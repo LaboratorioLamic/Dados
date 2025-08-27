@@ -686,28 +686,6 @@
             document.body.appendChild(backButton);
         }
 
-        window.onload = function() {
-            const sessionStart = localStorage.getItem('sessionStart');
-            const currentTime = Date.now();
-            const overlay = document.getElementById('password-overlay');
-            const mainContent = document.getElementById('main-content');
-
-            if (sessionStart && (currentTime - sessionStart < sessionDuration)) {
-                overlay.classList.add('hidden');
-                mainContent.classList.remove('blurred');
-                startSessionTimer();
-            }
-
-            // Register service worker for PWA functionality
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/service-worker.js', { scope: '/' }).then((registration) => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                }).catch((error) => {
-                    console.error('Service Worker registration failed:', error);
-                });
-            }
-        };
-
         function checkPassword() {
             const password = document.getElementById('password-input').value;
             const overlay = document.getElementById('password-overlay');
@@ -774,11 +752,43 @@
             }
         }
 
-        document.getElementById('password-input').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter' && !document.getElementById('submit-button').disabled) {
-                checkPassword();
+        // Move event listener setup to DOMContentLoaded to ensure DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordInput = document.getElementById('password-input');
+            const submitButton = document.getElementById('submit-button');
+
+            if (passwordInput && submitButton) {
+                passwordInput.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter' && !submitButton.disabled) {
+                        checkPassword();
+                    }
+                });
+            } else {
+                console.error('Password input or submit button not found');
             }
         });
+
+        window.onload = function() {
+            const sessionStart = localStorage.getItem('sessionStart');
+            const currentTime = Date.now();
+            const overlay = document.getElementById('password-overlay');
+            const mainContent = document.getElementById('main-content');
+
+            if (sessionStart && (currentTime - sessionStart < sessionDuration)) {
+                overlay.classList.add('hidden');
+                mainContent.classList.remove('blurred');
+                startSessionTimer();
+            }
+
+            // Register service worker for PWA functionality
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js', { scope: '/' }).then((registration) => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                }).catch((error) => {
+                    console.error('Service Worker registration failed:', error);
+                });
+            }
+        };
     </script>
 </body>
 </html>
