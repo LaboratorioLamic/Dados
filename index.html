@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001f3f">
     <title>Dados - Laboratório LAMIC</title>
     <link rel="icon" type="image/png" href="https://i.imgur.com/alXKG04.png">
     <link rel="apple-touch-icon" href="https://i.imgur.com/alXKG04.png">
@@ -132,6 +133,7 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            border: none; /* Garante consistência com dropdown-button */
         }
 
         .button:hover {
@@ -147,6 +149,8 @@
 
         .dropdown-container {
             position: relative;
+            display: flex;
+            justify-content: center;
         }
 
         .dropdown-button {
@@ -462,7 +466,14 @@
                 width: 100%;
                 max-width: 300px;
                 text-align: center;
-                box-sizing: border-box; /* Garante que padding não aumente a largura */
+                box-sizing: border-box;
+                margin: 0; /* Remove qualquer margem que possa interferir */
+                border: none; /* Garante consistência entre button e a */
+            }
+
+            .dropdown-container {
+                width: 100%;
+                max-width: 300px; /* Alinha com o max-width dos outros botões */
             }
 
             .button i, .dropdown-button i {
@@ -532,6 +543,10 @@
             .button, .dropdown-button {
                 padding: 8px 15px;
                 font-size: 0.9em;
+                max-width: 280px;
+            }
+
+            .dropdown-container {
                 max-width: 280px;
             }
 
