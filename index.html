@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#001f3f">
     <title>Dados - Laboratório LAMIC</title>
-    <link rel="icon" type="image/png" href="https://i.imgur.com/9yL0AN9.png">
-    <link rel="apple-touch-icon" href="https://i.imgur.com/9yL0AN9.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/assents/icon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/assents/icon.png">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
@@ -133,7 +133,7 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            border: none; /* Garante consistência com dropdown-button */
+            border: none;
         }
 
         .button:hover {
@@ -432,7 +432,6 @@
             font-size: 1.3em;
         }
 
-        /* Media Query para dispositivos móveis (telas menores que 768px) */
         @media (max-width: 768px) {
             body {
                 height: auto;
@@ -457,7 +456,7 @@
                 padding: 20px;
                 max-width: 100%;
                 overflow-y: auto;
-                max-height: calc(100vh - 120px); /* Ajusta altura para caber na tela */
+                max-height: calc(100vh - 120px);
             }
 
             .button, .dropdown-button {
@@ -467,13 +466,13 @@
                 max-width: 300px;
                 text-align: center;
                 box-sizing: border-box;
-                margin: 0; /* Remove qualquer margem que possa interferir */
-                border: none; /* Garante consistência entre button e a */
+                margin: 0;
+                border: none;
             }
 
             .dropdown-container {
                 width: 100%;
-                max-width: 300px; /* Alinha com o max-width dos outros botões */
+                max-width: 300px;
             }
 
             .button i, .dropdown-button i {
@@ -529,7 +528,6 @@
             }
         }
 
-        /* Media Query para telas muito pequenas (menores que 480px) */
         @media (max-width: 480px) {
             h1 {
                 font-size: 1.5em;
@@ -662,11 +660,9 @@
             const contentArea = document.getElementById('content-area');
             const passwordOverlay = document.getElementById('password-overlay');
 
-            // Hide main content and password overlay
             mainContent.classList.add('hidden');
             passwordOverlay.classList.add('hidden');
 
-            // Create iframe for content
             const iframe = document.createElement('iframe');
             iframe.id = 'content-frame';
             iframe.src = url;
@@ -674,7 +670,6 @@
             contentArea.appendChild(iframe);
             contentArea.classList.remove('hidden');
 
-            // Create back button
             const backButton = document.createElement('a');
             backButton.className = 'back-button';
             backButton.innerHTML = '<i class="fas fa-home"></i> Voltar ao Menu';
@@ -691,7 +686,6 @@
             document.body.appendChild(backButton);
         }
 
-        // Check if a valid session exists on page load
         window.onload = function() {
             const sessionStart = localStorage.getItem('sessionStart');
             const currentTime = Date.now();
@@ -702,6 +696,15 @@
                 overlay.classList.add('hidden');
                 mainContent.classList.remove('blurred');
                 startSessionTimer();
+            }
+
+            // Register service worker for PWA functionality
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js', { scope: '/' }).then((registration) => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                }).catch((error) => {
+                    console.error('Service Worker registration failed:', error);
+                });
             }
         };
 
