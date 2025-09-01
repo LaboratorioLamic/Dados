@@ -7,7 +7,7 @@
     <title>Dados - Laboratório LAMIC</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/assents/icon.png">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/assents/icon.png">
-    <link rel="manifest" href="https://github.com/LaboratorioLamic/Dados/blob/main/manifest.json">
+    <link rel="manifest" href="https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -1264,6 +1264,29 @@
                 });
             }
         };
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Show a custom install button or message to the user
+        console.log('Install prompt is ready to be triggered');
+        });
+
+        // Example: Trigger the prompt when a user clicks a button
+        document.getElementById('install-button')?.addEventListener('click', () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            } else {
+                console.log('User dismissed the install prompt');
+            }
+            deferredPrompt = null;
+            });
+        }
+        });
     </script>
 </body>
 </html>
