@@ -859,24 +859,24 @@
         // Tab management
         let tabs = [];
         let activeTabId = null;
-
+    
         function formatTime(ms) {
             const minutes = Math.floor(ms / 60000);
             const seconds = Math.floor((ms % 60000) / 1000);
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
-
+    
         function startSessionTimer() {
             const sessionStart = parseInt(localStorage.getItem('sessionStart'));
             const timerDisplay = document.getElementById('timer-display');
             const sessionTimer = document.getElementById('session-timer');
             const overlay = document.getElementById('password-overlay');
             const mainContent = document.getElementById('main-content');
-
+    
             const updateTimer = () => {
                 const currentTime = Date.now();
                 const timeLeft = sessionStart + sessionDuration - currentTime;
-
+    
                 if (timeLeft <= 0) {
                     localStorage.removeItem('sessionStart');
                     sessionTimer.style.display = 'none';
@@ -887,18 +887,18 @@
                     timerDisplay.textContent = formatTime(timeLeft);
                 }
             };
-
+    
             sessionTimer.style.display = 'block';
             updateTimer();
             const timerInterval = setInterval(updateTimer, 1000);
         }
-
+    
         function loadContent(event, url) {
             event.preventDefault();
             const mainContent = document.getElementById('main-content');
             const contentArea = document.getElementById('content-area');
             const passwordOverlay = document.getElementById('password-overlay');
-
+    
             // Get page title from the link text
             const linkText = event.target.textContent.trim();
             
@@ -908,7 +908,7 @@
                 switchToTab(existingTab.id);
                 return;
             }
-
+    
             // Create new tab
             const tabId = 'tab_' + Date.now();
             const newTab = {
@@ -928,41 +928,41 @@
             mainContent.classList.add('hidden');
             passwordOverlay.classList.add('hidden');
         }
-
-                 function createTabElement(tab) {
-             const tabElement = document.createElement('div');
-             tabElement.className = 'tab';
-             tabElement.dataset.tabId = tab.id;
-             
-             if (tab.id === activeTabId) {
-                 tabElement.classList.add('active');
-             }
-             
-             tabElement.innerHTML = `
-                 <span>${tab.title}</span>
-                 <button class="tab-close" onclick="closeTab('${tab.id}', event)">
-                     <i class="fas fa-times"></i>
-                 </button>
-             `;
-             
-             tabElement.onclick = (e) => {
-                 if (!e.target.closest('.tab-close')) {
-                     switchToTab(tab.id);
-                 }
-             };
-
-             // Add drag and drop functionality
-             tabElement.draggable = true;
-             tabElement.addEventListener('dragstart', handleDragStart);
-             tabElement.addEventListener('dragend', handleDragEnd);
-             tabElement.addEventListener('dragover', handleDragOver);
-             tabElement.addEventListener('drop', handleDrop);
-             tabElement.addEventListener('dragenter', handleDragEnter);
-             tabElement.addEventListener('dragleave', handleDragLeave);
-             
-             return tabElement;
-         }
-
+    
+        function createTabElement(tab) {
+            const tabElement = document.createElement('div');
+            tabElement.className = 'tab';
+            tabElement.dataset.tabId = tab.id;
+            
+            if (tab.id === activeTabId) {
+                tabElement.classList.add('active');
+            }
+            
+            tabElement.innerHTML = `
+                <span>${tab.title}</span>
+                <button class="tab-close" onclick="closeTab('${tab.id}', event)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            tabElement.onclick = (e) => {
+                if (!e.target.closest('.tab-close')) {
+                    switchToTab(tab.id);
+                }
+            };
+    
+            // Add drag and drop functionality
+            tabElement.draggable = true;
+            tabElement.addEventListener('dragstart', handleDragStart);
+            tabElement.addEventListener('dragend', handleDragEnd);
+            tabElement.addEventListener('dragover', handleDragOver);
+            tabElement.addEventListener('drop', handleDrop);
+            tabElement.addEventListener('dragenter', handleDragEnter);
+            tabElement.addEventListener('dragleave', handleDragLeave);
+            
+            return tabElement;
+        }
+    
         function updateTabBar() {
             const tabBar = document.getElementById('tab-bar');
             tabBar.innerHTML = '';
@@ -979,8 +979,10 @@
                 tabBar.appendChild(tabElement);
             });
         }
-
+    
         function showTabContent(tab) {
+            if (!tab) return; // CORREÇÃO: Evita erro se tab for undefined (proteção extra)
+    
             const contentArea = document.getElementById('content-area');
             const mainContent = document.getElementById('main-content');
             
@@ -1012,31 +1014,31 @@
                 const backButton = document.createElement('button');
                 backButton.className = 'back-to-menu';
                 backButton.innerHTML = '<i class="fas fa-home"></i> Voltar';
-                                 backButton.onclick = () => {
-                     // Hide content area and show main menu, but keep tabs open
-                     const contentArea = document.getElementById('content-area');
-                     const mainContent = document.getElementById('main-content');
-                     const passwordOverlay = document.getElementById('password-overlay');
-                     
-                     contentArea.classList.add('hidden');
-                     mainContent.classList.remove('hidden');
-                     
-                     // Deselect active tab when returning to menu
-                     activeTabId = null;
-                     updateTabBar();
-                     
-                     // Remove back button
-                     backButton.remove();
-                     
-                     if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
-                         mainContent.classList.add('blurred');
-                         passwordOverlay.classList.remove('hidden');
-                     }
-                 };
+                backButton.onclick = () => {
+                    // Hide content area and show main menu, but keep tabs open
+                    const contentArea = document.getElementById('content-area');
+                    const mainContent = document.getElementById('main-content');
+                    const passwordOverlay = document.getElementById('password-overlay');
+                    
+                    contentArea.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    
+                    // Deselect active tab when returning to menu
+                    activeTabId = null;
+                    updateTabBar();
+                    
+                    // Remove back button
+                    backButton.remove();
+                    
+                    if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
+                        mainContent.classList.add('blurred');
+                        passwordOverlay.classList.remove('hidden');
+                    }
+                };
                 document.body.appendChild(backButton);
             }
         }
-
+    
         function switchToTab(tabId) {
             activeTabId = tabId;
             const tab = tabs.find(t => t.id === tabId);
@@ -1046,112 +1048,119 @@
                 updateTabBar();
             }
         }
-
-                 function closeTab(tabId, event) {
-             event.stopPropagation();
-             
-             const tabIndex = tabs.findIndex(t => t.id === tabId);
-             if (tabIndex === -1) return;
-             
-             // Remove tab
-             tabs.splice(tabIndex, 1);
-             
-             // If closing active tab, switch to another tab
-             if (tabId === activeTabId) {
-                 if (tabs.length > 0) {
-                     // Switch to next tab, or previous if closing last tab
-                     const newActiveIndex = tabIndex < tabs.length ? tabIndex : tabIndex - 1;
-                     activeTabId = tabs[newActiveIndex].id;
-                 } else {
-                     // No tabs left, show main content
-                     activeTabId = null;
-                     const mainContent = document.getElementById('main-content');
-                     const contentArea = document.getElementById('content-area');
-                     const passwordOverlay = document.getElementById('password-overlay');
-                     
-                     contentArea.innerHTML = '';
-                     contentArea.classList.add('hidden');
-                     mainContent.classList.remove('hidden');
-                     
-                     // Remove back button when no tabs are left
-                     const backButton = document.querySelector('.back-to-menu');
-                     if (backButton && tabs.length === 0) {
-                         backButton.remove();
-                     }
-                     
-                     if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
-                         mainContent.classList.add('blurred');
-                         passwordOverlay.classList.remove('hidden');
-                     }
-                 }
-             }
-             
-             updateTabBar();
-             
-             if (tabs.length > 0) {
-                 showTabContent(tabs.find(t => t.id === activeTabId));
-             }
-         }
-
-         // Drag and drop variables
-         let draggedTab = null;
-
-         function handleDragStart(e) {
-             draggedTab = this;
-             this.classList.add('dragging');
-             e.dataTransfer.effectAllowed = 'move';
-             e.dataTransfer.setData('text/html', this.outerHTML);
-         }
-
-         function handleDragEnd(e) {
-             this.classList.remove('dragging');
-             draggedTab = null;
-             
-             // Remove drag-over class from all tabs
-             document.querySelectorAll('.tab').forEach(tab => {
-                 tab.classList.remove('drag-over');
-             });
-         }
-
-         function handleDragOver(e) {
-             e.preventDefault();
-             e.dataTransfer.dropEffect = 'move';
-         }
-
-         function handleDrop(e) {
-             e.preventDefault();
-             
-             if (draggedTab && draggedTab !== this) {
-                 const draggedTabId = draggedTab.dataset.tabId;
-                 const targetTabId = this.dataset.tabId;
-                 
-                 // Find indices
-                 const draggedIndex = tabs.findIndex(t => t.id === draggedTabId);
-                 const targetIndex = tabs.findIndex(t => t.id === targetTabId);
-                 
-                 if (draggedIndex !== -1 && targetIndex !== -1) {
-                     // Reorder tabs array
-                     const [movedTab] = tabs.splice(draggedIndex, 1);
-                     tabs.splice(targetIndex, 0, movedTab);
-                     
-                     // Update tab bar
-                     updateTabBar();
-                 }
-             }
-         }
-
-         function handleDragEnter(e) {
-             e.preventDefault();
-             if (draggedTab && draggedTab !== this) {
-                 this.classList.add('drag-over');
-             }
-         }
-
-         function handleDragLeave(e) {
-             e.preventDefault();
-             this.classList.remove('drag-over');
-         }
-
+    
+        function closeTab(tabId, event) {
+            event.stopPropagation();
+            
+            const tabIndex = tabs.findIndex(t => t.id === tabId);
+            if (tabIndex === -1) return;
+            
+            // Remove iframe if exists to clean up
+            const tabToClose = tabs[tabIndex];
+            if (tabToClose.iframe) {
+                tabToClose.iframe.remove();
+            }
+            
+            // Remove tab
+            tabs.splice(tabIndex, 1);
+            
+            // If closing active tab, switch to another tab or menu
+            if (tabId === activeTabId) {
+                if (tabs.length > 0) {
+                    // Switch to next tab, or previous if closing last tab
+                    const newActiveIndex = tabIndex < tabs.length ? tabIndex : tabIndex - 1;
+                    activeTabId = tabs[newActiveIndex].id;
+                } else {
+                    // No tabs left, show main content
+                    activeTabId = null;
+                    const mainContent = document.getElementById('main-content');
+                    const contentArea = document.getElementById('content-area');
+                    const passwordOverlay = document.getElementById('password-overlay');
+                    
+                    contentArea.innerHTML = '';
+                    contentArea.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    
+                    // Remove back button when no tabs are left
+                    const backButton = document.querySelector('.back-to-menu');
+                    if (backButton) {
+                        backButton.remove();
+                    }
+                    
+                    if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
+                        mainContent.classList.add('blurred');
+                        passwordOverlay.classList.remove('hidden');
+                    }
+                }
+            }
+            
+            updateTabBar();
+            
+            // CORREÇÃO PRINCIPAL: Só mostra o conteúdo se houver aba ativa (evita chamar showTabContent no menu)
+            if (activeTabId !== null && tabs.length > 0) {
+                showTabContent(tabs.find(t => t.id === activeTabId));
+            }
+        }
+    
+        // Drag and drop variables
+        let draggedTab = null;
+    
+        function handleDragStart(e) {
+            draggedTab = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.outerHTML);
+        }
+    
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedTab = null;
+            
+            // Remove drag-over class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('drag-over');
+            });
+        }
+    
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+    
+        function handleDrop(e) {
+            e.preventDefault();
+            
+            if (draggedTab && draggedTab !== this) {
+                const draggedTabId = draggedTab.dataset.tabId;
+                const targetTabId = this.dataset.tabId;
+                
+                // Find indices
+                const draggedIndex = tabs.findIndex(t => t.id === draggedTabId);
+                const targetIndex = tabs.findIndex(t => t.id === targetTabId);
+                
+                if (draggedIndex !== -1 && targetIndex !== -1) {
+                    // Reorder tabs array
+                    const [movedTab] = tabs.splice(draggedIndex, 1);
+                    tabs.splice(targetIndex, 0, movedTab);
+                    
+                    // Update tab bar
+                    updateTabBar();
+                }
+            }
+        }
+    
+        function handleDragEnter(e) {
+            e.preventDefault();
+            if (draggedTab && draggedTab !== this) {
+                this.classList.add('drag-over');
+            }
+        }
+    
+        function handleDragLeave(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+        }
+    
         function checkPassword() {
             const password = document.getElementById('password-input').value;
             const overlay = document.getElementById('password-overlay');
@@ -1163,7 +1172,7 @@
             const progressBar = document.getElementById('progress-bar');
             const submitButton = document.getElementById('submit-button');
             const passwordInput = document.getElementById('password-input');
-
+    
             if (password === correctPassword) {
                 localStorage.setItem('sessionStart', Date.now());
                 overlay.classList.add('hidden');
@@ -1175,12 +1184,12 @@
                 errorMessage.style.display = 'block';
                 passwordInput.classList.add('shake');
                 submitButton.classList.add('error');
-
+    
                 setTimeout(() => {
                     passwordInput.classList.remove('shake');
                     submitButton.classList.remove('error');
                 }, 600);
-
+    
                 if (attemptCount >= maxInitialAttempts) {
                     const additionalAttempts = attemptCount - maxInitialAttempts;
                     const waitTime = 5 + 5 * Math.floor(additionalAttempts / 2);
@@ -1189,21 +1198,21 @@
                     progressBarContainer.style.display = 'block';
                     errorMessage.textContent = `Senha incorreta! Aguarde antes de tentar novamente.`;
                     waitTimeDisplay.textContent = waitTime;
-
+    
                     let timeElapsed = 0;
                     const interval = 100;
                     const steps = waitTime * 1000 / interval;
                     const increment = 100 / steps;
                     let progress = 0;
-
+    
                     const progressInterval = setInterval(() => {
                         timeElapsed += interval;
                         progress += increment;
                         progressBar.style.width = `${Math.min(progress, 100)}%`;
-
+    
                         const timeLeft = Math.ceil((waitTime * 1000 - timeElapsed) / 1000);
                         waitTimeDisplay.textContent = timeLeft;
-
+    
                         if (timeElapsed >= waitTime * 1000) {
                             clearInterval(progressInterval);
                             submitButton.disabled = false;
@@ -1217,12 +1226,12 @@
                 }
             }
         }
-
+    
         // Move event listener setup to DOMContentLoaded to ensure DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
             const passwordInput = document.getElementById('password-input');
             const submitButton = document.getElementById('submit-button');
-
+    
             if (passwordInput && submitButton) {
                 passwordInput.addEventListener('keypress', (event) => {
                     if (event.key === 'Enter' && !submitButton.disabled) {
@@ -1233,19 +1242,19 @@
                 console.error('Password input or submit button not found');
             }
         });
-
+    
         window.onload = function() {
             const sessionStart = localStorage.getItem('sessionStart');
             const currentTime = Date.now();
             const overlay = document.getElementById('password-overlay');
             const mainContent = document.getElementById('main-content');
-
+    
             if (sessionStart && (currentTime - sessionStart < sessionDuration)) {
                 overlay.classList.add('hidden');
                 mainContent.classList.remove('blurred');
                 startSessionTimer();
             }
-
+    
             // Register service worker for PWA functionality
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/service-worker.js', { scope: '/' }).then((registration) => {
