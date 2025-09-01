@@ -453,6 +453,149 @@
             font-size: 1.3em;
         }
 
+        /* Tab Bar Styles */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--primary-color);
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            z-index: 30;
+            box-shadow: 0 -2px 10px var(--shadow-color);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .tab-bar.show {
+            transform: translateY(0);
+        }
+
+        .tab {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-color: var(--accent-color);
+            background-color: var(--accent-color);
+            color: var(--secondary-color);
+        }
+
+        .tab:hover {
+            background-color: #f0f8ff;
+            transform: translateY(-2px);
+        }
+
+        .tab.active:hover {
+            background-color: var(--accent-color);
+        }
+
+        .tab-close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .tab-close:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .tab.active .tab-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Adjust content area to account for tab bar */
+        #content-area {
+            bottom: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        #content-area iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Back to menu button */
+        .back-to-menu {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            z-index: 40;
+            transition: all 0.3s ease;
+            animation: bounceIn 0.5s ease-out;
+            border: none;
+            cursor: pointer;
+        }
+
+        .back-to-menu:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px var(--shadow-color);
+        }
+
+        .back-to-menu i {
+            font-size: 1.3em;
+        }
+
+        .tab-bar::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .tab-bar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .tab-bar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .tab-bar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
         @media (max-width: 768px) {
             body {
                 height: auto;
@@ -546,6 +689,35 @@
 
             .session-timer {
                 font-size: 0.8em;
+            }
+
+            /* Mobile tab bar adjustments */
+            .tab-bar {
+                padding: 8px 15px;
+            }
+
+            .tab {
+                padding: 6px 12px;
+                font-size: 0.8em;
+            }
+
+            .tab-close {
+                width: 18px;
+                height: 18px;
+                font-size: 1em;
+            }
+
+            #content-area {
+                bottom: 50px;
+            }
+
+            .back-to-menu {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+
+            .back-to-menu i {
+                font-size: 1.1em;
             }
         }
 
@@ -660,11 +832,16 @@
         </div>
     </div>
     <div id="content-area" class="hidden"></div>
+    <div id="tab-bar" class="tab-bar"></div>
     <script>
         let attemptCount = 0;
         const maxInitialAttempts = 5;
         const correctPassword = 'Lamic759@';
         const sessionDuration = 240 * 60 * 1000; // 120 minutes in milliseconds
+        
+        // Tab management
+        let tabs = [];
+        let activeTabId = null;
 
         function formatTime(ms) {
             const minutes = Math.floor(ms / 60000);
@@ -705,30 +882,189 @@
             const contentArea = document.getElementById('content-area');
             const passwordOverlay = document.getElementById('password-overlay');
 
+            // Get page title from the link text
+            const linkText = event.target.textContent.trim();
+            
+            // Check if tab already exists
+            const existingTab = tabs.find(tab => tab.url === url);
+            if (existingTab) {
+                switchToTab(existingTab.id);
+                return;
+            }
+
+            // Create new tab
+            const tabId = 'tab_' + Date.now();
+            const newTab = {
+                id: tabId,
+                url: url,
+                title: linkText,
+                iframe: null
+            };
+            
+            tabs.push(newTab);
+            activeTabId = tabId;
+            
+            // Update UI
+            updateTabBar();
+            showTabContent(newTab);
+            
             mainContent.classList.add('hidden');
             passwordOverlay.classList.add('hidden');
+        }
 
-            const iframe = document.createElement('iframe');
-            iframe.id = 'content-frame';
-            iframe.src = url;
-            contentArea.innerHTML = '';
-            contentArea.appendChild(iframe);
-            contentArea.classList.remove('hidden');
-
-            const backButton = document.createElement('a');
-            backButton.className = 'back-button';
-            backButton.innerHTML = '<i class="fas fa-home"></i>Voltar';
-            backButton.onclick = () => {
-                contentArea.innerHTML = '';
-                contentArea.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
-                    mainContent.classList.add('blurred');
-                    passwordOverlay.classList.remove('hidden');
+        function createTabElement(tab) {
+            const tabElement = document.createElement('div');
+            tabElement.className = 'tab';
+            tabElement.dataset.tabId = tab.id;
+            
+            if (tab.id === activeTabId) {
+                tabElement.classList.add('active');
+            }
+            
+            tabElement.innerHTML = `
+                <span>${tab.title}</span>
+                <button class="tab-close" onclick="closeTab('${tab.id}', event)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            tabElement.onclick = (e) => {
+                if (!e.target.closest('.tab-close')) {
+                    switchToTab(tab.id);
                 }
-                backButton.remove();
             };
-            document.body.appendChild(backButton);
+            
+            return tabElement;
+        }
+
+        function updateTabBar() {
+            const tabBar = document.getElementById('tab-bar');
+            tabBar.innerHTML = '';
+            
+            if (tabs.length === 0) {
+                tabBar.classList.remove('show');
+                return;
+            }
+            
+            tabBar.classList.add('show');
+            
+            tabs.forEach(tab => {
+                const tabElement = createTabElement(tab);
+                tabBar.appendChild(tabElement);
+            });
+        }
+
+        function showTabContent(tab) {
+            const contentArea = document.getElementById('content-area');
+            const mainContent = document.getElementById('main-content');
+            
+            // Hide main content
+            mainContent.classList.add('hidden');
+            
+            // Create iframe for this tab if it doesn't exist
+            if (!tab.iframe) {
+                const iframe = document.createElement('iframe');
+                iframe.id = `iframe_${tab.id}`;
+                iframe.src = tab.url;
+                iframe.style.display = tab.id === activeTabId ? 'block' : 'none';
+                tab.iframe = iframe;
+                contentArea.appendChild(iframe);
+            }
+            
+            // Show content area
+            contentArea.classList.remove('hidden');
+            
+            // Show active iframe and hide others
+            tabs.forEach(t => {
+                if (t.iframe) {
+                    t.iframe.style.display = t.id === activeTabId ? 'block' : 'none';
+                }
+            });
+            
+            // Add back to menu button if not already present
+            if (!document.querySelector('.back-to-menu')) {
+                const backButton = document.createElement('button');
+                backButton.className = 'back-to-menu';
+                backButton.innerHTML = '<i class="fas fa-home"></i> Voltar ao Menu';
+                                 backButton.onclick = () => {
+                     // Hide content area and show main menu, but keep tabs open
+                     const contentArea = document.getElementById('content-area');
+                     const mainContent = document.getElementById('main-content');
+                     const passwordOverlay = document.getElementById('password-overlay');
+                     
+                     contentArea.classList.add('hidden');
+                     mainContent.classList.remove('hidden');
+                     
+                     // Deselect active tab when returning to menu
+                     activeTabId = null;
+                     updateTabBar();
+                     
+                     // Remove back button
+                     backButton.remove();
+                     
+                     if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
+                         mainContent.classList.add('blurred');
+                         passwordOverlay.classList.remove('hidden');
+                     }
+                 };
+                document.body.appendChild(backButton);
+            }
+        }
+
+        function switchToTab(tabId) {
+            activeTabId = tabId;
+            const tab = tabs.find(t => t.id === tabId);
+            
+            if (tab) {
+                showTabContent(tab);
+                updateTabBar();
+            }
+        }
+
+        function closeTab(tabId, event) {
+            event.stopPropagation();
+            
+            const tabIndex = tabs.findIndex(t => t.id === tabId);
+            if (tabIndex === -1) return;
+            
+            // Remove tab
+            tabs.splice(tabIndex, 1);
+            
+            // If closing active tab, switch to another tab
+            if (tabId === activeTabId) {
+                if (tabs.length > 0) {
+                    // Switch to next tab, or previous if closing last tab
+                    const newActiveIndex = tabIndex < tabs.length ? tabIndex : tabIndex - 1;
+                    activeTabId = tabs[newActiveIndex].id;
+                } else {
+                    // No tabs left, show main content
+                    activeTabId = null;
+                    const mainContent = document.getElementById('main-content');
+                    const contentArea = document.getElementById('content-area');
+                    const passwordOverlay = document.getElementById('password-overlay');
+                    
+                    contentArea.innerHTML = '';
+                    contentArea.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    
+                                         // Remove back button when no tabs are left
+                     const backButton = document.querySelector('.back-to-menu');
+                     if (backButton && tabs.length === 0) {
+                         backButton.remove();
+                     }
+                    
+                    if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
+                        mainContent.classList.add('blurred');
+                        passwordOverlay.classList.remove('hidden');
+                    }
+                }
+            }
+            
+            updateTabBar();
+            
+            if (tabs.length > 0) {
+                showTabContent(tabs.find(t => t.id === activeTabId));
+            }
         }
 
         function checkPassword() {
