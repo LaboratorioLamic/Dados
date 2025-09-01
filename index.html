@@ -192,7 +192,9 @@
             border-radius: 10px;
             z-index: 1;
             min-width: 200px;
-            overflow: hidden;
+            max-height: 180px;
+            overflow-y: auto;
+            overflow-x: hidden;
             transform-origin: top;
             transform: scaleY(0);
             transition: transform 0.3s ease, opacity 0.3s ease;
@@ -243,6 +245,25 @@
 
         .dropdown-content a:hover::before {
             transform: scaleY(1);
+        }
+
+        /* Custom scrollbar for dropdown */
+        .dropdown-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dropdown-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .dropdown-content::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .dropdown-content::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
         }
 
         .button::after, .dropdown-button::after {
@@ -580,6 +601,28 @@
             <a href="https://drive.google.com/drive/folders/1jyd1B7ylx1yvQkpmLqUgWCWD922fFFXT" class="button" target="_blank">
                 <i class="fas fa-folder-open"></i> Drive
             </a>
+            <div class="dropdown-container">
+                <button class="dropdown-button">
+                    <i class="fas fa-stethoscope"></i> Convênios
+                </button>
+                <div class="dropdown-content">
+                    <a href="https://www.unimedcariri.com.br/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Unimed</a>
+                    <a href="https://www.camed.com.br/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Camed</a>
+                    <a href="https://famedsaude.com.br/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Famed</a>
+                    <a href="https://www.cassi.com.br/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Cassi</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Geap</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Caixa</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Sulamerica</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Postal Saúde</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Hapvida</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Amil</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Issec</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Cafaz</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Assefaz</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Bradesco</a>
+                    <a href="https://www.example.com/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Fachesf</a>
+                </div>
+            </div>
             <div class="dropdown-container">
                 <button class="dropdown-button">
                     <i class="fas fa-university"></i> Universidade LAMIC
