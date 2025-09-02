@@ -18,7 +18,7 @@
             --shadow-color: rgba(0, 0, 0, 0.1);
             --error-color: #ff0000;
         }
-
+        
         body {
             margin: 0;
             padding: 0;
@@ -33,7 +33,7 @@
             overflow: hidden;
             position: relative;
         }
-
+        
         body::before {
             content: '';
             position: absolute;
@@ -46,24 +46,24 @@
             animation: breathe 10s ease-in-out infinite;
             z-index: -1;
         }
-
+        
         @keyframes breathe {
             0% { opacity: 0.5; }
             50% { opacity: 0.8; }
             100% { opacity: 0.5; }
         }
-
+        
         .blurred {
             filter: blur(5px);
             pointer-events: none;
         }
-
+        
         header {
             text-align: center;
             margin-bottom: 40px;
             position: relative;
         }
-
+        
         h1 {
             font-size: 3em;
             color: var(--primary-color);
@@ -76,7 +76,7 @@
             padding: 10px 20px;
             animation: slideIn 1s ease-out;
         }
-
+        
         h1::before {
             content: '';
             position: absolute;
@@ -88,17 +88,17 @@
             transform-origin: left;
             animation: scaleIn 1.5s ease-out forwards;
         }
-
+        
         @keyframes slideIn {
             from { opacity: 0; transform: translateX(-20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-
+        
         @keyframes scaleIn {
             from { transform: scaleX(0); }
             to { transform: scaleX(1); }
         }
-
+        
         .container {
             background-color: var(--secondary-color);
             border-radius: 15px;
@@ -111,12 +111,12 @@
             max-width: 1000px;
             animation: fadeIn 1.5s ease-out;
         }
-
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
+        
         .button {
             display: flex;
             align-items: center;
@@ -135,24 +135,24 @@
             overflow: hidden;
             border: none;
         }
-
+        
         .button:hover {
             background-color: var(--accent-color);
             transform: translateY(-5px);
             box-shadow: 0 10px 20px var(--shadow-color);
         }
-
+        
         .button i {
             margin-right: 10px;
             font-size: 1.5em;
         }
-
+        
         .dropdown-container {
             position: relative;
             display: flex;
             justify-content: center;
         }
-
+        
         .dropdown-button {
             background-color: var(--primary-color);
             color: var(--secondary-color);
@@ -170,43 +170,43 @@
             position: relative;
             overflow: hidden;
         }
-
+        
         .dropdown-button:hover {
             background-color: var(--accent-color);
             transform: translateY(-5px);
             box-shadow: 0 10px 20px var(--shadow-color);
         }
-
+        
         .dropdown-button i {
             margin-right: 10px;
             font-size: 1.5em;
         }
-
-                 .dropdown-content {
-             display: none;
-             position: absolute;
-             top: 100%;
-             left: 0;
-             background-color: var(--secondary-color);
-             box-shadow: 0 5px 15px var(--shadow-color);
-             border-radius: 10px;
-             z-index: 50;
-             min-width: 200px;
-             max-height: 180px;
-             overflow-y: auto;
-             overflow-x: hidden;
-             transform-origin: top;
-             transform: scaleY(0);
-             transition: transform 0.3s ease, opacity 0.3s ease;
-             opacity: 0;
-         }
-
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: var(--secondary-color);
+            box-shadow: 0 5px 15px var(--shadow-color);
+            border-radius: 10px;
+            z-index: 50;
+            min-width: 200px;
+            max-height: 180px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+        
         .dropdown-container:hover .dropdown-content {
             display: block;
             transform: scaleY(1);
             opacity: 1;
         }
-
+        
         .dropdown-content a {
             color: var(--primary-color);
             padding: 12px 16px;
@@ -218,19 +218,19 @@
             transition: all 0.3s ease;
             position: relative;
         }
-
+        
         .dropdown-content a i {
             margin-right: 10px;
             font-size: 1.2em;
             opacity: 0.8;
         }
-
+        
         .dropdown-content a:hover {
             background-color: #f0f8ff;
             color: var(--accent-color);
             transform: translateX(10px);
         }
-
+        
         .dropdown-content a::before {
             content: '';
             position: absolute;
@@ -242,30 +242,29 @@
             transform: scaleY(0);
             transition: transform 0.3s ease;
         }
-
+        
         .dropdown-content a:hover::before {
             transform: scaleY(1);
         }
-
-        /* Custom scrollbar for dropdown */
+        
         .dropdown-content::-webkit-scrollbar {
             width: 8px;
         }
-
+        
         .dropdown-content::-webkit-scrollbar-track {
             background: #f1f1f1;
             border-radius: 4px;
         }
-
+        
         .dropdown-content::-webkit-scrollbar-thumb {
             background: var(--primary-color);
             border-radius: 4px;
         }
-
+        
         .dropdown-content::-webkit-scrollbar-thumb:hover {
             background: var(--accent-color);
         }
-
+        
         .button::after, .dropdown-button::after {
             content: '';
             position: absolute;
@@ -277,11 +276,11 @@
             opacity: 0;
             transition: opacity 0.5s;
         }
-
+        
         .button:hover::after, .dropdown-button:hover::after {
             opacity: 1;
         }
-
+        
         .password-overlay {
             position: fixed;
             top: 0;
@@ -294,7 +293,7 @@
             justify-content: center;
             z-index: 1000;
         }
-
+        
         .password-box {
             background-color: var(--secondary-color);
             border-radius: 10px;
@@ -304,13 +303,13 @@
             width: 300px;
             animation: fadeIn 0.5s ease-out;
         }
-
+        
         .password-box h2 {
             font-size: 1.5em;
             margin-bottom: 20px;
             color: var(--primary-color);
         }
-
+        
         .password-box input {
             width: 93%;
             padding: 10px;
@@ -321,17 +320,17 @@
             font-family: 'Roboto Slab', serif;
             display: block;
         }
-
+        
         .password-box input.shake {
             animation: shake 0.5s ease-in-out;
         }
-
+        
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-10px); }
             40%, 80% { transform: translateX(10px); }
         }
-
+        
         .password-box button {
             background-color: var(--primary-color);
             color: var(--secondary-color);
@@ -343,40 +342,40 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-
+        
         .password-box button:hover {
             background-color: var(--accent-color);
         }
-
+        
         .password-box button.error {
             animation: colorChange 0.6s ease-in-out;
         }
-
+        
         @keyframes colorChange {
             0% { background-color: var(--primary-color); }
             50% { background-color: var(--error-color); }
             100% { background-color: var(--primary-color); }
         }
-
+        
         .password-box button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
         }
-
+        
         .error-message {
             color: var(--error-color);
             font-size: 0.9em;
             margin-top: 10px;
             display: none;
         }
-
+        
         .wait-message {
             color: var(--primary-color);
             font-size: 0.9em;
             margin-top: 10px;
             display: none;
         }
-
+        
         .progress-bar-container {
             width: 100%;
             height: 10px;
@@ -386,14 +385,14 @@
             margin-top: 10px;
             display: none;
         }
-
+        
         .progress-bar {
             height: 100%;
             background-color: var(--accent-color);
             width: 0;
             transition: width 0.1s linear;
         }
-
+        
         .session-timer {
             font-size: 0.9em;
             color: var(--primary-color);
@@ -402,11 +401,11 @@
             margin-top: 20px;
             display: none;
         }
-
+        
         .hidden {
             display: none;
         }
-
+        
         #content-frame {
             width: 100%;
             height: 100%;
@@ -416,7 +415,7 @@
             left: 0;
             z-index: 10;
         }
-
+        
         .back-button {
             position: fixed;
             top: 10px;
@@ -436,24 +435,23 @@
             transition: all 0.3s ease;
             animation: bounceIn 0.5s ease-out;
         }
-
+        
         .back-button:hover {
             background-color: var(--accent-color);
             transform: translateY(-3px);
             box-shadow: 0 8px 20px var(--shadow-color);
         }
-
+        
         @keyframes bounceIn {
             0% { transform: scale(0); opacity: 0; }
             60% { transform: scale(1.2); opacity: 1; }
             100% { transform: scale(1); }
         }
-
+        
         .back-button i {
             font-size: 1.3em;
         }
-
-        /* Tab Bar Styles */
+        
         .tab-bar {
             position: fixed;
             bottom: 0;
@@ -468,60 +466,64 @@
             box-shadow: 0 -2px 10px var(--shadow-color);
             transform: translateY(100%);
             transition: transform 0.3s ease;
+            scroll-behavior: smooth;
         }
-
+        
         .tab-bar.show {
             transform: translateY(0);
         }
-
-                 .tab {
-             background-color: var(--secondary-color);
-             color: var(--primary-color);
-             padding: 8px 15px;
-             border-radius: 5px;
-             font-size: 0.9em;
-             font-weight: 500;
-             cursor: grab;
-             display: flex;
-             align-items: center;
-             gap: 8px;
-             white-space: nowrap;
-             transition: all 0.3s ease;
-             border: 2px solid transparent;
-             user-select: none;
-             position: relative;
-         }
-
-         .tab:active {
-             cursor: grabbing;
-         }
-
-         .tab.dragging {
-             opacity: 0.5;
-             transform: rotate(5deg);
-             z-index: 100;
-         }
-
-         .tab.drag-over {
-             border-color: var(--accent-color);
-             background-color: #f0f8ff;
-         }
-
+        
+        .tab {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: all 0.3s ease, transform 0.2s ease;
+            border: 2px solid transparent;
+            user-select: none;
+            position: relative;
+            will-change: transform;
+        }
+        
+        .tab:active {
+            cursor: grabbing;
+        }
+        
+        .tab.dragging {
+            opacity: 0.7;
+            transform: scale(1.05);
+            z-index: 100;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tab.drag-over {
+            border-color: var(--accent-color);
+            background-color: #f0f8ff;
+            transform: translateX(5px);
+        }
+        
         .tab.active {
             border-color: var(--accent-color);
             background-color: var(--accent-color);
             color: var(--secondary-color);
         }
-
+        
         .tab:hover {
             background-color: #f0f8ff;
             transform: translateY(-2px);
         }
-
+        
         .tab.active:hover {
             background-color: var(--accent-color);
         }
-
+        
         .tab-close {
             background: none;
             border: none;
@@ -537,16 +539,15 @@
             border-radius: 50%;
             transition: background-color 0.3s ease;
         }
-
+        
         .tab-close:hover {
             background-color: rgba(0, 0, 0, 0.1);
         }
-
+        
         .tab.active .tab-close:hover {
             background-color: rgba(255, 255, 255, 0.2);
         }
-
-        /* Adjust content area to account for tab bar */
+        
         #content-area {
             bottom: 60px;
             position: fixed;
@@ -555,14 +556,13 @@
             right: 0;
             z-index: 10;
         }
-
+        
         #content-area iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
-
-        /* Back to menu button */
+        
         .back-to-menu {
             position: fixed;
             top: 8px;
@@ -584,35 +584,96 @@
             border: none;
             cursor: pointer;
         }
-
+        
         .back-to-menu:hover {
             background-color: var(--accent-color);
             transform: translateY(-3px);
             box-shadow: 0 8px 20px var(--shadow-color);
         }
-
+        
         .back-to-menu i {
             font-size: 1.3em;
         }
-
+        
         .tab-bar::-webkit-scrollbar {
             height: 6px;
         }
-
+        
         .tab-bar::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
         }
-
+        
         .tab-bar::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.3);
             border-radius: 3px;
         }
-
+        
         .tab-bar::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.5);
         }
-
+        
+        .install-banner {
+            position: fixed;
+            bottom: 70px; /* Acima da tab-bar */
+            left: 10px;
+            right: 10px;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 50;
+            animation: slideUp 0.5s ease-out;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        
+        .install-banner.show {
+            display: flex;
+        }
+        
+        .install-banner p {
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        .install-banner button {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .install-banner button:hover {
+            background-color: var(--accent-color);
+        }
+        
+        .install-banner .close-install {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.2em;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
         @media (max-width: 768px) {
             body {
                 height: auto;
@@ -621,16 +682,16 @@
                 justify-content: flex-start;
                 padding: 20px;
             }
-
+        
             header {
                 margin-bottom: 20px;
             }
-
+        
             h1 {
                 font-size: 2em;
                 padding: 8px 15px;
             }
-
+        
             .container {
                 flex-direction: column;
                 align-items: center;
@@ -639,7 +700,7 @@
                 overflow-y: auto;
                 max-height: calc(100vh - 120px);
             }
-
+        
             .button, .dropdown-button {
                 padding: 10px 20px;
                 font-size: 1em;
@@ -650,124 +711,134 @@
                 margin: 0;
                 border: none;
             }
-
+        
             .dropdown-container {
                 width: 100%;
                 max-width: 300px;
             }
-
+        
             .button i, .dropdown-button i {
                 font-size: 1.2em;
                 margin-right: 8px;
             }
-
+        
             .dropdown-content {
                 min-width: 100%;
                 width: 100%;
             }
-
+        
             .dropdown-content a {
                 font-size: 0.9em;
                 padding: 10px 12px;
             }
-
+        
             .dropdown-content a i {
                 font-size: 1em;
             }
-
+        
             .password-box {
                 width: 90%;
                 max-width: 280px;
                 padding: 20px;
             }
-
+        
             .password-box h2 {
                 font-size: 1.2em;
             }
-
+        
             .password-box input {
                 font-size: 0.9em;
                 padding: 8px;
             }
-
+        
             .password-box button {
                 font-size: 0.9em;
                 padding: 8px 16px;
             }
-
+        
             .back-button {
                 padding: 10px 20px;
                 font-size: 0.9em;
             }
-
+        
             .back-button i {
                 font-size: 1.1em;
             }
-
+        
             .session-timer {
                 font-size: 0.8em;
             }
-
-            /* Mobile tab bar adjustments */
+        
             .tab-bar {
                 padding: 8px 15px;
             }
-
+        
             .tab {
                 padding: 6px 12px;
                 font-size: 0.8em;
             }
-
+        
             .tab-close {
                 width: 18px;
                 height: 18px;
                 font-size: 1em;
             }
-
+        
             #content-area {
                 bottom: 50px;
             }
-
+        
             .back-to-menu {
                 padding: 10px 20px;
                 font-size: 0.9em;
             }
-
+        
             .back-to-menu i {
                 font-size: 1.1em;
             }
+        
+            .install-banner {
+                bottom: 60px; /* Ajustado para telas menores */
+                padding: 10px;
+                font-size: 0.8em;
+            }
+        
+            .install-banner button {
+                padding: 6px 12px;
+                font-size: 0.8em;
+            }
         }
-
+        
         @media (max-width: 480px) {
             h1 {
                 font-size: 1.5em;
                 padding: 6px 10px;
             }
-
+        
             .container {
                 padding: 15px;
             }
-
+        
             .button, .dropdown-button {
                 padding: 8px 15px;
                 font-size: 0.9em;
                 max-width: 280px;
             }
-
+        
             .dropdown-container {
                 max-width: 280px;
             }
-
+        
             .button i, .dropdown-button i {
                 font-size: 1em;
             }
-
+        
             .dropdown-content a {
                 font-size: 0.8em;
                 padding: 8px 10px;
             }
         }
-    </style>
+        </style>
 </head>
 <body>
     <div id="main-content" class="blurred">
@@ -796,8 +867,8 @@
                 </button>
                 <div class="dropdown-content">
                     <a href="https://www.mypardini.com.br/mypardini/faces/login.xhtml" target="_blank"><i class="fas fa-globe"></i> Hermes Pardini</a>
-                    <a href="https://alvaroapoio.com.br/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Alvaro</a>
-                    <a href="https://www.diagnosticosdobrasil.com.br/" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> DB Diagnóstico</a>
+                    <a href="https://aol.alvaroapoio.com.br/exames" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Alvaro</a>
+                    <a href="https://gde.diagnosticosdobrasil.com.br/GDE_Home/Main.aspx" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> DB Diagnóstico</a>
                     <a href="https://yatrosdiagnosis.com.br/resultV1/login" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Yatros</a>
                     <a href="https://www.exametoxicologico.com.br/" target="_blank"><i class="fas fa-globe"></i> Toxicologia Pardini</a>
                     <a href="https://ctox.io/#/login" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Toxicologia Symvia</a>
@@ -873,24 +944,33 @@
         // Tab management
         let tabs = [];
         let activeTabId = null;
-    
+        let draggedTab = null;
+        let dragOffsetX = 0;
+        let isDragging = false;
+        
+        // Detectar se o dispositivo suporta toque
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Detectar dispositivo móvel
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
         function formatTime(ms) {
             const minutes = Math.floor(ms / 60000);
             const seconds = Math.floor((ms % 60000) / 1000);
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
-    
+        
         function startSessionTimer() {
             const sessionStart = parseInt(localStorage.getItem('sessionStart'));
             const timerDisplay = document.getElementById('timer-display');
             const sessionTimer = document.getElementById('session-timer');
             const overlay = document.getElementById('password-overlay');
             const mainContent = document.getElementById('main-content');
-    
+        
             const updateTimer = () => {
                 const currentTime = Date.now();
                 const timeLeft = sessionStart + sessionDuration - currentTime;
-    
+        
                 if (timeLeft <= 0) {
                     localStorage.removeItem('sessionStart');
                     sessionTimer.style.display = 'none';
@@ -901,29 +981,26 @@
                     timerDisplay.textContent = formatTime(timeLeft);
                 }
             };
-    
+        
             sessionTimer.style.display = 'block';
             updateTimer();
             const timerInterval = setInterval(updateTimer, 1000);
         }
-    
+        
         function loadContent(event, url) {
             event.preventDefault();
             const mainContent = document.getElementById('main-content');
             const contentArea = document.getElementById('content-area');
             const passwordOverlay = document.getElementById('password-overlay');
-    
-            // Get page title from the link text
+        
             const linkText = event.target.textContent.trim();
             
-            // Check if tab already exists
             const existingTab = tabs.find(tab => tab.url === url);
             if (existingTab) {
                 switchToTab(existingTab.id);
                 return;
             }
-    
-            // Create new tab
+        
             const tabId = 'tab_' + Date.now();
             const newTab = {
                 id: tabId,
@@ -935,14 +1012,13 @@
             tabs.push(newTab);
             activeTabId = tabId;
             
-            // Update UI
             updateTabBar();
             showTabContent(newTab);
             
             mainContent.classList.add('hidden');
             passwordOverlay.classList.add('hidden');
         }
-    
+        
         function createTabElement(tab) {
             const tabElement = document.createElement('div');
             tabElement.className = 'tab';
@@ -964,19 +1040,24 @@
                     switchToTab(tab.id);
                 }
             };
-    
-            // Add drag and drop functionality
-            tabElement.draggable = true;
-            tabElement.addEventListener('dragstart', handleDragStart);
-            tabElement.addEventListener('dragend', handleDragEnd);
-            tabElement.addEventListener('dragover', handleDragOver);
-            tabElement.addEventListener('drop', handleDrop);
-            tabElement.addEventListener('dragenter', handleDragEnter);
-            tabElement.addEventListener('dragleave', handleDragLeave);
+        
+            if (isTouchDevice) {
+                tabElement.addEventListener('touchstart', handleTouchStart);
+                tabElement.addEventListener('touchmove', handleTouchMove);
+                tabElement.addEventListener('touchend', handleTouchEnd);
+            } else {
+                tabElement.draggable = true;
+                tabElement.addEventListener('dragstart', handleDragStart);
+                tabElement.addEventListener('dragend', handleDragEnd);
+                tabElement.addEventListener('dragover', handleDragOver);
+                tabElement.addEventListener('dragenter', handleDragEnter);
+                tabElement.addEventListener('dragleave', handleDragLeave);
+                tabElement.addEventListener('drop', handleDrop);
+            }
             
             return tabElement;
         }
-    
+        
         function updateTabBar() {
             const tabBar = document.getElementById('tab-bar');
             tabBar.innerHTML = '';
@@ -991,19 +1072,22 @@
             tabs.forEach(tab => {
                 const tabElement = createTabElement(tab);
                 tabBar.appendChild(tabElement);
+        
+                setTimeout(() => {
+                    tabElement.style.transition = 'transform 0.2s ease';
+                    tabElement.style.transform = 'translateX(0)';
+                }, 0);
             });
         }
-    
+        
         function showTabContent(tab) {
-            if (!tab) return; // CORREÇÃO: Evita erro se tab for undefined (proteção extra)
-    
+            if (!tab) return;
+        
             const contentArea = document.getElementById('content-area');
             const mainContent = document.getElementById('main-content');
             
-            // Hide main content
             mainContent.classList.add('hidden');
             
-            // Create iframe for this tab if it doesn't exist
             if (!tab.iframe) {
                 const iframe = document.createElement('iframe');
                 iframe.id = `iframe_${tab.id}`;
@@ -1013,23 +1097,19 @@
                 contentArea.appendChild(iframe);
             }
             
-            // Show content area
             contentArea.classList.remove('hidden');
             
-            // Show active iframe and hide others
             tabs.forEach(t => {
                 if (t.iframe) {
                     t.iframe.style.display = t.id === activeTabId ? 'block' : 'none';
                 }
             });
             
-            // Add back to menu button if not already present
             if (!document.querySelector('.back-to-menu')) {
                 const backButton = document.createElement('button');
                 backButton.className = 'back-to-menu';
                 backButton.innerHTML = '<i class="fas fa-home"></i> Voltar';
                 backButton.onclick = () => {
-                    // Hide content area and show main menu, but keep tabs open
                     const contentArea = document.getElementById('content-area');
                     const mainContent = document.getElementById('main-content');
                     const passwordOverlay = document.getElementById('password-overlay');
@@ -1037,11 +1117,9 @@
                     contentArea.classList.add('hidden');
                     mainContent.classList.remove('hidden');
                     
-                    // Deselect active tab when returning to menu
                     activeTabId = null;
                     updateTabBar();
                     
-                    // Remove back button
                     backButton.remove();
                     
                     if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
@@ -1052,7 +1130,7 @@
                 document.body.appendChild(backButton);
             }
         }
-    
+        
         function switchToTab(tabId) {
             activeTabId = tabId;
             const tab = tabs.find(t => t.id === tabId);
@@ -1062,30 +1140,41 @@
                 updateTabBar();
             }
         }
-    
+        
         function closeTab(tabId, event) {
             event.stopPropagation();
             
             const tabIndex = tabs.findIndex(t => t.id === tabId);
             if (tabIndex === -1) return;
             
-            // Remove iframe if exists to clean up
             const tabToClose = tabs[tabIndex];
             if (tabToClose.iframe) {
                 tabToClose.iframe.remove();
             }
+        
+            const tabElement = document.querySelector(`.tab[data-tab-id="${tabId}"]`);
+            if (tabElement) {
+                if (isTouchDevice) {
+                    tabElement.removeEventListener('touchstart', handleTouchStart);
+                    tabElement.removeEventListener('touchmove', handleTouchMove);
+                    tabElement.removeEventListener('touchend', handleTouchEnd);
+                } else {
+                    tabElement.removeEventListener('dragstart', handleDragStart);
+                    tabElement.removeEventListener('dragend', handleDragEnd);
+                    tabElement.removeEventListener('dragover', handleDragOver);
+                    tabElement.removeEventListener('dragenter', handleDragEnter);
+                    tabElement.removeEventListener('dragleave', handleDragLeave);
+                    tabElement.removeEventListener('drop', handleDrop);
+                }
+            }
             
-            // Remove tab
             tabs.splice(tabIndex, 1);
             
-            // If closing active tab, switch to another tab or menu
             if (tabId === activeTabId) {
                 if (tabs.length > 0) {
-                    // Switch to next tab, or previous if closing last tab
                     const newActiveIndex = tabIndex < tabs.length ? tabIndex : tabIndex - 1;
                     activeTabId = tabs[newActiveIndex].id;
                 } else {
-                    // No tabs left, show main content
                     activeTabId = null;
                     const mainContent = document.getElementById('main-content');
                     const contentArea = document.getElementById('content-area');
@@ -1095,7 +1184,6 @@
                     contentArea.classList.add('hidden');
                     mainContent.classList.remove('hidden');
                     
-                    // Remove back button when no tabs are left
                     const backButton = document.querySelector('.back-to-menu');
                     if (backButton) {
                         backButton.remove();
@@ -1110,71 +1198,175 @@
             
             updateTabBar();
             
-            // CORREÇÃO PRINCIPAL: Só mostra o conteúdo se houver aba ativa (evita chamar showTabContent no menu)
             if (activeTabId !== null && tabs.length > 0) {
                 showTabContent(tabs.find(t => t.id === activeTabId));
             }
         }
-    
-        // Drag and drop variables
-        let draggedTab = null;
-    
+        
         function handleDragStart(e) {
             draggedTab = this;
+            isDragging = true;
             this.classList.add('dragging');
+        
+            const rect = this.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/html', this.outerHTML);
+        
+            requestAnimationFrame(moveTab);
         }
-    
+        
+        function moveTab() {
+            if (!isDragging || !draggedTab) return;
+        
+            const tabBar = document.getElementById('tab-bar');
+            const tabBarRect = tabBar.getBoundingClientRect();
+            const scrollThreshold = 50;
+            const cursorX = dragOffsetX + draggedTab.getBoundingClientRect().left;
+        
+            draggedTab.style.position = 'relative';
+            draggedTab.style.transform = `translateX(${dragOffsetX}px)`;
+        
+            if (cursorX < tabBarRect.left + scrollThreshold) {
+                tabBar.scrollLeft -= 10;
+            } else if (cursorX > tabBarRect.right - scrollThreshold) {
+                tabBar.scrollLeft += 10;
+            }
+        
+            requestAnimationFrame(moveTab);
+        }
+        
         function handleDragEnd(e) {
-            this.classList.remove('dragging');
+            isDragging = false;
+            draggedTab.classList.remove('dragging');
+            draggedTab.style.position = '';
+            draggedTab.style.transform = '';
             draggedTab = null;
-            
-            // Remove drag-over class from all tabs
+        
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('drag-over');
             });
+        
+            updateTabBar();
         }
-    
+        
         function handleDragOver(e) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
         }
-    
-        function handleDrop(e) {
-            e.preventDefault();
-            
-            if (draggedTab && draggedTab !== this) {
-                const draggedTabId = draggedTab.dataset.tabId;
-                const targetTabId = this.dataset.tabId;
-                
-                // Find indices
-                const draggedIndex = tabs.findIndex(t => t.id === draggedTabId);
-                const targetIndex = tabs.findIndex(t => t.id === targetTabId);
-                
-                if (draggedIndex !== -1 && targetIndex !== -1) {
-                    // Reorder tabs array
-                    const [movedTab] = tabs.splice(draggedIndex, 1);
-                    tabs.splice(targetIndex, 0, movedTab);
-                    
-                    // Update tab bar
-                    updateTabBar();
-                }
-            }
-        }
-    
+        
         function handleDragEnter(e) {
             e.preventDefault();
             if (draggedTab && draggedTab !== this) {
                 this.classList.add('drag-over');
             }
         }
-    
+        
         function handleDragLeave(e) {
             e.preventDefault();
             this.classList.remove('drag-over');
         }
-    
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            if (draggedTab && draggedTab !== this) {
+                const draggedTabId = draggedTab.dataset.tabId;
+                const targetTabId = this.dataset.tabId;
+        
+                const draggedIndex = tabs.findIndex(t => t.id === draggedTabId);
+                const targetIndex = tabs.findIndex(t => t.id === targetTabId);
+        
+                if (draggedIndex !== -1 && targetIndex !== -1) {
+                    const [movedTab] = tabs.splice(draggedIndex, 1);
+                    const insertIndex = e.clientX < this.getBoundingClientRect().left + this.getBoundingClientRect().width / 2 ? targetIndex : targetIndex + 1;
+                    tabs.splice(insertIndex, 0, movedTab);
+        
+                    updateTabBar();
+                }
+            }
+        }
+        
+        function handleTouchStart(e) {
+            draggedTab = this;
+            isDragging = true;
+            this.classList.add('dragging');
+        
+            const touch = e.touches[0];
+            const rect = this.getBoundingClientRect();
+            dragOffsetX = touch.clientX - rect.left;
+        
+            requestAnimationFrame(moveTab);
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            dragOffsetX = touch.clientX - this.getBoundingClientRect().left;
+        
+            const tabBar = document.getElementById('tab-bar');
+            const tabBarRect = tabBar.getBoundingClientRect();
+            const scrollThreshold = 50;
+        
+            if (touch.clientX < tabBarRect.left + scrollThreshold) {
+                tabBar.scrollLeft -= 10;
+            } else if (touch.clientX > tabBarRect.right - scrollThreshold) {
+                tabBar.scrollLeft += 10;
+            }
+        
+            const tabs = Array.from(tabBar.querySelectorAll('.tab'));
+            const currentTab = tabs.find(tab => {
+                const rect = tab.getBoundingClientRect();
+                return touch.clientX >= rect.left && touch.clientX <= rect.right;
+            });
+        
+            if (currentTab && currentTab !== draggedTab) {
+                currentTab.classList.add('drag-over');
+                tabs.forEach(tab => {
+                    if (tab !== currentTab && tab !== draggedTab) {
+                        tab.classList.remove('drag-over');
+                    }
+                });
+            }
+        }
+        
+        function handleTouchEnd(e) {
+            isDragging = false;
+            if (draggedTab) {
+                draggedTab.classList.remove('dragging');
+                draggedTab.style.position = '';
+                draggedTab.style.transform = '';
+        
+                const tabBar = document.getElementById('tab-bar');
+                const tabs = Array.from(tabBar.querySelectorAll('.tab'));
+                const touch = e.changedTouches[0];
+                const targetTab = tabs.find(tab => {
+                    const rect = tab.getBoundingClientRect();
+                    return touch.clientX >= rect.left && touch.clientX <= rect.right;
+                });
+        
+                if (targetTab && targetTab !== draggedTab) {
+                    const draggedTabId = draggedTab.dataset.tabId;
+                    const targetTabId = targetTab.dataset.tabId;
+        
+                    const draggedIndex = tabs.findIndex(t => t.dataset.tabId === draggedTabId);
+                    const targetIndex = tabs.findIndex(t => t.dataset.tabId === targetTabId);
+        
+                    if (draggedIndex !== -1 && targetIndex !== -1) {
+                        const [movedTab] = tabs.splice(draggedIndex, 1);
+                        const insertIndex = touch.clientX < targetTab.getBoundingClientRect().left + targetTab.getBoundingClientRect().width / 2 ? targetIndex : targetIndex + 1;
+                        tabs.splice(insertIndex, 0, movedTab);
+        
+                        updateTabBar();
+                    }
+                }
+        
+                draggedTab = null;
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('drag-over');
+                });
+            }
+        }
+        
         function checkPassword() {
             const password = document.getElementById('password-input').value;
             const overlay = document.getElementById('password-overlay');
@@ -1186,7 +1378,7 @@
             const progressBar = document.getElementById('progress-bar');
             const submitButton = document.getElementById('submit-button');
             const passwordInput = document.getElementById('password-input');
-    
+        
             if (password === correctPassword) {
                 localStorage.setItem('sessionStart', Date.now());
                 overlay.classList.add('hidden');
@@ -1198,12 +1390,12 @@
                 errorMessage.style.display = 'block';
                 passwordInput.classList.add('shake');
                 submitButton.classList.add('error');
-    
+        
                 setTimeout(() => {
                     passwordInput.classList.remove('shake');
                     submitButton.classList.remove('error');
                 }, 600);
-    
+        
                 if (attemptCount >= maxInitialAttempts) {
                     const additionalAttempts = attemptCount - maxInitialAttempts;
                     const waitTime = 5 + 5 * Math.floor(additionalAttempts / 2);
@@ -1212,21 +1404,21 @@
                     progressBarContainer.style.display = 'block';
                     errorMessage.textContent = `Senha incorreta! Aguarde antes de tentar novamente.`;
                     waitTimeDisplay.textContent = waitTime;
-    
+        
                     let timeElapsed = 0;
                     const interval = 100;
                     const steps = waitTime * 1000 / interval;
                     const increment = 100 / steps;
                     let progress = 0;
-    
+        
                     const progressInterval = setInterval(() => {
                         timeElapsed += interval;
                         progress += increment;
                         progressBar.style.width = `${Math.min(progress, 100)}%`;
-    
+        
                         const timeLeft = Math.ceil((waitTime * 1000 - timeElapsed) / 1000);
                         waitTimeDisplay.textContent = timeLeft;
-    
+        
                         if (timeElapsed >= waitTime * 1000) {
                             clearInterval(progressInterval);
                             submitButton.disabled = false;
@@ -1240,12 +1432,53 @@
                 }
             }
         }
-    
-        // Move event listener setup to DOMContentLoaded to ensure DOM is ready
+        
+        function showInstallBanner() {
+            if (!isMobileDevice || localStorage.getItem('installPromptDismissed') || localStorage.getItem('appInstalled')) {
+                return;
+            }
+        
+            const banner = document.createElement('div');
+            banner.className = 'install-banner';
+            banner.innerHTML = `
+                <p>Instale nosso aplicativo para uma melhor experiência!</p>
+                <button id="install-app-button">Instalar</button>
+                <button class="close-install"><i class="fas fa-times"></i></button>
+            `;
+            document.body.appendChild(banner);
+        
+            setTimeout(() => {
+                banner.classList.add('show');
+            }, 1000); // Atraso para exibir após o carregamento
+        
+            document.getElementById('install-app-button').addEventListener('click', () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('User accepted the install prompt');
+                            localStorage.setItem('appInstalled', 'true');
+                        } else {
+                            console.log('User dismissed the install prompt');
+                        }
+                        deferredPrompt = null;
+                        banner.classList.remove('show');
+                        setTimeout(() => banner.remove(), 500);
+                    });
+                }
+            });
+        
+            banner.querySelector('.close-install').addEventListener('click', () => {
+                localStorage.setItem('installPromptDismissed', 'true');
+                banner.classList.remove('show');
+                setTimeout(() => banner.remove(), 500);
+            });
+        }
+        
         document.addEventListener('DOMContentLoaded', () => {
             const passwordInput = document.getElementById('password-input');
             const submitButton = document.getElementById('submit-button');
-    
+        
             if (passwordInput && submitButton) {
                 passwordInput.addEventListener('keypress', (event) => {
                     if (event.key === 'Enter' && !submitButton.disabled) {
@@ -1255,21 +1488,33 @@
             } else {
                 console.error('Password input or submit button not found');
             }
+        
+            // Exibir o banner de instalação em dispositivos móveis
+            if (isMobileDevice) {
+                showInstallBanner();
+            }
         });
-    
+        
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('Install prompt is ready to be triggered');
+        });
+        
         window.onload = function() {
             const sessionStart = localStorage.getItem('sessionStart');
             const currentTime = Date.now();
             const overlay = document.getElementById('password-overlay');
             const mainContent = document.getElementById('main-content');
-    
+        
             if (sessionStart && (currentTime - sessionStart < sessionDuration)) {
                 overlay.classList.add('hidden');
                 mainContent.classList.remove('blurred');
                 startSessionTimer();
             }
-    
-            // Register service worker for PWA functionality
+        
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/service-worker.js', { scope: '/' }).then((registration) => {
                     console.log('Service Worker registered with scope:', registration.scope);
@@ -1278,29 +1523,6 @@
                 });
             }
         };
-        let deferredPrompt;
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        // Show a custom install button or message to the user
-        console.log('Install prompt is ready to be triggered');
-        });
-
-        // Example: Trigger the prompt when a user clicks a button
-        document.getElementById('install-button')?.addEventListener('click', () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('User accepted the install prompt');
-            } else {
-                console.log('User dismissed the install prompt');
-            }
-            deferredPrompt = null;
-            });
-        }
-        });
-    </script>
+        </script>
 </body>
 </html>
