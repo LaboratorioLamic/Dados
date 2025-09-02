@@ -469,7 +469,44 @@
             scroll-behavior: smooth;
         }
         
-        .tab-bar.show {
+        .tab-bar.minimized {
+            transform: translateY(100%) !important;
+        }
+        
+        .minimize-button {
+            position: fixed;
+            bottom: 0;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50% 50% 0 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            z-index: 31;
+            transition: all 0.3s ease;
+            box-shadow: 0 -2px 10px var(--shadow-color);
+        }
+        
+        .minimize-button:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+        
+        .minimize-button.minimized {
+            transform: translateY(0);
+        }
+        
+        .minimize-button.minimized:hover {
+            transform: translateY(-2px);
+        }
+        
+        .tab-bar.show:not(.minimized) {
             transform: translateY(0);
         }
         
@@ -555,6 +592,11 @@
             left: 0;
             right: 0;
             z-index: 10;
+            transition: bottom 0.3s ease;
+        }
+        
+        #content-area.maximized {
+            bottom: 0;
         }
         
         #content-area iframe {
@@ -631,6 +673,11 @@
             animation: slideUp 0.5s ease-out;
             font-size: 0.9em;
             text-align: center;
+            transition: bottom 0.3s ease;
+        }
+        
+        .install-banner.minimized {
+            bottom: 10px;
         }
         
         .install-banner.show {
@@ -787,6 +834,10 @@
             #content-area {
                 bottom: 50px;
             }
+            
+            #content-area.maximized {
+                bottom: 0;
+            }
         
             .back-to-menu {
                 padding: 10px 20px;
@@ -797,15 +848,30 @@
                 font-size: 1.1em;
             }
         
-            .install-banner {
+                        .install-banner {
                 bottom: 60px; /* Ajustado para telas menores */
                 padding: 10px;
                 font-size: 0.8em;
             }
-        
+            
+            .install-banner.minimized {
+                bottom: 10px;
+            }
+            
             .install-banner button {
                 padding: 6px 12px;
                 font-size: 0.8em;
+            }
+            
+            .minimize-button {
+                width: 35px;
+                height: 35px;
+                right: 15px;
+                font-size: 1em;
+            }
+            
+            .tab-bar.minimized {
+                transform: translateY(100%) !important;
             }
         }
         
@@ -836,6 +902,17 @@
             .dropdown-content a {
                 font-size: 0.8em;
                 padding: 8px 10px;
+            }
+            
+            .minimize-button {
+                width: 30px;
+                height: 30px;
+                right: 10px;
+                font-size: 0.9em;
+            }
+            
+            .tab-bar.minimized {
+                transform: translateY(100%) !important;
             }
         }
         </style>
@@ -935,6 +1012,9 @@
     </div>
     <div id="content-area" class="hidden"></div>
     <div id="tab-bar" class="tab-bar"></div>
+    <button id="minimize-button" class="minimize-button" title="Minimizar barra de abas">
+        <i class="fas fa-chevron-up"></i>
+    </button>
     <script>
         let attemptCount = 0;
         const maxInitialAttempts = 5;
@@ -947,6 +1027,7 @@
         let draggedTab = null;
         let dragOffsetX = 0;
         let isDragging = false;
+        let isTabBarMinimized = false;
         
         // Detectar se o dispositivo suporta toque
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -1060,6 +1141,7 @@
         
         function updateTabBar() {
             const tabBar = document.getElementById('tab-bar');
+            const wasMinimized = tabBar.classList.contains('minimized');
             tabBar.innerHTML = '';
             
             if (tabs.length === 0) {
@@ -1068,6 +1150,11 @@
             }
             
             tabBar.classList.add('show');
+            
+            // Restaurar estado de minimização se necessário
+            if (wasMinimized) {
+                tabBar.classList.add('minimized');
+            }
             
             tabs.forEach(tab => {
                 const tabElement = createTabElement(tab);
@@ -1447,6 +1534,39 @@
             }
         }
         
+        function toggleTabBarMinimization() {
+            const tabBar = document.getElementById('tab-bar');
+            const minimizeButton = document.getElementById('minimize-button');
+            const minimizeIcon = minimizeButton.querySelector('i');
+            const contentArea = document.getElementById('content-area');
+            const installBanner = document.querySelector('.install-banner');
+            
+            isTabBarMinimized = !isTabBarMinimized;
+            
+            if (isTabBarMinimized) {
+                tabBar.classList.add('minimized');
+                minimizeButton.classList.add('minimized');
+                minimizeIcon.className = 'fas fa-chevron-down';
+                minimizeButton.title = 'Expandir barra de abas';
+                contentArea.classList.add('maximized');
+                if (installBanner) {
+                    installBanner.classList.add('minimized');
+                }
+            } else {
+                tabBar.classList.remove('minimized');
+                minimizeButton.classList.remove('minimized');
+                minimizeIcon.className = 'fas fa-chevron-up';
+                minimizeButton.title = 'Minimizar barra de abas';
+                contentArea.classList.remove('maximized');
+                if (installBanner) {
+                    installBanner.classList.remove('minimized');
+                }
+            }
+            
+            // Salvar estado no localStorage
+            localStorage.setItem('tabBarMinized', isTabBarMinimized);
+        }
+        
         function showInstallBanner() {
             if (!isMobileDevice || localStorage.getItem('installPromptDismissed') || localStorage.getItem('appInstalled')) {
                 return;
@@ -1492,6 +1612,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const passwordInput = document.getElementById('password-input');
             const submitButton = document.getElementById('submit-button');
+            const minimizeButton = document.getElementById('minimize-button');
         
             if (passwordInput && submitButton) {
                 passwordInput.addEventListener('keypress', (event) => {
@@ -1501,6 +1622,30 @@
                 });
             } else {
                 console.error('Password input or submit button not found');
+            }
+            
+            // Adicionar event listener para o botão de minimizar
+            if (minimizeButton) {
+                minimizeButton.addEventListener('click', toggleTabBarMinimization);
+                
+                // Restaurar estado salvo da minimização
+                const savedState = localStorage.getItem('tabBarMinized');
+                if (savedState === 'true') {
+                    isTabBarMinimized = true;
+                    const tabBar = document.getElementById('tab-bar');
+                    const minimizeIcon = minimizeButton.querySelector('i');
+                    const contentArea = document.getElementById('content-area');
+                    const installBanner = document.querySelector('.install-banner');
+                    
+                    tabBar.classList.add('minimized');
+                    minimizeButton.classList.add('minimized');
+                    minimizeIcon.className = 'fas fa-chevron-down';
+                    minimizeButton.title = 'Expandir barra de abas';
+                    contentArea.classList.add('maximized');
+                    if (installBanner) {
+                        installBanner.classList.add('minimized');
+                    }
+                }
             }
         
             // Exibir o banner de instalação em dispositivos móveis
