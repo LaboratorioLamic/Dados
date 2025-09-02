@@ -1290,82 +1290,96 @@
             draggedTab = this;
             isDragging = true;
             this.classList.add('dragging');
-        
+
             const touch = e.touches[0];
             const rect = this.getBoundingClientRect();
             dragOffsetX = touch.clientX - rect.left;
-        
+
+            // Store initial position for relative movement
+            this.initialX = rect.left;
+            this.style.position = 'relative';
+            this.style.zIndex = '100';
+
             requestAnimationFrame(moveTab);
         }
-        
+
         function handleTouchMove(e) {
             e.preventDefault();
+            if (!isDragging || !draggedTab) return;
+
             const touch = e.touches[0];
-            dragOffsetX = touch.clientX - this.getBoundingClientRect().left;
-        
             const tabBar = document.getElementById('tab-bar');
             const tabBarRect = tabBar.getBoundingClientRect();
             const scrollThreshold = 50;
-        
+
+            // Calculate new position
+            const newX = touch.clientX - dragOffsetX;
+            draggedTab.style.transform = `translateX(${newX - draggedTab.initialX}px)`;
+
+            // Auto-scroll tab bar
             if (touch.clientX < tabBarRect.left + scrollThreshold) {
                 tabBar.scrollLeft -= 10;
             } else if (touch.clientX > tabBarRect.right - scrollThreshold) {
                 tabBar.scrollLeft += 10;
             }
-        
+
+            // Find target tab for drop
             const tabs = Array.from(tabBar.querySelectorAll('.tab'));
-            const currentTab = tabs.find(tab => {
+            const targetTab = tabs.find(tab => {
+                if (tab === draggedTab) return false;
                 const rect = tab.getBoundingClientRect();
                 return touch.clientX >= rect.left && touch.clientX <= rect.right;
             });
-        
-            if (currentTab && currentTab !== draggedTab) {
-                currentTab.classList.add('drag-over');
-                tabs.forEach(tab => {
-                    if (tab !== currentTab && tab !== draggedTab) {
-                        tab.classList.remove('drag-over');
-                    }
-                });
+
+            // Update drag-over class
+            tabs.forEach(tab => tab.classList.remove('drag-over'));
+            if (targetTab) {
+                targetTab.classList.add('drag-over');
             }
         }
-        
+
         function handleTouchEnd(e) {
+            if (!isDragging || !draggedTab) return;
+
             isDragging = false;
-            if (draggedTab) {
-                draggedTab.classList.remove('dragging');
-                draggedTab.style.position = '';
-                draggedTab.style.transform = '';
-        
-                const tabBar = document.getElementById('tab-bar');
-                const tabs = Array.from(tabBar.querySelectorAll('.tab'));
-                const touch = e.changedTouches[0];
-                const targetTab = tabs.find(tab => {
-                    const rect = tab.getBoundingClientRect();
-                    return touch.clientX >= rect.left && touch.clientX <= rect.right;
-                });
-        
-                if (targetTab && targetTab !== draggedTab) {
-                    const draggedTabId = draggedTab.dataset.tabId;
-                    const targetTabId = targetTab.dataset.tabId;
-        
-                    const draggedIndex = tabs.findIndex(t => t.dataset.tabId === draggedTabId);
-                    const targetIndex = tabs.findIndex(t => t.dataset.tabId === targetTabId);
-        
-                    if (draggedIndex !== -1 && targetIndex !== -1) {
-                        const [movedTab] = tabs.splice(draggedIndex, 1);
-                        const insertIndex = touch.clientX < targetTab.getBoundingClientRect().left + targetTab.getBoundingClientRect().width / 2 ? targetIndex : targetIndex + 1;
-                        tabs.splice(insertIndex, 0, movedTab);
-        
-                        updateTabBar();
-                    }
+            draggedTab.classList.remove('dragging');
+            draggedTab.style.position = '';
+            draggedTab.style.transform = '';
+            draggedTab.style.zIndex = '';
+
+            const tabBar = document.getElementById('tab-bar');
+            const tabsElements = Array.from(tabBar.querySelectorAll('.tab'));
+            const touch = e.changedTouches[0];
+
+            // Find target tab for drop
+            const targetTab = tabsElements.find(tab => {
+                if (tab === draggedTab) return false;
+                const rect = tab.getBoundingClientRect();
+                return touch.clientX >= rect.left && touch.clientX <= rect.right;
+            });
+
+            if (targetTab) {
+                const draggedTabId = draggedTab.dataset.tabId;
+                const targetTabId = targetTab.dataset.tabId;
+
+                const draggedIndex = tabs.findIndex(t => t.id === draggedTabId);
+                const targetIndex = tabs.findIndex(t => t.id === targetTabId);
+
+                if (draggedIndex !== -1 && targetIndex !== -1) {
+                    const [movedTab] = tabs.splice(draggedIndex, 1);
+                    // Insert before or after target based on touch position
+                    const targetRect = targetTab.getBoundingClientRect();
+                    const insertIndex = touch.clientX < targetRect.left + targetRect.width / 2 ? targetIndex : targetIndex + 1;
+                    tabs.splice(insertIndex, 0, movedTab);
+
+                    updateTabBar();
                 }
-        
-                draggedTab = null;
-                document.querySelectorAll('.tab').forEach(tab => {
-                    tab.classList.remove('drag-over');
-                });
             }
-        }
+
+            // Clean up
+            tabsElements.forEach(tab => tab.classList.remove('drag-over'));
+            draggedTab = null;
+        };
         
         function checkPassword() {
             const password = document.getElementById('password-input').value;
