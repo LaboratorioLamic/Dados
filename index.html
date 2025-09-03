@@ -923,17 +923,21 @@
             <h1>Dados - Laboratório LAMIC</h1>
         </header>
         <div class="container">
-            <a href="https://laboratoriolamic.github.io/Pops/" class="button" onclick="loadContent(event, this.href)">
-                <i class="fas fa-rocket"></i> Pop's
-            </a>
+            <div class="dropdown-container">
+                <button class="dropdown-button">
+                    <i class="fas fa-file-alt"></i> Documentos
+                </button>
+                <div class="dropdown-content">
+                    <a href="https://laboratoriolamic.github.io/Pops/" onclick="loadContent(event, this.href)"><i class="fas fa-rocket"></i> Pop's</a>
+                    <a href="https://laboratoriolamic.github.io/Protocolos/" onclick="loadContent(event, this.href)"><i class="fas fa-file-alt"></i> Protocolos</a>
+                    <a href="https://laboratoriolamic.github.io/Termos/" onclick="loadContent(event, this.href)"><i class="fas fa-file-contract"></i> Termos</a>
+                </div>
+            </div>
             <a href="https://laboratoriolamic.github.io/Planilhas/" class="button" onclick="loadContent(event, this.href)">
                 <i class="fas fa-table"></i> Planilhas
             </a>
-            <a href="https://laboratoriolamic.github.io/Protocolos/" class="button" onclick="loadContent(event, this.href)">
-                <i class="fas fa-file-alt"></i> Protocolos
-            </a>
-            <a href="https://laboratoriolamic.github.io/Termos/" class="button" onclick="loadContent(event, this.href)">
-                <i class="fas fa-file-contract"></i> Termos
+            <a href="https://laboratoriolamic.github.io/valor/" class="button" onclick="loadContent(event, this.href)">
+                <i class="fas fa-dollar"></i> Valores
             </a>
             <a href="https://drive.google.com/drive/folders/1jyd1B7ylx1yvQkpmLqUgWCWD922fFFXT" class="button" target="_blank">
                 <i class="fas fa-folder-open"></i> Drive
