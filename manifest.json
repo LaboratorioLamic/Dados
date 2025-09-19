@@ -18,5 +18,7 @@
     }
   ],
   "description": "Aplicativo web para acesso aos dados do Laboratório LAMIC",
-  "scope": "/"
+  "scope": "/",
+  "password": "Lamic@759"
+
 }
