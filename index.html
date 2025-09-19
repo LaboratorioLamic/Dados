@@ -1035,8 +1035,8 @@
     <script>
         let attemptCount = 0;
         const maxInitialAttempts = 5;
-        const correctPassword = 'Lamic759@';
         const sessionDuration = 240 * 60 * 1000; // 120 minutes in milliseconds
+        const infodata = 'https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/info.json'; 
         
         // Tab management
         let tabs = [];
@@ -1485,72 +1485,100 @@
             draggedTab = null;
         };
         
-        function checkPassword() {
-            const password = document.getElementById('password-input').value;
-            const overlay = document.getElementById('password-overlay');
-            const mainContent = document.getElementById('main-content');
-            const errorMessage = document.getElementById('error-message');
-            const waitMessage = document.getElementById('wait-message');
-            const waitTimeDisplay = document.getElementById('wait-time');
-            const progressBarContainer = document.getElementById('progress-bar-container');
-            const progressBar = document.getElementById('progress-bar');
-            const submitButton = document.getElementById('submit-button');
-            const passwordInput = document.getElementById('password-input');
-        
-            if (password === correctPassword) {
-                localStorage.setItem('sessionStart', Date.now());
-                overlay.classList.add('hidden');
-                mainContent.classList.remove('blurred');
-                attemptCount = 0;
-                startSessionTimer();
-            } else {
-                attemptCount++;
-                errorMessage.style.display = 'block';
-                passwordInput.classList.add('shake');
-                submitButton.classList.add('error');
-        
-                setTimeout(() => {
-                    passwordInput.classList.remove('shake');
-                    submitButton.classList.remove('error');
-                }, 600);
-        
-                if (attemptCount >= maxInitialAttempts) {
-                    const additionalAttempts = attemptCount - maxInitialAttempts;
-                    const waitTime = 5 + 5 * Math.floor(additionalAttempts / 2);
-                    submitButton.disabled = true;
-                    waitMessage.style.display = 'block';
-                    progressBarContainer.style.display = 'block';
-                    errorMessage.textContent = `Senha incorreta! Aguarde antes de tentar novamente.`;
-                    waitTimeDisplay.textContent = waitTime;
-        
-                    let timeElapsed = 0;
-                    const interval = 100;
-                    const steps = waitTime * 1000 / interval;
-                    const increment = 100 / steps;
-                    let progress = 0;
-        
-                    const progressInterval = setInterval(() => {
-                        timeElapsed += interval;
-                        progress += increment;
-                        progressBar.style.width = `${Math.min(progress, 100)}%`;
-        
-                        const timeLeft = Math.ceil((waitTime * 1000 - timeElapsed) / 1000);
-                        waitTimeDisplay.textContent = timeLeft;
-        
-                        if (timeElapsed >= waitTime * 1000) {
-                            clearInterval(progressInterval);
-                            submitButton.disabled = false;
-                            waitMessage.style.display = 'none';
-                            progressBarContainer.style.display = 'none';
-                            progressBar.style.width = '0';
-                            errorMessage.style.display = 'none';
-                            passwordInput.value = '';
-                        }
-                    }, interval);
-                }
-            }
+        async function checkPassword() {
+    const password = document.getElementById('password-input').value;
+    const overlay = document.getElementById('password-overlay');
+    const mainContent = document.getElementById('main-content');
+    const errorMessage = document.getElementById('error-message');
+    const waitMessage = document.getElementById('wait-message');
+    const waitTimeDisplay = document.getElementById('wait-time');
+    const progressBarContainer = document.getElementById('progress-bar-container');
+    const progressBar = document.getElementById('progress-bar');
+    const submitButton = document.getElementById('submit-button');
+    const passwordInput = document.getElementById('password-input');
+
+    try {
+        // Fetch o JSON externo
+        const response = await fetch(infodata);
+        if (!response.ok) {
+            throw new Error('Falha ao carregar o JSON de senha.');
         }
-        
+        const data = await response.json();
+        const correctPassword = data.password; // Acesse o campo 'password' do JSON
+
+        if (!correctPassword) {
+            throw new Error('Campo "password" não encontrado no JSON.');
+        }
+
+        if (password === correctPassword) {
+            localStorage.setItem('sessionStart', Date.now());
+            overlay.classList.add('hidden');
+            mainContent.classList.remove('blurred');
+            attemptCount = 0;
+            startSessionTimer();
+        } else {
+            handlePasswordError();
+        }
+    } catch (error) {
+        console.error('Erro ao consultar senha:', error);
+        errorMessage.textContent = 'Erro ao carregar senha: ' + error.message;
+        errorMessage.style.display = 'block';
+        passwordInput.classList.add('shake');
+        submitButton.classList.add('error');
+
+        setTimeout(() => {
+            passwordInput.classList.remove('shake');
+            submitButton.classList.remove('error');
+        }, 600);
+    }
+    function handlePasswordError() {
+        attemptCount++;
+        errorMessage.textContent = 'Senha incorreta!';
+        errorMessage.style.display = 'block';
+        passwordInput.classList.add('shake');
+        submitButton.classList.add('error');
+
+        setTimeout(() => {
+            passwordInput.classList.remove('shake');
+            submitButton.classList.remove('error');
+        }, 600);
+
+        if (attemptCount >= maxInitialAttempts) {
+            const additionalAttempts = attemptCount - maxInitialAttempts;
+            const waitTime = 5 + 5 * Math.floor(additionalAttempts / 2);
+            submitButton.disabled = true;
+            waitMessage.style.display = 'block';
+            progressBarContainer.style.display = 'block';
+            waitTimeDisplay.textContent = waitTime;
+
+            let timeElapsed = 0;
+            const interval = 100;
+            const steps = waitTime * 1000 / interval;
+            const increment = 100 / steps;
+            let progress = 0;
+
+            const progressInterval = setInterval(() => {
+                timeElapsed += interval;
+                progress += increment;
+                progressBar.style.width = `${Math.min(progress, 100)}%`;
+
+                const timeLeft = Math.ceil((waitTime * 1000 - timeElapsed) / 1000);
+                waitTimeDisplay.textContent = timeLeft;
+
+                if (timeElapsed >= waitTime * 1000) {
+                    clearInterval(progressInterval);
+                    submitButton.disabled = false;
+                    waitMessage.style.display = 'none';
+                    progressBarContainer.style.display = 'none';
+                    progressBar.style.width = '0';
+                    errorMessage.style.display = 'none';
+                    passwordInput.value = '';
+                }
+            }, interval);
+        }
+    }
+}
+
         function toggleTabBarMinimization() {
             const tabBar = document.getElementById('tab-bar');
             const minimizeButton = document.getElementById('minimize-button');
@@ -1699,6 +1727,26 @@
                 });
             }
         };
+        document.addEventListener('contextmenu', function(event) {
+    event.preventDefault();
+});
+function ctrlShiftKey(e, keyCode) {
+    return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
+}
+
+document.onkeydown = function(event) {
+    if (
+        event.keyCode === 123 ||  // F12
+        ctrlShiftKey(event, 'I') ||  // Ctrl + Shift + I
+        ctrlShiftKey(event, 'J') ||  // Ctrl + Shift + J
+        ctrlShiftKey(event, 'C') ||  // Ctrl + Shift + C
+        (event.ctrlKey && event.keyCode === 'U'.charCodeAt(0)) ||  // Ctrl + U
+        (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0))  // Ctrl + S
+    ) {
+        event.preventDefault();
+        return false;
+    }
+};
         </script>
 </body>
 </html>
