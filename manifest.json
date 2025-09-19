@@ -1,4 +1,5 @@
 {
+  
   "name": "Dados - Laboratório LAMIC",
   "short_name": "LAMIC Dados",
   "start_url": "/",
@@ -18,5 +19,6 @@
     }
   ],
   "description": "Aplicativo web para acesso aos dados do Laboratório LAMIC",
-  "scope": "/"
+  "scope": "/",
+  "password": "Lamic759@"
 }
