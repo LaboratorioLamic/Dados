@@ -939,9 +939,17 @@
             <a href="https://laboratoriolamic.github.io/Planilhas/" class="button" onclick="loadContent(event, this.href)">
                 <i class="fas fa-table"></i> Planilhas
             </a>
-            <a href="https://laboratoriolamic.github.io/valor/" class="button" onclick="loadContent(event, this.href)">
-                <i class="fas fa-dollar"></i> Valores
-            </a>
+            <div class="dropdown-container">
+                <button class="dropdown-button">
+                    <i class="fas fas fa-dollar"></i> Valores
+                </button>
+                <div class="dropdown-content">
+                    <a href="https://laboratoriolamic.github.io/valor/" onclick="loadContent(event, this.href)"><i class="fas fa-dollar"></i> Orçamentos</a>
+                    <a href="https://laboratoriolamic.github.io/TabeIasIamic/" onclick="loadContent(event, this.href)"><i class="fas fa-file-invoice-dollar"></i> Tabelas</a>
+                    <a href="https://laboratoriolamic.github.io/L2L/" onclick="loadContent(event, this.href)"><i class="fas fa-money-check-dollar"></i> Lamic to Lab</a>
+
+                </div>
+            </div>
             <a href="https://iss.speedgov.com.br/juazeirodonorte/login" class="button" target="_blank">
                 <i class="fas fa-pager"></i> Emitir N/F
             </a>
