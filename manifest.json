@@ -8,17 +8,16 @@
   "theme_color": "#001f3f",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/assents/icon.png",
+      "src": "https://i.imgur.com/CMQ2kVH.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/assents/icon.png",
+      "src": "https://i.imgur.com/CMQ2kVH.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ],
   "description": "Aplicativo web para acesso aos dados do Laboratório LAMIC",
-  "scope": "/",
-  "password": "Lamic759@"
+  "scope": "/"
 }

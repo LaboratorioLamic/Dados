@@ -4,7 +4,7 @@ const urlsToCache = [
   '/index.html',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap',
-  'https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/assents/icon.png',
+  'https://i.imgur.com/CMQ2kVH.png',
   'https://raw.githubusercontent.com/LaboratorioLamic/Dados/main/manifest.json'
 ];
 
