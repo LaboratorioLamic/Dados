@@ -1518,7 +1518,7 @@
                 }
             } catch (error) {
                 console.error('Erro ao consultar senha:', error);
-                errorMessage.textContent = 'Erro ao carregar senha: ' + error.message;
+                errorMessage.textContent = 'Erro de conexão, Tente novamente em alguns minutos - Type: ' + error.message;
                 errorMessage.style.display = 'block';
                 passwordInput.classList.add('shake');
                 submitButton.classList.add('error');
