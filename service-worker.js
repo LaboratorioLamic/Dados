@@ -1,17 +1,11 @@
-// Aumentar a versão do cache forçará o navegador a instalar o novo Service Worker.
-const CACHE_NAME = 'lamic-dados-v2';
-
-// URLs a serem cacheadas durante a instalação.
-// Incluem os novos ícones locais.
+const CACHE_NAME = 'lamic-dados-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  // URLs de terceiros que você quer cachear no início:
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap'
+  'https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap',
+  'https://i.imgur.com/0CfbOl5.png',
+  'https://raw.githubusercontent.com/LaboratorioLamic/Dados/refs/heads/main/manifest.json'
 ];
 
 self.addEventListener('install', event => {
@@ -25,7 +19,7 @@ self.addEventListener('install', event => {
         console.error('Cache addAll failed:', error);
       })
   );
-  // Força o Service Worker a ativar imediatamente
+  // Force the Service Worker to activate immediately
   self.skipWaiting();
 });
 
@@ -42,45 +36,37 @@ self.addEventListener('activate', event => {
         })
       );
     })
-    // Garante que o novo Service Worker controle a página imediatamente
-    .then(() => self.clients.claim()) 
+    .then(() => {
+      console.log('Service Worker activated');
+      return self.clients.claim();
+    })
   );
 });
 
 self.addEventListener('fetch', event => {
-  const requestUrl = new URL(event.request.url);
-
-  // Regra 1: Ignorar requests que não são http(s)
-  if (!requestUrl.protocol.startsWith('http')) return;
-    
-  // Regra 2: URLs de terceiros que NÃO estão na lista de cache devem ir direto para a rede (Network-only).
-  // Isso evita cachear dinamicamente recursos externos desconhecidos.
-  const isExternalAndNotCached = requestUrl.host !== self.location.host && !urlsToCache.includes(requestUrl.href);
-
-  if (isExternalAndNotCached) {
-    event.respondWith(fetch(event.request));
+  // Skip caching for external URLs that are not in urlsToCache
+  const isExternalUrl = !urlsToCache.some(url => event.request.url.includes(url)) && event.request.url.startsWith('http');
+  if (isExternalUrl && !event.request.url.includes('LaboratorioLamic')) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          return new Response('Offline: Unable to fetch resource.', { status: 503 });
+        })
+    );
     return;
   }
 
-  // Regra 3: Cache-First para URLs internas e recursos externos pre-cacheados (urlsToCache).
-  // Tenta o cache primeiro, depois a rede, e armazena na rede se for bem-sucedido.
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Retorna do cache se encontrado
         if (response) {
           return response;
         }
-        
-        // Se não estiver no cache, tenta buscar na rede
         return fetch(event.request)
           .then(networkResponse => {
-            // Verifica se a resposta é válida para cache
             if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
               return networkResponse;
             }
-            
-            // Clona a resposta e armazena no cache para uso futuro
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME)
               .then(cache => {
@@ -89,7 +75,6 @@ self.addEventListener('fetch', event => {
             return networkResponse;
           })
           .catch(() => {
-            // Fallback offline: Retorna a página offline HTML.
             return new Response(
               '<html><body><h1>Offline</h1><p>Você está offline. Por favor, conecte-se à internet para acessar este conteúdo.</p></body></html>',
               {
@@ -100,4 +85,4 @@ self.addEventListener('fetch', event => {
           });
       })
   );
-});
+}); 

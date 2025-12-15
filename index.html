@@ -7,7 +7,7 @@
     <title>Dados - Laboratório LAMIC</title>
     <link rel="icon" type="image/png" href="https://i.imgur.com/0CfbOl5.png">
     <link rel="apple-touch-icon" href="https://i.imgur.com/0CfbOl5.png">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="https://raw.githubusercontent.com/LaboratorioLamic/Dados/refs/heads/main/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -1743,7 +1743,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
             }
        
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/service-worker.js', { scope: '/' }).then((registration) => {
+                navigator.serviceWorker.register('https://raw.githubusercontent.com/LaboratorioLamic/Dados/refs/heads/main/service-worker.js', { scope: '/' }).then((registration) => {
                     console.log('Service Worker registered with scope:', registration.scope);
                 }).catch((error) => {
                     console.error('Service Worker registration failed:', error);
