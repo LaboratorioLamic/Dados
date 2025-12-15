@@ -1,4 +1,5 @@
 {
+  
   "name": "Dados - Laboratório LAMIC",
   "short_name": "LAMIC Dados",
   "start_url": "/",
@@ -7,12 +8,12 @@
   "theme_color": "#001f3f",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://i.imgur.com/y8EzMg8.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://i.imgur.com/0CfbOl5.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

@@ -7,8 +7,8 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  'https://i.imgur.com/y8EzMg8.png',
+  'https://i.imgur.com/0CfbOl5.png',
   // URLs de terceiros que você quer cachear no início:
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap'
