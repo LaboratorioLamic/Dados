@@ -1410,18 +1410,20 @@
         }
        
         function handleTouchStart(e) {
-            draggedTab = this;
-            isDragging = true;
-            this.classList.add('dragging');
-            const touch = e.touches[0];
-            const rect = this.getBoundingClientRect();
-            dragOffsetX = touch.clientX - rect.left;
-            // Store initial position for relative movement
-            this.initialX = rect.left;
-            this.style.position = 'relative';
-            this.style.zIndex = '100';
-            requestAnimationFrame(moveTab);
-        }
+    if (e.target.closest('.tab-close')) return; // Ignorar toque se for no botão de fechar
+    
+    draggedTab = this;
+    isDragging = true;
+    this.classList.add('dragging');
+    const touch = e.targetTouches[0]; // Usar targetTouches para o elemento que começou o toque
+    const rect = this.getBoundingClientRect();
+    dragOffsetX = touch.clientX - rect.left;
+    // Store initial position for relative movement
+    this.initialX = rect.left;
+    this.style.position = 'relative';
+    this.style.zIndex = '100';
+    requestAnimationFrame(moveTab);
+}
         function handleTouchMove(e) {
             e.preventDefault();
             if (!isDragging || !draggedTab) return;
@@ -1607,48 +1609,74 @@
             localStorage.setItem('tabBarMinized', isTabBarMinimized);
         }
        
-        function showInstallBanner() {
-            if (!isMobileDevice || localStorage.getItem('installPromptDismissed') || localStorage.getItem('appInstalled')) {
-                return;
-            }
-       
-            const banner = document.createElement('div');
-            banner.className = 'install-banner';
-            banner.innerHTML = `
-                <p>Instale nosso aplicativo para uma melhor experiência!</p>
-                <button id="install-app-button">Instalar</button>
-                <button class="close-install"><i class="fas fa-times"></i></button>
-            `;
-            document.body.appendChild(banner);
-       
-            setTimeout(() => {
-                banner.classList.add('show');
-            }, 1000); // Atraso para exibir após o carregamento
-       
-            document.getElementById('install-app-button').addEventListener('click', () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            console.log('User accepted the install prompt');
-                            localStorage.setItem('appInstalled', 'true');
-                        } else {
-                            console.log('User dismissed the install prompt');
-                        }
-                        deferredPrompt = null;
-                        banner.classList.remove('show');
-                        setTimeout(() => banner.remove(), 500);
-                    });
+        function showInstallBanner(promptEvent) {
+    if (!isMobileDevice || localStorage.getItem('installPromptDismissed') || localStorage.getItem('appInstalled')) {
+        return;
+    }
+
+    // Remover qualquer banner antigo antes de criar um novo
+    let existingBanner = document.querySelector('.install-banner');
+    if (existingBanner) existingBanner.remove();
+    
+    const tabBar = document.getElementById('tab-bar');
+    const banner = document.createElement('div');
+    banner.className = 'install-banner';
+    
+    // Adicionar a classe minimized se a tab-bar estiver minimizada
+    if (tabBar.classList.contains('minimized')) {
+        banner.classList.add('minimized');
+    }
+    
+    banner.innerHTML = `
+        <p>Instale nosso aplicativo para uma melhor experiência!</p>
+        <button id="install-app-button">Instalar</button>
+        <button class="close-install"><i class="fas fa-times"></i></button>
+    `;
+    document.body.appendChild(banner);
+
+    setTimeout(() => {
+        banner.classList.add('show');
+    }, 100);
+
+    document.getElementById('install-app-button').addEventListener('click', () => {
+        if (promptEvent) {
+            promptEvent.prompt();
+            promptEvent.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    localStorage.setItem('appInstalled', 'true');
+                } else {
+                    console.log('User dismissed the install prompt');
                 }
-            });
-       
-            banner.querySelector('.close-install').addEventListener('click', () => {
-                localStorage.setItem('installPromptDismissed', 'true');
+                deferredPrompt = null;
                 banner.classList.remove('show');
                 setTimeout(() => banner.remove(), 500);
             });
         }
-       
+    });
+
+    banner.querySelector('.close-install').addEventListener('click', () => {
+        localStorage.setItem('installPromptDismissed', 'true');
+        banner.classList.remove('show');
+        setTimeout(() => banner.remove(), 500);
+    });
+}
+
+// Listener principal para o evento de instalação
+window.addEventListener('beforeinstallprompt', (e) => {
+    // 1. Prevenir o prompt padrão do navegador
+    e.preventDefault();
+    
+    // 2. Armazenar o evento
+    deferredPrompt = e;
+    console.log('Install prompt is ready to be triggered');
+    
+    // 3. Chamar a função de exibição do banner
+    // A função showInstallBanner() agora usa o prompt armazenado
+    // e checa as flags de localStorage e dispositivo móvel.
+    showInstallBanner(deferredPrompt);
+});
+
         document.addEventListener('DOMContentLoaded', () => {
             const passwordInput = document.getElementById('password-input');
             const submitButton = document.getElementById('submit-button');
