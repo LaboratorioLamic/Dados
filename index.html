@@ -385,6 +385,33 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        .loading-bar-container {
+            width: 100%;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 15px;
+            display: none;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .loading-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-color), #00d4ff, var(--accent-color));
+            background-size: 200% 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.3s ease-out;
+            box-shadow: 0 0 10px rgba(0, 31, 63, 0.3);
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
        
         .error-message {
             color: var(--error-color);
@@ -1064,6 +1091,9 @@
             <h2>Digite a Senha</h2>
             <input type="password" id="password-input" placeholder="Senha">
             <button id="submit-button" onclick="checkPassword()">Acessar</button>
+            <div id="loading-bar-container" class="loading-bar-container">
+                <div id="loading-bar" class="loading-bar"></div>
+            </div>
             <p id="error-message" class="error-message">Senha incorreta!</p>
             <p id="wait-message" class="wait-message">Aguarde <span id="wait-time"></span> segundos...</p>
             <div id="progress-bar-container" class="progress-bar-container">
@@ -1523,11 +1553,47 @@
             const progressBar = document.getElementById('progress-bar');
             const submitButton = document.getElementById('submit-button');
             const passwordInput = document.getElementById('password-input');
+            const loadingBarContainer = document.getElementById('loading-bar-container');
+            const loadingBar = document.getElementById('loading-bar');
             
             // Mostrar animação de carregamento imediatamente
             submitButton.classList.add('loading');
             submitButton.disabled = true;
             errorMessage.style.display = 'none';
+            
+            // Mostrar barra de carregamento
+            loadingBarContainer.style.display = 'block';
+            loadingBar.style.width = '0%';
+            
+            // Implementar carregamento que vai até 95% em exatamente 10 segundos
+            let progress = 0;
+            const maxProgress = 95;
+            const duration = 15000; // 10 segundos para chegar em 95%
+            const startTime = Date.now();
+            let progressInterval;
+            
+            const updateProgress = () => {
+                const elapsed = Date.now() - startTime;
+                
+                // Calcular progresso baseado no tempo decorrido (0-95% em 10 segundos)
+                const targetProgress = Math.min((elapsed / duration) * maxProgress, maxProgress);
+                
+                // Adicionar variação aleatória para não ser perfeitamente linear
+                // A variação diminui conforme se aproxima do target
+                const variation = (Math.random() - 0.5) * 2; // -1 a +1
+                const variationFactor = Math.max(0, 1 - (elapsed / duration)); // diminui com o tempo
+                const adjustedProgress = targetProgress + (variation * variationFactor * 2);
+                
+                // Garantir que não ultrapasse 95% e não seja negativo
+                progress = Math.max(0, Math.min(adjustedProgress, maxProgress));
+                
+                loadingBar.style.width = progress + '%';
+                
+                // Continua atualizando até receber resposta do servidor
+                progressInterval = requestAnimationFrame(updateProgress);
+            };
+            
+            updateProgress();
             
             try {
                 // Fetch do JSONBin (usando a API v3 com X-MASTER-KEY para acesso privado)
@@ -1546,20 +1612,38 @@
                     throw new Error('Campo "password" não encontrado no JSON.');
                 }
                 if (password === correctPassword) {
-                    localStorage.setItem('sessionStart', Date.now());
-                    overlay.classList.add('hidden');
-                    mainContent.classList.remove('blurred');
-                    attemptCount = 0;
-                    submitButton.classList.remove('loading');
-                    submitButton.disabled = false;
-                    startSessionTimer();
+                    // Parar a animação da barra
+                    if (progressInterval) {
+                        cancelAnimationFrame(progressInterval);
+                    }
+                    // Completar a barra para 100% e manter visível por um momento
+                    loadingBar.style.width = '100%';
+                    setTimeout(() => {
+                        localStorage.setItem('sessionStart', Date.now());
+                        overlay.classList.add('hidden');
+                        mainContent.classList.remove('blurred');
+                        attemptCount = 0;
+                        submitButton.classList.remove('loading');
+                        submitButton.disabled = false;
+                        loadingBarContainer.style.display = 'none';
+                        startSessionTimer();
+                    }, 800); // Aumentado para 800ms para mostrar a barra em 100% por mais tempo
                 } else {
+                    // Parar a animação da barra
+                    if (progressInterval) {
+                        cancelAnimationFrame(progressInterval);
+                    }
                     handlePasswordError();
                 }
             } catch (error) {
                 console.error('Erro ao consultar senha:', error);
+                // Parar a animação da barra
+                if (progressInterval) {
+                    cancelAnimationFrame(progressInterval);
+                }
                 submitButton.classList.remove('loading');
                 submitButton.disabled = false;
+                loadingBarContainer.style.display = 'none';
                 errorMessage.textContent = 'Erro de conexão, Tente novamente em alguns minutos - Type: ' + error.message;
                 errorMessage.style.display = 'block';
                 passwordInput.classList.add('shake');
@@ -1570,9 +1654,14 @@
                 }, 600);
             }
             function handlePasswordError() {
+                // Parar a animação da barra
+                if (progressInterval) {
+                    cancelAnimationFrame(progressInterval);
+                }
                 attemptCount++;
                 submitButton.classList.remove('loading');
                 submitButton.disabled = false;
+                loadingBarContainer.style.display = 'none';
                 errorMessage.textContent = 'Senha incorreta!';
                 errorMessage.style.display = 'block';
                 passwordInput.classList.add('shake');
