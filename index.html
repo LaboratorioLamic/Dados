@@ -281,7 +281,7 @@
             opacity: 1;
         }
        
-        .password-overlay {
+        .auth-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -294,7 +294,7 @@
             z-index: 1000;
         }
        
-        .password-box {
+        .access-box {
             background-color: var(--secondary-color);
             border-radius: 10px;
             padding: 30px;
@@ -304,13 +304,13 @@
             animation: fadeIn 0.5s ease-out;
         }
        
-        .password-box h2 {
+        .access-box h2 {
             font-size: 1.5em;
             margin-bottom: 20px;
             color: var(--primary-color);
         }
        
-        .password-box input {
+        .access-box input {
             width: 93%;
             padding: 10px;
             margin-bottom: 15px;
@@ -321,7 +321,7 @@
             display: block;
         }
        
-        .password-box input.shake {
+        .access-box input.shake {
             animation: shake 0.5s ease-in-out;
         }
        
@@ -331,7 +331,7 @@
             40%, 80% { transform: translateX(10px); }
         }
        
-        .password-box button {
+        .access-box button {
             background-color: var(--primary-color);
             color: var(--secondary-color);
             padding: 10px 20px;
@@ -343,11 +343,11 @@
             transition: background-color 0.3s ease;
         }
        
-        .password-box button:hover {
+        .access-box button:hover {
             background-color: var(--accent-color);
         }
        
-        .password-box button.error {
+        .access-box button.error {
             animation: colorChange 0.6s ease-in-out;
         }
        
@@ -357,17 +357,17 @@
             100% { background-color: var(--primary-color); }
         }
        
-        .password-box button:disabled {
+        .access-box button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
         }
         
-        .password-box button.loading {
+        .access-box button.loading {
             position: relative;
             color: transparent;
         }
         
-        .password-box button.loading::after {
+        .access-box button.loading::after {
             content: '';
             position: absolute;
             width: 16px;
@@ -834,22 +834,22 @@
                 font-size: 1em;
             }
        
-            .password-box {
+            .access-box {
                 width: 90%;
                 max-width: 280px;
                 padding: 20px;
             }
        
-            .password-box h2 {
+            .access-box h2 {
                 font-size: 1.2em;
             }
        
-            .password-box input {
+            .access-box input {
                 font-size: 0.9em;
                 padding: 8px;
             }
        
-            .password-box button {
+            .access-box button {
                 font-size: 0.9em;
                 padding: 8px 16px;
             }
@@ -1093,11 +1093,11 @@
         </div>
         <div id="session-timer" class="session-timer">Sessão expira em: <span id="timer-display">00:00</span></div>
     </div>
-    <div id="password-overlay" class="password-overlay">
-        <div class="password-box">
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="access-box">
             <h2>Digite a Senha</h2>
-            <input type="password" id="password-input" placeholder="Senha">
-            <button id="submit-button" onclick="checkPassword()">Acessar</button>
+            <input type="password" id="access-key-input" placeholder="Senha">
+            <button id="submit-button" onclick="validateAccess()">Acessar</button>
             <div id="loading-bar-container" class="loading-bar-container">
                 <div id="loading-bar" class="loading-bar"></div>
             </div>
@@ -1142,7 +1142,7 @@
             const sessionStart = parseInt(localStorage.getItem('sessionStart'));
             const timerDisplay = document.getElementById('timer-display');
             const sessionTimer = document.getElementById('session-timer');
-            const overlay = document.getElementById('password-overlay');
+            const overlay = document.getElementById('auth-overlay');
             const mainContent = document.getElementById('main-content');
        
             const updateTimer = () => {
@@ -1169,7 +1169,7 @@
             event.preventDefault();
             const mainContent = document.getElementById('main-content');
             const contentArea = document.getElementById('content-area');
-            const passwordOverlay = document.getElementById('password-overlay');
+            const authOverlay = document.getElementById('auth-overlay');
        
             const linkText = event.target.textContent.trim();
            
@@ -1296,7 +1296,7 @@
                 backButton.onclick = () => {
                     const contentArea = document.getElementById('content-area');
                     const mainContent = document.getElementById('main-content');
-                    const passwordOverlay = document.getElementById('password-overlay');
+                    const authOverlay = document.getElementById('auth-overlay');
                    
                     contentArea.classList.add('hidden');
                     mainContent.classList.remove('hidden');
@@ -1362,7 +1362,7 @@
                     activeTabId = null;
                     const mainContent = document.getElementById('main-content');
                     const contentArea = document.getElementById('content-area');
-                    const passwordOverlay = document.getElementById('password-overlay');
+                    const authOverlay = document.getElementById('auth-overlay');
                    
                     contentArea.innerHTML = '';
                     contentArea.classList.add('hidden');
@@ -1549,9 +1549,9 @@
             draggedTab = null;
         };
        
-        async function checkPassword() {
-            const password = document.getElementById('password-input').value;
-            const overlay = document.getElementById('password-overlay');
+        function validateAccess() {
+            const userKey = document.getElementById('access-key-input').value;
+            const overlay = document.getElementById('auth-overlay');
             const mainContent = document.getElementById('main-content');
             const errorMessage = document.getElementById('error-message');
             const waitMessage = document.getElementById('wait-message');
@@ -1559,11 +1559,14 @@
             const progressBarContainer = document.getElementById('progress-bar-container');
             const progressBar = document.getElementById('progress-bar');
             const submitButton = document.getElementById('submit-button');
-            const passwordInput = document.getElementById('password-input');
+            const keyInput = document.getElementById('access-key-input');
             const loadingBarContainer = document.getElementById('loading-bar-container');
             const loadingBar = document.getElementById('loading-bar');
             
-            // Mostrar animação de carregamento imediatamente
+            // Chave de acesso hardcoded diretamente no HTML
+            const validAccessKey = 'Lamic759@';
+            
+            // Mostrar animação de carregamento
             submitButton.classList.add('loading');
             submitButton.disabled = true;
             errorMessage.style.display = 'none';
@@ -1572,140 +1575,81 @@
             loadingBarContainer.style.display = 'block';
             loadingBar.style.width = '0%';
             
-            // Implementar carregamento que vai até 95% em exatamente 10 segundos
+            // Simular verificação rápida
             let progress = 0;
-            const maxProgress = 95;
-            const duration = 15000; // 10 segundos para chegar em 95%
+            const duration = 1000; // 1 segundo para verificação
             const startTime = Date.now();
-            let progressInterval;
             
             const updateProgress = () => {
                 const elapsed = Date.now() - startTime;
-                
-                // Calcular progresso baseado no tempo decorrido (0-95% em 10 segundos)
-                const targetProgress = Math.min((elapsed / duration) * maxProgress, maxProgress);
-                
-                // Adicionar variação aleatória para não ser perfeitamente linear
-                // A variação diminui conforme se aproxima do target
-                const variation = (Math.random() - 0.5) * 2; // -1 a +1
-                const variationFactor = Math.max(0, 1 - (elapsed / duration)); // diminui com o tempo
-                const adjustedProgress = targetProgress + (variation * variationFactor * 2);
-                
-                // Garantir que não ultrapasse 95% e não seja negativo
-                progress = Math.max(0, Math.min(adjustedProgress, maxProgress));
-                
+                progress = Math.min((elapsed / duration) * 100, 100);
                 loadingBar.style.width = progress + '%';
                 
-                // Continua atualizando até receber resposta do servidor
-                progressInterval = requestAnimationFrame(updateProgress);
+                if (progress < 100) {
+                    requestAnimationFrame(updateProgress);
+                } else {
+                    // Verificação concluída
+                    if (userKey === validAccessKey) {
+                        setTimeout(() => {
+                            localStorage.setItem('sessionStart', Date.now());
+                            overlay.classList.add('hidden');
+                            mainContent.classList.remove('blurred');
+                            attemptCount = 0;
+                            submitButton.classList.remove('loading');
+                            submitButton.disabled = false;
+                            loadingBarContainer.style.display = 'none';
+                            startSessionTimer();
+                        }, 300);
+                    } else {
+                        handleAccessError();
+                    }
+                }
             };
             
             updateProgress();
-            
-            try {
-                // Fetch do JSONBin (usando a API v3 com X-MASTER-KEY para acesso privado)
-                const response = await fetch('https://api.jsonbin.io/v3/b/68fb63e743b1c97be97d1555/latest', {
-                    method: 'GET',
-                    headers: {
-                        'X-MASTER-KEY': '$2a$10$2elKW8TT6o.K3V176efqwu7kOfD1PnS3D/F0s4Tczc3MYmaU.N1bi'
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error('Falha ao carregar o JSON de senha.');
-                }
-                const data = await response.json();
-                const correctPassword = data.record.password; // Acessa o campo 'password' dentro de 'record' (estrutura do JSONBin v3)
-                if (!correctPassword) {
-                    throw new Error('Campo "password" não encontrado no JSON.');
-                }
-                if (password === correctPassword) {
-                    // Parar a animação da barra
-                    if (progressInterval) {
-                        cancelAnimationFrame(progressInterval);
-                    }
-                    // Completar a barra para 100% e manter visível por um momento
-                    loadingBar.style.width = '100%';
-                    setTimeout(() => {
-                        localStorage.setItem('sessionStart', Date.now());
-                        overlay.classList.add('hidden');
-                        mainContent.classList.remove('blurred');
-                        attemptCount = 0;
-                        submitButton.classList.remove('loading');
+        }
+        
+        function handleAccessError() {
+            attemptCount++;
+            submitButton.classList.remove('loading');
+            submitButton.disabled = false;
+            loadingBarContainer.style.display = 'none';
+            errorMessage.textContent = 'Senha incorreta!';
+            errorMessage.style.display = 'block';
+            keyInput.classList.add('shake');
+            submitButton.classList.add('error');
+            setTimeout(() => {
+                keyInput.classList.remove('shake');
+                submitButton.classList.remove('error');
+            }, 600);
+            if (attemptCount >= maxInitialAttempts) {
+                const additionalAttempts = attemptCount - maxInitialAttempts;
+                const waitTime = 5 + 5 * Math.floor(additionalAttempts / 2);
+                submitButton.disabled = true;
+                waitMessage.style.display = 'block';
+                progressBarContainer.style.display = 'block';
+                waitTimeDisplay.textContent = waitTime;
+                let timeElapsed = 0;
+                const interval = 100;
+                const steps = waitTime * 1000 / interval;
+                const increment = 100 / steps;
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    timeElapsed += interval;
+                    progress += increment;
+                    progressBar.style.width = `${Math.min(progress, 100)}%`;
+                    const timeLeft = Math.ceil((waitTime * 1000 - timeElapsed) / 1000);
+                    waitTimeDisplay.textContent = timeLeft;
+                    if (timeElapsed >= waitTime * 1000) {
+                        clearInterval(progressInterval);
                         submitButton.disabled = false;
-                        loadingBarContainer.style.display = 'none';
-                        startSessionTimer();
-                    }, 800); // Aumentado para 800ms para mostrar a barra em 100% por mais tempo
-                } else {
-                    // Parar a animação da barra
-                    if (progressInterval) {
-                        cancelAnimationFrame(progressInterval);
+                        waitMessage.style.display = 'none';
+                        progressBarContainer.style.display = 'none';
+                        progressBar.style.width = '0';
+                        errorMessage.style.display = 'none';
+                        keyInput.value = '';
                     }
-                    handlePasswordError();
-                }
-            } catch (error) {
-                console.error('Erro ao consultar senha:', error);
-                // Parar a animação da barra
-                if (progressInterval) {
-                    cancelAnimationFrame(progressInterval);
-                }
-                submitButton.classList.remove('loading');
-                submitButton.disabled = false;
-                loadingBarContainer.style.display = 'none';
-                errorMessage.textContent = 'Erro de conexão, Tente novamente em alguns minutos - Type: ' + error.message;
-                errorMessage.style.display = 'block';
-                passwordInput.classList.add('shake');
-                submitButton.classList.add('error');
-                setTimeout(() => {
-                    passwordInput.classList.remove('shake');
-                    submitButton.classList.remove('error');
-                }, 600);
-            }
-            function handlePasswordError() {
-                // Parar a animação da barra
-                if (progressInterval) {
-                    cancelAnimationFrame(progressInterval);
-                }
-                attemptCount++;
-                submitButton.classList.remove('loading');
-                submitButton.disabled = false;
-                loadingBarContainer.style.display = 'none';
-                errorMessage.textContent = 'Senha incorreta!';
-                errorMessage.style.display = 'block';
-                passwordInput.classList.add('shake');
-                submitButton.classList.add('error');
-                setTimeout(() => {
-                    passwordInput.classList.remove('shake');
-                    submitButton.classList.remove('error');
-                }, 600);
-                if (attemptCount >= maxInitialAttempts) {
-                    const additionalAttempts = attemptCount - maxInitialAttempts;
-                    const waitTime = 5 + 5 * Math.floor(additionalAttempts / 2);
-                    submitButton.disabled = true;
-                    waitMessage.style.display = 'block';
-                    progressBarContainer.style.display = 'block';
-                    waitTimeDisplay.textContent = waitTime;
-                    let timeElapsed = 0;
-                    const interval = 100;
-                    const steps = waitTime * 1000 / interval;
-                    const increment = 100 / steps;
-                    let progress = 0;
-                    const progressInterval = setInterval(() => {
-                        timeElapsed += interval;
-                        progress += increment;
-                        progressBar.style.width = `${Math.min(progress, 100)}%`;
-                        const timeLeft = Math.ceil((waitTime * 1000 - timeElapsed) / 1000);
-                        waitTimeDisplay.textContent = timeLeft;
-                        if (timeElapsed >= waitTime * 1000) {
-                            clearInterval(progressInterval);
-                            submitButton.disabled = false;
-                            waitMessage.style.display = 'none';
-                            progressBarContainer.style.display = 'none';
-                            progressBar.style.width = '0';
-                            errorMessage.style.display = 'none';
-                            passwordInput.value = '';
-                        }
-                    }, interval);
-                }
+                }, interval);
             }
         }
         function toggleTabBarMinimization() {
@@ -1810,14 +1754,14 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
         document.addEventListener('DOMContentLoaded', () => {
-            const passwordInput = document.getElementById('password-input');
+            const keyInput = document.getElementById('access-key-input');
             const submitButton = document.getElementById('submit-button');
             const minimizeButton = document.getElementById('minimize-button');
        
-            if (passwordInput && submitButton) {
-                passwordInput.addEventListener('keypress', (event) => {
+            if (keyInput && submitButton) {
+                keyInput.addEventListener('keypress', (event) => {
                     if (event.key === 'Enter') {
-                        checkPassword();
+                        validateAccess();
                     }
                 });
             } else {
@@ -1865,7 +1809,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
         window.onload = function() {
             const sessionStart = localStorage.getItem('sessionStart');
             const currentTime = Date.now();
-            const overlay = document.getElementById('password-overlay');
+            const overlay = document.getElementById('auth-overlay');
             const mainContent = document.getElementById('main-content');
        
             if (sessionStart && (currentTime - sessionStart < sessionDuration)) {
