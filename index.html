@@ -1555,66 +1555,34 @@
             const overlay = document.getElementById('auth-overlay');
             const mainContent = document.getElementById('main-content');
             const errorMessage = document.getElementById('error-message');
-            const waitMessage = document.getElementById('wait-message');
-            const waitTimeDisplay = document.getElementById('wait-time');
-            const progressBarContainer = document.getElementById('progress-bar-container');
-            const progressBar = document.getElementById('progress-bar');
             const submitButton = document.getElementById('submit-button');
             const keyInput = document.getElementById('access-key-input');
-            const loadingBarContainer = document.getElementById('loading-bar-container');
-            const loadingBar = document.getElementById('loading-bar');
             
             // Chave de acesso hardcoded diretamente no HTML
             const validAccessKey = 'Lamic759@';
             
-            // Mostrar animação de carregamento
-            submitButton.classList.add('loading');
-            submitButton.disabled = true;
-            errorMessage.style.display = 'none';
-            
-            // Mostrar barra de carregamento
-            loadingBarContainer.style.display = 'block';
-            loadingBar.style.width = '0%';
-            
-            // Simular verificação rápida
-            let progress = 0;
-            const duration = 1000; // 1 segundo para verificação
-            const startTime = Date.now();
-            
-            const updateProgress = () => {
-                const elapsed = Date.now() - startTime;
-                progress = Math.min((elapsed / duration) * 100, 100);
-                loadingBar.style.width = progress + '%';
-                
-                if (progress < 100) {
-                    requestAnimationFrame(updateProgress);
-                } else {
-                    // Verificação concluída
-                    if (userKey === validAccessKey) {
-                        setTimeout(() => {
-                            localStorage.setItem('sessionStart', Date.now());
-                            overlay.classList.add('hidden');
-                            mainContent.classList.remove('blurred');
-                            attemptCount = 0;
-                            submitButton.classList.remove('loading');
-                            submitButton.disabled = false;
-                            loadingBarContainer.style.display = 'none';
-                            startSessionTimer();
-                        }, 300);
-                    } else {
-                        handleAccessError();
-                    }
-                }
-            };
-            
-            updateProgress();
+            // Verificação direta sem animação
+            if (userKey === validAccessKey) {
+                localStorage.setItem('sessionStart', Date.now());
+                overlay.classList.add('hidden');
+                mainContent.classList.remove('blurred');
+                attemptCount = 0;
+                startSessionTimer();
+            } else {
+                handleAccessError();
+            }
         }
         
         function handleAccessError() {
+            const errorMessage = document.getElementById('error-message');
+            const submitButton = document.getElementById('submit-button');
+            const keyInput = document.getElementById('access-key-input');
+            const waitMessage = document.getElementById('wait-message');
+            const waitTimeDisplay = document.getElementById('wait-time');
+            const progressBarContainer = document.getElementById('progress-bar-container');
+            const progressBar = document.getElementById('progress-bar');
+            
             attemptCount++;
-            submitButton.classList.remove('loading');
-            submitButton.disabled = false;
-            loadingBarContainer.style.display = 'none';
             errorMessage.textContent = 'Senha incorreta!';
             errorMessage.style.display = 'block';
             keyInput.classList.add('shake');
