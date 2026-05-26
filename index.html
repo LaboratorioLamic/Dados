@@ -3,1122 +3,1163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#001f3f">
-    <title>Dados - Laboratório LAMIC</title>
+    <meta name="theme-color" content="#0b1527">
+    <title>LAMIC — Sistema de Gestão</title>
     <link rel="icon" type="image/png" href="https://i.imgur.com/0CfbOl5.png">
     <link rel="apple-touch-icon" href="https://i.imgur.com/0CfbOl5.png">
     <link rel="manifest" href="https://raw.githubusercontent.com/LaboratorioLamic/Dados/refs/heads/main/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
-            --primary-color: #001f3f;
-            --secondary-color: #ffffff;
-            --accent-color: #007bff;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-            --error-color: #ff0000;
+            --bg:            #eef2f7;
+            --hdr-bg:        #0b1527;
+            --hdr-border:    #162038;
+            --card:          #ffffff;
+            --card-border:   #e4eaf2;
+            --card-head:     #f7f9fc;
+            --accent:        #2563eb;
+            --accent-hover:  #1d4ed8;
+            --accent-light:  #eff6ff;
+            --text:          #0f172a;
+            --text-2:        #475569;
+            --text-3:        #94a3b8;
+            --red:           #ef4444;
+            --sh-xs: 0 1px 2px rgba(0,0,0,.06), 0 1px 4px rgba(0,0,0,.05);
+            --sh-sm: 0 2px 8px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.05);
+            --sh-md: 0 4px 20px rgba(0,0,0,.09), 0 2px 6px rgba(0,0,0,.05);
+            --sh-lg: 0 12px 48px rgba(0,0,0,.15);
+            --r-sm: 6px;
+            --r-md: 10px;
+            --r-lg: 14px;
+            --ease: .18s ease;
         }
-       
+
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Roboto Slab', serif;
-            background-color: var(--secondary-color);
-            color: var(--primary-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-            position: relative;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
-       
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #f0f8ff, #ffffff);
-            opacity: 0.5;
-            animation: breathe 10s ease-in-out infinite;
-            z-index: -1;
-        }
-       
-        @keyframes breathe {
-            0% { opacity: 0.5; }
-            50% { opacity: 0.8; }
-            100% { opacity: 0.5; }
-        }
-       
-        .blurred {
-            filter: blur(5px);
-            pointer-events: none;
-        }
-       
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-        }
-       
-        h1 {
-            font-size: 3em;
-            color: var(--primary-color);
-            font-family: 'Roboto Slab', serif;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            position: relative;
-            display: inline-block;
-            padding: 10px 20px;
-            animation: slideIn 1s ease-out;
-        }
-       
-        h1::before {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--primary-color);
-            transform-origin: left;
-            animation: scaleIn 1.5s ease-out forwards;
-        }
-       
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-       
-        @keyframes scaleIn {
-            from { transform: scaleX(0); }
-            to { transform: scaleX(1); }
-        }
-       
-        .container {
-            background-color: var(--secondary-color);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px var(--shadow-color);
-            padding: 40px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            max-width: 1200px;
-            animation: fadeIn 1.5s ease-out;
-        }
-       
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-       
-        .button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            text-decoration: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.2em;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px var(--shadow-color);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            border: none;
-        }
-       
-        .button:hover {
-            background-color: var(--accent-color);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px var(--shadow-color);
-        }
-       
-        .button i {
-            margin-right: 10px;
-            font-size: 1.5em;
-        }
-       
-        .dropdown-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-        }
-       
-        .dropdown-button {
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.2em;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px var(--shadow-color);
-            position: relative;
-            overflow: hidden;
-        }
-       
-        .dropdown-button:hover {
-            background-color: var(--accent-color);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px var(--shadow-color);
-        }
-       
-        .dropdown-button i {
-            margin-right: 10px;
-            font-size: 1.5em;
-        }
-       
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background-color: var(--secondary-color);
-            box-shadow: 0 5px 15px var(--shadow-color);
-            border-radius: 10px;
-            z-index: 50;
-            min-width: 200px;
-            max-height: 180px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            transform-origin: top;
-            transform: scaleY(0);
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            opacity: 0;
-        }
-       
-        .dropdown-container:hover .dropdown-content {
-            display: block;
-            transform: scaleY(1);
-            opacity: 1;
-        }
-       
-        .dropdown-content a {
-            color: var(--primary-color);
-            padding: 12px 16px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            font-size: 1.1em;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-       
-        .dropdown-content a i {
-            margin-right: 10px;
-            font-size: 1.2em;
-            opacity: 0.8;
-        }
-       
-        .dropdown-content a:hover {
-            background-color: #f0f8ff;
-            color: var(--accent-color);
-            transform: translateX(10px);
-        }
-       
-        .dropdown-content a::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 4px;
-            background-color: var(--accent-color);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-        }
-       
-        .dropdown-content a:hover::before {
-            transform: scaleY(1);
-        }
-       
-        .dropdown-content::-webkit-scrollbar {
-            width: 8px;
-        }
-       
-        .dropdown-content::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-       
-        .dropdown-content::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 4px;
-        }
-       
-        .dropdown-content::-webkit-scrollbar-thumb:hover {
-            background: var(--accent-color);
-        }
-       
-        .button::after, .dropdown-button::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 80%);
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-       
-        .button:hover::after, .dropdown-button:hover::after {
-            opacity: 1;
-        }
-       
+
+        /* ════════════════════════════════
+           AUTH OVERLAY
+        ════════════════════════════════ */
         .auth-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            inset: 0;
+            background: rgba(8, 15, 30, 0.88);
+            backdrop-filter: blur(10px) saturate(180%);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 9999;
         }
-       
+
         .access-box {
-            background-color: var(--secondary-color);
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 5px 20px var(--shadow-color);
+            background: var(--card);
+            border-radius: var(--r-lg);
+            padding: 44px 40px 36px;
+            box-shadow: var(--sh-lg);
+            width: 100%;
+            max-width: 370px;
             text-align: center;
-            width: 300px;
-            animation: fadeIn 0.5s ease-out;
+            border: 1px solid var(--card-border);
+            animation: fadeUp .35s ease-out;
         }
-       
-        .access-box h2 {
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            color: var(--primary-color);
+
+        .auth-brand-mark {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(145deg, #2563eb 0%, #1e3a8a 100%);
+            border-radius: var(--r-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 6px 20px rgba(37,99,235,.35);
+            font-size: 1.4em;
+            color: #fff;
         }
-       
-        .access-box input {
-            width: 93%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid var(--primary-color);
-            border-radius: 5px;
-            font-size: 1em;
-            font-family: 'Roboto Slab', serif;
+
+        .auth-title {
+            font-size: 1.25em;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -.3px;
+        }
+
+        .auth-sub {
+            font-size: .78em;
+            color: var(--text-3);
+            margin: 4px 0 28px;
+            letter-spacing: .02em;
+        }
+
+        .field-label {
             display: block;
+            font-size: .72em;
+            font-weight: 600;
+            color: var(--text-2);
+            text-align: left;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
         }
-       
-        .access-box input.shake {
-            animation: shake 0.5s ease-in-out;
+
+        .access-box input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--card-border);
+            border-radius: var(--r-sm);
+            font-size: .92em;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            outline: none;
+            transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
+            display: block;
+            margin-bottom: 14px;
         }
-       
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-10px); }
-            40%, 80% { transform: translateX(10px); }
+
+        .access-box input:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.12);
         }
-       
-        .access-box button {
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            padding: 10px 20px;
+
+        .access-box input.shake { animation: shake .45s ease-in-out; }
+
+        #submit-button {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #fff;
             border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            font-weight: bold;
+            border-radius: var(--r-sm);
+            font-size: .92em;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            letter-spacing: .02em;
+            transition: all var(--ease);
+            margin-top: 2px;
         }
-       
-        .access-box button:hover {
-            background-color: var(--accent-color);
+
+        #submit-button:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 18px rgba(37,99,235,.4);
         }
-       
-        .access-box button.error {
-            animation: colorChange 0.6s ease-in-out;
-        }
-       
-        @keyframes colorChange {
-            0% { background-color: var(--primary-color); }
-            50% { background-color: var(--error-color); }
-            100% { background-color: var(--primary-color); }
-        }
-       
-        .access-box button:disabled {
-            background-color: #cccccc;
+
+        #submit-button:disabled {
+            background: var(--card-border);
+            color: var(--text-3);
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
-        
-        .access-box button.loading {
-            position: relative;
-            color: transparent;
-        }
-        
-        .access-box button.loading::after {
+
+        #submit-button.error { animation: errFlash .6s ease-in-out; }
+
+        #submit-button.loading { position: relative; color: transparent; }
+        #submit-button.loading::after {
             content: '';
             position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 15px; height: 15px;
+            top: 50%; left: 50%;
+            margin: -7.5px 0 0 -7.5px;
+            border: 2px solid rgba(255,255,255,.3);
             border-radius: 50%;
-            border-top-color: rgba(255, 255, 255, 1);
-            animation: spin 0.8s linear infinite;
+            border-top-color: #fff;
+            animation: spin .75s linear infinite;
         }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
+
         .loading-bar-container {
-            width: 100%;
-            height: 4px;
-            background-color: rgba(255, 255, 255, 0.1);
+            width: 100%; height: 3px;
+            background: var(--card-border);
             border-radius: 2px;
             overflow: hidden;
-            margin-top: 15px;
+            margin-top: 12px;
             display: none;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
         }
-        
+
         .loading-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent-color), #00d4ff, var(--accent-color));
+            background: linear-gradient(90deg, var(--accent), #60a5fa, var(--accent));
             background-size: 200% 100%;
-            animation: shimmer 2s ease-in-out infinite;
+            animation: shimmer 1.4s ease-in-out infinite;
             width: 0%;
-            border-radius: 2px;
-            transition: width 0.3s ease-out;
-            box-shadow: 0 0 10px rgba(0, 31, 63, 0.3);
+            transition: width .3s ease-out;
         }
-        
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-       
+
         .error-message {
-            color: var(--error-color);
-            font-size: 0.9em;
-            margin-top: 10px;
+            color: var(--red);
+            font-size: .8em;
+            margin-top: 9px;
             display: none;
         }
-       
+
         .wait-message {
-            color: var(--primary-color);
-            font-size: 0.9em;
-            margin-top: 10px;
+            color: var(--text-2);
+            font-size: .8em;
+            margin-top: 9px;
             display: none;
         }
-       
+
         .progress-bar-container {
-            width: 100%;
-            height: 10px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
+            width: 100%; height: 5px;
+            background: var(--card-border);
+            border-radius: 4px;
             overflow: hidden;
-            margin-top: 10px;
+            margin-top: 8px;
             display: none;
         }
-       
+
         .progress-bar {
             height: 100%;
-            background-color: var(--accent-color);
+            background: var(--accent);
             width: 0;
-            transition: width 0.1s linear;
+            transition: width .1s linear;
+            border-radius: 4px;
         }
-       
-        .session-timer {
-            font-size: 0.9em;
-            color: var(--primary-color);
-            opacity: 0.7;
-            text-align: center;
-            margin-top: 20px;
-            display: none;
+
+        /* ════════════════════════════════
+           APP HEADER
+        ════════════════════════════════ */
+        .app-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 58px;
+            background: var(--hdr-bg);
+            border-bottom: 1px solid var(--hdr-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            z-index: 500;
+            box-shadow: 0 2px 20px rgba(0,0,0,.3);
         }
-       
-        .hidden {
-            display: none;
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
         }
-       
-        #content-frame {
-            width: 100%;
-            height: 100%;
-            border: none;
+
+        .brand-mark {
+            width: 32px; height: 32px;
+            background: linear-gradient(145deg, var(--accent), #1e40af);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: .82em;
+            color: #fff;
+            letter-spacing: -.5px;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(37,99,235,.4);
+        }
+
+        .brand-name {
+            font-size: .86em;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: .01em;
+            line-height: 1.2;
+        }
+
+        .brand-tagline {
+            font-size: .64em;
+            color: rgba(255,255,255,.38);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .header-center {
             position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 10;
-        }
-       
-        .back-button {
-            position: fixed;
-            top: 10px;
-            right: 20px;
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: bold;
-            text-decoration: none;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 5px 15px var(--shadow-color);
-            z-index: 20;
-            transition: all 0.3s ease;
-            animation: bounceIn 0.5s ease-out;
+            pointer-events: none;
         }
-       
-        .back-button:hover {
-            background-color: var(--accent-color);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px var(--shadow-color);
+
+        .header-center-logo {
+            height: 36px;
+            width: auto;
+            object-fit: contain;
+            display: block;
         }
-       
-        @keyframes bounceIn {
-            0% { transform: scale(0); opacity: 0; }
-            60% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); }
-        }
-       
-        .back-button i {
-            font-size: 1.3em;
-        }
-       
-        .tab-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--primary-color);
-            padding: 10px 20px;
+
+        .header-right {
             display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            z-index: 30;
-            box-shadow: 0 -2px 10px var(--shadow-color);
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-            scroll-behavior: smooth;
+            align-items: center;
+            gap: 14px;
         }
-       
-        .tab-bar.minimized {
-            transform: translateY(100%) !important;
+
+        .session-timer {
+            display: none;
+            font-size: .76em;
+            color: rgba(255,255,255,.55);
+            background: rgba(255,255,255,.06);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,.1);
+            letter-spacing: .02em;
         }
-       
-        .minimize-button {
-            position: fixed;
-            bottom: 0;
-            right: 20px;
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            width: 40px;
-            height: 40px;
-            border: none;
-            border-radius: 50% 50% 0 0;
-            cursor: pointer;
+
+        .session-timer span {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        /* ════════════════════════════════
+           DASHBOARD
+        ════════════════════════════════ */
+        .dashboard {
+            padding: 80px 0 40px;
+            min-height: 100vh;
+        }
+
+        .dash-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 28px 28px 0;
+        }
+
+        .dash-eyebrow {
+            font-size: .68em;
+            font-weight: 600;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .dash-title {
+            font-size: 1.75em;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -.5px;
+            text-align: center;
+            margin-bottom: 28px;
+            line-height: 1.15;
+        }
+
+        .dash-title span {
+            color: var(--accent);
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 14px;
+        }
+
+        /* ════════════════════════════════
+           MODULE CARDS
+        ════════════════════════════════ */
+        .mod-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            box-shadow: var(--sh-xs);
+            transition: box-shadow var(--ease), transform var(--ease);
+        }
+
+        .mod-card:hover {
+            box-shadow: var(--sh-md);
+            transform: translateY(-2px);
+        }
+
+        .mod-card-head {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--card-head);
+        }
+
+        .mod-icon {
+            width: 34px; height: 34px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
-            z-index: 31;
-            transition: all 0.3s ease;
-            box-shadow: 0 -2px 10px var(--shadow-color);
+            font-size: .85em;
+            flex-shrink: 0;
         }
-       
-        .minimize-button:hover {
-            background-color: var(--accent-color);
-            transform: translateY(-2px);
+
+        .ic-blue   { background: #eff6ff; color: #2563eb; }
+        .ic-emerald{ background: #f0fdf4; color: #059669; }
+        .ic-amber  { background: #fffbeb; color: #d97706; }
+        .ic-teal   { background: #f0fdfa; color: #0d9488; }
+        .ic-violet { background: #f5f3ff; color: #7c3aed; }
+        .ic-rose   { background: #fff1f2; color: #e11d48; }
+        .ic-indigo { background: #eef2ff; color: #4f46e5; }
+        .ic-orange { background: #fff7ed; color: #ea580c; }
+        .ic-sky    { background: #f0f9ff; color: #0284c7; }
+
+        .mod-card-title {
+            font-size: .86em;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: .01em;
+            flex: 1;
         }
-       
-        .minimize-button.minimized {
-            transform: translateY(0);
-        }
-       
-        .minimize-button.minimized:hover {
-            transform: translateY(-2px);
-        }
-       
-        .tab-bar.show:not(.minimized) {
-            transform: translateY(0);
-        }
-       
-        .tab {
-            background-color: var(--secondary-color);
-            color: var(--primary-color);
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 0.9em;
+
+        .mod-badge {
+            font-size: .68em;
+            color: var(--text-3);
+            background: var(--bg);
+            padding: 2px 7px;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
             font-weight: 500;
-            cursor: grab;
+        }
+
+        .mod-card-body {
+            padding: 6px 0;
+            max-height: 296px;
+            overflow-y: auto;
+        }
+
+        .mod-card-body::-webkit-scrollbar { width: 4px; }
+        .mod-card-body::-webkit-scrollbar-track { background: transparent; }
+        .mod-card-body::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 2px; }
+
+        /* Fix: make child elements non-interactive so event.target is always the <a> */
+        .mod-link * { pointer-events: none; }
+
+        .mod-link {
             display: flex;
             align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-            transition: all 0.3s ease, transform 0.2s ease;
-            border: 2px solid transparent;
-            user-select: none;
-            position: relative;
-            will-change: transform;
-        }
-       
-        .tab:active {
-            cursor: grabbing;
-        }
-       
-        .tab.dragging {
-            opacity: 0.7;
-            transform: scale(1.05);
-            z-index: 100;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-       
-        .tab.drag-over {
-            border-color: var(--accent-color);
-            background-color: #f0f8ff;
-            transform: translateX(5px);
-        }
-       
-        .tab.active {
-            border-color: var(--accent-color);
-            background-color: var(--accent-color);
-            color: var(--secondary-color);
-        }
-       
-        .tab:hover {
-            background-color: #f0f8ff;
-            transform: translateY(-2px);
-        }
-       
-        .tab.active:hover {
-            background-color: var(--accent-color);
-        }
-       
-        .tab-close {
-            background: none;
-            border: none;
-            color: inherit;
+            gap: 9px;
+            padding: 8px 18px;
+            text-decoration: none;
+            color: var(--text-2);
+            font-size: .83em;
+            font-weight: 500;
+            transition: all var(--ease);
             cursor: pointer;
-            font-size: 1.2em;
-            padding: 0;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background-color 0.3s ease;
+            width: 100%;
+            position: relative;
         }
-       
-        .tab-close:hover {
-            background-color: rgba(0, 0, 0, 0.1);
+
+        .mod-link::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--accent);
+            border-radius: 0 2px 2px 0;
+            transform: scaleY(0);
+            transition: transform var(--ease);
         }
-       
-        .tab.active .tab-close:hover {
-            background-color: rgba(255, 255, 255, 0.2);
+
+        .mod-link:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+            padding-left: 22px;
         }
-       
+
+        .mod-link:hover::before { transform: scaleY(1); }
+
+        .mod-link .lk-icon {
+            width: 15px;
+            text-align: center;
+            font-size: .82em;
+            opacity: .55;
+            flex-shrink: 0;
+        }
+
+        .mod-link:hover .lk-icon { opacity: 1; }
+
+        .mod-link .lk-ext {
+            margin-left: auto;
+            font-size: .62em;
+            opacity: 0;
+            transition: opacity var(--ease);
+        }
+
+        .mod-link:hover .lk-ext { opacity: .45; }
+
+        /* ════════════════════════════════
+           BLURRED / HIDDEN STATES
+        ════════════════════════════════ */
+        .blurred {
+            filter: blur(7px);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .hidden { display: none !important; }
+
+        /* ════════════════════════════════
+           CONTENT AREA (iframes)
+        ════════════════════════════════ */
         #content-area {
-            bottom: 60px;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 10;
-            transition: bottom 0.3s ease;
+            top: 0; left: 0; right: 0;
+            bottom: 52px;
+            z-index: 200;
+            transition: bottom .3s ease;
         }
-       
-        #content-area.maximized {
-            bottom: 0;
-        }
-       
+
+        #content-area.maximized { bottom: 0; }
+
         #content-area iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
-       
+
+        /* ════════════════════════════════
+           BACK TO MENU BUTTON
+        ════════════════════════════════ */
         .back-to-menu {
             position: fixed;
-            top: 8px;
+            top: 10px;
             right: 20px;
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: bold;
+            background: rgba(11, 21, 39, 0.92);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: .78em;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 5px 15px var(--shadow-color);
-            z-index: 40;
-            transition: all 0.3s ease;
-            animation: bounceIn 0.5s ease-out;
-            border: none;
+            gap: 6px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.35);
+            z-index: 600;
+            border: 1px solid rgba(255,255,255,.12);
             cursor: pointer;
+            transition: all var(--ease);
+            animation: bounceIn .35s ease-out;
+            letter-spacing: .02em;
         }
-       
+
         .back-to-menu:hover {
-            background-color: var(--accent-color);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px var(--shadow-color);
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 22px rgba(37,99,235,.4);
         }
-       
-        .back-to-menu i {
-            font-size: 1.3em;
+
+        /* ════════════════════════════════
+           TAB BAR
+        ════════════════════════════════ */
+        .tab-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 52px;
+            background: #0b1527;
+            border-top: 1px solid #162038;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            overflow-x: auto;
+            z-index: 400;
+            box-shadow: 0 -4px 24px rgba(0,0,0,.25);
+            transform: translateY(100%);
+            transition: transform .3s ease;
+            scroll-behavior: smooth;
         }
-       
-        .tab-bar::-webkit-scrollbar {
-            height: 6px;
+
+        .tab-bar.show:not(.minimized) { transform: translateY(0); }
+        .tab-bar.minimized { transform: translateY(100%) !important; }
+
+        .tab-bar::-webkit-scrollbar { height: 3px; }
+        .tab-bar::-webkit-scrollbar-track { background: transparent; }
+        .tab-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+
+        .tab {
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.65);
+            padding: 5px 11px;
+            border-radius: 5px;
+            font-size: .76em;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all var(--ease);
+            border: 1px solid rgba(255,255,255,.07);
+            user-select: none;
+            position: relative;
+            will-change: transform;
+            flex-shrink: 0;
         }
-       
-        .tab-bar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
+
+        .tab:active { cursor: grabbing; }
+
+        .tab:hover {
+            background: rgba(255,255,255,.1);
+            color: #fff;
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 2px 10px rgba(37,99,235,.4);
+        }
+
+        .tab.dragging { opacity: .55; transform: scale(1.04); z-index: 100; }
+        .tab.drag-over { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.1); }
+
+        .tab-close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: .7em;
+            padding: 0;
+            width: 15px; height: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 3px;
+            transition: background var(--ease);
+            opacity: .65;
         }
-       
-        .tab-bar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
+
+        .tab-close:hover { background: rgba(255,255,255,.15); opacity: 1; }
+
+        /* ════════════════════════════════
+           MINIMIZE BUTTON
+        ════════════════════════════════ */
+        .minimize-button {
+            position: fixed;
+            bottom: 0;
+            right: 20px;
+            background: var(--accent);
+            color: #fff;
+            width: 34px; height: 34px;
+            border: none;
+            border-radius: 7px 7px 0 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .82em;
+            z-index: 401;
+            transition: background var(--ease);
+            box-shadow: 0 -2px 12px rgba(37,99,235,.35);
         }
-       
-        .tab-bar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-       
+
+        .minimize-button:hover { background: var(--accent-hover); }
+
+        /* ════════════════════════════════
+           INSTALL BANNER
+        ════════════════════════════════ */
         .install-banner {
             position: fixed;
-            bottom: 70px; /* Acima da tab-bar */
-            left: 10px;
-            right: 10px;
-            background-color: var(--secondary-color);
-            color: var(--primary-color);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px var(--shadow-color);
+            bottom: 62px;
+            left: 12px; right: 12px;
+            background: var(--card);
+            color: var(--text);
+            padding: 13px 16px;
+            border-radius: var(--r-md);
+            box-shadow: var(--sh-lg);
+            border: 1px solid var(--card-border);
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            z-index: 50;
-            animation: slideUp 0.5s ease-out;
-            font-size: 0.9em;
+            gap: 9px;
+            z-index: 410;
+            animation: slideUp .4s ease-out;
+            font-size: .82em;
             text-align: center;
-            transition: bottom 0.3s ease;
+            transition: bottom .3s ease;
         }
-       
-        .install-banner.minimized {
-            bottom: 10px;
-        }
-       
-        .install-banner.show {
-            display: flex;
-        }
-       
-        .install-banner p {
-            margin: 0;
-            font-weight: 500;
-        }
-       
+
+        .install-banner.minimized { bottom: 10px; }
+        .install-banner.show { display: flex; }
+        .install-banner p { margin: 0; font-weight: 500; }
+
         .install-banner button {
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            padding: 8px 16px;
+            background: var(--accent);
+            color: #fff;
+            padding: 7px 16px;
             border: none;
-            border-radius: 5px;
-            font-size: 0.9em;
-            font-weight: bold;
+            border-radius: var(--r-sm);
+            font-size: .82em;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            transition: background var(--ease);
         }
-       
-        .install-banner button:hover {
-            background-color: var(--accent-color);
-        }
-       
+
+        .install-banner button:hover { background: var(--accent-hover); }
+
         .install-banner .close-install {
             background: none;
             border: none;
-            color: var(--primary-color);
-            font-size: 1.2em;
+            color: var(--text-3);
+            font-size: 1.1em;
             cursor: pointer;
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 10px; right: 12px;
         }
-       
+
+        /* ════════════════════════════════
+           ANIMATIONS
+        ════════════════════════════════ */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60%  { transform: translateX(-7px); }
+            40%, 80%  { transform: translateX(7px); }
+        }
+
+        @keyframes errFlash {
+            0%   { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+            45%  { background: linear-gradient(135deg, #ef4444, #dc2626); }
+            100% { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position:  200% 0; }
+        }
+
+        @keyframes bounceIn {
+            0%   { transform: scale(.65); opacity: 0; }
+            65%  { transform: scale(1.06); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from { transform: translateY(50px); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
         }
-       
-        @media (max-width: 768px) {
-            body {
-                height: auto;
-                min-height: 100vh;
-                overflow-y: auto;
-                justify-content: flex-start;
-                padding: 20px;
-            }
-       
-            header {
-                margin-bottom: 20px;
-            }
-       
-            h1 {
-                font-size: 2em;
-                padding: 8px 15px;
-            }
-       
-            .container {
-                flex-direction: column;
-                align-items: center;
-                padding: 20px;
-                max-width: 100%;
-                overflow-y: auto;
-                max-height: calc(100vh - 120px);
-            }
-       
-            .button, .dropdown-button {
-                padding: 10px 20px;
-                font-size: 1em;
-                width: 100%;
-                max-width: 300px;
-                text-align: center;
-                box-sizing: border-box;
-                margin: 0;
-                border: none;
-            }
-       
-            .dropdown-container {
-                width: 100%;
-                max-width: 300px;
-            }
-       
-            .button i, .dropdown-button i {
-                font-size: 1.2em;
-                margin-right: 8px;
-            }
-       
-            .dropdown-content {
-                min-width: 100%;
-                width: 100%;
-            }
-       
-            .dropdown-content a {
-                font-size: 0.9em;
-                padding: 10px 12px;
-            }
-       
-            .dropdown-content a i {
-                font-size: 1em;
-            }
-       
-            .access-box {
-                width: 90%;
-                max-width: 280px;
-                padding: 20px;
-            }
-       
-            .access-box h2 {
-                font-size: 1.2em;
-            }
-       
-            .access-box input {
-                font-size: 0.9em;
-                padding: 8px;
-            }
-       
-            .access-box button {
-                font-size: 0.9em;
-                padding: 8px 16px;
-            }
-       
-            .back-button {
-                padding: 10px 20px;
-                font-size: 0.9em;
-            }
-       
-            .back-button i {
-                font-size: 1.1em;
-            }
-       
-            .session-timer {
-                font-size: 0.8em;
-            }
-       
-            .tab-bar {
-                padding: 8px 15px;
-            }
-       
-            .tab {
-                padding: 6px 12px;
-                font-size: 0.8em;
-            }
-       
-            .tab-close {
-                width: 18px;
-                height: 18px;
-                font-size: 1em;
-            }
-       
-            #content-area {
-                bottom: 50px;
-            }
-           
-            #content-area.maximized {
-                bottom: 0;
-            }
-       
-            .back-to-menu {
-                padding: 10px 20px;
-                font-size: 0.9em;
-            }
-       
-            .back-to-menu i {
-                font-size: 1.1em;
-            }
-       
-                        .install-banner {
-                bottom: 60px; /* Ajustado para telas menores */
-                padding: 10px;
-                font-size: 0.8em;
-            }
-           
-            .install-banner.minimized {
-                bottom: 10px;
-            }
-           
-            .install-banner button {
-                padding: 6px 12px;
-                font-size: 0.8em;
-            }
-           
-            .minimize-button {
-                width: 35px;
-                height: 35px;
-                right: 15px;
-                font-size: 1em;
-            }
-           
-            .tab-bar.minimized {
-                transform: translateY(100%) !important;
-            }
+
+        /* ════════════════════════════════
+           RESPONSIVE
+        ════════════════════════════════ */
+        @media (max-width: 900px) {
+            .modules-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
         }
-       
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.5em;
-                padding: 6px 10px;
-            }
-       
-            .container {
-                padding: 15px;
-            }
-       
-            .button, .dropdown-button {
-                padding: 8px 15px;
-                font-size: 0.9em;
-                max-width: 280px;
-            }
-       
-            .dropdown-container {
-                max-width: 280px;
-            }
-       
-            .button i, .dropdown-button i {
-                font-size: 1em;
-            }
-       
-            .dropdown-content a {
-                font-size: 0.8em;
-                padding: 8px 10px;
-            }
-           
-            .minimize-button {
-                width: 30px;
-                height: 30px;
-                right: 10px;
-                font-size: 0.9em;
-            }
-           
-            .tab-bar.minimized {
-                transform: translateY(100%) !important;
-            }
+
+        @media (max-width: 640px) {
+            .app-header { padding: 0 16px; }
+            .brand-tagline { display: none; }
+            .dash-inner { padding: 20px 14px 0; }
+            .modules-grid { grid-template-columns: 1fr; gap: 10px; }
+            #content-area { bottom: 48px; }
+            .tab-bar { height: 48px; }
         }
-        </style>
+
+        @media (max-width: 420px) {
+            .access-box { padding: 36px 22px 28px; margin: 16px; }
+        }
+    </style>
 </head>
 <body>
-    <div id="main-content" class="blurred">
-        <header>
-            <h1>Dados - Laboratório LAMIC</h1>
-        </header>
-        <div class="container">
-            <div class="dropdown-container">
-                <button class="dropdown-button">
-                    <i class="fas fa-file-alt"></i> Documentos
-                </button>
-                <div class="dropdown-content">
-                    <a href="https://laboratoriolamic.github.io/Pops/" onclick="loadContent(event, this.href)"><i class="fas fa-rocket"></i> Pop's</a>
-                    <a href="https://laboratoriolamic.github.io/Protocolos/" onclick="loadContent(event, this.href)"><i class="fas fa-file-alt"></i> Protocolos</a>
-                    <a href="https://laboratoriolamic.github.io/Termos/" onclick="loadContent(event, this.href)"><i class="fas fa-file-contract"></i> Termos</a>
-                    <a href="https://laboratoriolamic.github.io/curricuIoIamic/" onclick="loadContent(event, this.href)"><i class="fas fa-users"></i> Colaboradores</a>
-                    <a href="https://drive.google.com/file/d/1ZChubIkZKG0PhykfQhSxcs-hbedoFH1Q/view?usp=drive_link" target="_blank"><i class="fas fa-folder-open"></i> Certificados</a>
-                    <a href="https://drive.google.com/drive/folders/1jyd1B7ylx1yvQkpmLqUgWCWD922fFFXT" target="_blank"><i class="fas fa-folder-open"></i> Drive</a>
-                    <a href="https://laboratoriolamic.github.io/docadmin/" onclick="loadContent(event, this.href)"><i class="fas fa-user-gear"></i> Configurações</a>
-                </div>
-            </div>
-            <a href="https://laboratoriolamic.github.io/Planilhas/" class="button" onclick="loadContent(event, this.href)">
-                <i class="fas fa-table"></i> Planilhas
-            </a>
-            <div class="dropdown-container">
-                <button class="dropdown-button">
-                    <i class="fas fas fa-dollar"></i> Valores
-                </button>
-                <div class="dropdown-content">
-                    <a href="https://laboratoriolamic.github.io/valor/" onclick="loadContent(event, this.href)"><i class="fas fa-dollar"></i> Orçamentos</a>
-                    <a href="https://laboratoriolamic.github.io/TabeIasIamic/" onclick="loadContent(event, this.href)"><i class="fas fa-file-invoice-dollar"></i> Tabelas</a>
-                    <a href="https://laboratoriolamic.github.io/L2L/" onclick="loadContent(event, this.href)"><i class="fas fa-money-check-dollar"></i> Lamic to Lab</a>
-                    <a href="https://laboratoriolamic.github.io/Iamicproposta/" onclick="loadContent(event, this.href)"><i class="fas fa-hand-holding-dollar"></i> Propostas</a>
-                    <a href="https://laboratoriolamic.github.io/coberturaIamic/" onclick="loadContent(event, this.href)"><i class="fas fa-store"></i> Concorrentes</a>
-                </div>
-            </div>
-            <a href="https://iss.speedgov.com.br/juazeirodonorte/login" class="button" target="_blank">
-                <i class="fas fa-pager"></i> Emitir N/F
-            </a>
-            <div class="dropdown-container">
-                <button class="dropdown-button">
-                    <i class="fas fa-building-user"></i> Apoio
-                </button>
-                <div class="dropdown-content">
-                    <a href="https://www.mypardini.com.br/mypardini/faces/login.xhtml" target="_blank"><i class="fas fa-globe"></i> Hermes Pardini</a>
-                    <a href="https://aol.alvaroapoio.com.br/exames" target="_blank"><i class="fas fa-globe"></i> Alvaro</a>
-                    <a href="https://gde.diagnosticosdobrasil.com.br/GDE_Home/Main.aspx" target="_blank"><i class="fas fa-globe"></i> DB Diagnóstico</a>
-                    <a href="https://yatrosdiagnosis.com.br/resultV1/login" target="_blank"><i class="fas fa-globe"></i> Yatros</a>
-                    <a href="https://www.exametoxicologico.com.br/" target="_blank"><i class="fas fa-globe"></i> Toxicologia Pardini</a>
-                    <a href="https://ctox.io/#/login" onclick="loadContent(event, this.href)"><i class="fas fa-globe"></i> Toxicologia Symvia</a>
-                </div>
-            </div>
-            <div class="dropdown-container">
-                <button class="dropdown-button">
-                    <i class="fas fa-stethoscope"></i> Convênios
-                </button>
-                <div class="dropdown-content">
-                    <a href="https://laboratoriolamic.github.io/checkguias/" onclick="loadContent(event, this.href)"><i class="fas fa-check-to-slot"></i> Checklist</a>
-                    <a href="https://laboratoriolamic.github.io/conveniosIamic/" onclick="loadContent(event, this.href)"><i class="fas fa-chart-line"></i> Glosas</a>
-                    <a href="https://biometria-prd02.unimedceara.com.br/autwebbio/login.do" target="_blank"><i class="fas fa-globe"></i> Unimed</a>
-                    <a href="https://gcfreitas.com.br/ConveniadosWeb/login.aspx?ReturnUrl=%2fConveniadosWeb%2fpaginas%2fcadConsultaConveniado.aspx" target="_blank"><i class="fas fa-globe"></i> Afagu</a>
-                    <a href="http://144.22.214.217/site/login/login/passo1ws.php" target="_blank"><i class="fas fa-globe"></i> Issec</a>
-                    <a href="https://www.polimed.com.br/autenticadorOrizon/loginAutenticador" target="_blank"><i class="fas fa-globe"></i> Orizon - Cassi, Bradesco</a>
-                    <a href="https://saviatendimento.com.br/saviatendimento/login.faces" target="_blank"><i class="fas fa-globe"></i> Hapvida</a>
-                    <a href="https://saude.caixa.gov.br/AutorizadorPRD/login.aspx" target="_blank"><i class="fas fa-globe"></i> Caixa</a>
-                    <a href="https://saude.sulamericaseguros.com.br/prestador/login/" target="_blank"><i class="fas fa-globe"></i> Sulamerica</a>
-                    <a href="https://novowebplanassefaz.facilinformatica.com.br/GuiasTISS/Logon" target="_blank"><i class="fas fa-globe"></i> Acefaz</a>
-                    <a href="https://portalconectasaude.com.br/Account/Login?ReturnUrl=%2FDashboard%2FIndexPrestador" target="_blank"><i class="fas fa-globe"></i> Benner conecta - Cafaz, Camed, Faschesf</a>
-                    <a href="https://cafazonline.org.br/sistema" target="_blank"><i class="fas fa-globe"></i> Cafaz</a>
-                    <a href="https://portal.salutis.com.br/index.asp?operadora=famed" target="_blank"><i class="fas fa-globe"></i> Famed</a>
-                    <a href="https://www2.geap.com.br/index.asp" target="_blank"><i class="fas fa-globe"></i> Geap</a>
-                    <a href="https://credenciado.amil.com.br/login" target="_blank"><i class="fas fa-globe"></i> Amil</a>
-                    <a href="https://autorizador.postalsaudeservicos.com.br/autorizadorpro/custom/CustomLogin.aspx" target="_blank"><i class="fas fa-globe"></i> Postal Saúde</a>
-                    <a href="https://apps.camed.com.br/CamedSaudeServicos/Acesso/Login.aspx?AspxAutoDetectCookieSupport=1" target="_blank"><i class="fas fa-globe"></i> Camed</a>
-                </div>
-            </div>
-            <div class="dropdown-container">
-                <button class="dropdown-button">
-                    <i class="fas fa-id-card"></i> Viva+
-                </button>
-                <div class="dropdown-content">
-                    <a href="https://partners.urbis.cc/login/" onclick="loadContent(event, this.href)"><i class="fas fa-user"></i> Urbis (Clientes)</a>
-                    <a href="https://www.manager.urbis.cc/login/" onclick="loadContent(event, this.href)"><i class="fas fa-chart-line"></i> Dashboard</a>
-                    <a href="https://www.clube.lcesaude.com.br/login" onclick="loadContent(event, this.href)"><i class="fas fa-users"></i> Clube</a>
-                </div>
-            </div>
-            <div class="dropdown-container">
-                <button class="dropdown-button">
-                    <i class="fas fa-users"></i> Contador
-                </button>
-                <div class="dropdown-content">
-                    <a href="https://lamic2025laboratorios.github.io/Contadorpacientes-lamic/" onclick="loadContent(event, this.href)"><i class="fas fa-store"></i> Contador - UC</a>
-                    <a href="https://lamic2025laboratorios.github.io/contadorcc-lamic/" onclick="loadContent(event, this.href)"><i class="fas fa-headset"></i> Contador - CAC</a>
-                </div>
-            </div>
-            <a href="https://laboratoriolamic.github.io/Temperatura/" class="button" onclick="loadContent(event, this.href)">
-                <i class="fas fa-temperature-high"></i> Temperatura
-            </a>
-            <a href="https://laboratoriolamic.github.io/rankingIamic/" class="button" onclick="loadContent(event, this.href)">
-                <i class="fas fa-trophy"></i> Ranking
-            </a>
-            <div class="dropdown-container">
-                <button class="dropdown-button">
-                    <i class="fas fa-university"></i> UniLAMIC
-                </button>
-                <div class="dropdown-content">
-                    <a href="https://laboratoriolamic.github.io/Treinamentos/" onclick="loadContent(event, this.href)"><i class="fas fa-chalkboard-teacher"></i> Treinamentos</a>
-                    <a href="https://laboratoriolamic.github.io/EAD/" onclick="loadContent(event, this.href)"><i class="fas fa-graduation-cap"></i> Educação Continuada</a>
-                    <a href="https://laboratoriolamic.github.io/Estagio/" onclick="loadContent(event, this.href)"><i class="fas fa-user-graduate"></i> Estágio</a>
-                    <a href="https://laboratoriolamic.github.io/uniadmin/" onclick="loadContent(event, this.href)"><i class="fas fa-user-gear"></i> Configurações</a>
-                </div>
-            </div>
-             <div class="dropdown-container">
-                <button class="dropdown-button">
-                    <i class="fas fa-calendar"></i> Agendas
-                </button>
-                <div class="dropdown-content">
-                    <a href="https://laboratoriolamic.github.io/respIamic/" onclick="loadContent(event, this.href)"><i class="fas fa-calendar-alt"></i> T. Repiratório</a>
-                    <a href="https://laboratoriolamic.github.io/wpp/" onclick="loadContent(event, this.href)"><i class="fab fa-whatsapp"></i> Contato</a>
-                </div>
-            </div>
-            <a href="https://laboratoriolamic.github.io/auditoriaIamic/" class="button" onclick="loadContent(event, this.href)">
-                <i class="fas fa-layer-group"></i> Auditoria Geral
-            </a>
-        </div>
-        <div id="session-timer" class="session-timer">Sessão expira em: <span id="timer-display">00:00</span></div>
-    </div>
+
+    <!-- ╔══════════════════════════════╗
+         ║       AUTH OVERLAY           ║
+         ╚══════════════════════════════╝ -->
     <div id="auth-overlay" class="auth-overlay">
         <div class="access-box">
-            <h2>Digite a Senha</h2>
-            <input type="password" id="access-key-input" placeholder="Senha">
-            <button id="submit-button" onclick="validateAccess()">Acessar</button>
+            <div class="auth-brand-mark">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <div class="auth-title">Acesso Restrito</div>
+            <div class="auth-sub">Laboratório LAMIC &mdash; Sistema de Gestão</div>
+
+            <label class="field-label" for="access-key-input">Senha de Acesso</label>
+            <input type="password" id="access-key-input" placeholder="••••••••••••">
+
+            <button id="submit-button" onclick="validateAccess()">
+                <i class="fas fa-right-to-bracket" style="margin-right:7px;"></i>Entrar no Sistema
+            </button>
+
             <div id="loading-bar-container" class="loading-bar-container">
                 <div id="loading-bar" class="loading-bar"></div>
             </div>
-            <p id="error-message" class="error-message">Senha incorreta!</p>
-            <p id="wait-message" class="wait-message">Aguarde <span id="wait-time"></span> segundos...</p>
+            <p id="error-message" class="error-message">
+                <i class="fas fa-triangle-exclamation" style="margin-right:5px;"></i>Senha incorreta. Tente novamente.
+            </p>
+            <p id="wait-message" class="wait-message">
+                Acesso bloqueado temporariamente. Aguarde <span id="wait-time"></span>s
+            </p>
             <div id="progress-bar-container" class="progress-bar-container">
                 <div id="progress-bar" class="progress-bar"></div>
             </div>
         </div>
     </div>
+
+    <!-- ╔══════════════════════════════╗
+         ║         MAIN CONTENT         ║
+         ╚══════════════════════════════╝ -->
+    <div id="main-content" class="blurred">
+
+        <!-- ── Header ── -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-mark">L</div>
+                <div>
+                    <div class="brand-name">Laboratório LAMIC</div>
+                    <div class="brand-tagline">Sistema de Gestão Administrativa</div>
+                </div>
+            </div>
+            <div class="header-center">
+                <img src="https://i.imgur.com/vXM6l52.png" alt="Logo LAMIC" class="header-center-logo">
+            </div>
+            <div class="header-right">
+                <div id="session-timer" class="session-timer">
+                    <i class="fas fa-clock" style="margin-right:5px;font-size:.85em;"></i>Sessão:&nbsp;<span id="timer-display">00:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Dashboard ── -->
+        <main class="dashboard">
+            <div class="dash-inner">
+                <div class="dash-eyebrow">Módulos do Sistema</div>
+                <h1 class="dash-title">Dados — Laboratório <span>LAMIC</span></h1>
+
+                <div class="modules-grid">
+
+                    <!-- ▸ DOCUMENTOS ─────────────────── -->
+                    <div class="mod-card">
+                        <div class="mod-card-head">
+                            <div class="mod-icon ic-blue"><i class="fas fa-folder-open"></i></div>
+                            <span class="mod-card-title">Documentos</span>
+                            <span class="mod-badge">8</span>
+                        </div>
+                        <div class="mod-card-body">
+                            <a href="https://laboratoriolamic.github.io/Pops/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-rocket lk-icon"></i> Pop's
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/Protocolos/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-file-lines lk-icon"></i> Protocolos
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/Termos/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-file-contract lk-icon"></i> Termos
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/Planilhas/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-table lk-icon"></i> Planilhas
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/curricuIoIamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-users lk-icon"></i> Colaboradores
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://drive.google.com/file/d/1ZChubIkZKG0PhykfQhSxcs-hbedoFH1Q/view?usp=drive_link" class="mod-link" target="_blank">
+                                <i class="fas fa-certificate lk-icon"></i> Certificados
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://drive.google.com/drive/folders/1jyd1B7ylx1yvQkpmLqUgWCWD922fFFXT" class="mod-link" target="_blank">
+                                <i class="fab fa-google-drive lk-icon"></i> Drive
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/docadmin/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-sliders lk-icon"></i> Configurações
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ▸ FINANCEIRO ─────────────────── -->
+                    <div class="mod-card">
+                        <div class="mod-card-head">
+                            <div class="mod-icon ic-emerald"><i class="fas fa-chart-line"></i></div>
+                            <span class="mod-card-title">Financeiro</span>
+                            <span class="mod-badge">6</span>
+                        </div>
+                        <div class="mod-card-body">
+                            <a href="https://iss.speedgov.com.br/juazeirodonorte/login" class="mod-link" target="_blank">
+                                <i class="fas fa-file-invoice lk-icon"></i> Emitir Nota Fiscal
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/valor/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-calculator lk-icon"></i> Orçamentos
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/TabeIasIamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-file-invoice-dollar lk-icon"></i> Tabelas de Preço
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/L2L/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-money-check-dollar lk-icon"></i> Lamic to Lab
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/Iamicproposta/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-hand-holding-dollar lk-icon"></i> Propostas
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/coberturaIamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-store lk-icon"></i> Concorrentes
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ▸ APOIO DIAGNÓSTICO ──────────── -->
+                    <div class="mod-card">
+                        <div class="mod-card-head">
+                            <div class="mod-icon ic-teal"><i class="fas fa-flask"></i></div>
+                            <span class="mod-card-title">Apoio Diagnóstico</span>
+                            <span class="mod-badge">6</span>
+                        </div>
+                        <div class="mod-card-body">
+                            <a href="https://www.mypardini.com.br/mypardini/faces/login.xhtml" class="mod-link" target="_blank">
+                                <i class="fas fa-microscope lk-icon"></i> Hermes Pardini
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://aol.alvaroapoio.com.br/exames" class="mod-link" target="_blank">
+                                <i class="fas fa-vials lk-icon"></i> Alvaro
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://gde.diagnosticosdobrasil.com.br/GDE_Home/Main.aspx" class="mod-link" target="_blank">
+                                <i class="fas fa-vial lk-icon"></i> DB Diagnóstico
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://yatrosdiagnosis.com.br/resultV1/login" class="mod-link" target="_blank">
+                                <i class="fas fa-stethoscope lk-icon"></i> Yatros
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://www.exametoxicologico.com.br/" class="mod-link" target="_blank">
+                                <i class="fas fa-dna lk-icon"></i> Toxicologia Pardini
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://ctox.io/#/login" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-atom lk-icon"></i> Toxicologia Symvia
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ▸ CONVÊNIOS ──────────────────── -->
+                    <div class="mod-card">
+                        <div class="mod-card-head">
+                            <div class="mod-icon ic-violet"><i class="fas fa-handshake"></i></div>
+                            <span class="mod-card-title">Convênios</span>
+                            <span class="mod-badge">17</span>
+                        </div>
+                        <div class="mod-card-body">
+                            <a href="https://laboratoriolamic.github.io/checkguias/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-check-to-slot lk-icon"></i> Checklist de Guias
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/conveniosIamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-chart-line lk-icon"></i> Glosas
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://biometria-prd02.unimedceara.com.br/autwebbio/login.do" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Unimed
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://gcfreitas.com.br/ConveniadosWeb/login.aspx?ReturnUrl=%2fConveniadosWeb%2fpaginas%2fcadConsultaConveniado.aspx" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Afagu
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="http://144.22.214.217/site/login/login/passo1ws.php" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Issec
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://www.polimed.com.br/autenticadorOrizon/loginAutenticador" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Orizon &mdash; Cassi / Bradesco
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://saviatendimento.com.br/saviatendimento/login.faces" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Hapvida
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://saude.caixa.gov.br/AutorizadorPRD/login.aspx" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Caixa
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://saude.sulamericaseguros.com.br/prestador/login/" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Sulamerica
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://novowebplanassefaz.facilinformatica.com.br/GuiasTISS/Logon" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Acefaz
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://portalconectasaude.com.br/Account/Login?ReturnUrl=%2FDashboard%2FIndexPrestador" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Benner Conecta
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://cafazonline.org.br/sistema" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Cafaz
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://portal.salutis.com.br/index.asp?operadora=famed" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Famed
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://www2.geap.com.br/index.asp" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Geap
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://credenciado.amil.com.br/login" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Amil
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://autorizador.postalsaudeservicos.com.br/autorizadorpro/custom/CustomLogin.aspx" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Postal Saúde
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                            <a href="https://apps.camed.com.br/CamedSaudeServicos/Acesso/Login.aspx?AspxAutoDetectCookieSupport=1" class="mod-link" target="_blank">
+                                <i class="fas fa-hospital lk-icon"></i> Camed
+                                <i class="fas fa-arrow-up-right-from-square lk-ext"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ▸ PROGRAMA VIVA+ ─────────────── -->
+                    <div class="mod-card">
+                        <div class="mod-card-head">
+                            <div class="mod-icon ic-rose"><i class="fas fa-id-card"></i></div>
+                            <span class="mod-card-title">LAMIC Viva+</span>
+                            <span class="mod-badge">3</span>
+                        </div>
+                        <div class="mod-card-body">
+                            <a href="https://partners.urbis.cc/login/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-user lk-icon"></i> Urbis — Clientes
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://www.manager.urbis.cc/login/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-chart-bar lk-icon"></i> Dashboard
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://www.clube.lcesaude.com.br/login" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-users lk-icon"></i> Clube
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ▸ UNILAMIC ───────────────────── -->
+                    <div class="mod-card">
+                        <div class="mod-card-head">
+                            <div class="mod-icon ic-indigo"><i class="fas fa-graduation-cap"></i></div>
+                            <span class="mod-card-title">UniLAMIC</span>
+                            <span class="mod-badge">4</span>
+                        </div>
+                        <div class="mod-card-body">
+                            <a href="https://laboratoriolamic.github.io/Treinamentos/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-chalkboard-user lk-icon"></i> Treinamentos
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/EAD/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-book-open lk-icon"></i> Educação Continuada
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/Estagio/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-user-graduate lk-icon"></i> Estágio
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/uniadmin/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-sliders lk-icon"></i> Configurações
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ▸ OPERACIONAL ────────────────── -->
+                    <div class="mod-card">
+                        <div class="mod-card-head">
+                            <div class="mod-icon ic-orange"><i class="fas fa-gauge-high"></i></div>
+                            <span class="mod-card-title">Operacional</span>
+                            <span class="mod-badge">5</span>
+                        </div>
+                        <div class="mod-card-body">
+                            <a href="https://lamic2025laboratorios.github.io/Contadorpacientes-lamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-store lk-icon"></i> Contador — UC
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://lamic2025laboratorios.github.io/contadorcc-lamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-headset lk-icon"></i> Contador — CAC
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/Temperatura/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-temperature-high lk-icon"></i> Temperatura
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/rankingIamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-trophy lk-icon"></i> Ranking
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/auditoriaIamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-layer-group lk-icon"></i> Auditoria Geral
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ▸ AGENDAS ────────────────────── -->
+                    <div class="mod-card">
+                        <div class="mod-card-head">
+                            <div class="mod-icon ic-sky"><i class="fas fa-calendar-days"></i></div>
+                            <span class="mod-card-title">Agendas</span>
+                            <span class="mod-badge">2</span>
+                        </div>
+                        <div class="mod-card-body">
+                            <a href="https://laboratoriolamic.github.io/respIamic/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fas fa-lungs lk-icon"></i> Teste Respiratório
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                            <a href="https://laboratoriolamic.github.io/wpp/" class="mod-link" onclick="loadContent(event,this.href)">
+                                <i class="fab fa-whatsapp lk-icon"></i> Contato
+                                <i class="fas fa-chevron-right lk-ext"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                </div><!-- /modules-grid -->
+            </div><!-- /dash-inner -->
+        </main>
+
+        <div id="session-timer-footer" style="display:none;"></div>
+    </div><!-- /main-content -->
+
+    <!-- ── Content area (iframes) ── -->
     <div id="content-area" class="hidden"></div>
+
+    <!-- ── Tab bar ── -->
     <div id="tab-bar" class="tab-bar"></div>
     <button id="minimize-button" class="minimize-button" title="Minimizar barra de abas">
         <i class="fas fa-chevron-up"></i>
     </button>
+
+    <!-- ════════════════════════════════
+         JAVASCRIPT  (unchanged logic)
+    ════════════════════════════════ -->
     <script>
         let attemptCount = 0;
         const maxInitialAttempts = 5;
-        const sessionDuration = 240 * 60 * 1000; // 120 minutes in milliseconds
-       
+        const sessionDuration = 600 * 60 * 1000; // 120 minutes in milliseconds
+
         // Tab management
         let tabs = [];
         let activeTabId = null;
@@ -1126,30 +1167,30 @@
         let dragOffsetX = 0;
         let isDragging = false;
         let isTabBarMinimized = false;
-       
+
         // Detectar se o dispositivo suporta toque
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-       
+
         // Detectar dispositivo móvel
         const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-       
+
         function formatTime(ms) {
             const minutes = Math.floor(ms / 60000);
             const seconds = Math.floor((ms % 60000) / 1000);
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
-       
+
         function startSessionTimer() {
             const sessionStart = parseInt(localStorage.getItem('sessionStart'));
             const timerDisplay = document.getElementById('timer-display');
             const sessionTimer = document.getElementById('session-timer');
             const overlay = document.getElementById('auth-overlay');
             const mainContent = document.getElementById('main-content');
-       
+
             const updateTimer = () => {
                 const currentTime = Date.now();
                 const timeLeft = sessionStart + sessionDuration - currentTime;
-       
+
                 if (timeLeft <= 0) {
                     localStorage.removeItem('sessionStart');
                     sessionTimer.style.display = 'none';
@@ -1160,26 +1201,26 @@
                     timerDisplay.textContent = formatTime(timeLeft);
                 }
             };
-       
+
             sessionTimer.style.display = 'block';
             updateTimer();
             const timerInterval = setInterval(updateTimer, 1000);
         }
-       
+
         function loadContent(event, url) {
             event.preventDefault();
             const mainContent = document.getElementById('main-content');
             const contentArea = document.getElementById('content-area');
             const authOverlay = document.getElementById('auth-overlay');
-       
+
             const linkText = event.target.textContent.trim();
-           
+
             const existingTab = tabs.find(tab => tab.url === url);
             if (existingTab) {
                 switchToTab(existingTab.id);
                 return;
             }
-       
+
             const tabId = 'tab_' + Date.now();
             const newTab = {
                 id: tabId,
@@ -1187,39 +1228,39 @@
                 title: linkText,
                 iframe: null
             };
-           
+
             tabs.push(newTab);
             activeTabId = tabId;
-           
+
             updateTabBar();
             showTabContent(newTab);
-           
+
             mainContent.classList.add('hidden');
             passwordOverlay.classList.add('hidden');
         }
-       
+
         function createTabElement(tab) {
             const tabElement = document.createElement('div');
             tabElement.className = 'tab';
             tabElement.dataset.tabId = tab.id;
-           
+
             if (tab.id === activeTabId) {
                 tabElement.classList.add('active');
             }
-           
+
             tabElement.innerHTML = `
                 <span>${tab.title}</span>
                 <button class="tab-close" onclick="closeTab('${tab.id}', event)">
                     <i class="fas fa-times"></i>
                 </button>
             `;
-           
+
             tabElement.onclick = (e) => {
                 if (!e.target.closest('.tab-close')) {
                     switchToTab(tab.id);
                 }
             };
-       
+
             if (isTouchDevice) {
                 tabElement.addEventListener('touchstart', handleTouchStart);
                 tabElement.addEventListener('touchmove', handleTouchMove);
@@ -1233,46 +1274,45 @@
                 tabElement.addEventListener('dragleave', handleDragLeave);
                 tabElement.addEventListener('drop', handleDrop);
             }
-           
+
             return tabElement;
         }
-       
+
         function updateTabBar() {
             const tabBar = document.getElementById('tab-bar');
             const wasMinimized = tabBar.classList.contains('minimized');
             tabBar.innerHTML = '';
-           
+
             if (tabs.length === 0) {
                 tabBar.classList.remove('show');
                 return;
             }
-           
+
             tabBar.classList.add('show');
-           
-            // Restaurar estado de minimização se necessário
+
             if (wasMinimized) {
                 tabBar.classList.add('minimized');
             }
-           
+
             tabs.forEach(tab => {
                 const tabElement = createTabElement(tab);
                 tabBar.appendChild(tabElement);
-       
+
                 setTimeout(() => {
                     tabElement.style.transition = 'transform 0.2s ease';
                     tabElement.style.transform = 'translateX(0)';
                 }, 0);
             });
         }
-       
+
         function showTabContent(tab) {
             if (!tab) return;
-       
+
             const contentArea = document.getElementById('content-area');
             const mainContent = document.getElementById('main-content');
-           
+
             mainContent.classList.add('hidden');
-           
+
             if (!tab.iframe) {
                 const iframe = document.createElement('iframe');
                 iframe.id = `iframe_${tab.id}`;
@@ -1281,15 +1321,15 @@
                 tab.iframe = iframe;
                 contentArea.appendChild(iframe);
             }
-           
+
             contentArea.classList.remove('hidden');
-           
+
             tabs.forEach(t => {
                 if (t.iframe) {
                     t.iframe.style.display = t.id === activeTabId ? 'block' : 'none';
                 }
             });
-           
+
             if (!document.querySelector('.back-to-menu')) {
                 const backButton = document.createElement('button');
                 backButton.className = 'back-to-menu';
@@ -1298,15 +1338,15 @@
                     const contentArea = document.getElementById('content-area');
                     const mainContent = document.getElementById('main-content');
                     const authOverlay = document.getElementById('auth-overlay');
-                   
+
                     contentArea.classList.add('hidden');
                     mainContent.classList.remove('hidden');
-                   
+
                     activeTabId = null;
                     updateTabBar();
-                   
+
                     backButton.remove();
-                   
+
                     if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
                         mainContent.classList.add('blurred');
                         passwordOverlay.classList.remove('hidden');
@@ -1315,28 +1355,28 @@
                 document.body.appendChild(backButton);
             }
         }
-       
+
         function switchToTab(tabId) {
             activeTabId = tabId;
             const tab = tabs.find(t => t.id === tabId);
-           
+
             if (tab) {
                 showTabContent(tab);
                 updateTabBar();
             }
         }
-       
+
         function closeTab(tabId, event) {
             event.stopPropagation();
-           
+
             const tabIndex = tabs.findIndex(t => t.id === tabId);
             if (tabIndex === -1) return;
-           
+
             const tabToClose = tabs[tabIndex];
             if (tabToClose.iframe) {
                 tabToClose.iframe.remove();
             }
-       
+
             const tabElement = document.querySelector(`.tab[data-tab-id="${tabId}"]`);
             if (tabElement) {
                 if (isTouchDevice) {
@@ -1352,9 +1392,9 @@
                     tabElement.removeEventListener('drop', handleDrop);
                 }
             }
-           
+
             tabs.splice(tabIndex, 1);
-           
+
             if (tabId === activeTabId) {
                 if (tabs.length > 0) {
                     const newActiveIndex = tabIndex < tabs.length ? tabIndex : tabIndex - 1;
@@ -1364,128 +1404,127 @@
                     const mainContent = document.getElementById('main-content');
                     const contentArea = document.getElementById('content-area');
                     const authOverlay = document.getElementById('auth-overlay');
-                   
+
                     contentArea.innerHTML = '';
                     contentArea.classList.add('hidden');
                     mainContent.classList.remove('hidden');
-                   
+
                     const backButton = document.querySelector('.back-to-menu');
                     if (backButton) {
                         backButton.remove();
                     }
-                   
+
                     if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
                         mainContent.classList.add('blurred');
                         passwordOverlay.classList.remove('hidden');
                     }
                 }
             }
-           
+
             updateTabBar();
-           
+
             if (activeTabId !== null && tabs.length > 0) {
                 showTabContent(tabs.find(t => t.id === activeTabId));
             }
         }
-       
+
         function handleDragStart(e) {
             draggedTab = this;
             isDragging = true;
             this.classList.add('dragging');
-       
+
             const rect = this.getBoundingClientRect();
             dragOffsetX = e.clientX - rect.left;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/html', this.outerHTML);
-       
+
             requestAnimationFrame(moveTab);
         }
-       
+
         function moveTab() {
             if (!isDragging || !draggedTab) return;
-       
+
             const tabBar = document.getElementById('tab-bar');
             const tabBarRect = tabBar.getBoundingClientRect();
             const scrollThreshold = 50;
             const cursorX = dragOffsetX + draggedTab.getBoundingClientRect().left;
-       
+
             draggedTab.style.position = 'relative';
             draggedTab.style.transform = `translateX(${dragOffsetX}px)`;
-       
+
             if (cursorX < tabBarRect.left + scrollThreshold) {
                 tabBar.scrollLeft -= 10;
             } else if (cursorX > tabBarRect.right - scrollThreshold) {
                 tabBar.scrollLeft += 10;
             }
-       
+
             requestAnimationFrame(moveTab);
         }
-       
+
         function handleDragEnd(e) {
             isDragging = false;
             draggedTab.classList.remove('dragging');
             draggedTab.style.position = '';
             draggedTab.style.transform = '';
             draggedTab = null;
-       
+
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('drag-over');
             });
-       
+
             updateTabBar();
         }
-       
+
         function handleDragOver(e) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
         }
-       
+
         function handleDragEnter(e) {
             e.preventDefault();
             if (draggedTab && draggedTab !== this) {
                 this.classList.add('drag-over');
             }
         }
-       
+
         function handleDragLeave(e) {
             e.preventDefault();
             this.classList.remove('drag-over');
         }
-       
+
         function handleDrop(e) {
             e.preventDefault();
             if (draggedTab && draggedTab !== this) {
                 const draggedTabId = draggedTab.dataset.tabId;
                 const targetTabId = this.dataset.tabId;
-       
+
                 const draggedIndex = tabs.findIndex(t => t.id === draggedTabId);
                 const targetIndex = tabs.findIndex(t => t.id === targetTabId);
-       
+
                 if (draggedIndex !== -1 && targetIndex !== -1) {
                     const [movedTab] = tabs.splice(draggedIndex, 1);
                     const insertIndex = e.clientX < this.getBoundingClientRect().left + this.getBoundingClientRect().width / 2 ? targetIndex : targetIndex + 1;
                     tabs.splice(insertIndex, 0, movedTab);
-       
+
                     updateTabBar();
                 }
             }
         }
-       
+
         function handleTouchStart(e) {
-    if (e.target.closest('.tab-close')) return; // Ignorar toque se for no botão de fechar
-    
-    draggedTab = this;
-    isDragging = true;
-    this.classList.add('dragging');
-    const touch = e.targetTouches[0]; // Usar targetTouches para o elemento que começou o toque
-    const rect = this.getBoundingClientRect();
-    dragOffsetX = touch.clientX - rect.left;
-    // Store initial position for relative movement
-    this.initialX = rect.left;
-    this.style.position = 'relative';
-    this.style.zIndex = '100';
-    requestAnimationFrame(moveTab);
-}
+            if (e.target.closest('.tab-close')) return;
+            draggedTab = this;
+            isDragging = true;
+            this.classList.add('dragging');
+            const touch = e.targetTouches[0];
+            const rect = this.getBoundingClientRect();
+            dragOffsetX = touch.clientX - rect.left;
+            this.initialX = rect.left;
+            this.style.position = 'relative';
+            this.style.zIndex = '100';
+            requestAnimationFrame(moveTab);
+        }
+
         function handleTouchMove(e) {
             e.preventDefault();
             if (!isDragging || !draggedTab) return;
@@ -1493,28 +1532,25 @@
             const tabBar = document.getElementById('tab-bar');
             const tabBarRect = tabBar.getBoundingClientRect();
             const scrollThreshold = 50;
-            // Calculate new position
             const newX = touch.clientX - dragOffsetX;
             draggedTab.style.transform = `translateX(${newX - draggedTab.initialX}px)`;
-            // Auto-scroll tab bar
             if (touch.clientX < tabBarRect.left + scrollThreshold) {
                 tabBar.scrollLeft -= 10;
             } else if (touch.clientX > tabBarRect.right - scrollThreshold) {
                 tabBar.scrollLeft += 10;
             }
-            // Find target tab for drop
             const tabs = Array.from(tabBar.querySelectorAll('.tab'));
             const targetTab = tabs.find(tab => {
                 if (tab === draggedTab) return false;
                 const rect = tab.getBoundingClientRect();
                 return touch.clientX >= rect.left && touch.clientX <= rect.right;
             });
-            // Update drag-over class
             tabs.forEach(tab => tab.classList.remove('drag-over'));
             if (targetTab) {
                 targetTab.classList.add('drag-over');
             }
         }
+
         function handleTouchEnd(e) {
             if (!isDragging || !draggedTab) return;
             isDragging = false;
@@ -1525,7 +1561,6 @@
             const tabBar = document.getElementById('tab-bar');
             const tabsElements = Array.from(tabBar.querySelectorAll('.tab'));
             const touch = e.changedTouches[0];
-            // Find target tab for drop
             const targetTab = tabsElements.find(tab => {
                 if (tab === draggedTab) return false;
                 const rect = tab.getBoundingClientRect();
@@ -1538,18 +1573,16 @@
                 const targetIndex = tabs.findIndex(t => t.id === targetTabId);
                 if (draggedIndex !== -1 && targetIndex !== -1) {
                     const [movedTab] = tabs.splice(draggedIndex, 1);
-                    // Insert before or after target based on touch position
                     const targetRect = targetTab.getBoundingClientRect();
                     const insertIndex = touch.clientX < targetRect.left + targetRect.width / 2 ? targetIndex : targetIndex + 1;
                     tabs.splice(insertIndex, 0, movedTab);
                     updateTabBar();
                 }
             }
-            // Clean up
             tabsElements.forEach(tab => tab.classList.remove('drag-over'));
             draggedTab = null;
-        };
-       
+        }
+
         function validateAccess() {
             const userKey = document.getElementById('access-key-input').value;
             const overlay = document.getElementById('auth-overlay');
@@ -1557,11 +1590,9 @@
             const errorMessage = document.getElementById('error-message');
             const submitButton = document.getElementById('submit-button');
             const keyInput = document.getElementById('access-key-input');
-            
-            // Chave de acesso hardcoded diretamente no HTML
+
             const validAccessKey = 'Lamic759@';
-            
-            // Verificação direta sem animação
+
             if (userKey === validAccessKey) {
                 localStorage.setItem('sessionStart', Date.now());
                 overlay.classList.add('hidden');
@@ -1572,7 +1603,7 @@
                 handleAccessError();
             }
         }
-        
+
         function handleAccessError() {
             const errorMessage = document.getElementById('error-message');
             const submitButton = document.getElementById('submit-button');
@@ -1581,9 +1612,9 @@
             const waitTimeDisplay = document.getElementById('wait-time');
             const progressBarContainer = document.getElementById('progress-bar-container');
             const progressBar = document.getElementById('progress-bar');
-            
+
             attemptCount++;
-            errorMessage.textContent = 'Senha incorreta!';
+            errorMessage.textContent = 'Senha incorreta! Tente novamente.';
             errorMessage.style.display = 'block';
             keyInput.classList.add('shake');
             submitButton.classList.add('error');
@@ -1621,15 +1652,16 @@
                 }, interval);
             }
         }
+
         function toggleTabBarMinimization() {
             const tabBar = document.getElementById('tab-bar');
             const minimizeButton = document.getElementById('minimize-button');
             const minimizeIcon = minimizeButton.querySelector('i');
             const contentArea = document.getElementById('content-area');
             const installBanner = document.querySelector('.install-banner');
-           
+
             isTabBarMinimized = !isTabBarMinimized;
-           
+
             if (isTabBarMinimized) {
                 tabBar.classList.add('minimized');
                 minimizeButton.classList.add('minimized');
@@ -1649,99 +1681,77 @@
                     installBanner.classList.remove('minimized');
                 }
             }
-           
-            // Salvar estado no localStorage
+
             localStorage.setItem('tabBarMinized', isTabBarMinimized);
         }
-       
+
         function showInstallBanner(promptEvent) {
-    if (!isMobileDevice || localStorage.getItem('installPromptDismissed') || localStorage.getItem('appInstalled')) {
-        return;
-    }
+            if (!isMobileDevice || localStorage.getItem('installPromptDismissed') || localStorage.getItem('appInstalled')) {
+                return;
+            }
+            let existingBanner = document.querySelector('.install-banner');
+            if (existingBanner) existingBanner.remove();
 
-    // Remover qualquer banner antigo antes de criar um novo
-    let existingBanner = document.querySelector('.install-banner');
-    if (existingBanner) existingBanner.remove();
-    
-    const tabBar = document.getElementById('tab-bar');
-    const banner = document.createElement('div');
-    banner.className = 'install-banner';
-    
-    // Adicionar a classe minimized se a tab-bar estiver minimizada
-    if (tabBar.classList.contains('minimized')) {
-        banner.classList.add('minimized');
-    }
-    
-    banner.innerHTML = `
-        <p>Instale nosso aplicativo para uma melhor experiência!</p>
-        <button id="install-app-button">Instalar</button>
-        <button class="close-install"><i class="fas fa-times"></i></button>
-    `;
-    document.body.appendChild(banner);
+            const tabBar = document.getElementById('tab-bar');
+            const banner = document.createElement('div');
+            banner.className = 'install-banner';
 
-    setTimeout(() => {
-        banner.classList.add('show');
-    }, 100);
+            if (tabBar.classList.contains('minimized')) {
+                banner.classList.add('minimized');
+            }
 
-    document.getElementById('install-app-button').addEventListener('click', () => {
-        if (promptEvent) {
-            promptEvent.prompt();
-            promptEvent.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                    localStorage.setItem('appInstalled', 'true');
-                } else {
-                    console.log('User dismissed the install prompt');
+            banner.innerHTML = `
+                <p>Instale o app para uma experiência melhor</p>
+                <button id="install-app-button"><i class="fas fa-download" style="margin-right:6px;"></i>Instalar</button>
+                <button class="close-install"><i class="fas fa-times"></i></button>
+            `;
+            document.body.appendChild(banner);
+
+            setTimeout(() => { banner.classList.add('show'); }, 100);
+
+            document.getElementById('install-app-button').addEventListener('click', () => {
+                if (promptEvent) {
+                    promptEvent.prompt();
+                    promptEvent.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            localStorage.setItem('appInstalled', 'true');
+                        }
+                        deferredPrompt = null;
+                        banner.classList.remove('show');
+                        setTimeout(() => banner.remove(), 500);
+                    });
                 }
-                deferredPrompt = null;
+            });
+
+            banner.querySelector('.close-install').addEventListener('click', () => {
+                localStorage.setItem('installPromptDismissed', 'true');
                 banner.classList.remove('show');
                 setTimeout(() => banner.remove(), 500);
             });
         }
-    });
 
-    banner.querySelector('.close-install').addEventListener('click', () => {
-        localStorage.setItem('installPromptDismissed', 'true');
-        banner.classList.remove('show');
-        setTimeout(() => banner.remove(), 500);
-    });
-}
-
-// Listener principal para o evento de instalação
-window.addEventListener('beforeinstallprompt', (e) => {
-    // 1. Prevenir o prompt padrão do navegador
-    e.preventDefault();
-    
-    // 2. Armazenar o evento
-    deferredPrompt = e;
-    console.log('Install prompt is ready to be triggered');
-    
-    // 3. Chamar a função de exibição do banner
-    // A função showInstallBanner() agora usa o prompt armazenado
-    // e checa as flags de localStorage e dispositivo móvel.
-    showInstallBanner(deferredPrompt);
-});
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallBanner(deferredPrompt);
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
             const keyInput = document.getElementById('access-key-input');
             const submitButton = document.getElementById('submit-button');
             const minimizeButton = document.getElementById('minimize-button');
-       
+
             if (keyInput && submitButton) {
                 keyInput.addEventListener('keypress', (event) => {
                     if (event.key === 'Enter') {
                         validateAccess();
                     }
                 });
-            } else {
-                console.error('Password input or submit button not found');
             }
-           
-            // Adicionar event listener para o botão de minimizar
+
             if (minimizeButton) {
                 minimizeButton.addEventListener('click', toggleTabBarMinimization);
-               
-                // Restaurar estado salvo da minimização
+
                 const savedState = localStorage.getItem('tabBarMinized');
                 if (savedState === 'true') {
                     isTabBarMinimized = true;
@@ -1749,7 +1759,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
                     const minimizeIcon = minimizeButton.querySelector('i');
                     const contentArea = document.getElementById('content-area');
                     const installBanner = document.querySelector('.install-banner');
-                   
+
                     tabBar.classList.add('minimized');
                     minimizeButton.classList.add('minimized');
                     minimizeIcon.className = 'fas fa-chevron-down';
@@ -1760,33 +1770,31 @@ window.addEventListener('beforeinstallprompt', (e) => {
                     }
                 }
             }
-       
-            // Exibir o banner de instalação em dispositivos móveis
+
             if (isMobileDevice) {
                 showInstallBanner();
             }
         });
-       
+
         let deferredPrompt;
-       
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            console.log('Install prompt is ready to be triggered');
         });
-       
+
         window.onload = function() {
             const sessionStart = localStorage.getItem('sessionStart');
             const currentTime = Date.now();
             const overlay = document.getElementById('auth-overlay');
             const mainContent = document.getElementById('main-content');
-       
+
             if (sessionStart && (currentTime - sessionStart < sessionDuration)) {
                 overlay.classList.add('hidden');
                 mainContent.classList.remove('blurred');
                 startSessionTimer();
             }
-       
+
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('https://raw.githubusercontent.com/LaboratorioLamic/Dados/refs/heads/main/service-worker.js', { scope: '/' }).then((registration) => {
                     console.log('Service Worker registered with scope:', registration.scope);
@@ -1795,25 +1803,28 @@ window.addEventListener('beforeinstallprompt', (e) => {
                 });
             }
         };
+
         document.addEventListener('contextmenu', function(event) {
-    event.preventDefault();
-});
-function ctrlShiftKey(e, keyCode) {
-    return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
-}
-document.onkeydown = function(event) {
-    if (
-        event.keyCode === 123 || // F12
-        ctrlShiftKey(event, 'I') || // Ctrl + Shift + I
-        ctrlShiftKey(event, 'J') || // Ctrl + Shift + J
-        ctrlShiftKey(event, 'C') || // Ctrl + Shift + C
-        (event.ctrlKey && event.keyCode === 'U'.charCodeAt(0)) || // Ctrl + U
-        (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0)) // Ctrl + S
-    ) {
-        event.preventDefault();
-        return false;
-    }
-};
-        </script>
+            event.preventDefault();
+        });
+
+        function ctrlShiftKey(e, keyCode) {
+            return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
+        }
+
+        document.onkeydown = function(event) {
+            if (
+                event.keyCode === 123 ||
+                ctrlShiftKey(event, 'I') ||
+                ctrlShiftKey(event, 'J') ||
+                ctrlShiftKey(event, 'C') ||
+                (event.ctrlKey && event.keyCode === 'U'.charCodeAt(0)) ||
+                (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0))
+            ) {
+                event.preventDefault();
+                return false;
+            }
+        };
+    </script>
 </body>
 </html>
