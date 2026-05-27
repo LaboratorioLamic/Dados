@@ -764,7 +764,10 @@
         }
 
         @media (max-width: 640px) {
-            .app-header { padding: 0 16px; }
+            .app-header { padding: 0 16px; justify-content: center; }
+            .header-brand { display: none; }
+            .header-right { display: none; }
+            .header-center { position: static; transform: none; }
             .brand-tagline { display: none; }
             .dash-inner { padding: 20px 14px 0; }
             .modules-grid { grid-template-columns: 1fr; gap: 10px; }
