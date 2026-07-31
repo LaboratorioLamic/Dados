@@ -525,37 +525,62 @@
         /* ════════════════════════════════
            BACK TO MENU BUTTON
         ════════════════════════════════ */
+        /* Botão "Voltar" dentro da barra inferior */
         .back-to-menu {
-            position: fixed;
-            top: 10px;
-            right: 20px;
-            background: rgba(11, 21, 39, 0.92);
-            backdrop-filter: blur(8px);
-            color: #fff;
-            padding: 7px 16px;
-            border-radius: 20px;
-            font-size: .78em;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            text-decoration: none;
-            display: flex;
+            display: none;
+            flex-shrink: 0;
+            margin-left: auto;
+            margin-right: 42px; /* espaço para o botão de minimizar */
             align-items: center;
             gap: 6px;
-            box-shadow: 0 4px 20px rgba(0,0,0,.35);
-            z-index: 600;
+            height: 30px;
+            padding: 0 13px;
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.8);
             border: 1px solid rgba(255,255,255,.12);
+            border-radius: 6px;
+            font-size: .76em;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: .02em;
             cursor: pointer;
             transition: all var(--ease);
-            animation: bounceIn .35s ease-out;
-            letter-spacing: .02em;
+            white-space: nowrap;
         }
+
+        .tab-bar.show .back-to-menu.visible { display: flex; }
 
         .back-to-menu:hover {
             background: var(--accent);
+            color: #fff;
             border-color: var(--accent);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 22px rgba(37,99,235,.4);
+            box-shadow: 0 2px 12px rgba(37,99,235,.4);
         }
+
+        /* Botão suspenso (apenas ícone) quando a barra está minimizada */
+        .back-floating {
+            position: fixed;
+            bottom: 0;
+            right: 60px;
+            width: 34px; height: 34px;
+            background: rgba(11, 21, 39, .95);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.12);
+            border-bottom: none;
+            border-radius: 7px 7px 0 0;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: .82em;
+            z-index: 401;
+            transition: background var(--ease), color var(--ease);
+            box-shadow: 0 -2px 12px rgba(0,0,0,.35);
+        }
+
+        .back-floating.visible { display: flex; }
+        .back-floating:hover { background: var(--accent); border-color: var(--accent); }
 
         /* ════════════════════════════════
            TAB BAR
@@ -569,21 +594,32 @@
             padding: 0 14px;
             display: flex;
             align-items: center;
-            gap: 5px;
-            overflow-x: auto;
+            gap: 8px;
+            overflow: hidden;
             z-index: 400;
             box-shadow: 0 -4px 24px rgba(0,0,0,.25);
             transform: translateY(100%);
             transition: transform .3s ease;
-            scroll-behavior: smooth;
         }
 
         .tab-bar.show:not(.minimized) { transform: translateY(0); }
         .tab-bar.minimized { transform: translateY(100%) !important; }
 
-        .tab-bar::-webkit-scrollbar { height: 3px; }
-        .tab-bar::-webkit-scrollbar-track { background: transparent; }
-        .tab-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+        .tab-scroll {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .tab-scroll::-webkit-scrollbar { height: 3px; }
+        .tab-scroll::-webkit-scrollbar-track { background: transparent; }
+        .tab-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 
         .tab {
             background: rgba(255,255,255,.06);
@@ -1159,7 +1195,15 @@
     <div id="content-area" class="hidden"></div>
 
     <!-- ── Tab bar ── -->
-    <div id="tab-bar" class="tab-bar"></div>
+    <div id="tab-bar" class="tab-bar">
+        <div id="tab-scroll" class="tab-scroll"></div>
+        <button id="tab-bar-back" class="back-to-menu" title="Voltar ao menu principal">
+            <i class="fas fa-home"></i><span>Voltar</span>
+        </button>
+    </div>
+    <button id="back-floating" class="back-floating" title="Voltar ao menu principal">
+        <i class="fas fa-home"></i>
+    </button>
     <button id="minimize-button" class="minimize-button" title="Minimizar barra de abas">
         <i class="fas fa-chevron-up"></i>
     </button>
@@ -1292,11 +1336,13 @@
 
         function updateTabBar() {
             const tabBar = document.getElementById('tab-bar');
+            const tabScroll = document.getElementById('tab-scroll');
             const wasMinimized = tabBar.classList.contains('minimized');
-            tabBar.innerHTML = '';
+            tabScroll.innerHTML = '';
 
             if (tabs.length === 0) {
                 tabBar.classList.remove('show');
+                updateBackButtons();
                 return;
             }
 
@@ -1306,9 +1352,11 @@
                 tabBar.classList.add('minimized');
             }
 
+            updateBackButtons();
+
             tabs.forEach(tab => {
                 const tabElement = createTabElement(tab);
-                tabBar.appendChild(tabElement);
+                tabScroll.appendChild(tabElement);
 
                 setTimeout(() => {
                     tabElement.style.transition = 'transform 0.2s ease';
@@ -1342,29 +1390,39 @@
                 }
             });
 
-            if (!document.querySelector('.back-to-menu')) {
-                const backButton = document.createElement('button');
-                backButton.className = 'back-to-menu';
-                backButton.innerHTML = '<i class="fas fa-home"></i> Voltar';
-                backButton.onclick = () => {
-                    const contentArea = document.getElementById('content-area');
-                    const mainContent = document.getElementById('main-content');
-                    const authOverlay = document.getElementById('auth-overlay');
+            updateBackButtons();
+        }
 
-                    contentArea.classList.add('hidden');
-                    mainContent.classList.remove('hidden');
+        /* Mostra/oculta os botões "Voltar":
+           - dentro da barra inferior quando ela está visível
+           - suspenso (só ícone de casa) quando a barra está minimizada */
+        function updateBackButtons() {
+            const tabBar = document.getElementById('tab-bar');
+            const barBack = document.getElementById('tab-bar-back');
+            const floatBack = document.getElementById('back-floating');
+            if (!tabBar || !barBack || !floatBack) return;
 
-                    activeTabId = null;
-                    updateTabBar();
+            const contentArea = document.getElementById('content-area');
+            const inModule = contentArea && !contentArea.classList.contains('hidden') && activeTabId !== null;
+            const minimized = tabBar.classList.contains('minimized');
 
-                    backButton.remove();
+            barBack.classList.toggle('visible', inModule && !minimized);
+            floatBack.classList.toggle('visible', inModule && minimized);
+        }
 
-                    if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
-                        mainContent.classList.add('blurred');
-                        passwordOverlay.classList.remove('hidden');
-                    }
-                };
-                document.body.appendChild(backButton);
+        function goBackToMenu() {
+            const contentArea = document.getElementById('content-area');
+            const mainContent = document.getElementById('main-content');
+
+            contentArea.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+
+            activeTabId = null;
+            updateTabBar();
+
+            if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
+                mainContent.classList.add('blurred');
+                passwordOverlay.classList.remove('hidden');
             }
         }
 
@@ -1421,10 +1479,7 @@
                     contentArea.classList.add('hidden');
                     mainContent.classList.remove('hidden');
 
-                    const backButton = document.querySelector('.back-to-menu');
-                    if (backButton) {
-                        backButton.remove();
-                    }
+                    updateBackButtons();
 
                     if (!localStorage.getItem('sessionStart') || (Date.now() - parseInt(localStorage.getItem('sessionStart')) >= sessionDuration)) {
                         mainContent.classList.add('blurred');
@@ -1456,7 +1511,7 @@
         function moveTab() {
             if (!isDragging || !draggedTab) return;
 
-            const tabBar = document.getElementById('tab-bar');
+            const tabBar = document.getElementById('tab-scroll');
             const tabBarRect = tabBar.getBoundingClientRect();
             const scrollThreshold = 50;
             const cursorX = dragOffsetX + draggedTab.getBoundingClientRect().left;
@@ -1541,7 +1596,7 @@
             e.preventDefault();
             if (!isDragging || !draggedTab) return;
             const touch = e.touches[0];
-            const tabBar = document.getElementById('tab-bar');
+            const tabBar = document.getElementById('tab-scroll');
             const tabBarRect = tabBar.getBoundingClientRect();
             const scrollThreshold = 50;
             const newX = touch.clientX - dragOffsetX;
@@ -1695,6 +1750,7 @@
             }
 
             localStorage.setItem('tabBarMinized', isTabBarMinimized);
+            updateBackButtons();
         }
 
         function showInstallBanner(promptEvent) {
@@ -1782,6 +1838,12 @@
                     }
                 }
             }
+
+            const barBack = document.getElementById('tab-bar-back');
+            const floatBack = document.getElementById('back-floating');
+            if (barBack) barBack.addEventListener('click', goBackToMenu);
+            if (floatBack) floatBack.addEventListener('click', goBackToMenu);
+            updateBackButtons();
 
             if (isMobileDevice) {
                 showInstallBanner();
