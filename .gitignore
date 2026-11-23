@@ -1,0 +1,7 @@
+uniadmin.json
+uniadmin-corrigido.json
+agendaresp.json
+respiroLamic_backup_*.json
+
+# Cada módulo em seeds/ é um repositório próprio (publicado no próprio GitHub Pages)
+seeds/

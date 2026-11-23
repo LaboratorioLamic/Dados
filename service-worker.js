@@ -1,88 +1,27 @@
-const CACHE_NAME = 'lamic-dados-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap',
-  'https://i.imgur.com/0CfbOl5.png',
-  'https://raw.githubusercontent.com/LaboratorioLamic/Dados/refs/heads/main/manifest.json'
-];
+// Rede primeiro (dados e login sempre atualizados); cache só como reserva offline do "casco" do app.
+const CACHE = 'lamic-portal-v90';
+const CASCO = ['./', 'index.html', 'css/portal.css', 'js/app.js', 'js/chat-flutuante.js', 'js/config.js', 'assents/circulo.png', 'icon-192.png', 'icon-512.png'];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(error => {
-        console.error('Cache addAll failed:', error);
-      })
-  );
-  // Force the Service Worker to activate immediately
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CASCO)).catch(() => {}));
   self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (!cacheWhitelist.includes(cacheName)) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-    .then(() => {
-      console.log('Service Worker activated');
-      return self.clients.claim();
-    })
-  );
+self.addEventListener('activate', (e) => {
+  e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
-self.addEventListener('fetch', event => {
-  // Skip caching for external URLs that are not in urlsToCache
-  const isExternalUrl = !urlsToCache.some(url => event.request.url.includes(url)) && event.request.url.startsWith('http');
-  if (isExternalUrl && !event.request.url.includes('LaboratorioLamic')) {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return new Response('Offline: Unable to fetch resource.', { status: 503 });
-        })
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request)
-          .then(networkResponse => {
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-              return networkResponse;
-            }
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-            return networkResponse;
-          })
-          .catch(() => {
-            return new Response(
-              '<html><body><h1>Offline</h1><p>Você está offline. Por favor, conecte-se à internet para acessar este conteúdo.</p></body></html>',
-              {
-                headers: { 'Content-Type': 'text/html' },
-                status: 503
-              }
-            );
-          });
+self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+  // Só arquivos do próprio site, via GET. Supabase e outros domínios passam direto.
+  if (e.request.method !== 'GET' || url.origin !== location.origin) return;
+  e.respondWith(
+    // no-cache: sempre confere com o servidor (304 se igual); sem isso o cache HTTP do navegador servia arquivo velho
+    (e.request.mode === 'navigate' ? fetch(e.request) : fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }))
+      .then((r) => {
+        if (r.ok) { const copia = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copia)); }
+        return r;
       })
+      .catch(() => caches.match(e.request).then((r) => r || caches.match('index.html')))
   );
-}); 
+});
