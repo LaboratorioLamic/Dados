@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001f3f">
+    <title>Lamic Tabelas</title>
+    <link rel="icon" href="https://i.imgur.com/CMQ2kVH.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/CMQ2kVH.png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto Slab', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 95vh;
+            height: auto;
+            overflow-y: scroll;
+        }
+        html {
+            overflow-y: scroll;
+            height: auto;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: clamp(0.5rem, 3vw, 1rem);
+            font-weight: normal;
+        }
+        #userName {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .download-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #1a2b5f;
+            font-size: 18px;
+            z-index: 5;
+        }
+        .download-icon:hover {
+            color: #2c3e50;
+        }
+        .loading-download {
+            position: absolute;
+            right: 15px;
+            top: 30%;
+            transform: translateY(-50%);
+            color: #1a2b5f;
+            font-size: 18px;
+            z-index: 5;
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+        table {
+            width: 100%;
+            max-width: 1200px;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: visible;
+            display: none;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #1a2b5f;
+            color: white;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .loading-icon {
+            font-size: 64px;
+            color: #2c3e50;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .logo-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            display: none;
+        }
+        .logo-container img {
+            width: 200px;
+            height: auto;
+        }
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+        }
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+            border: 2px solid #332a8a;
+        }
+        .login-box select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .login-box button {
+            background-color: #1a2b5f;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .login-box button:hover {
+            background-color: #2c3e50;
+        }
+        .login-box button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .login-box .loading-icon {
+            font-size: 24px;
+            color: #2c3e50;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 10px auto;
+        }
+        #changeTableButton {
+            background-color: #1a2b5f;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        #changeTableButton:hover {
+            background-color: #2c3e50;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .modal-content-presentation {
+            background: #e6f0fa;
+            padding: 20px;
+            border: 2px solid #1a2b5f;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            animation: fadeIn 0.3s ease-in-out;
+            font-family: 'Inter', sans-serif;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-content-presentation h2 {
+            font-size: clamp(1.4em, 2.5vw, 1.8em);
+            font-weight: 700;
+            color: #1a2b5f;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal-content-presentation textarea {
+            width: 94%;
+            height: 350px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: clamp(0.9em, 2vw, 1em);
+            margin-bottom: 20px;
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+            background: #ffffff;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .modal-content-presentation button {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: clamp(0.9em, 2vw, 1em);
+            font-weight: 600;
+            width: 48%;
+            margin: 1%;
+            transition: background-color 0.3s ease;
+            color: white;
+        }
+        .modal-content-presentation button.cancel {
+            background-color: #dc3545;
+            color: white;
+        }
+        .modal-content-presentation button.cancel:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        .modal-content-presentation button.download {
+            background-color: #1a2b5f;
+            color: white;
+        }
+        .modal-content-presentation button.download:hover {
+            background-color: #2c3e50;
+            color: white;
+        }
+        /* Instrução Tooltip Styles - Corrigido */
+        .instruction-cell {
+            position: relative;
+            text-align: center;
+            cursor: pointer;
+            color: #1a2b5f;
+        }
+
+        .instruction-tooltip {
+            display: none;
+            position: absolute;
+            right: 130%; /* Distância do ícone */
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ffffff;
+            border: 2px solid #1a2b5f;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: -5px 5px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+            
+            /* Largura aumentada conforme solicitado */
+            width: 450px;
+            min-width: 150px;
+            
+            color: #333;
+            text-align: left;
+            
+            /* Respeita quebras de linha da planilha */
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+            
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            font-weight: normal;
+            line-height: 1.5;
+        }
+
+        /* DESIGN MODERNIZADO DO HYPERLINK DENTRO DO TOOLTIP */
+        .instruction-tooltip a {
+            display: inline-flex;
+            align-items: center;
+            color: #1a2b5f;
+            text-decoration: none;
+            font-weight: 700;
+            background: rgba(26, 43, 95, 0.08);
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin: 2px 0;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .instruction-tooltip a:hover {
+            background: #1a2b5f;
+            color: #ffffff;
+            box-shadow: 0 4px 8px rgba(26, 43, 95, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .instruction-tooltip a::after {
+            content: "\f35d"; /* FontAwesome external link icon */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-left: 8px;
+            font-size: 12px;
+        }
+
+        /* Seta da janela */
+        .instruction-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 20%;
+            left: 100%;
+            margin-top: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent transparent transparent #1a2b5f;
+        }
+
+        /* Animação e Exibição */
+        .instruction-cell.active .instruction-tooltip {
+            display: block;
+            animation: slideInLeft 0.3s ease-out forwards;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateY(-20%) translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-20%) translateX(0);
+            }
+        }
+
+        /* Ajuste para telas menores */
+        @media (max-width: 768px) {
+            table {
+                font-size: 14px;
+            }
+            .loading-icon {
+                font-size: 48px;
+            }
+            .logo-container {
+                position: relative;
+                left: auto;
+                top: auto;
+                display: flex;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+            .logo-container img {
+                width: 200px;
+            }
+            .modal-content-presentation {
+                max-width: 90%;
+            }
+            .modal-content-presentation textarea {
+                height: 250px;
+            }
+            .instruction-tooltip {
+                width: 250px;
+                right: 0;
+                top: 100%;
+                transform: none;
+            }
+            .instruction-tooltip::after {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box" id="loginBox">
+            <h2>Selecionar Tabela</h2>
+            <select id="userSelect">
+                <option value="">Selecione uma tabela</option>
+            </select>
+            <i class="fas fa-spinner loading-icon" id="loadingTableIcon"></i>
+            <button id="loginButton" disabled>Entrar</button>
+        </div>
+    </div>
+
+    <div class="modal" id="presentation-modal">
+        <div class="modal-content-presentation">
+            <h2>Editar Texto de Apresentação</h2>
+            <textarea id="presentationText"></textarea>
+            <button class="cancel" id="cancel-presentation">Cancelar</button><button class="download" id="download-presentation">Baixar</button>
+        </div>
+    </div>
+
+    <div class="logo-container">
+        <img src="https://i.imgur.com/qVfGMyc.png" alt="Logo" id="mainLogo">
+    </div>
+    <p id="userName" style="display: none;">Tabela selecionada</p>
+    <button id="changeTableButton" style="display: none;">Trocar Tabela</button>
+    <h1>Lista de Exames</h1>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Busque por nome do exame...">
+        <i class="fas fa-download download-icon" id="downloadIcon" style="display: none;"></i>
+        <i class="fas fa-spinner loading-download" id="loadingDownloadIcon"></i>
+    </div>
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <i class="fas fa-spinner loading-icon"></i>
+    </div>
+    <table id="comparisonTable">
+        <thead id="tableHeader"></thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <script>
+        const sheetsUrl = 'https://script.google.com/macros/s/AKfycbySlCz5a0ub1J5xHYxeeNZTI-lQzI5GiGdoyvsAqffVxHOhEwLCKBBKIy3e6qD_mSk/exec';
+        const testData = [
+            { Tabela: 'Nenhuma Tabela', Exame: 'Nenhum Exame Carregado', Valor: null, Material: '-', Prazo: '-', Descricao: '' },
+        ];
+        let examsData = {};
+        let currentTable = '';
+
+        // Texto padrão para a apresentação
+        const defaultPresentationText = `Ao (Nome fantasia e CNPJ)
+        
+Prezado(a) Senhor(a),
+
+    É com grande satisfação que encaminhamos para apreciação de V.Sa, a nossa proposta orçamentária, para realização de exames laboratoriais de nossa especialidade.
+    Salientamos que todos os exames aqui apresentados estão disponíveis para imediata realização.
+    Ademais, ressaltamos que a estrutura do Núcleo Técnico Operacional – NTO do Laboratório LAMIC está apta a realizar uma gama de aproximadamente 2.000 (dois mil) diferentes exames, e desta forma, caso vossa senhoria demande a realização de algum(ns) exame(s) que não esteja(m) detalhado(s) na presente proposta, encontramo-nos a disposição para apresentar proposta específica para o(s) mesmo(s).
+    A recepção dos materiais para análise obedecerá aos seguintes horários:
+
+Juazeiro do Norte (NTO – Centro) – ÁREA TÉCNICA 
+•	Segunda-feira à Sexta-feira: 06h00 às 17h00
+•	Sábado: 06h00 às 12h00
+
+    Entrega dos Resultados:
+    Os prazos de entrega dos resultados dos exames estão evidenciados ao lado da descrição de cada exame na relação anexa à presente proposta e levam em consideração o horário da entrada do material coletado na área técnica do Laboratório LAMIC.`;
+
+        // Texto fixo após a tabela
+        const closingText = `Encontramo-nos à disposição para esclarecer eventuais dúvidas julgadas necessárias acerca do presente orçamento.
+
+Atenciosamente, Dr. Leonardo
+Laboratório LAMIC`;
+
+        // Hide main content initially
+        document.querySelector('h1').style.display = 'none';
+        document.getElementById('userName').style.display = 'none';
+        document.querySelector('.search-container').style.display = 'none';
+        document.querySelector('.logo-container').style.display = 'none';
+        document.getElementById('comparisonTable').style.display = 'none';
+        document.getElementById('changeTableButton').style.display = 'none';
+
+        // Disable login button initially
+        document.getElementById('loginButton').disabled = true;
+
+        function showPresentationModal() {
+            document.getElementById('presentation-modal').style.display = 'flex';
+            document.getElementById('presentationText').value = defaultPresentationText;
+        }
+
+        function hidePresentationModal() {
+            document.getElementById('presentation-modal').style.display = 'none';
+        }
+
+        // Load tables from Google Sheets
+        async function loadTables() {
+            const userSelect = document.getElementById('userSelect');
+            userSelect.disabled = true;
+            document.getElementById('loadingTableIcon').style.display = 'block';
+            try {
+                const response = await fetch(sheetsUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    const tables = [...new Set(data.map(row => row.Tabela))];
+                    userSelect.innerHTML = '<option value="">Selecione uma tabela</option>';
+                    tables.forEach(table => {
+                        if (table) {
+                            const option = document.createElement('option');
+                            option.value = table;
+                            option.textContent = table;
+                            userSelect.appendChild(option);
+                        }
+                    });
+                    document.getElementById('loginButton').disabled = false;
+                } else {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+            } catch (error) {
+                console.warn('Falha ao carregar tabelas, usando dados de teste:', error);
+                userSelect.innerHTML = '<option value="">Selecione uma tabela</option>';
+                testData.forEach(row => {
+                    const option = document.createElement('option');
+                    option.value = row.Tabela;
+                    option.textContent = row.Tabela;
+                    userSelect.appendChild(option);
+                });
+                document.getElementById('loginButton').disabled = false;
+            } finally {
+                document.getElementById('loadingTableIcon').style.display = 'none';
+                userSelect.disabled = false;
+            }
+        }
+
+        // Handle table selection
+        document.getElementById('loginButton').addEventListener('click', async () => {
+            const selectedTable = document.getElementById('userSelect').value;
+            if (selectedTable) {
+                currentTable = selectedTable;
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.querySelector('h1').style.display = 'block';
+                document.getElementById('userName').textContent = selectedTable;
+                document.getElementById('userName').style.display = 'block';
+                document.querySelector('.search-container').style.display = 'block';
+                document.querySelector('.logo-container').style.display = 'block';
+                document.getElementById('comparisonTable').style.display = 'table';
+                document.getElementById('downloadIcon').style.display = 'block';
+                document.getElementById('changeTableButton').style.display = 'block';
+                loadData();
+            }
+        });
+
+        // Handle "Change Table" button click
+        document.getElementById('changeTableButton').addEventListener('click', () => {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.querySelector('h1').style.display = 'none';
+            document.getElementById('userName').style.display = 'none';
+            document.querySelector('.search-container').style.display = 'none';
+            document.querySelector('.logo-container').style.display = 'none';
+            document.getElementById('comparisonTable').style.display = 'none';
+            document.getElementById('downloadIcon').style.display = 'none';
+            document.getElementById('changeTableButton').style.display = 'none';
+            document.getElementById('userSelect').value = '';
+            document.getElementById('loginButton').disabled = true;
+        });
+
+        // Allow Enter key to trigger selection
+        document.getElementById('userSelect').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginButton').click();
+            }
+        });
+
+        // Enable/disable login button based on selection
+        document.getElementById('userSelect').addEventListener('change', () => {
+            const selectedTable = document.getElementById('userSelect').value;
+            document.getElementById('loginButton').disabled = !selectedTable;
+        });
+
+        // Função para formatar a data no formato desejado
+        function getFormattedDate() {
+            const months = [
+                'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+            ];
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = months[today.getMonth()];
+            const year = today.getFullYear();
+            return `Juazeiro do Norte/CE, ${day} de ${month} de ${year}.`;
+        }
+
+        // Download PDF function
+        async function downloadPDF() {
+            document.getElementById('downloadIcon').style.display = 'none';
+            document.getElementById('loadingDownloadIcon').style.display = 'block';
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const logoUrl = document.getElementById('mainLogo').src;
+            let startY = 20;
+
+            // Load and add logo
+            try {
+                const logoImg = new Image();
+                logoImg.crossOrigin = "anonymous";
+                logoImg.src = logoUrl;
+
+                await new Promise((resolve, reject) => {
+                    if (logoImg.complete) {
+                        resolve();
+                    } else {
+                        logoImg.onload = () => resolve();
+                        logoImg.onerror = () => reject(new Error('Failed to load logo'));
+                    }
+                });
+
+                const aspectRatio = logoImg.naturalHeight / logoImg.naturalWidth;
+                const imgWidth = 60;
+                const imgHeight = imgWidth * aspectRatio;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = logoImg.naturalWidth;
+                canvas.height = logoImg.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(logoImg, 0, 0);
+                const imgData = canvas.toDataURL('image/png');
+
+                const x = (210 - imgWidth) / 2;
+                doc.addImage(imgData, 'PNG', x, 10, imgWidth, imgHeight);
+                startY = 10 + imgHeight + 10;
+            } catch (error) {
+                console.warn('Logo load failed:', error);
+            }
+
+            // Add header
+            doc.setTextColor(44, 62, 80);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text("Proposta de Exames", 105, startY, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);
+
+            // Adiciona a localização e data
+            const dateText = getFormattedDate();
+            doc.text(dateText, 105, startY + 10, { align: 'center' });
+
+            // Adiciona o texto de apresentação editável
+            const presentationText = document.getElementById('presentationText').value || defaultPresentationText;
+            const presentationLines = doc.splitTextToSize(presentationText, 180);
+            doc.text(presentationLines, 15, startY + 20);
+
+            // Calcula a posição após o texto de apresentação
+            let textHeight = presentationLines.length * 5;
+            let tableStartY = startY + 20 + textHeight + 10;
+
+            // Prepare table data
+            const rows = Object.keys(examsData).map(exame => {
+                const data = examsData[exame];
+                const valorStr = data.valor !== undefined && !isNaN(data.valor) ? `R$ ${data.valor.toFixed(2)}` : 'N/A';
+                return [exame, data.material || 'N/A', data.prazo || 'N/A', valorStr];
+            });
+
+            // Add table using autoTable
+            doc.autoTable({
+                startY: tableStartY,
+                head: [['Exame', 'Material', 'Prazo', 'Valor']],
+                body: rows,
+                theme: 'striped',
+                styles: { 
+                    fontSize: 9, 
+                    cellPadding: 4,
+                    overflow: 'linebreak',
+                    font: 'helvetica',
+                    fontStyle: 'normal'
+                },
+                columnStyles: {
+                    0: { cellWidth: 95 },
+                    1: { cellWidth: 30 },
+                    2: { cellWidth: 25 },
+                    3: { cellWidth: 30 }
+                },
+                headStyles: { 
+                    fillColor: [26, 43, 95],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 10
+                }
+            });
+
+            // Adiciona o texto fixo após a tabela
+            const finalY = doc.lastAutoTable.finalY + 10;
+            const closingLines = doc.splitTextToSize(closingText, 180);
+            doc.text(closingLines, 15, finalY);
+
+            doc.save(`LAMIC - Lista de Exames.pdf`);
+
+            document.getElementById('loadingDownloadIcon').style.display = 'none';
+            document.getElementById('downloadIcon').style.display = 'block';
+        }
+
+        // Eventos para o modal de apresentação
+        document.getElementById('downloadIcon').addEventListener('click', () => {
+            showPresentationModal();
+        });
+
+        document.getElementById('cancel-presentation').addEventListener('click', () => {
+            hidePresentationModal();
+            document.getElementById('downloadIcon').style.display = 'block';
+        });
+
+        document.getElementById('download-presentation').addEventListener('click', () => {
+            hidePresentationModal();
+            downloadPDF();
+        });
+
+        // Load data from Google Sheets
+        async function loadData() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            let data;
+            try {
+                const response = await fetch(sheetsUrl);
+                if (response.ok) {
+                    data = await response.json();
+                } else {
+                    throw new Error('Falha ao carregar dados do Google Sheets');
+                }
+            } catch (error) {
+                console.warn('Usando dados de teste:', error);
+                data = testData;
+            }
+
+            // Filter exams for the selected table
+            examsData = {};
+            data.forEach(row => {
+                if (row.Tabela === currentTable) {
+                    const exame = row.Exame;
+                    const valor = parseFloat(row.Valor);
+                    const material = row.Material;
+                    const prazo = row.Prazo;
+                    const descricao = row.Descricao || '';
+                    if (exame && !isNaN(valor)) {
+                        examsData[exame] = { valor, material, prazo, descricao };
+                    }
+                }
+            });
+
+            renderTableHeader();
+            renderTable(Object.keys(examsData));
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function renderTableHeader() {
+            const header = document.getElementById('tableHeader');
+            header.innerHTML = '<tr><th>Exame</th><th>Material Biológico</th><th>Prazo</th><th>Valor</th><th>Info</th></tr>';
+        }
+
+        function renderTable(exams) {
+            const body = document.getElementById('tableBody');
+            body.innerHTML = '';
+            exams.forEach(exame => {
+                const row = document.createElement('tr');
+                const data = examsData[exame] || { valor: 'N/A', material: 'N/A', prazo: 'N/A', descricao: '' };
+                const displayValor = data.valor !== 'N/A' && !isNaN(data.valor) ? `R$ ${data.valor.toFixed(2)}` : 'N/A';
+                const processedDescription = processHyperlinks(data.descricao);
+                const infoContent = data.descricao ? `<div class="instruction-cell"><i class="fas fa-circle-info instruction-icon" onclick="toggleInstruction(this)"></i><div class="instruction-tooltip">${processedDescription}</div></div>` : '<span>-</span>';
+                row.innerHTML = `<td>${exame}</td><td>${data.material || 'N/A'}</td><td>${data.prazo || 'N/A'}</td><td>${displayValor}</td><td>${infoContent}</td>`;
+                body.appendChild(row);
+            });
+        }
+
+        function processHyperlinks(text) {
+            if (!text) return '';
+            
+            // Se o texto contém tags <a>, extrai e reformata
+            const linkRegex = /<a\s+href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi;
+            let hasLinks = false;
+            
+            const processed = text.replace(linkRegex, (match, url, linkText) => {
+                hasLinks = true;
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+            });
+            
+            // Se encontrou links formatados, retorna o processado
+            if (hasLinks) {
+                return processed;
+            }
+            
+            // Caso contrário, processa URLs simples
+            const urlRegex = /(https?:\/\/[^\s<>"(){}\[\]\\^`|]*)/g;
+            return text.replace(urlRegex, (url) => {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            });
+        }
+
+        function toggleInstruction(element) {
+            const cell = element.closest('.instruction-cell');
+            if (!cell) return;
+            
+            const allCells = document.querySelectorAll('.instruction-cell.active');
+            allCells.forEach(activeCell => {
+                if (activeCell !== cell) {
+                    activeCell.classList.remove('active');
+                }
+            });
+            
+            cell.classList.toggle('active');
+            
+            // Se o tooltip foi ativado, ajusta a posição para garantir visibilidade
+            if (cell.classList.contains('active')) {
+                setTimeout(() => {
+                    const tooltip = cell.querySelector('.instruction-tooltip');
+                    if (tooltip) {
+                        const rect = tooltip.getBoundingClientRect();
+                        
+                        // Se o tooltip sai pela esquerda, reposiciona para direita
+                        if (rect.left < 0) {
+                            tooltip.style.right = 'auto';
+                            tooltip.style.left = '130%';
+                        }
+                        
+                        // Se o tooltip sai pela direita, reposiciona para esquerda
+                        if (rect.right > window.innerWidth) {
+                            tooltip.style.right = '130%';
+                            tooltip.style.left = 'auto';
+                        }
+                    }
+                }, 0);
+            }
+            
+            event.stopPropagation();
+        }
+
+        function filterExams(query) {
+            const matchingExams = Object.keys(examsData).filter(exame =>
+                exame.toLowerCase().includes(query.toLowerCase())
+            );
+            renderTable(matchingExams);
+            if (!query) {
+                renderTable(Object.keys(examsData));
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => filterExams(e.target.value));
+
+        // Close instruction tooltips when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.instruction-cell')) {
+                document.querySelectorAll('.instruction-cell.active').forEach(cell => {
+                    cell.classList.remove('active');
+                });
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            loadTables();
+        });
+
+        function ctrlShiftKey(e, keyCode) {
+            return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
+        }
+
+        document.onkeydown = function(event) {
+            if (
+                event.keyCode === 123 || 
+                ctrlShiftKey(event, 'I') || 
+                ctrlShiftKey(event, 'J') || 
+                ctrlShiftKey(event, 'C') || 
+                (event.ctrlKey && event.keyCode === 'U'.charCodeAt(0)) || 
+                (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0))
+            ) {
+                event.preventDefault();
+                return false;
+            }
+        };
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>

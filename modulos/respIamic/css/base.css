@@ -1,0 +1,74 @@
+/* Reset leve, tipografia, fundo, animações de aba/modal e scrollbars */
+
+html { -webkit-text-size-adjust: 100%; }
+
+/* ── ALTURA DA JANELA NO CELULAR ──────────────────────────────
+   O layout é `body h-screen overflow-hidden` + `main overflow-auto`: quem rola
+   é o <main>, não a página. No celular `100vh` (do h-screen) mede a janela SEM
+   a barra de endereço do navegador, então o body fica mais alto que a área
+   visível; o fim do <main> cai atrás da barra e a rolagem parece travada.
+   `100dvh` mede a altura realmente visível e acompanha a barra ao aparecer e
+   sumir. `100vh` fica antes como reserva para navegadores sem `dvh`. */
+html, body { height: 100vh; height: 100dvh; }
+
+body {
+    font-feature-settings: 'cv02','cv03','cv04','ss01';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(61,124,240,.07), transparent 60%),
+        radial-gradient(900px 500px at -10% 110%, rgba(14,22,40,.06), transparent 60%),
+        #f4f6fb;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: tabIn .32s var(--ease-drawer) both; }
+@keyframes tabIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal { display: none; }
+.modal.active { display: flex; animation: fadeIn .18s ease-out; }
+.modal.active > div { animation: modalIn .28s var(--ease-drawer) both; }
+
+/* Modal mais alto que a janela precisa rolar por dentro, senão o rodapé (com os
+   botões) fica fora de alcance no celular. `items-center` centraliza enquanto
+   cabe; passando disso, `my-auto` vira margem zero e o conteúdo rola do topo. */
+.modal { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.modal.active > div { max-height: none; margin-top: auto; margin-bottom: auto; }
+/* Modais que já controlam a própria altura (cabeçalho fixo + corpo rolante)
+   mantêm o desenho: quem rola lá dentro é o corpo, não o card inteiro. */
+.modal.active > div[class*="max-h-["] { margin-top: 0; margin-bottom: 0; }
+@keyframes modalIn { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+
+/* ── ROLAGEM POR TOQUE ────────────────────────────────────────
+   Todo container rolável (o <main>, o menu lateral, listas e corpos de modal)
+   recebe inércia no iOS e libera o gesto vertical para o navegador — sem
+   `touch-action` alguns elementos com handler de ponteiro engolem o arrasto e
+   nada rola. `overscroll-behavior: contain` impede que, ao chegar no fim de uma
+   lista, o gesto vaze e puxe a página atrás dela. */
+main,
+[class*="overflow-y-auto"],
+[class*="overflow-auto"],
+.drawer-nav {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+}
+
+/* Rolagem horizontal (tabelas largas, grade da semana) libera o eixo X */
+[class*="overflow-x-auto"],
+.week-scroll { touch-action: pan-x pan-y; }
+
+/* O card arrastável da semana continua com o gesto reservado ao arrasto */
+.week-event-movivel { touch-action: none; }
+
+/* Scrollbars discretas */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(14,22,40,.22); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(14,22,40,.38); background-clip: content-box; }
+* { scrollbar-color: rgba(14,22,40,.28) transparent; scrollbar-width: thin; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

@@ -1,0 +1,78 @@
+/* =========================================================================
+   OTIMIZAÇÃO BASE (sempre ativa) — mantém TODAS as animações e efeitos,
+   inclusive mostrar/ocultar e abrir/fechar janelas. Só reduz o custo de
+   render/repaint, sem alterar a aparência.
+   ========================================================================= */
+
+/* 1. Pula a renderização de cards fora da tela. .card tem altura fixa
+   (196px) → contain-intrinsic-size evita pulo de scroll. Ganho grande em
+   listas longas, invisível ao usuário. */
+.card {
+    content-visibility: auto;
+    contain-intrinsic-size: 270px 196px;
+}
+
+/* 2. Isola layout/paint de cada card e coluna: hover/repaint de um não
+   força recálculo dos vizinhos. Cards já usam overflow:hidden, então
+   'paint' não muda o visual. */
+.card,
+.rnc-card,
+.kanban-card,
+.rnc-kb-card,
+.summary-card,
+.kpi-card {
+    contain: layout paint;
+}
+
+/* 3. Colunas kanban: isola layout ao arrastar/rolar. */
+.kanban-col,
+.rnc-kb-col {
+    contain: layout;
+}
+
+/* 4. Camada de composição própria para o que desliza (sidebar/drawers),
+   deixando abrir/fechar mais suave e sem repaint da página inteira. */
+.sidebar,
+.form-drawer {
+    will-change: transform;
+}
+
+/* =========================================================================
+   PAINÉIS SOBRE BACKDROP-FILTER (N/C, modais, drawers)
+   Quando há blur de fundo (backdrop-filter), qualquer repaint DENTRO do
+   painel — hover, scroll da lista, animação do ícone, donut — pode obrigar
+   o navegador a recalcular o blur da tela inteira. Isolando o painel em
+   camada de composição própria, esses repaints não tocam mais no fundo.
+   Mantém 100% da aparência. */
+.pub-nc-card,
+.cl-reset-card,
+.modal-box {
+    will-change: transform;
+    isolation: isolate;
+}
+
+/* Lista rolável do painel de N/C em camada própria: rolar não reblura. */
+.pub-nc-scroll {
+    will-change: transform;
+    contain: layout paint;
+}
+
+/* Cada item/card isolado: hover de um não repinta os vizinhos. */
+.pub-nc-item,
+.pub-nc-rnc-card {
+    contain: layout paint;
+}
+
+/* Ícone com animação infinita roda na GPU, sem repintar o painel. */
+.pub-nc-header-icon {
+    will-change: transform;
+}
+
+/* =========================================================================
+   ANTI-EMPILHAMENTO DE BLUR
+   Aplicada via JS (perf-base.js) só nas janelas de baixo quando há mais de
+   uma aberta. A janela do topo mantém o blur. Sobrescreve blur inline. */
+.perf-blur-stacked {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}

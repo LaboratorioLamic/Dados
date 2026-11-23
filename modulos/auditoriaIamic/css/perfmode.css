@@ -1,0 +1,84 @@
+/* =========================================================================
+   MODO LEVE (perf-mode) — otimização para computadores lentos
+   Desativa animações/transições, remove blur e sombras pesadas.
+   ========================================================================= */
+
+/* ── Toggle "Modo Leve" na sidebar (reusa estrutura do darkmode-toggle) ── */
+.sidebar-perfmode-icon {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+    transition: color 0.4s var(--ease);
+}
+body.perf-mode .sidebar-perfmode-icon {
+    color: #22c55e;
+    text-shadow: 0 0 8px rgba(34,197,94,0.6);
+}
+
+body.perf-mode #btnPerfMode {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    border-color: #22c55e;
+    box-shadow: 0 0 10px rgba(34,197,94,0.40), 0 2px 6px rgba(0,0,0,0.3);
+}
+body.perf-mode #btnPerfMode .darkmode-toggle-thumb {
+    transform: translateX(18px);
+}
+body.perf-mode #btnPerfMode .darkmode-toggle-thumb::before {
+    opacity: 1;
+}
+
+/* =========================================================================
+   OTIMIZAÇÕES — aplicadas quando body.perf-mode está ativo
+   ========================================================================= */
+
+/* 1. Zera TODAS as animações e transições */
+body.perf-mode *,
+body.perf-mode *::before,
+body.perf-mode *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+}
+
+/* 2. Remove todo blur (backdrop e filter blur) — o principal vilão de FPS */
+body.perf-mode *,
+body.perf-mode *::before,
+body.perf-mode *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* 3. Remove sombras pesadas (box-shadow custa muito em repaint) */
+body.perf-mode .card,
+body.perf-mode .card:hover,
+body.perf-mode .rnc-card,
+body.perf-mode .rnc-card:hover,
+body.perf-mode .kanban-card,
+body.perf-mode .summary-card,
+body.perf-mode .kpi-card,
+body.perf-mode .chart-card,
+body.perf-mode .modal-box,
+body.perf-mode .form-drawer,
+body.perf-mode .list-table,
+body.perf-mode .rnc-table {
+    box-shadow: none !important;
+}
+
+/* 4. Desliga orbs/gradientes animados de fundo (offline/login) */
+body.perf-mode .offline-bg-orb,
+body.perf-mode .login-bg-orb {
+    display: none !important;
+}
+
+/* 5. Desativa hover-lift/transform que forçam recomposição */
+body.perf-mode .card:hover,
+body.perf-mode .rnc-card:hover,
+body.perf-mode .kanban-card:hover,
+body.perf-mode .summary-card:hover {
+    transform: none !important;
+}

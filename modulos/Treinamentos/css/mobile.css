@@ -1,0 +1,889 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   mobile.css — CAMADA DE OVERRIDE MOBILE
+   Carregada por ÚLTIMO em index.html e portal.html.
+
+   TRÊS REGRAS DE OURO (quebrar qualquer uma vira regressão em desktop):
+
+   1. NENHUMA regra fora de `@media (max-width: …)`. É a garantia mecânica de
+      que o desktop continua exatamente como estava.
+
+   2. NUNCA declarar `display` no OVERLAY de um modal. Os modais do admin são
+      abertos/fechados por `style.display` inline em JS (js/admin.js showModal(),
+      js/admin-dashboard.js, js/admin-history.js, js/ui.js). Estilo inline vence
+      até `!important` de folha — mexer ali quebraria abrir/fechar.
+      Estilizar só o `.modal-content` / `.auth-card` interno. `align-items` e
+      `padding` do overlay são seguros (não são inline).
+
+   3. ESPELHAR o prefixo do seletor de origem (`#cfg-root .sidebar`, nunca
+      `.sidebar` sozinho). Media query NÃO soma especificidade: empate de
+      especificidade + carregado depois = vence, inclusive contra as @media
+      internas de admin.css. Sem isso, vira epidemia de !important.
+
+   BREAKPOINTS
+     ≤1024px  tablet retrato — contenção (modais, grids, toolbars, tabela)
+     ≤720px   celular        — o grosso; casa com admin.css:3222 (sidebar off)
+     ≤480px   celular pequeno — compactação final
+
+   !important é permitido SÓ em 3 casos, todos comentados no ponto de uso:
+     a) `col { width: auto }` da tabela de histórico (neutraliza 15 col.hc-*)
+     b) popovers posicionados por JS com left/top inline → viram bottom-sheet
+     c) nada mais.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ══ 0. TOKENS MOBILE ═══════════════════════════════════════════════════════
+   Redeclarar variável dentro da MQ propaga para dezenas de regras legadas sem
+   tocá-las. NÃO zerar --sidebar-w: o drawer usa essa largura. */
+
+@media (max-width: 720px) {
+    :root {
+        --topbar-h: 56px;
+    }
+}
+
+
+/* ══ 1. GLOBAL / ANTI-SCROLL-HORIZONTAL ═════════════════════════════════════
+   Não usar `overflow-x: hidden` no body: quebra `position: sticky` da topbar
+   e do <thead> em vários navegadores e mascara o culpado real do estouro. */
+
+@media (max-width: 1024px) {
+    /* `table` fica de fora de proposito: as tabelas do admin vivem dentro de
+       wrappers com overflow-x e PRECISAM transbordar para rolar (secao 9). */
+    img, svg, video, canvas { max-width: 100%; }
+
+    /* Nomes longos, e-mails e URLs de curso são a fonte nº 1 de estouro.
+       `break-word` e NAO `anywhere`: `anywhere` também encolhe o min-content da
+       caixa, e numa coluna estreita de tabela o navegador passa a aceitar
+       largura de 1 caractere — foi o que empilhou "M A R I A" verticalmente.
+       `break-word` só quebra a palavra quando ela realmente não cabe. */
+    body, #cfg-root { overflow-wrap: break-word; }
+
+    /* admin.css:170 — margin-right: 100px empurra a badge para fora da topbar. */
+    #cfg-root .category-badge { margin-right: 0; }
+}
+
+
+/* ══ 2. HOME (index.html) ═══════════════════════════════════════════════════ */
+
+@media (max-width: 720px) {
+    /* home.css:74 já torna .home-account estático em ≤560px; aqui só o respiro. */
+    .home-foot { flex-wrap: wrap; justify-content: center; text-align: center; }
+    .home-foot button { min-height: 44px; }
+}
+
+@media (max-width: 480px) {
+    body { padding: 28px 14px 36px; }
+    .home-head h1 { font-size: 1.55em; }
+    .platform-card { border-radius: 16px; }
+    .card-divider { margin: 0 16px; }
+}
+
+
+/* ══ 3. HEADER DO ALUNO ═════════════════════════════════════════════════════ */
+
+@media (max-width: 720px) {
+    .header-inner { padding: 0 16px; gap: 10px; height: 60px; }
+    .header-logo { width: 34px; height: 34px; font-size: 15px; }
+    .header-text h1 { font-size: 0.95em; }
+    .header-text p { display: none; }
+
+    .header-home, .header-account, .header-settings {
+        min-height: 44px; min-width: 44px; height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Em 320-480px sobram logo + título + 3 botões de 44px. Tudo que é
+       decorativo sai; os botões viram ícone-only (main.css:135 já faz isso com
+       .header-home a partir de 640px — aqui estendemos aos demais). */
+    .header-inner { padding: 0 12px; gap: 8px; }
+    .header-divider, .header-badge { display: none; }
+    .header-text h1 { font-size: 0.88em; }
+    .header-account span, .header-settings span { display: none; }
+    .header-account, .header-settings {
+        padding: 0; width: 44px; justify-content: center;
+    }
+}
+
+
+/* ══ 4. LMS DO ALUNO ════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+    /* minmax(320px,1fr) num container de ~340px gera coluna de 320 + gap =
+       estouro. min(260px,100%) é a correção genérica: mantém 2 colunas em
+       tablet e nunca transborda. */
+    .course-grid { grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); }
+}
+
+@media (max-width: 720px) {
+    .page-body { padding: 18px 14px 36px; }
+    .selection-inner { padding: 14px 14px; gap: 12px; }
+    .select-group { max-width: 100%; }
+    .dropdown-content { max-width: none; width: 100%; }
+
+    .course-grid { grid-template-columns: 1fr; }
+    .gallery-header { flex-wrap: wrap; gap: 10px; }
+    .gallery-search { flex: 1 1 100%; min-width: 0; }
+
+    /* Sidebar de módulos já vira estática em ≤1024 (main.css:1922); no celular
+       ela ganha altura maior porque é a navegação principal entre módulos. */
+    .sidebar-scroll { max-height: 50vh; }
+
+    /* main.css:504 tem flex-wrap: nowrap — no celular a barra precisa quebrar. */
+    .player-controls { flex-wrap: wrap; row-gap: 6px; }
+    .player-controls button { min-height: 40px; min-width: 40px; }
+    .player-controls select#speed-select { max-width: none; }
+    .time-labels { min-width: 0; }
+
+    /* Alternativas de quiz precisam de alvo de toque confortável. */
+    .quiz-option { min-height: 48px; align-items: center; }
+
+    /* Campos abaixo de 16px fazem o Safari iOS dar zoom ao focar. Não usar
+       maximum-scale=1 no viewport: quebra pinch-zoom (WCAG 1.4.4). */
+    input, select, textarea { font-size: 16px; }
+    /* Exceção: dentro do player os controles são minúsculos por design e não
+       recebem digitação. */
+    .player-controls select { font-size: 0.72em; }
+
+    /* Vídeos curtos: no celular o quadro 9:16 ocupa a largura toda, então a
+       altura passa a ser ditada pela largura (main.css deriva o contrário).
+       As setas de navegação saem de cena — sobre o vídeo elas atrapalham, e o
+       gesto de arrastar já cobre a função. */
+    .shorts-stage {
+        --shorts-h: min(78vh, calc(100vw * 16 / 9));
+        --shorts-w: 100%;
+    }
+    .shorts-nav { display: none; }
+    .shorts-segments { width: calc(100% - 20px); }
+    .shorts-counter { right: 10px; }
+    .shorts-hint { font-size: 0.74em; padding: 8px 14px; }
+    .shorts-hint span { white-space: normal; }
+    /* Alvo de toque confortável para o botão de som e para o aviso de avanço. */
+    .shorts-mute { width: 44px; height: 44px; }
+    .shorts-autonext { min-height: 44px; }
+}
+
+@media (max-width: 480px) {
+    .page-body { padding: 14px 12px 32px; }
+    .selection-inner { padding: 12px; }
+    .module-info { padding: 16px 14px; }
+    .quiz-container, .form-container { padding: 16px 14px; }
+
+    /* Barra de progresso total encolhe junto com o .module-info. */
+    .shorts-total { padding: 10px 12px; }
+    .shorts-total-label { font-size: 0.74em; }
+    .shorts-slide-label { max-width: calc(100% - 86px); font-size: 0.74em; }
+    .shorts-hint { bottom: 18px; max-width: calc(100% - 32px); }
+    .shorts-autonext { bottom: 18px; }
+}
+
+
+/* ══ 5. MODAIS DO ALUNO (auth.css) ══════════════════════════════════════════
+   Aqui o overlay usa classe (.auth-modal.active { display:flex }), não estilo
+   inline — mesmo assim só mexemos em padding/align-items, nunca em display. */
+
+@media (max-width: 1024px) {
+    .auth-card, .student-auth-card, .student-profile-card {
+        max-width: min(94vw, 560px);
+        max-height: 88vh;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 720px) {
+    .auth-modal { padding: 0; align-items: flex-end; }
+
+    .auth-card, .student-auth-card, .student-profile-card {
+        max-width: 100%;
+        width: 100%;
+        max-height: 92vh;
+        max-height: 92dvh;              /* dvh acompanha a barra de URL do mobile */
+        border-radius: 16px 16px 0 0;   /* bottom-sheet */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .student-profile-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .student-course-grid { grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); }
+    .student-auth-tabs, .student-profile-tabs { flex-wrap: wrap; }
+}
+
+@media (max-width: 480px) {
+    .student-profile-summary { grid-template-columns: 1fr; }
+    .student-course-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ══ 6. ADMIN — SHELL + DRAWER ══════════════════════════════════════════════
+   Estado único: #cfg-root.sidebar-open. Todo o resto deriva dele, então o JS
+   é um classList.toggle. A sidebar já é position:fixed + translateX(-100%)
+   por admin.css:3222 — aqui só damos transição, largura e o estado aberto. */
+
+@media (max-width: 1024px) {
+    #cfg-root .topbar { padding: 0 16px; }
+    #cfg-root .content-area { padding: 20px; }
+}
+
+@media (max-width: 720px) {
+    #cfg-root .cfg-sidebar-toggle {
+        display: inline-flex;
+        align-items: center; justify-content: center;
+        width: 44px; height: 44px; flex-shrink: 0;
+        margin-left: -8px; margin-right: 4px;
+        border: none; background: transparent;
+        color: var(--text); font-size: 18px;
+        border-radius: 8px; cursor: pointer;
+    }
+    #cfg-root .cfg-sidebar-toggle:active { background: var(--bg); }
+
+    #cfg-root .sidebar {
+        width: min(var(--sidebar-w), 82vw);
+        transition: transform 0.22s ease;
+        will-change: transform;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.28);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    #cfg-root.sidebar-open .sidebar { transform: translateX(0); }
+
+    /* Sidebar é z-index 100 (admin.css:68); o overlay fica logo abaixo. */
+    #cfg-root .cfg-sidebar-overlay {
+        display: block;
+        position: fixed; inset: 0; z-index: 99;
+        background: rgba(9, 15, 30, 0.5);
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.22s ease;
+    }
+    #cfg-root.sidebar-open .cfg-sidebar-overlay { opacity: 1; pointer-events: auto; }
+
+    /* Classe aplicada por initSidebarDrawer() em js/admin.js. */
+    body.cfg-drawer-lock { overflow: hidden; }
+
+    /* Nav do drawer: alvo de toque mais generoso que os 9px de padding. */
+    #cfg-root .sidebar-nav .tab-btn { min-height: 48px; font-size: 14.5px; }
+    #cfg-root .sidebar-action-btn { min-height: 44px; }
+
+    #cfg-root .topbar { padding: 0 12px; gap: 8px; }
+    #cfg-root .topbar-sub { display: none; }
+    #cfg-root .category-badge { max-width: 45vw; min-width: 0; }
+    #cfg-root .category-badge span {
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #cfg-root .content-area { padding: 14px; }
+    #cfg-root .panel-body { padding: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #cfg-root .sidebar, #cfg-root .cfg-sidebar-overlay { transition: none; }
+}
+
+
+/* ══ 7. ADMIN — TOOLBARS E FILTROS ══════════════════════════════════════════
+   `min-width: 0` nos filhos é o item mais importante daqui: flex item tem
+   min-width:auto por padrão e se recusa a encolher abaixo do conteúdo — causa
+   raiz de metade dos estouros horizontais em flex. */
+
+@media (max-width: 1024px) {
+    #cfg-root .courses-toolbar,
+    #cfg-root .history-toolbar,
+    #cfg-root .users-toolbar,
+    #cfg-root .colab-filters-row,
+    #cfg-root .dashboard-picker,
+    #cfg-root .history-toolbar-actions,
+    #cfg-root .hfilter-row {
+        flex-wrap: wrap;
+    }
+    #cfg-root .courses-toolbar > *,
+    #cfg-root .history-toolbar > *,
+    #cfg-root .hfilter-row > * { min-width: 0; }
+
+    /* admin-courses.css:31 e admin.css:972 travam 220px. */
+    #cfg-root .filter-picker-btn,
+    #cfg-root .history-toolbar .gallery-search { min-width: 0; flex: 1 1 200px; }
+}
+
+@media (max-width: 720px) {
+    #cfg-root .filter-picker-btn,
+    #cfg-root .history-toolbar .gallery-search,
+    #cfg-root .history-toolbar select { flex-basis: 100%; width: 100%; }
+
+    #cfg-root .history-toolbar-actions { margin-left: 0; width: 100%; }
+    #cfg-root .history-toolbar-actions .btn { flex: 1 1 auto; justify-content: center; }
+
+    #cfg-root .hfilter-row { gap: 6px; }
+    #cfg-root .hfilter-status-tabs { flex: 1 1 100%; }
+    #cfg-root .hfilter-status-tab { flex: 1; min-height: 40px; }
+
+    /* Popovers de filtro: em telas pequenas viram bottom-sheet.
+       !important INEVITÁVEL — js/admin-courses.js e js/admin.js escrevem
+       left/top inline em coordenadas de viewport, e estilo inline vence
+       qualquer regra de folha sem !important. */
+    #cfg-root .filter-popover,
+    #cfg-root .roles-popover {
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        top: auto !important;
+        bottom: 0 !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 70vh;
+        overflow-y: auto;
+        border-radius: 14px 14px 0 0;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Chips de filtro do painel: viram bottom-sheet também. Aqui NÃO precisa
+       !important — o posicionamento vem do CSS (admin.css:1029), não de estilo
+       inline. `display` fica intocado: quem liga/desliga é
+       `.hfilter-chip.is-open .hfilter-chip-popover { display: block }`.
+       O prefixo #cfg-root (1,2,0) vence admin.css:1109 e :1287, e de quebra
+       não alcança os chips dentro dos modais do dashboard (que vivem fora de
+       #cfg-root e já têm larguras próprias de 150-260px). */
+    #cfg-root .hfilter-chip .hfilter-chip-popover {
+        position: fixed;
+        left: 8px;
+        right: 8px;
+        top: auto;
+        bottom: 0;
+        width: auto;
+        max-width: none;
+        max-height: 60vh;
+        overflow-y: auto;
+        z-index: 1200;              /* acima da topbar (z-index 50) */
+        border-radius: 14px 14px 0 0;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Igual à seção 4: abaixo de 16px o iOS dá zoom ao focar. */
+    #cfg-root input, #cfg-root select, #cfg-root textarea,
+    .modal-body input, .modal-body select, .modal-body textarea,
+    .hfilter-chip-search, .filter-popover-search { font-size: 16px; }
+}
+
+
+/* ══ 8. ADMIN — GRIDS E CARDS ═══════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+    #cfg-root .dash-course-grid,
+    #cfg-root .courses-grid,
+    .user-course-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+    }
+    #cfg-root .dashboard-chart-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+    #cfg-root .dash-course-grid,
+    #cfg-root .courses-grid,
+    .user-course-grid,
+    #cfg-users-container,
+    #cfg-root .colab-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #cfg-root .content-panels { gap: 14px; }
+    #cfg-root .form-actions { flex-wrap: wrap; }
+    #cfg-root .form-actions .btn { flex: 1 1 auto; justify-content: center; min-height: 44px; }
+
+    /* Ações dos cards (editar/senha/desativar/excluir) precisam de alvo real. */
+    #cfg-root .user-card .card-actions .btn-sm,
+    #cfg-root .admin-course-card-footer .card-actions button,
+    #cfg-root .btn-icon { min-height: 44px; min-width: 44px; }
+
+    /* Chart.js: o canvas é responsivo, mas o container precisa de teto de
+       altura, senão o aspect ratio padrão gera blocos altíssimos. */
+    #cfg-root .dashboard-chart-row canvas,
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) canvas { max-height: 260px; }
+}
+
+
+/* ══ 8.1 MODAIS DO DASHBOARD — TABELAS VIRAM CARDS ══════════════════════════
+   As listas de Conclusões (Aprovados / Reprovados / Faltam concluir) e o
+   histórico do colaborador têm de 3 a 10 colunas dentro de um modal. Em
+   celular nenhuma delas cabe: as colunas de texto colapsam e o nome fica
+   ilegível, uma letra por linha.
+
+   Aqui cada <tr> vira um card e cada <td> vira um chip. O rótulo sai do
+   `data-label` que js/admin-dashboard.js escreve em cada célula — no desktop
+   o atributo não tem efeito visual, então a tabela continua sendo tabela.
+
+   Continua sendo <table>: o clique da linha (tr.is-clickable →
+   openReviewModal) e o botão "Desconsiderar atraso" seguem funcionando sem
+   nenhuma mudança de JS. */
+
+@media (max-width: 720px) {
+    /* Sem o box de 360px com scroll próprio: dentro de um modal que já rola,
+       scroll aninhado é armadilha no toque. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dashboard-table-wrap {
+        max-height: none;
+        overflow: visible;
+    }
+
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards,
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards tbody { display: block; }
+
+    /* O cabeçalho vira redundante: cada chip carrega o próprio rótulo. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards thead { display: none; }
+
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards tbody tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: 1px solid var(--cfg-border);
+        border-radius: 14px;
+        background: var(--cfg-surface);
+        box-shadow: var(--cfg-shadow-sm);
+    }
+    /* Zebrado e hover de linha não fazem sentido em card. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards tbody tr:nth-child(even),
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards tbody tr:hover { background: var(--cfg-surface); }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards tbody tr.is-clickable:hover {
+        border-color: var(--cfg-primary);
+        box-shadow: none;
+    }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards tbody tr:last-child { margin-bottom: 0; }
+
+    /* Cada célula vira um chip. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        width: auto;
+        min-width: 0;
+        max-width: 100%;
+        padding: 0;
+        border-bottom: none;
+        font-size: 11.5px;
+    }
+
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label]::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        font-size: 9.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-3);
+    }
+
+    /* Título do card: nome da pessoa (ou do curso, no modal do colaborador). */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Nome"],
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Curso"] {
+        order: 1;
+        flex: 1 1 100%;
+        font-size: 13.5px;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Nome"]::before,
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Curso"]::before { content: none; }
+
+    /* Badges que já se explicam sozinhos: sem rótulo, só o próprio badge. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Situação"] { order: 2; }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Nota"]     { order: 3; }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Prazo"]    { order: 4; }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Situação"]::before,
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Nota"]::before,
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Prazo"]::before { content: none; }
+
+    /* Chips de texto: fundo suave para separar visualmente do título. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Unidade"],
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Cargo"],
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Tempo"],
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Conclusão"] {
+        padding: 4px 9px;
+        border: 1px solid var(--cfg-border);
+        border-radius: 999px;
+        background: var(--bg);
+    }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Unidade"]   { order: 5; }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Cargo"]     { order: 6; }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Tempo"]     { order: 7; }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Conclusão"] { order: 8; }
+
+    /* Barra de progresso ocupa a linha inteira para continuar legível. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Progresso"] {
+        order: 9;
+        flex: 1 1 100%;
+    }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Progresso"] .missing-progress { flex: 1; }
+
+    /* Data/hora como rodapé discreto do card. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td[data-label="Data/Hora"] {
+        order: 10;
+        flex: 1 1 100%;
+        margin-top: 4px;
+        padding-top: 8px;
+        border-top: 1px dashed var(--cfg-border);
+        font-size: 10.5px;
+        color: var(--text-3);
+    }
+
+    /* Última coluna (botão "Desconsiderar atraso") não tem data-label. */
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td:not([data-label]) {
+        order: 11;
+        flex: 1 1 100%;
+    }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards td:not([data-label]):empty { display: none; }
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards .dash-forgive-btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 40px;
+    }
+
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-cards .row-name { min-width: 0; }
+}
+
+
+/* ══ 9. ADMIN — TABELA DE HISTÓRICO ═════════════════════════════════════════
+   Decisão: SCROLL HORIZONTAL REAL, não cards empilhados.
+   São 15 colunas (um card por registro daria ~450px de altura cada), e o
+   <thead> sticky é clicável para ordenar — no modo card a ordenação some, e
+   ela é a função principal da tela. Cards ainda exigiriam emitir data-label
+   em js/admin-history.js, o que sai do escopo de "camada de override".
+
+   O que quebra hoje: `table-layout: fixed; width: 100%` + 15 <col> percentuais
+   (admin.css:1110-1139) forçam a tabela a caber, então nunca há overflow e
+   toda célula vira elipse. Soltamos os dois. */
+
+@media (max-width: 1024px) {
+    #cfg-root .history-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;   /* não dispara o "voltar" do iOS */
+    }
+
+    #cfg-root .history-table-wrap table {
+        table-layout: auto;
+        width: max-content;
+        min-width: 100%;                  /* não encolhe com poucas linhas */
+        font-size: 12px;
+    }
+
+    /* !important INEVITÁVEL: neutraliza os 15 col.hc-* de admin.css:1125-1139
+       de uma vez; anulá-los um a um seria pior. */
+    #cfg-root .history-table-wrap col { width: auto !important; }
+
+    #cfg-root .history-table-wrap td,
+    #cfg-root .history-table-wrap thead th {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: nowrap;
+        padding: 8px 10px;
+    }
+
+    /* Pisos de largura em ch (acompanham a fonte) nas colunas de texto. */
+    #cfg-root .history-table-wrap col.hc-name    { min-width: 18ch; }
+    #cfg-root .history-table-wrap col.hc-date    { min-width: 14ch; }
+    #cfg-root .history-table-wrap col.hc-theme,
+    #cfg-root .history-table-wrap col.hc-subject,
+    #cfg-root .history-table-wrap col.hc-unit,
+    #cfg-root .history-table-wrap col.hc-role    { min-width: 12ch; }
+
+    /* Exceção deliberada à regra de 44px: 44px por botão numa tabela de 15
+       colunas × N linhas explodiria a altura. Aqui só folga no padding. */
+    #cfg-root .history-table-wrap td button { padding: 6px 8px; }
+}
+
+@media (max-width: 720px) {
+    /* Com overflow-x:auto o overflow-y computa como auto e o <thead> sticky
+       passa a se ancorar no wrapper — que precisa ter altura para isso valer. */
+    #cfg-root #cfg-history-table-wrap { max-height: 70vh; overflow-y: auto; }
+
+    /* Sombras de scroll: dica visual de que há mais conteúdo à direita.
+       Puro CSS, somem sozinhas ao chegar nas bordas. */
+    #cfg-root .history-table-wrap {
+        background:
+            linear-gradient(90deg,  var(--cfg-surface) 30%, rgba(255,255,255,0)) left  / 24px 100% no-repeat,
+            linear-gradient(270deg, var(--cfg-surface) 30%, rgba(255,255,255,0)) right / 24px 100% no-repeat,
+            radial-gradient(farthest-side at 0   50%, rgba(0,0,0,0.12), rgba(0,0,0,0)) left  / 12px 100% no-repeat,
+            radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)) right / 12px 100% no-repeat;
+        background-attachment: local, local, scroll, scroll;
+    }
+
+    #cfg-root .history-pagination { flex-wrap: wrap; justify-content: center; gap: 8px; }
+}
+
+
+/* ══ 10. ADMIN — MODAIS E DRAWERS ═══════════════════════════════════════════
+   REGRA 2 vale integralmente aqui: nenhuma linha abaixo toca `display` do
+   overlay `.modal` — só `padding`/`align-items` (que não são inline) e o
+   conteúdo interno. */
+
+@media (max-width: 1024px) {
+    .modal { padding: 16px; }
+
+    .modal-content,
+    #cfg-user-history-modal .modal-content,
+    #cfg-history-form-modal .modal-content,
+    #cfg-theme-form-modal .modal-content,
+    #cfg-subject-manage-modal .modal-content,
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-course-modal-content,
+    #cfg-dash-review-modal .dash-review-modal-content,
+    #cfg-course-detail-modal .course-drawer-content,
+    .cert-modal-card {
+        max-width: min(94vw, 560px);
+        width: 100%;
+        max-height: 88vh;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 720px) {
+    /* Bottom-sheet full-bleed: em celular, modal centralizado com margem é
+       desperdício de área útil. */
+    .modal { padding: 0; align-items: flex-end; }
+
+    .modal-content,
+    #cfg-user-history-modal .modal-content,
+    #cfg-history-form-modal .modal-content,
+    #cfg-theme-form-modal .modal-content,
+    #cfg-subject-manage-modal .modal-content,
+    :is(#cfg-dash-course-modal, #cfg-dash-user-modal, #cfg-dash-unit-modal) .dash-course-modal-content,
+    #cfg-dash-review-modal .dash-review-modal-content,
+    #cfg-course-detail-modal .course-drawer-content,
+    .cert-modal-card {
+        max-width: 100%;
+        width: 100%;
+        max-height: 92vh;
+        max-height: 92dvh;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-header { padding: 18px 16px 12px; }
+    .modal-body { padding: 4px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+
+    .history-detail-summary,
+    #cfg-root .history-detail-summary,
+    #cfg-dash-review-modal .dash-review-stats,
+    .history-form-grid { grid-template-columns: 1fr; }
+
+    .course-drawer-hero, .dash-course-hero { flex-wrap: wrap; padding: 16px; }
+
+    /* Fechar do modal com alvo de toque real. */
+    .close { min-width: 44px; min-height: 44px; }
+}
+
+@media (max-width: 480px) {
+    /* Ação primária ao alcance do polegar. */
+    #cfg-root .form-actions,
+    .history-form-actions,
+    .confirm-actions,
+    .cert-modal-foot {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    #cfg-root .form-actions > *,
+    .history-form-actions > *,
+    .confirm-actions > *,
+    .cert-modal-foot > * { width: 100%; justify-content: center; }
+}
+
+
+/* ══ 11. CERTIFICADO ════════════════════════════════════════════════════════
+   NENHUMA regra aqui toca `.cert-stage`. Ele é o palco de 1308px que o
+   html2canvas mede antes de clonar (certificate.css:14) — position:fixed,
+   z-index:-9999, visibility:hidden, portanto não gera scroll no documento.
+   Qualquer mudança de `width` ou `transform` nele sairia no PNG/PDF exportado.
+   Só o modal do certificado é ajustado. */
+
+@media (max-width: 720px) {
+    .cert-modal-body { padding: 16px 14px; }
+    .cert-modal-head { padding: 18px 16px 14px; }
+    .cert-modal-foot { flex-wrap: wrap; padding: 14px 16px; }
+    .cert-modal-foot button { flex: 1 1 auto; justify-content: center; min-height: 44px; }
+    .cert-loading-panel { width: min(92vw, 420px); }
+}
+
+
+/* ══ 12. TOASTS / OVERLAYS FLUTUANTES ═══════════════════════════════════════
+   main.css:1568 e admin.css:3213 usam white-space: nowrap + translateX(-50%).
+   Ao trocar para left/right fixos precisamos anular o transform — e, com ele,
+   a animação toastIn, que anima justamente translateX(-50%) e faria o toast
+   "pular" meia largura. Redeclarar @keyframes DENTRO da MQ é válido e escopado,
+   então preservamos a animação em vez de matá-la. */
+
+@media (max-width: 720px) {
+    .warning-message,
+    .cfg-warning-message {
+        left: 12px;
+        right: 12px;
+        transform: none;
+        max-width: none;
+        white-space: normal;
+        text-align: center;
+        justify-content: center;
+        animation: toastInMobile 0.25s ease;
+    }
+
+    @keyframes toastInMobile {
+        from { opacity: 0; transform: translateY(-8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .loading-overlay .spinner-container,
+    .cfg-loading-overlay { padding: 20px 16px; }
+}
+
+
+/* ══ 13. SAFE-AREA (notch iOS) ══════════════════════════════════════════════
+   Sem `viewport-fit=cover` no <meta viewport>, env() resolve para 0px e estas
+   regras são inócuas — por isso podem entrar desde já sem risco. Se um iPhone
+   com notch mostrar corte real, basta adicionar `viewport-fit=cover` na linha
+   5 dos dois HTMLs e elas passam a valer. */
+
+@media (max-width: 720px) {
+    .warning-message { top: calc(80px + env(safe-area-inset-top, 0px)); }
+    .cfg-warning-message { top: calc(18px + env(safe-area-inset-top, 0px)); }
+    #cfg-root .content-area { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
+
+
+/* ══ 14. RANKING ════════════════════════════════════════════════════════════
+   Painel de js/ranking.js. No desktop o pódio é uma linha de três pedestais;
+   aqui vira uma pilha de cards (1º, 2º, 3º) e cada linha da lista quebra os
+   chips de critério para uma segunda faixa. */
+
+@media (max-width: 1024px) {
+    .ranking-modal .modal-content.ranking-modal-content { max-height: 94vh; border-radius: 14px; }
+    .ranking-detail-inner { padding-left: 22px; }
+}
+
+@media (max-width: 720px) {
+    /* Com .selection-inner em coluna (css/main.css), o botão colado à direita
+       fica solto no meio do nada — melhor ocupar a largura toda. */
+    .selection-inner .ranking-btn { margin-left: 0; align-self: stretch; justify-content: center; }
+
+    /* O cabeçalho quebra em duas linhas: título em cima, botão de critérios
+       embaixo em largura total — lado a lado eles não cabem em 390px. */
+    .ranking-head { flex-wrap: wrap; padding: 16px 16px; gap: 11px; }
+    .ranking-head-icon { width: 38px; height: 38px; font-size: 17px; border-radius: 11px; }
+    .ranking-legend-wrap { margin-left: 0; width: 100%; }
+    .ranking-legend-btn { width: 100%; justify-content: center; }
+    .ranking-legend-panel { left: 0; right: 0; width: auto; max-width: none; }
+
+    /* Pódio empilhado: 1º no topo, cada colocado num card horizontal. */
+    .ranking-scope { padding: 14px 16px 0; }
+    .ranking-scope-btn { max-width: 100%; }
+    .ranking-scope-label { overflow: hidden; text-overflow: ellipsis; }
+    .ranking-scope-panel { width: 260px; }
+    .ranking-scope-options { max-height: 240px; }
+    .ranking-podium { flex-direction: column; align-items: center; gap: 10px; padding: 20px 16px; }
+    .ranking-scope + .ranking-podium { padding-top: 14px; }
+    .podium-step.is-first  { order: 1; }
+    .podium-step.is-second { order: 2; }
+    .podium-step.is-third  { order: 3; }
+    /* Nome ocupa a largura toda numa faixa própria: dividindo a linha com o
+       bloco de percentual (que é largo por causa de "100,0%"), a coluna do
+       nome colapsava para "A…" em telas de ~390px. */
+    .podium-step {
+        width: 100%; max-width: 400px;
+        display: grid;
+        grid-template-columns: auto minmax(0,1fr) auto;
+        grid-template-areas:
+            "avatar name  caret"
+            "avatar role  caret"
+            "block  block block";
+        align-items: center; column-gap: 12px; row-gap: 0;
+        padding: 12px 14px;
+        background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+    }
+    .podium-crown { position: absolute; top: -11px; left: 12px; font-size: 17px; }
+    .podium-avatar { grid-area: avatar; }
+    .is-first .podium-avatar { width: 58px; height: 58px; font-size: 1.15em; }
+    .podium-name {
+        grid-area: name; text-align: left; align-self: flex-end;
+        white-space: normal; overflow: visible; text-overflow: clip;
+        line-height: 1.25; overflow-wrap: anywhere;
+    }
+    .podium-role { grid-area: role; text-align: left; align-self: flex-start; }
+    .podium-block {
+        grid-area: block; width: 100%; margin: 10px 0 0;
+        padding: 8px 12px; border-radius: 10px;
+        border: 1px solid var(--border); text-align: center;
+        display: flex; align-items: baseline; justify-content: center; gap: 8px; flex-wrap: wrap;
+    }
+    .podium-block .podium-caption { width: 100%; margin-top: 0; }
+    .is-first .podium-block,
+    .is-second .podium-block,
+    .is-third .podium-block { padding: 8px 12px; }
+    .is-first .podium-pct { font-size: 1.4em; }
+    /* Nota média e "% no prazo" ficam no card empilhado: são os critérios que
+       decidem o pódio e sumiam por completo no mobile. Entram como faixas
+       cheias do bloco, abaixo do percentual. */
+    .podium-score {
+        width: 100%; margin: 8px 0 0; padding: 6px 10px 7px;
+        display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+    }
+    .podium-score-label { font-size: 0.58em; }
+    .podium-score-value { margin-top: 0; }
+    .is-first .podium-score-value b { font-size: 1.25em; }
+    .podium-score-stars { margin-top: 0; }
+    .podium-retry { width: 100%; margin: 6px 0 0; justify-content: center; }
+    .podium-punctual { width: 100%; margin: 5px 0 0; justify-content: center; }
+    .podium-caret { grid-area: caret; margin: 0; }
+
+    /* Linha da lista: chips descem para uma segunda faixa. */
+    .ranking-row {
+        grid-template-columns: 32px 36px minmax(0,1fr) 16px;
+        row-gap: 9px; padding: 12px 14px; gap: 10px;
+    }
+    .ranking-pos    { grid-column: 1; grid-row: 1; }
+    .ranking-avatar { grid-column: 2; grid-row: 1; width: 36px; height: 36px; }
+    .ranking-main   { grid-column: 3; grid-row: 1; }
+    .ranking-caret  { grid-column: 4; grid-row: 1; }
+    .ranking-chips  { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+
+    /* .header-inner cai para 60px em <=720px (secao 2). */
+    .ranking-host.is-inline .ranking-you { top: 60px; }
+    .ranking-you { padding: 14px 14px; }
+    .ranking-you-body { gap: 11px; }
+    .ranking-you-body .ranking-chips { justify-content: flex-start; }
+
+    /* "Parâmetros" desce para baixo de "Ver cursos": lado a lado os dois
+       rótulos ficariam apertados demais em ~390px. */
+    .ranking-detail-actions { flex-direction: column; }
+
+    /* Detalhe empilhado: lado a lado, o grafico nao encolhe (flex-shrink:0 em
+       css/main.css) e empurra as estatisticas para fora da tela. */
+    .ranking-detail-inner { flex-direction: column; align-items: stretch; padding: 16px 14px; gap: 14px; }
+    .ranking-detail-chart { width: 100%; max-width: 220px; margin: 0 auto; }
+    .ranking-detail-stats { min-width: 0; width: 100%; grid-template-columns: repeat(auto-fit, minmax(96px,1fr)); }
+
+    /* Janela "Ver cursos": cabe na tela toda, um card por linha. */
+    .ranking-courses-overlay { padding: 0; align-items: flex-end; }
+    .ranking-courses-card { max-width: none; max-height: 92vh; border-radius: 16px 16px 0 0; }
+    .ranking-courses-head { padding: 18px 46px 16px 16px; }
+    .ranking-courses-body { padding: 14px 14px 18px; }
+
+    /* Linha de parâmetro: o valor desce para uma segunda faixa, alinhado à
+       esquerda sob o texto — à direita ele espremia o título. */
+    .ranking-params-head { padding: 18px 46px 16px 16px; }
+    .param-row {
+        grid-template-columns: 26px 34px minmax(0,1fr);
+        row-gap: 8px; padding: 12px;
+    }
+    .param-order { grid-column: 1; grid-row: 1; align-self: start; }
+    .param-icon  { grid-column: 2; grid-row: 1; align-self: start; }
+    .param-body  { grid-column: 3; grid-row: 1; }
+    .param-value { grid-column: 1 / -1; grid-row: 2; text-align: left; min-width: 0; }
+    .param-value b { display: inline; font-size: 1em; }
+    .param-value small { display: inline; margin-left: 6px; }
+    .course-mini-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+
+    .ranking-chip { padding: 3px 8px; font-size: 0.68em; }
+    .podium-name { font-size: 0.82em; }
+    .is-first .podium-name { font-size: 0.88em; }
+    .podium-pct { font-size: 1.25em; }
+    .is-first .podium-pct { font-size: 1.3em; }
+    .ranking-you-place { font-size: 1.4em; }
+    .ranking-detail-stats { grid-template-columns: 1fr 1fr; }
+}

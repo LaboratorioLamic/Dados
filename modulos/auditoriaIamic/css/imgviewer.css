@@ -1,0 +1,100 @@
+/* ─── Visualizador de imagem (lightbox com zoom / rotação) ─── */
+#imgLightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(10, 14, 25, 0.94);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 16px 16px;
+    -webkit-user-select: none;
+    user-select: none;
+}
+#imgLightbox.is-open { display: flex; }
+
+.imgv-toolbar {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 10px;
+    padding: 4px 6px;
+    z-index: 2;
+    backdrop-filter: blur(6px);
+}
+.imgv-btn {
+    background: none;
+    border: none;
+    color: #e5e7eb;
+    font-size: 15px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, color .15s;
+}
+.imgv-btn:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.imgv-btn.imgv-close:hover { background: #dc2626; color: #fff; }
+.imgv-btn:disabled { opacity: .35; cursor: default; background: none; }
+.imgv-zoom {
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 46px;
+    text-align: center;
+    letter-spacing: .3px;
+}
+.imgv-sep {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.14);
+    margin: 0 4px;
+}
+
+.imgv-stage {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    touch-action: none;
+}
+#imgLightboxImg {
+    max-width: min(90vw, 1000px);
+    max-height: calc(100vh - 130px);
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
+    cursor: zoom-in;
+    transition: transform .18s ease-out;
+    will-change: transform;
+}
+#imgLightboxImg.imgv-zoomed { cursor: grab; }
+#imgLightboxImg.imgv-dragging { cursor: grabbing; transition: none; }
+
+.imgv-label {
+    color: #e5e7eb;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: .5px;
+    padding: 10px 4px 2px;
+    max-width: 90vw;
+    word-break: break-word;
+}
+
+@media (max-width: 640px) {
+    .imgv-toolbar { top: 8px; right: 8px; gap: 2px; }
+    .imgv-btn { width: 30px; height: 30px; font-size: 14px; }
+    .imgv-zoom { min-width: 40px; font-size: 11px; }
+}

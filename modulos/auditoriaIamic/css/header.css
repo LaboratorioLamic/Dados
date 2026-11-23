@@ -1,0 +1,487 @@
+/* =========================================================================
+   HEADER
+   ========================================================================= */
+.header {
+    background: var(--grad-header);
+    backdrop-filter: saturate(200%) blur(12px);
+    -webkit-backdrop-filter: saturate(200%) blur(12px);
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 68px;
+    flex-shrink: 0;
+    z-index: 500;
+    position: relative;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-right: 100px;
+}
+
+.title-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+}
+.title-area h1 {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.title-area small {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+.btn-toggle-menu {
+    background: none;
+    border: 1.5px solid var(--border);
+    color: var(--primary);
+    font-size: 17px;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-md);
+    margin-right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+    flex-shrink: 0;
+}
+.btn-toggle-menu:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+    transform: scale(1.04);
+}
+
+/* Botão filtro de setor no header */
+.btn-setor-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 14px;
+    height: 38px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.btn-setor-filter:hover {
+    background: var(--surface-hover);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.btn-setor-filter.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.btn-setor-filter i { font-size: 13px; }
+
+/* =========================================================================
+   MODAL FILTRO DE SETORES
+   ========================================================================= */
+.setor-filter-modal {
+    width: min(640px, 95vw) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border-radius: 18px !important;
+    box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(255,255,255,0.06) !important;
+}
+
+.setor-filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 26px 20px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+    position: relative;
+}
+.setor-filter-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.setor-filter-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    flex-shrink: 0;
+    backdrop-filter: blur(4px);
+}
+.setor-filter-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.2px;
+}
+.setor-filter-subtitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 3px;
+    font-weight: 600;
+}
+.setor-filter-header .btn-close {
+    color: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.12);
+    border-radius: 9px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--t-fast), color var(--t-fast);
+}
+.setor-filter-header .btn-close:hover {
+    background: rgba(255,255,255,0.22);
+    color: #fff;
+}
+
+.setor-filter-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 26px 12px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+}
+.setor-filter-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+}
+.setor-filter-deselect {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-full);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
+}
+.setor-filter-deselect:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #ef4444;
+    box-shadow: 0 2px 6px rgba(239,68,68,0.15);
+}
+
+.setor-filter-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    position: relative;
+}
+.setor-filter-search-icon {
+    position: absolute;
+    left: 34px;
+    color: #94a3b8;
+    font-size: 13px;
+    pointer-events: none;
+}
+.setor-filter-search-input {
+    width: 100%;
+    padding: 8px 12px 8px 34px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-full);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: #f8fafc;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.setor-filter-search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.10);
+    background: #fff;
+}
+.setor-filter-search-input::placeholder { color: #b0bec5; }
+
+.setor-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 18px 22px;
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.setor-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+    user-select: none;
+    min-height: 46px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.setor-chip:hover {
+    border-color: #93c5fd;
+    background: #f0f7ff;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+}
+.setor-chip.selected {
+    border-color: #2563eb;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: #1e3a8a;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.12);
+}
+.setor-chip-check {
+    width: 19px;
+    height: 19px;
+    border-radius: 6px;
+    border: 1.5px solid #cbd5e1;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: transparent;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), transform var(--t-fast);
+}
+.setor-chip.selected .setor-chip-check {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+    transform: scale(1.05);
+}
+.setor-chip.disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+.setor-chip-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.setor-filter-grid::-webkit-scrollbar { width: 8px; }
+.setor-filter-grid::-webkit-scrollbar-track { background: transparent; }
+.setor-filter-grid::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+}
+.setor-filter-grid::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.setor-filter-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 26px 20px;
+    border-top: 1px solid var(--border);
+    background: #f8fafc;
+}
+.setor-filter-footer .btn-save {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+}
+.setor-filter-footer .btn-save:hover {
+    box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+}
+
+/* =========================================================================
+   DROPDOWN FILTRO DE DATA (header)
+   ========================================================================= */
+.fbar-date-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 260px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md);
+    z-index: 600;
+    animation: popIn 0.18s var(--ease);
+    overflow: hidden;
+}
+.fbar-date-dd-inner {
+    padding: 6px 0;
+}
+.fbar-date-dd-modes {
+    display: flex;
+    flex-direction: column;
+}
+.fbar-date-dd-mode {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--text);
+    text-align: left;
+    width: 100%;
+    transition: background var(--t-fast), color var(--t-fast);
+    border-left: 3px solid transparent;
+}
+.fbar-date-dd-mode:hover { background: var(--surface-hover); }
+.fbar-date-dd-mode.active {
+    background: #eff6ff;
+    color: var(--accent);
+    font-weight: 700;
+    border-left-color: var(--accent);
+}
+.fbar-date-dd-mode i { width: 16px; text-align: center; font-size: 13px; }
+
+.fbar-date-dd-picker {
+    padding: 12px 18px 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #f8fafc;
+}
+.fbar-date-dd-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.fbar-date-dd-picker-row .fbar-adv-label {
+    min-width: 36px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.fbar-date-dd-picker-row select {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: #fff;
+    outline: none;
+    cursor: pointer;
+    transition: border-color var(--t-fast);
+}
+.fbar-date-dd-picker-row select:focus { border-color: var(--accent); }
+
+/* ── Calendário de mês ─────────────────────────────────────────── */
+.fbar-month-cal {
+    padding: 12px 14px 14px;
+    border-top: 1px solid var(--border);
+    background: #f8fafc;
+}
+.fbar-month-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.fbar-month-cal-year {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+}
+.fbar-month-cal-nav {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 11px;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+.fbar-month-cal-nav:hover {
+    background: var(--surface-hover);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.fbar-month-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+.fbar-month-cal-cell {
+    padding: 7px 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: white;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+.fbar-month-cal-cell:hover {
+    background: var(--surface-hover);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.fbar-month-cal-cell.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-weight: 700;
+}

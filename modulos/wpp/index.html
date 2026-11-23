@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Connect Pro</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --primary-dark: #0b5ed7;
+            --success: #198754;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --glass: rgba(255, 255, 255, 0.15);
+            --border: rgba(255, 255, 255, 0.2);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            flex: 1;
+            min-width: 320px;
+            transition: all 0.4s ease;
+            border: 1px solid var(--border);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            z-index: 2;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(13, 110, 253, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #198754, #146c43);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(25, 135, 84, 0.3);
+        }
+
+        .message-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 5px 0;
+            transition: all 0.2s;
+        }
+
+        .message-item:hover {
+            background: #e9ecef;
+        }
+
+        .message-actions i {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .message-actions i.fa-edit { color: var(--primary); }
+        .message-actions i.fa-trash { color: var(--danger); }
+
+        .message-actions i:hover {
+            background: rgba(0,0,0,0.1);
+            transform: scale(1.2);
+        }
+
+        #message-preview {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f4ff;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            font-size: 15px;
+            color: #333;
+            min-height: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .container { gap: 20px; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <h1><i class="fab fa-whatsapp"></i> WhatsApp Connect Pro</h1>
+    <p class="subtitle">Inicie conversas profissionais com um clique</p>
+
+    <div class="container">
+        <div class="card">
+            <h2><i class="fas fa-paper-plane"></i> Enviar Mensagem</h2>
+            
+            <div class="input-group">
+                <i class="fas fa-phone"></i>
+                <input type="tel" id="phone-number" placeholder="Apenas DDD + número (ex: 11999999999)">
+            </div>
+
+            <div class="input-group">
+                <i class="fas fa-comment-dots"></i>
+                <select id="message-select">
+                    <option value="">Selecione uma mensagem padrão</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" id="contact-button">
+                <i class="fab fa-whatsapp"></i> Abrir WhatsApp
+            </button>
+
+            <div id="message-preview">
+                <em>Selecione uma mensagem para visualizar o preview...</em>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-list-ul"></i> Mensagens Padrão</h2>
+            
+            <div class="input-group">
+                <i class="fas fa-edit"></i>
+                <textarea id="new-message" rows="4" placeholder="Digite sua mensagem padrão aqui..."></textarea>
+            </div>
+
+            <button class="btn btn-success" id="add-message-button">
+                <i class="fas fa-plus"></i> Adicionar Mensagem
+            </button>
+
+            <div id="messages-list" style="margin-top: 20px; max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        let messages = JSON.parse(localStorage.getItem('whatsappMessagesPro')) || [];
+
+        const messageSelect = document.getElementById('message-select');
+        const messagesList = document.getElementById('messages-list');
+        const preview = document.getElementById('message-preview');
+
+        // Função que padroniza automaticamente para +55
+        function formatarNumeroBrasileiro(input) {
+            let numero = input.replace(/\D/g, ''); // remove tudo que não é dígito
+            
+            // Se já começar com 55, mantém
+            if (numero.startsWith('55') && numero.length >= 12) {
+                numero = numero.substring(2);
+            }
+            
+            // Remove 0 à esquerda do DDD (caso tenha)
+            if (numero.length === 11 && numero[0] === '0') {
+                numero = numero.substring(1);
+            }
+            
+            // Aceita 10 ou 11 dígitos (com ou sem 9 no celular)
+            if (numero.length === 10 || numero.length === 11) {
+                return '+55' + numero;
+            }
+            
+            return null; // inválido
+        }
+
+        function renderMessages() {
+            messageSelect.innerHTML = '<option value="">Selecione uma mensagem padrão</option>';
+            messagesList.innerHTML = '';
+
+            messages.forEach((msg, index) => {
+                const option = document.createElement('option');
+                option.value = msg;
+                option.textContent = msg.length > 50 ? msg.substring(0, 50) + '...' : msg;
+                messageSelect.appendChild(option);
+
+                const div = document.createElement('div');
+                div.className = 'message-item';
+                div.innerHTML = `
+                    <span title="${msg}">${msg.substring(0, 60)}${msg.length > 60 ? '...' : ''}</span>
+                    <div class="message-actions">
+                        <i class="fas fa-edit" onclick="editMessage(${index})" title="Editar"></i>
+                        <i class="fas fa-trash" onclick="deleteMessage(${index})" title="Excluir"></i>
+                    </div>
+                `;
+                messagesList.appendChild(div);
+            });
+        }
+
+        function saveMessages() {
+            localStorage.setItem('whatsappMessagesPro', JSON.stringify(messages));
+            renderMessages();
+        }
+
+        window.editMessage = function(index) {
+            const newText = prompt("Edite a mensagem:", messages[index]);
+            if (newText !== null && newText.trim() !== '') {
+                messages[index] = newText.trim();
+                saveMessages();
+            }
+        }
+
+        window.deleteMessage = function(index) {
+            if (confirm("Tem certeza que deseja excluir esta mensagem?")) {
+                messages.splice(index, 1);
+                saveMessages();
+            }
+        }
+
+        document.getElementById('add-message-button').addEventListener('click', () => {
+            const text = document.getElementById('new-message').value.trim();
+            if (text) {
+                messages.push(text);
+                saveMessages();
+                document.getElementById('new-message').value = '';
+            } else {
+                alert('Digite uma mensagem válida.');
+            }
+        });
+
+        messageSelect.addEventListener('change', () => {
+            const selected = messageSelect.value;
+            preview.innerHTML = selected 
+                ? `<strong>Mensagem selecionada:</strong><br><br>${selected.replace(/\n/g, '<br>')}`
+                : '<em>Selecione uma mensagem para visualizar o preview...</em>';
+        });
+
+        document.getElementById('contact-button').addEventListener('click', () => {
+            let input = document.getElementById('phone-number').value.trim();
+            const msg = messageSelect.value;
+
+            const numeroCompleto = formatarNumeroBrasileiro(input);
+
+            if (!numeroCompleto) {
+                alert('Número inválido.\nUse apenas DDD + número (ex: 11999999999 ou 21 999999999)');
+                return;
+            }
+
+            const url = `https://wa.me/${numeroCompleto}${msg ? '?text=' + encodeURIComponent(msg) : ''}`;
+            window.open(url, '_blank');
+        });
+
+        renderMessages();
+    </script>
+</body>
+</html>

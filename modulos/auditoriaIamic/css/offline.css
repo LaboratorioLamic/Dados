@@ -1,0 +1,238 @@
+/* =========================================================================
+   OVERLAY DE SEM CONEXÃO / RECONEXÃO
+   ========================================================================= */
+
+.offline-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    padding: 20px;
+    overflow: hidden;
+}
+
+/* Orbs decorativos de fundo */
+.offline-bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.12;
+    animation: offlineOrbPulse 6s ease-in-out infinite;
+}
+.offline-bg-orb--1 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, #2563eb, transparent 70%);
+    top: -100px;
+    left: -100px;
+    animation-delay: 0s;
+}
+.offline-bg-orb--2 {
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, #3b82f6, transparent 70%);
+    bottom: -80px;
+    right: -80px;
+    animation-delay: 3s;
+}
+
+@keyframes offlineOrbPulse {
+    0%, 100% { transform: scale(1); opacity: 0.12; }
+    50%       { transform: scale(1.15); opacity: 0.18; }
+}
+
+/* Caixa central */
+.offline-box {
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 44px 40px 36px;
+    border-radius: 28px;
+    box-shadow: 0 28px 80px rgba(2, 6, 23, 0.45), 0 0 0 1px rgba(255,255,255,0.08);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+    animation: offlineBoxIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes offlineBoxIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Barra de acento no topo */
+.offline-box::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+    border-radius: 0 0 99px 99px;
+}
+
+/* Ícone principal */
+.offline-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 2px solid #fca5a5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 22px;
+    font-size: 28px;
+    color: #dc2626;
+    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.08);
+    transition: background 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
+}
+.offline-icon-wrap.is-online {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border-color: #86efac;
+    color: #16a34a;
+    box-shadow: 0 0 0 8px rgba(22, 163, 74, 0.08);
+}
+.offline-icon-wrap.is-checking {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border-color: #93c5fd;
+    color: #2563eb;
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.08);
+}
+
+#offlineIcon {
+    transition: none;
+}
+.icon-spin {
+    animation: offlineIconSpin 0.9s linear infinite;
+}
+@keyframes offlineIconSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Slash no ícone de wifi quando offline */
+.wifi-slash::before {
+    content: '\f6ac'; /* fa-wifi-slash não existe; usa fa-triangle-exclamation como fallback */
+}
+
+/* Textos */
+.offline-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin: 0 0 10px;
+    line-height: 1.2;
+}
+
+.offline-desc {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0 0 22px;
+}
+
+/* Status de conexão */
+.offline-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.offline-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dc2626;
+    flex-shrink: 0;
+    transition: background 0.3s;
+    animation: offlineDotPulse 2s ease-in-out infinite;
+}
+.offline-status-dot.is-online  { background: #16a34a; animation: none; }
+.offline-status-dot.is-checking { background: #2563eb; }
+
+@keyframes offlineDotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Botão Reconectar */
+.offline-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    padding: 13px 24px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: filter 0.18s, transform 0.18s, box-shadow 0.18s;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.38);
+    letter-spacing: -0.2px;
+    margin-bottom: 20px;
+}
+.offline-btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(37, 99, 235, 0.45);
+}
+.offline-btn:active:not(:disabled) { transform: translateY(0); }
+.offline-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    filter: none;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Rodapé */
+.offline-footer {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* ── Responsivo ──────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .offline-box {
+        padding: 36px 24px 28px;
+        border-radius: 24px;
+    }
+    .offline-icon-wrap {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        border-radius: 16px;
+        margin-bottom: 18px;
+    }
+    .offline-title { font-size: 20px; }
+    .offline-desc { font-size: 13.5px; margin-bottom: 18px; }
+    .offline-btn { padding: 12px 20px; font-size: 14px; }
+}
+
+@media (max-width: 360px) {
+    .offline-box { padding: 28px 18px 24px; }
+    .offline-title { font-size: 18px; }
+}

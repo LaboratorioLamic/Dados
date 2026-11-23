@@ -1,0 +1,28 @@
+/* Cabeçalho da aplicação e botão hambúrguer */
+
+/* ── Header ───────────────────────────────────────────────── */
+.app-header {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 60%),
+        #162036;
+    box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 34px -18px rgba(8,13,24,.9);
+}
+.app-header::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(61,124,240,.85), rgba(106,156,249,.35), transparent);
+}
+
+/* ── Botão hambúrguer animado ─────────────────────────────── */
+.burger { position: relative; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.burger-box { position: relative; width: 20px; height: 14px; }
+.burger-bar {
+    position: absolute; left: 0; height: 2px; width: 100%; border-radius: 2px; background: #fff;
+    transition: transform .38s var(--ease-drawer), opacity .2s ease, width .38s var(--ease-drawer);
+}
+.burger-bar:nth-child(1) { top: 0; }
+.burger-bar:nth-child(2) { top: 6px; width: 74%; }
+.burger-bar:nth-child(3) { top: 12px; }
+.burger:hover .burger-bar:nth-child(2) { width: 100%; }
+.burger.is-open .burger-bar:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.burger.is-open .burger-bar:nth-child(2) { opacity: 0; transform: translateX(10px); }
+.burger.is-open .burger-bar:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }

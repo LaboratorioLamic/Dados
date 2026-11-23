@@ -1,0 +1,316 @@
+/* =========================================================================
+   BOTÕES
+   ========================================================================= */
+.btn-primary {
+    background: var(--grad-accent);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--r-md);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform var(--t-fast), box-shadow var(--t-fast), filter var(--t-fast);
+    box-shadow: 0 4px 16px rgba(37,99,235,0.30);
+    font-family: inherit;
+    white-space: nowrap;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37,99,235,0.38);
+    filter: brightness(1.07);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+    background: #fff;
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    padding: 10px 18px;
+    border-radius: var(--r-md);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+    position: relative;
+    font-family: inherit;
+    white-space: nowrap;
+}
+.btn-secondary:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+}
+.btn-secondary:active { transform: translateY(0); }
+
+.trash-badge {
+    background: var(--c-red);
+    color: #fff;
+    border-radius: var(--r-full);
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    padding: 0 4px;
+    box-shadow: 0 2px 6px rgba(220,38,38,0.4);
+    border: 2px solid #fff;
+}
+
+.btn-clear {
+    padding: 8px 13px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    color: var(--text-light);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+    font-family: inherit;
+}
+.btn-clear:hover {
+    background: var(--surface-hover);
+    color: var(--primary);
+    border-color: var(--border-strong);
+    transform: scale(1.04);
+}
+
+.btn-large {
+    padding: 14px 28px;
+    font-size: 14.5px;
+    border-radius: var(--r-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: none;
+    font-weight: 700;
+    transition: transform var(--t-fast), box-shadow var(--t-fast), filter var(--t-fast);
+    font-family: inherit;
+}
+.btn-export {
+    background: var(--grad-accent);
+    color: #fff;
+    box-shadow: var(--shadow-accent);
+}
+.btn-export:hover { transform: translateY(-2px); filter: brightness(1.07); }
+.btn-import {
+    background: #fff;
+    color: var(--text);
+    border: 1.5px solid var(--border) !important;
+}
+.btn-import:hover { border-color: var(--accent) !important; color: var(--accent); transform: translateY(-2px); }
+
+/* Botões de modal */
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 21px;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-sm);
+    transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
+    line-height: 1;
+    flex-shrink: 0;
+}
+.btn-close:hover {
+    background: #fef2f2;
+    color: var(--c-red);
+    transform: scale(1.1);
+}
+
+.btn-cancel {
+    background: #fff;
+    color: #64748b;
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+    font-family: inherit;
+    font-size: 13.5px;
+    letter-spacing: 0.1px;
+}
+.btn-cancel:hover { background: #f8fafc; border-color: #cbd5e1; color: #374151; }
+
+.btn-ver-tarefa {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s, box-shadow .15s;
+    font-family: inherit;
+    font-size: 13.5px;
+    letter-spacing: 0.1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 2px 8px rgba(79,70,229,.25);
+}
+.btn-ver-tarefa:hover { opacity: .88; box-shadow: 0 4px 14px rgba(79,70,229,.35); }
+
+.btn-duplicate {
+    background: #fff;
+    color: #92400e;
+    padding: 10px 20px;
+    border-radius: var(--r-md);
+    border: 1.5px solid #fde68a;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--t-fast), transform var(--t-fast);
+    font-family: inherit;
+    font-size: 13.5px;
+}
+.btn-duplicate:hover { background: #fffbeb; transform: translateY(-1px); }
+
+.btn-save {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.30);
+    transition: filter var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+    font-family: inherit;
+    font-size: 13.5px;
+    letter-spacing: 0.1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+.btn-save:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.38); }
+
+.btn-edit {
+    background: var(--grad-accent);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: var(--r-md);
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.28);
+    transition: filter var(--t-fast), transform var(--t-fast);
+    font-family: inherit;
+    font-size: 13.5px;
+}
+.btn-edit:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+.btn-history-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.btn-history-trigger:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.btn-add-anexo {
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed var(--border-strong);
+    background: var(--surface-muted);
+    color: var(--text-light);
+    border-radius: var(--r-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 13px;
+}
+.btn-add-anexo:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+/* FAB - Floating Action Button */
+.fab-add {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--grad-accent);
+    color: #fff;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 24px rgba(37,99,235,0.40);
+    z-index: 900;
+    transition: transform var(--t-fast), box-shadow var(--t-fast), filter var(--t-fast);
+}
+.fab-add:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 10px 32px rgba(37,99,235,0.50);
+    filter: brightness(1.08);
+}
+.fab-add:active { transform: scale(0.96); }
+.fab-add i { transition: transform 0.2s var(--ease); }
+.fab-add.open i { transform: rotate(45deg); }
+
+/* Botão login */
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: var(--grad-accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-md);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter var(--t-fast), transform var(--t-fast);
+    box-shadow: var(--shadow-accent);
+    font-family: inherit;
+    letter-spacing: -0.2px;
+}
+.btn-login:hover { filter: brightness(1.08); transform: translateY(-2px); }
+.btn-login:active { transform: translateY(0); }
+.btn-login:disabled { background: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; filter: none; }

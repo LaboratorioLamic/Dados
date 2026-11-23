@@ -1,0 +1,44 @@
+/* Toasts de notificação */
+
+/* Estilos das Notificações */
+.notification {
+    pointer-events: auto;
+    transform: translateX(100%);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: slideIn 0.4s ease-out forwards, slideOut 0.3s ease-in 9.7s forwards;
+}
+
+@keyframes slideIn {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+.notification {
+    border-radius: 1rem;
+    box-shadow: 0 18px 40px -18px rgba(8,13,24,.6), 0 0 0 1px rgba(255,255,255,.12) inset;
+    font-weight: 600;
+}
+.notification-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+
+/* Selo de verificado do toast de sucesso — check verde sobre círculo branco */
+.notification-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.5rem;
+    width: 1.5rem;
+    border-radius: 9999px;
+    background: #fff;
+    color: #059669;
+    font-size: 0.75rem;
+    line-height: 1;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+.notification-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+.notification-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+.notification-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }

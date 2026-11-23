@@ -60,9 +60,9 @@
   ];
   const PERMISSOES = CATEGORIAS.flatMap((c) => c.perms);
   const chavePerm = (p) => p.replace('.', '_');
-  // Cada módulo de seeds/ é um repositório próprio publicado em laboratoriolamic.github.io/{repo}/.
-  // Publicado: link sempre na versão nova do repositório (seeds/ não vai para o Pages do Dados).
-  // Local (localhost/arquivo): abre a cópia em seeds/, e links do GitHub Pages também apontam para ela.
+  // Os módulos vivem em seeds/ (local) e são copiados para modulos/ (node ferramentas/sincronizar-modulos.js),
+  // que vai no GitHub Pages do Dados. Publicado: abre modulos/{repo}/; local: seeds/{repo}/.
+  // Links antigos para laboratoriolamic.github.io/{repo}/ também caem na cópia do Dados.
   const SEEDS = ['Iamicvacinas', 'L2L', 'Planilhas', 'Pops', 'Protocolos', 'TabeIasIamic', 'Temperatura', 'Termos', 'Treinamentos',
     'auditoriaIamic', 'checkguias', 'comercial', 'conveniosIamic', 'curricuIoIamic', 'docadmin', 'manutencao', 'propagandismolamic', 'respIamic', 'wpp'];
   const PUBLICADO = /\.github\.io$/.test(location.hostname);
@@ -71,7 +71,7 @@
     const gh = /^https:\/\/laboratoriolamic\.github\.io\/([^/?#]+)\/?(index\.html)?$/i.exec(u || '');
     const repo = SEEDS.find((r) => r.toLowerCase() === String((sd || gh)?.[1] || '').toLowerCase());
     if (!repo) return u;
-    return PUBLICADO ? `https://laboratoriolamic.github.io/${repo}/` : `seeds/${repo}/index.html`;
+    return PUBLICADO ? `modulos/${repo}/index.html` : `seeds/${repo}/index.html`;
   };
   // Link liberado ao grupo: grupos/{g}/links/{linkId}. Grupo antigo sem a lista usa o módulo inteiro (modulos/{m}/grupos).
   function linkLiberado(grupo, m, l) {
@@ -670,7 +670,7 @@
         if (/auditoria[il]amic/i.test(l.url || '')) return {
           url: new URL(urlSegura(urlLink(l.url)), location.href).href, nome: l.nome, modo: l.modo,
           // chat: sempre a Auditoria do mesmo endereço do portal (local = seeds/, publicado = github.io)
-          chat: new URL(PUBLICADO ? 'https://laboratoriolamic.github.io/auditoriaIamic/' : 'seeds/auditoriaIamic/index.html', location.href).href,
+          chat: new URL(PUBLICADO ? 'modulos/auditoriaIamic/index.html' : 'seeds/auditoriaIamic/index.html', location.href).href,
         };
       return null;
     },

@@ -1,0 +1,911 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   IMUNOGEST — CAMADA MOBILE
+   Layout próprio para celular (≤768px). Nada aqui deve afetar o desktop:
+   toda regra está dentro de @media (max-width:768px) e/ou de body.is-mobile
+   (a classe é aplicada por scripts/mobile.js).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --m-topbar-h: 52px;
+    --m-nav-h: 60px;
+    --m-safe-b: env(safe-area-inset-bottom, 0px);
+    --m-gutter: 0.75rem;
+}
+
+/* Elementos exclusivos do mobile ficam ocultos no desktop */
+#mobile-nav,
+.mobile-only { display: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ≤768px
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+/* ── 1. Base ────────────────────────────────────────────────────────────── */
+/* IMPORTANTE: nada aqui pode criar um contexto de scroll travado.
+   `overflow-x:hidden` em <html> transforma o <body> no scroller do viewport e,
+   somado a `overscroll-behavior-y:none`, mata a rolagem por toque em vários
+   navegadores mobile. O clip horizontal fica só no <body>, com o eixo Y
+   explicitamente visível. */
+html {
+    max-width: 100%;
+    overflow-x: clip;
+    overflow-y: visible;
+    height: auto;
+    -webkit-overflow-scrolling: touch;
+}
+body {
+    max-width: 100%;
+    overflow-x: clip;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 100%;
+    position: static !important;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y pinch-zoom;
+}
+/* Sem suporte a overflow:clip (Safari < 16), o hidden fica só no body —
+   nunca no <html>, para não roubar o scroller do viewport */
+@supports not (overflow: clip) {
+    html { overflow-x: visible; }
+    body { overflow-x: hidden; }
+}
+body.is-mobile {
+    -webkit-tap-highlight-color: rgba(37, 99, 235, 0.12);
+    -webkit-text-size-adjust: 100%;
+}
+body.is-mobile main {
+    padding: var(--m-gutter) !important;
+    padding-top: calc(var(--m-topbar-h) + 0.5rem) !important;
+    padding-bottom: calc(var(--m-nav-h) + var(--m-safe-b) + 1rem) !important;
+    overflow: visible !important;
+    min-height: 0 !important;
+    height: auto !important;
+    flex: 1 1 auto;
+    touch-action: pan-y pinch-zoom;
+}
+body.is-mobile .container { max-width: 100%; padding-left: 0; padding-right: 0; }
+
+/* Evita zoom automático do iOS ao focar campos (<16px dispara o zoom) */
+body.is-mobile input,
+body.is-mobile select,
+body.is-mobile textarea { font-size: 16px !important; }
+body.is-mobile input[type="checkbox"],
+body.is-mobile input[type="radio"] { font-size: inherit !important; }
+
+/* Alvos de toque confortáveis */
+body.is-mobile button,
+body.is-mobile a[role="button"],
+body.is-mobile .sidebar-nav-btn { touch-action: manipulation; }
+/* Só os botões de ação "grandes" ganham altura mínima — ícones compactos
+   (kanban, cards, tabelas) mantêm o tamanho original */
+body.is-mobile .m-actions > button,
+body.is-mobile .m-filterbar.m-filters-open > div > button,
+body.is-mobile #mobile-nav button,
+body.is-mobile .modal.active > div > div:last-child > button { min-height: 42px; }
+
+/* Sem hover-lift no toque (causa "pulo" ao tocar) */
+body.is-mobile .hover\:-translate-y-0\.5:hover { transform: none !important; }
+
+/* ── 2. Topbar compacta ─────────────────────────────────────────────────── */
+body.is-mobile .app-topbar {
+    height: var(--m-topbar-h);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    gap: 0.5rem;
+}
+body.is-mobile .app-topbar > div[style*="margin-right"] { display: none !important; }
+body.is-mobile #topbar-module-label {
+    display: block !important;
+    font-size: 10px;
+    max-width: 40vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+body.is-mobile .app-topbar .flex-1 { min-width: 0; }
+
+/* ── 3. Drawer lateral (menu "Mais") ────────────────────────────────────── */
+body.is-mobile #app-sidebar {
+    width: min(84vw, 20rem);
+    padding-bottom: var(--m-safe-b);
+}
+body.is-mobile #sidebar-overlay { z-index: 290; }
+
+/* ── 4. Bottom navigation ───────────────────────────────────────────────── */
+body.is-mobile #mobile-nav {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* abaixo da faixa dos modais (z >= 100): qualquer folha aberta cobre a barra
+       mesmo em navegadores sem suporte a :has() */
+    z-index: 90;
+    height: calc(var(--m-nav-h) + var(--m-safe-b));
+    padding-bottom: var(--m-safe-b);
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -2px 16px rgba(15, 23, 42, 0.08);
+}
+body.is-mobile.dark-mode #mobile-nav {
+    background: #0f172a;
+    border-top-color: #1e293b;
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.5);
+}
+body.is-mobile #mobile-nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    min-height: 0;
+    transition: color 0.15s ease;
+}
+body.is-mobile #mobile-nav button i { font-size: 16px; }
+body.is-mobile #mobile-nav button.active { color: #2563eb; }
+body.is-mobile.dark-mode #mobile-nav button.active { color: #60a5fa; }
+body.is-mobile #mobile-nav button.active i { transform: translateY(-1px); }
+
+/* Com uma folha (modal) aberta, a barra inferior e o FAB saem da frente */
+body.is-mobile:has(.modal.active) #mobile-nav,
+body.is-mobile:has(.modal.active) .fab-agenda,
+body.is-mobile:has(.modal.active) #fab-nova-vacina,
+body.is-mobile:has(.modal.active) #fab-novo-lote { display: none !important; }
+
+/* ── 5. FAB, notificações e painéis flutuantes ──────────────────────────── */
+body.is-mobile .fab-agenda {
+    bottom: calc(var(--m-nav-h) + var(--m-safe-b) + 0.75rem);
+    right: 1rem;
+    width: 52px;
+    height: 52px;
+    z-index: 85;
+}
+/* FABs do almoxarifado (nova vacina / novo lote) também sobem acima da barra */
+body.is-mobile #fab-nova-vacina,
+body.is-mobile #fab-novo-lote {
+    bottom: calc(var(--m-nav-h) + var(--m-safe-b) + 0.75rem) !important;
+    right: 1rem !important;
+    height: 52px;
+    width: 52px;
+    z-index: 85;
+}
+body.is-mobile #notification-container {
+    top: calc(var(--m-topbar-h) + 6px);
+    left: 0.5rem;
+    right: 0.5rem;
+}
+body.is-mobile .notification { width: 100% !important; max-width: 100% !important; }
+
+/* Painéis dos sinos descem a partir da topbar (o gatilho está lá em cima) */
+body.is-mobile #contacts-panel,
+body.is-mobile #semlote-panel,
+body.is-mobile #expiry-panel {
+    position: fixed !important;
+    top: calc(var(--m-topbar-h) + 6px) !important;
+    bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - var(--m-topbar-h) - 6px - var(--m-nav-h) - var(--m-safe-b)) !important;
+    border-radius: 0 0 20px 20px !important;
+    padding-bottom: 0;
+    z-index: 520;
+    animation: mSheetDown 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@keyframes mSheetDown { from { transform: translateY(-6%); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+body.lite-mode.is-mobile #contacts-panel,
+body.lite-mode.is-mobile #semlote-panel,
+body.lite-mode.is-mobile #expiry-panel { animation: none; }
+
+/* ── 6. Modais → bottom sheets ──────────────────────────────────────────── */
+body.is-mobile .modal.active {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+body.is-mobile .modal.active > div {
+    position: relative;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+    animation: mSheetUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@keyframes mSheetUp { from { transform: translateY(4%); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+body.lite-mode.is-mobile .modal.active > div { animation: none; }
+
+/* "Puxador" visual no topo da folha */
+body.is-mobile .modal.active > div::before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 38px;
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(148, 163, 184, 0.55);
+    z-index: 5;
+    pointer-events: none;
+}
+body.is-mobile .modal.active > div > * { max-width: 100%; }
+/* Corpo rolável: o filho que já tem overflow mantém; os demais recebem scroll */
+body.is-mobile .modal.active > div > .overflow-y-auto,
+body.is-mobile .modal.active > div > .flex-1 {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    max-height: none !important;
+}
+/* Alturas fixas internas (max-h-[…]) atrapalham dentro da folha — só as internas */
+body.is-mobile .modal.active > div [class*="max-h-["] { max-height: none !important; }
+/* Rodapés de ação: empilhados e com respiro para a safe-area */
+body.is-mobile .modal.active .vr-footer,
+body.is-mobile .modal.active .dm-modal-footer { padding-bottom: calc(0.75rem + var(--m-safe-b)) !important; }
+
+/* Modais que abrem alinhados ao topo com scroll externo */
+body.is-mobile #modal-paciente.active,
+body.is-mobile #modal-vacina.active {
+    align-items: flex-end !important;
+    overflow-y: hidden !important;
+}
+
+/* Grades internas de formulário: 1 coluna (evita campos espremidos) */
+body.is-mobile .modal .grid-cols-2,
+body.is-mobile .modal .grid-cols-3,
+body.is-mobile .modal .grid-cols-4 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+body.is-mobile .modal .m-keep-2col { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
+/* ── 7. Popovers → bottom sheets ────────────────────────────────────────── */
+body.is-mobile #vendedor-popover,
+body.is-mobile #vendedor-popover-cal,
+body.is-mobile #vacina-filter-pop,
+body.is-mobile #date-filter-pop,
+body.is-mobile #status-filter-pop,
+body.is-mobile #month-year-picker,
+body.is-mobile .dash-pop,
+body.is-mobile div[id$="-popover"] {
+    position: fixed !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    max-height: 78dvh !important;
+    overflow-y: auto !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding-bottom: calc(0.5rem + var(--m-safe-b)) !important;
+    transform: none !important;
+    z-index: 530;
+}
+body.is-mobile .dash-pop:not(.active) { visibility: hidden; }
+body.is-mobile .dash-pop-list { max-height: 50dvh !important; }
+body.is-mobile #vendedor-popover-list,
+body.is-mobile #vendedor-popover-list-cal,
+body.is-mobile #vacina-filter-list { max-height: 45dvh !important; }
+body.is-mobile .dash-month-grid { grid-template-columns: repeat(3, 1fr); }
+
+/* ── 8. Tabelas → cartões ───────────────────────────────────────────────── */
+body.is-mobile .tbl-cards {
+    overflow-x: visible !important;
+    padding: 0.5rem !important;
+}
+body.is-mobile .tbl-cards table { display: block; width: 100%; border: none !important; }
+body.is-mobile .tbl-cards thead { display: none; }
+body.is-mobile .tbl-cards tbody { display: block; width: 100%; }
+body.is-mobile .tbl-cards tbody > tr {
+    display: block;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    padding: 4px 0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transform: none !important;
+}
+body.is-mobile.dark-mode .tbl-cards tbody > tr {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+/* Rótulo à esquerda (coluna 1) e todo o conteúdo da célula empilhado
+   na coluna 2 — evita que dois filhos disputem a mesma linha */
+body.is-mobile .tbl-cards tbody > tr > td {
+    display: grid;
+    grid-template-columns: 30% 1fr;
+    align-items: start;
+    gap: 4px 10px;
+    width: 100%;
+    padding: 7px 12px !important;
+    border: none !important;
+    text-align: left !important;
+    white-space: normal !important;
+}
+body.is-mobile .tbl-cards tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #94a3b8;
+    padding-top: 2px;
+}
+body.is-mobile .tbl-cards tbody > tr > td[data-label] > * { grid-column: 2; }
+body.is-mobile .tbl-cards tbody > tr > td > * { min-width: 0; }
+/* Célula de ações ocupa a linha inteira, botões alinhados à direita */
+body.is-mobile .tbl-cards tbody > tr > td[data-label="Ações"] > div,
+body.is-mobile .tbl-cards tbody > tr > td[data-label="Ação"] > div { justify-content: flex-end !important; }
+/* Linha de "nenhum registro" continua centralizada */
+body.is-mobile .tbl-cards tbody > tr > td[colspan] { justify-content: center; }
+body.is-mobile .tbl-cards tbody > tr > td[colspan]::before { content: none; }
+/* Paginação */
+body.is-mobile [id$="-pagination"] { flex-wrap: wrap; gap: 8px; padding: 12px !important; }
+
+/* ── 9. Sub-navegação: barra de ícones (espelha a barra inferior) ───────── */
+body.is-mobile .m-chips {
+    display: grid !important;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    align-items: stretch !important;
+    gap: 0 !important;
+    overflow: visible !important;
+    margin-bottom: 0.75rem;
+    padding: 4px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+}
+body.is-mobile.dark-mode .m-chips {
+    background: #0f172a;
+    border-color: #1e293b;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+}
+/* Botão-ícone: rótulo curto sob o ícone, igual ao #mobile-nav */
+body.is-mobile .m-chips > button {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px !important;
+    min-width: 0;
+    padding: 7px 2px !important;
+    border: none !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    font-size: 9px !important;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: none !important;
+    min-height: 0;
+    overflow: hidden;
+}
+body.is-mobile .m-chips > button i { font-size: 16px !important; }
+/* Rótulo curto vindo do data-mlabel (o texto original fica oculto) */
+body.is-mobile .m-chips > button > .m-chip-lbl {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* Ativa = a que o app pinta de navy (bg-navy-900) */
+body.is-mobile .m-chips > button.bg-navy-900,
+body.is-mobile .m-chips > button.m-chip-active {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+}
+body.is-mobile.dark-mode .m-chips > button.bg-navy-900,
+body.is-mobile.dark-mode .m-chips > button.m-chip-active {
+    background: rgba(37, 99, 235, 0.18) !important;
+    color: #60a5fa !important;
+}
+
+/* ── 10. Cabeçalhos de módulo / barras de filtro ────────────────────────── */
+body.is-mobile .glass-card,
+body.is-mobile section .bg-white.rounded-2xl { border-radius: 16px; }
+body.is-mobile #tab-agenda h2,
+body.is-mobile #tab-pacientes h2,
+body.is-mobile #tab-dashboard h2 { font-size: 15px !important; }
+body.is-mobile main .p-5,
+body.is-mobile main .p-6,
+body.is-mobile .modal .p-5,
+body.is-mobile .modal .p-6 { padding: 0.85rem !important; }
+
+/* Barra de filtros recolhível */
+body.is-mobile .m-filterbar { display: none !important; }
+body.is-mobile .m-filterbar.m-filters-open {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+}
+body.is-mobile .m-filterbar.m-filters-open > * { width: 100%; }
+body.is-mobile .m-filterbar.m-filters-open > button { justify-content: flex-start; }
+body.is-mobile .m-filterbar.m-filters-open > div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+/* Botão-gatilho de popover ocupa a linha; botão-ícone mantém largura fixa */
+body.is-mobile .m-filterbar.m-filters-open > div > button {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+}
+body.is-mobile .m-filterbar.m-filters-open > div > button[id^="btn-icon-"] { flex: 0 0 36px; }
+/* Campos que no desktop abrem por ícone ficam sempre visíveis no painel */
+body.is-mobile .m-filterbar.m-filters-open [id^="wrap-"] {
+    max-width: 100% !important;
+    opacity: 1 !important;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+body.is-mobile .m-filterbar.m-filters-open [id^="wrap-"] input,
+body.is-mobile .m-filterbar.m-filters-open [id^="wrap-"] select {
+    width: 100% !important;
+    margin-left: 0 !important;
+}
+body.is-mobile .m-filters-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+body.is-mobile.dark-mode .m-filters-btn { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+body.is-mobile .m-filters-btn.active { border-color: #2563eb; color: #1d4ed8; background: #eff6ff; }
+
+/* ── 11. Agenda: mês em lista (um dia por linha) ────────────────────────── */
+body.is-mobile #cal-view-mensal { padding: 0.5rem !important; }
+/* Cabeçalho Dom…Sáb só faz sentido na grade */
+body.is-mobile #cal-view-mensal > .calendar-grid.mb-2 { display: none !important; }
+body.is-mobile #calendar-body.m-cal-list {
+    display: flex !important;
+    flex-direction: column;
+    gap: 6px;
+}
+body.is-mobile #calendar-body.m-cal-list > div {
+    display: grid !important;
+    grid-template-columns: 52px 1fr;
+    align-items: center;
+    gap: 10px;
+    min-height: 0 !important;
+    padding: 8px 10px !important;
+    border-radius: 12px;
+}
+/* Coluna 1: número do dia + abreviação da semana */
+body.is-mobile #calendar-body.m-cal-list > div > div:first-child {
+    text-align: center !important;
+    font-size: 17px !important;
+    line-height: 1.05;
+    margin-bottom: 0 !important;
+}
+body.is-mobile #calendar-body.m-cal-list .m-cal-wd {
+    display: block;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.7;
+}
+/* Coluna 2: resumos em texto, quebrando linha */
+body.is-mobile #calendar-body.m-cal-list .cal-sum-wrap {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 4px !important;
+    align-content: center;
+    min-width: 0;
+}
+body.is-mobile #calendar-body.m-cal-list .cal-sum {
+    margin: 0 !important;
+    padding: 2px 7px !important;
+    border-radius: 999px;
+    font-size: 9.5px !important;
+    max-width: 100%;
+}
+/* Dia sem nada: linha discreta em vez de bloco vazio */
+body.is-mobile #calendar-body.m-cal-list > div .cal-sum-wrap:empty::before {
+    content: 'Sem agendamentos';
+    font-size: 9.5px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #cbd5e1;
+}
+/* Faixas "DOMINGO" / "FERIADO" ocupam a coluna de conteúdo, sem mt-auto */
+body.is-mobile #calendar-body.m-cal-list > div > div:last-child.mt-auto,
+body.is-mobile #calendar-body.m-cal-list > div > .text-\[9px\] {
+    margin-top: 0 !important;
+    width: auto !important;
+    text-align: left !important;
+    font-size: 9.5px !important;
+}
+body.is-mobile.dark-mode #calendar-body.m-cal-list > div { border-color: #1e293b; }
+
+/* Cabeçalho do calendário: navegação em bloco */
+body.is-mobile #agendaview-agenda .glass-card { flex-direction: column; align-items: stretch !important; }
+body.is-mobile #agendaview-agenda .glass-card > div { width: 100%; justify-content: space-between; }
+body.is-mobile #current-month-label { font-size: 12px; }
+
+/* ── 12. Agenda: semanal (um dia por vez) ───────────────────────────────── */
+/* Sem rolagem interna: a timeline do dia aparece inteira e quem rola é a página */
+body.is-mobile #weekly-board { height: auto !important; }
+body.is-mobile #weekly-board .wk-wrap { height: auto !important; }
+body.is-mobile #weekly-board .wk-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+}
+body.is-mobile .m-wk-days {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 0 0 8px;
+    scrollbar-width: none;
+}
+body.is-mobile .m-wk-days::-webkit-scrollbar { display: none; }
+body.is-mobile .m-wk-day {
+    flex: 1 0 auto;
+    min-width: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 6px 4px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: #64748b;
+}
+body.is-mobile .m-wk-day .m-wk-num { font-size: 14px; color: #0f172a; }
+body.is-mobile .m-wk-day.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+body.is-mobile .m-wk-day.active .m-wk-num { color: #fff; }
+body.is-mobile.dark-mode .m-wk-day { background: #1e293b; border-color: #334155; color: #94a3b8; }
+body.is-mobile.dark-mode .m-wk-day .m-wk-num { color: #e2e8f0; }
+
+/* ── 13. Agenda: kanban (uma coluna por vez) ────────────────────────────── */
+body.is-mobile #view-kanban {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0.5rem !important;
+}
+/* Carrossel: uma coluna por tela, troca arrastando para os lados */
+body.is-mobile #kanban-board {
+    display: flex !important;
+    gap: 10px;
+    height: auto !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 0 !important;
+}
+body.is-mobile #kanban-board::-webkit-scrollbar { display: none; }
+/* !important em tudo: o renderizador escreve flex/min-width/height inline
+   (scripts/agenda.js) e regra sem !important perderia para o style do elemento */
+body.is-mobile #kanban-board .kanban-col {
+    display: flex !important;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: always !important;
+}
+/* Indicador de posição (pontos) — o cabeçalho colorido da coluna já diz qual é */
+body.is-mobile #m-kanban-dots {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 0 10px;
+}
+body.is-mobile #m-kanban-dots button {
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    min-height: 0;
+    border: none;
+    border-radius: 999px;
+    background: #cbd5e1;
+    transition: width 0.2s ease, background 0.2s ease;
+}
+body.is-mobile #m-kanban-dots button.active { width: 20px; background: #2563eb; }
+body.is-mobile.dark-mode #m-kanban-dots button { background: #334155; }
+body.is-mobile.dark-mode #m-kanban-dots button.active { background: #60a5fa; }
+body.is-mobile .kanban-col-body {
+    overflow: visible !important;
+    max-height: none !important;
+}
+body.is-mobile .kanban-group-card { cursor: pointer !important; }
+body.is-mobile .kanban-group-card .fa-grip-vertical { display: none; }
+body.is-mobile .m-move-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 26px;
+    padding: 0 8px;
+    border: none;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    min-height: 0;
+    flex-shrink: 0;
+}
+body.is-mobile.dark-mode .m-move-btn { background: rgba(99, 102, 241, 0.18); color: #a5b4fc; }
+
+/* ── 14. Oportunidades ──────────────────────────────────────────────────── */
+body.is-mobile #oport-cards-container { grid-template-columns: 1fr !important; }
+body.is-mobile #agendaview-oportunidades .min-w-\[180px\],
+body.is-mobile #agendaview-oportunidades .min-w-\[140px\] { min-width: 0 !important; }
+body.is-mobile #oport-stats { flex-wrap: wrap; gap: 6px; }
+/* Busca em linha própria; demais filtros viram chips que quebram linha */
+body.is-mobile #opp-filters-aprazamento,
+body.is-mobile #opp-filters-oferta { padding: 0.6rem !important; gap: 6px; }
+body.is-mobile #opp-filters-aprazamento > div:first-child,
+body.is-mobile #opp-filters-oferta > div:first-child { flex: 1 0 100%; }
+body.is-mobile #opp-filters-aprazamento > button,
+body.is-mobile #opp-filters-oferta > button {
+    flex: 0 0 auto;
+    min-width: 0 !important;
+    max-width: none !important;
+    font-size: 10px !important;
+    padding: 6px 10px !important;
+    border-radius: 999px !important;
+}
+
+/* ── 15. Pacientes ──────────────────────────────────────────────────────── */
+body.is-mobile .m-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px !important;
+}
+body.is-mobile .m-actions > input[type="text"] { flex: 1 1 100%; width: auto !important; }
+body.is-mobile .m-actions > button:not(.h-9) { flex: 1 1 auto; }
+body.is-mobile #patients-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 0.75rem !important;
+}
+
+/* ── 16. Dashboard ──────────────────────────────────────────────────────── */
+/* Gráficos e rankings: um por linha, ocupando a largura toda */
+body.is-mobile #tab-dashboard .grid-cols-1,
+body.is-mobile #tab-dashboard .lg\:grid-cols-3,
+body.is-mobile #tab-dashboard .lg\:grid-cols-2 { grid-template-columns: 1fr !important; }
+body.is-mobile #tab-dashboard .lg\:col-span-2,
+body.is-mobile #tab-dashboard .lg\:col-span-1 { grid-column: 1 / -1 !important; }
+/* KPIs em duas colunas (regra depois: vence nos elementos que têm as duas classes) */
+body.is-mobile #tab-dashboard .grid-cols-2,
+body.is-mobile #tab-dashboard .md\:grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+/* Cabeçalho do painel: título em cima, abas embaixo */
+body.is-mobile #tab-dashboard .bg-navy-900.rounded-t-2xl { flex-wrap: wrap; }
+body.is-mobile .chart-container { height: min(58vw, 240px) !important; }
+/* Itens de grid não podem crescer além da trilha (canvas do Chart.js força
+   min-content maior que a coluna e estoura a lateral) */
+body.is-mobile main .grid > * { min-width: 0; }
+body.is-mobile .chart-container canvas { max-width: 100% !important; }
+body.is-mobile #tab-dashboard .flex.gap-6,
+body.is-mobile #tab-dashboard .flex.gap-4.items-center,
+body.is-mobile #tab-dashboard .flex.items-center.gap-2,
+body.is-mobile #tab-dashboard .flex.items-center.gap-3 { flex-wrap: wrap; }
+body.is-mobile #tab-dashboard select { max-width: 100%; }
+body.is-mobile .dash-filter-btn { font-size: 11px; padding: 8px 11px; }
+
+/* ── 17. Almoxarifado (aba Vacinas) ─────────────────────────────────────── */
+body.is-mobile #tab-vacinas.active {
+    display: block !important;
+    margin: calc(var(--m-gutter) * -1) !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+body.is-mobile #tab-vacinas > div {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+/* A sidebar do almoxarifado vira faixa de chips no topo */
+body.is-mobile #alm-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    position: sticky;
+    top: var(--m-topbar-h);
+    z-index: 60;
+}
+body.is-mobile #alm-sidebar > div:first-child { display: none; }
+body.is-mobile #alm-sidebar nav {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 8px !important;
+    scrollbar-width: none;
+}
+body.is-mobile #alm-sidebar nav::-webkit-scrollbar { display: none; }
+body.is-mobile #alm-sidebar .alm-mod-btn {
+    width: auto !important;
+    flex: 0 0 auto;
+    margin-bottom: 0 !important;
+    padding: 6px 12px !important;
+    border-radius: 999px !important;
+    white-space: nowrap;
+}
+body.is-mobile #alm-sidebar .alm-mod-btn .alm-btn-icon { height: 1.5rem !important; width: 1.5rem !important; }
+body.is-mobile #alm-sidebar .alm-mod-btn p:last-child { display: none; }
+body.is-mobile #alm-content-area {
+    padding: var(--m-gutter) !important;
+    padding-bottom: calc(var(--m-nav-h) + var(--m-safe-b) + 1rem) !important;
+    overflow: visible !important;
+}
+body.is-mobile #alm-modulo-estoque .grid,
+body.is-mobile .alm-modulo .lg\:grid-cols-6,
+body.is-mobile .alm-modulo .md\:grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+/* Cards de produto do painel de estoque ficam em coluna única (2 colunas
+   espremem "1 dose" e o número do estoque).
+   Seletor com #alm-modulo-estoque para superar a regra acima, que também
+   casa este grid e tem especificidade maior que "#estoque-body" sozinho */
+body.is-mobile #alm-modulo-estoque #estoque-body,
+body.is-mobile #estoque-body { grid-template-columns: 1fr !important; }
+body.is-mobile .alm-modulo .text-2xl { font-size: 1.15rem !important; }
+/* Cabeçalho de cada módulo: título em uma linha, ações em outra */
+body.is-mobile .alm-modulo .bg-slate-50.border-b > div { width: 100%; }
+body.is-mobile .alm-modulo .bg-slate-50.border-b > div:last-child { flex-wrap: wrap; }
+body.is-mobile #vaccine-search-wrapper { max-width: 100% !important; flex: 1 1 100%; }
+body.is-mobile #vaccine-search-wrapper input { width: 100% !important; }
+
+/* ── 18. Configurações ──────────────────────────────────────────────────── */
+body.is-mobile #modal-settings.active > div { max-height: 94dvh !important; }
+body.is-mobile #modal-settings .w-56,
+body.is-mobile #modal-settings .w-64 { width: 100% !important; }
+body.is-mobile #modal-settings [id^="settings-tab-"] {
+    font-size: 9px !important;
+    padding: 12px 4px !important;
+    letter-spacing: 0.02em;
+}
+body.is-mobile #modal-settings [id^="settings-tab-"] i { display: none; }
+body.is-mobile #modal-settings .p-6 { padding: 0.85rem !important; }
+body.is-mobile #modal-settings form.grid { max-width: 100% !important; }
+
+/* ── 18b. Tela de carregamento ──────────────────────────────────────────── */
+#loading-overlay p {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+/* ── 19. Login ──────────────────────────────────────────────────────────── */
+body #login-screen { padding: 1rem; }
+@supports (height: 100dvh) {
+    body #login-screen { min-height: 100dvh; }
+}
+#login-screen .max-h-40 { max-height: 6.5rem; }
+#login-screen > div:first-child { padding-top: 1.5rem !important; gap: 1rem !important; }
+
+/* ── 19b. Legibilidade: micro-tipografia do desktop cresce no celular ───── */
+body.is-mobile #patients-grid > div h4 { font-size: 13px !important; }
+body.is-mobile #patients-grid > div .text-\[9px\] { font-size: 11px !important; }
+body.is-mobile #patients-grid > div .text-\[8px\] { font-size: 10px !important; }
+body.is-mobile #kanban-board .kanban-group-card .text-\[9px\] { font-size: 10.5px !important; }
+body.is-mobile #kanban-board .kanban-group-card .text-\[11px\] { font-size: 12.5px !important; }
+body.is-mobile #oport-cards-container .text-\[9px\] { font-size: 10.5px !important; }
+body.is-mobile #oport-cards-container .text-\[10px\] { font-size: 11.5px !important; }
+body.is-mobile .tbl-cards td .text-\[10px\] { font-size: 11.5px !important; }
+
+/* ── 20. Ajustes finais de conteúdo ─────────────────────────────────────── */
+body.is-mobile .whitespace-nowrap.m-wrap { white-space: normal !important; }
+body.is-mobile table { max-width: 100%; }
+body.is-mobile .overflow-x-auto:not(.tbl-cards) { -webkit-overflow-scrolling: touch; }
+/* Respiro para o "puxador" no topo das folhas (vem depois das regras de padding) */
+body.is-mobile .modal.active > div > *:first-child { padding-top: 15px !important; }
+/* Modais com corpo rolável (cabeçalho + .flex-1 + rodapé) ocupam a folha inteira */
+body.is-mobile .modal.active > div:has(> .flex-1) { height: 92dvh; }
+
+/* Nada pode empurrar a página horizontalmente */
+body.is-mobile main img,
+body.is-mobile main canvas { max-width: 100%; height: auto; }
+
+/* ── 21. Rolagem por toque nos contêineres internos ─────────────────────── */
+/* Qualquer área com rolagem própria precisa de inércia e de aceitar o gesto
+   vertical; sem isto o toque é engolido e nada desce. */
+body.is-mobile .overflow-y-auto,
+body.is-mobile .overflow-auto,
+body.is-mobile [style*="overflow-y"],
+body.is-mobile .modal.active > div > .overflow-y-auto,
+body.is-mobile .modal.active > div > .flex-1,
+body.is-mobile #m-action-sheet > div:last-child,
+body.is-mobile .dash-pop,
+body.is-mobile .dash-pop-list,
+body.is-mobile #contacts-panel,
+body.is-mobile #semlote-panel,
+body.is-mobile #expiry-panel,
+body.is-mobile [id$="-panel-list"] {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pinch-zoom;
+    overscroll-behavior-y: contain;
+}
+/* Listas horizontais (kanban, chips do almoxarifado, dias da semana) mantêm
+   o gesto no eixo X sem bloquear o Y da página */
+body.is-mobile #kanban-board,
+body.is-mobile .m-wk-days,
+body.is-mobile #alm-sidebar nav { touch-action: pan-x pan-y pinch-zoom; }
+/* O quadro semanal troca de dia por arrasto lateral (scripts/mobile.js): o
+   gesto X precisa chegar ao listener, e o Y continua rolando a página */
+body.is-mobile #weekly-board { touch-action: pan-x pan-y pinch-zoom; }
+/* Sem arrasto HTML5 no toque: os cards são desmarcados por JS, aqui só se
+   garante que o navegador não inicie a seleção/arraste nativo do card */
+body.is-mobile #kanban-board .kanban-group-card,
+body.is-mobile #weekly-board .wk-event {
+    -webkit-user-drag: none;
+    user-select: none;
+}
+/* Dica visual de que dá para arrastar entre dias */
+body.is-mobile .m-wk-days { scroll-snap-type: x proximity; }
+body.is-mobile .m-wk-day { scroll-snap-align: center; }
+/* A troca de dia é animada por transform (scripts/mobile.js): o quadro precisa
+   ser um bloco só, e o que sai não pode vazar para fora do board */
+body.is-mobile #weekly-board { overflow-x: clip; }
+body.is-mobile #weekly-board .wk-wrap { will-change: auto; }
+/* O arrasto entre colunas do kanban usa o scroll nativo com snap; a inércia
+   suave vale também para o passo programático (mobileKanbanShowCol) */
+body.is-mobile #kanban-board { scroll-behavior: smooth; }
+/* Sem animação no modo leve */
+body.lite-mode.is-mobile #weekly-board .wk-wrap { transition: none !important; }
+body.lite-mode.is-mobile #kanban-board { scroll-behavior: auto; }
+
+} /* fim @media (max-width:768px) */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TABLET (769–1024px) — apenas alívio de densidade
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1024px) {
+    main { padding: 1rem !important; }
+    #patients-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    #alm-sidebar { width: 11rem !important; min-width: 11rem !important; }
+    .chart-container { height: 220px !important; }
+}

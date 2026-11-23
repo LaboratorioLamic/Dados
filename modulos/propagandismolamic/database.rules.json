@@ -1,0 +1,9 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "meta": {
+      "schemaVersion": { ".validate": "newData.isNumber()" }
+    }
+  }
+}

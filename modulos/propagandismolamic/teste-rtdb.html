@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste RTDB — Propagandismo LAMIC</title>
+    <!-- Passo 0 da migração: prova que o Realtime Database conecta com o app
+         aberto por duplo-clique (origem file://, que o Firebase enxerga como
+         "null"). Abra ESTE arquivo em duas janelas ao mesmo tempo. -->
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 24px; max-width: 640px; }
+        h1 { font-size: 20px; }
+        .linha { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+        input, button { font: inherit; padding: 8px 12px; }
+        input { flex: 1; }
+        #estado { font-weight: 700; }
+        .ok { color: #047857; }
+        .erro { color: #b91c1c; }
+        pre { background: #f1f5f9; padding: 12px; border-radius: 8px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Teste de conexão — Realtime Database</h1>
+
+    <p>Conexão: <span id="estado" class="erro">verificando…</span></p>
+
+    <div class="linha">
+        <input id="texto" placeholder="Digite algo e clique em Gravar" autocomplete="off">
+        <button id="gravar">Gravar</button>
+    </div>
+
+    <p>Valor no servidor (atualiza sozinho):</p>
+    <pre id="valor">—</pre>
+
+    <p>Log:</p>
+    <pre id="log"></pre>
+
+    <script src="js/vendor/firebase-app-compat-11.6.0.js"></script>
+    <script src="js/vendor/firebase-database-compat-11.6.0.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        const elEstado = document.getElementById('estado');
+        const elValor = document.getElementById('valor');
+        const elLog = document.getElementById('log');
+        const elTexto = document.getElementById('texto');
+
+        function log(msg) {
+            elLog.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+        }
+
+        if (!window.firebase || !window.firebase.database) {
+            elEstado.textContent = 'SDK não carregou (js/vendor/*)';
+            log('ERRO: window.firebase ausente. Confira os arquivos em js/vendor/.');
+            return;
+        }
+
+        firebase.initializeApp({
+            apiKey: 'AIzaSyAVvZNLf6Qys15qOVh5RgU8GekChKxqg9Q',
+            authDomain: 'bd-propagandismo.firebaseapp.com',
+            databaseURL: 'https://bd-propagandismo-default-rtdb.firebaseio.com',
+            projectId: 'bd-propagandismo',
+            storageBucket: 'bd-propagandismo.firebasestorage.app',
+            messagingSenderId: '1050647698083',
+            appId: '1:1050647698083:web:7927c0ad87da710120fd16'
+        });
+
+        log('SDK inicializado. Origem: ' + (location.origin || 'null (file://)'));
+
+        const refPing = firebase.database().ref('/ping');
+
+        firebase.database().ref('.info/connected').on('value', snap => {
+            const conectado = snap.val() === true;
+            elEstado.textContent = conectado ? 'CONECTADO' : 'desconectado';
+            elEstado.className = conectado ? 'ok' : 'erro';
+            log('conexão: ' + (conectado ? 'conectado' : 'desconectado'));
+        });
+
+        refPing.on('value', snap => {
+            elValor.textContent = JSON.stringify(snap.val(), null, 2) || '—';
+            log('leitura em tempo real recebida');
+        }, erro => {
+            log('ERRO de leitura: ' + erro.message);
+        });
+
+        document.getElementById('gravar').addEventListener('click', () => {
+            refPing.set({ texto: elTexto.value, em: Date.now() })
+                .then(() => log('gravado com sucesso'))
+                .catch(erro => log('ERRO de escrita: ' + erro.message));
+        });
+    })();
+    </script>
+</body>
+</html>

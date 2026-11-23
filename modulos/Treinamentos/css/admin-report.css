@@ -1,0 +1,281 @@
+/* ─── Relatório do colaborador em PDF ───
+   As folhas do relatório são montadas num palco fora da tela e capturadas com
+   html2canvas (ver js/admin-pdf-report.js), igual ao certificado. Duas regras
+   valem para tudo aqui:
+
+   1. Nada de background-image nem gradiente. O html2canvas 1.4.1 pinta
+      background-image criando um canvas do tamanho da caixa e aborta o render
+      inteiro quando a caixa mede menos de 1px ("createPattern ... width or
+      height of 0"). Só cor sólida.
+   2. Medidas fixas em px. A folha tem exatamente 960x540 (16:9, o mesmo do
+      modelo do relatório impresso), então o layout não pode depender da
+      viewport nem de unidades relativas. */
+
+.report-stage {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 960px;
+    z-index: -9999;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+/* No clone do html2canvas o palco precisa voltar a ser visível —
+   `visibility: hidden` é herdado e sairia uma folha em branco. */
+.report-stage.is-capturing { visibility: visible; }
+
+.rp-slide {
+    position: relative;
+    box-sizing: border-box;
+    width: 960px;
+    height: 540px;
+    overflow: hidden;
+    background: #ffffff;
+    color: #06333b;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+/* Folhas comuns (não a capa) empilham cabeçalho, corpo e rodapé em coluna:
+   o rodapé fica no fluxo, colado ao pé, e o corpo é o único que encolhe.
+   Assim um cabeçalho mais alto que o previsto (tarja de recorte longa, título
+   em duas linhas) come espaço do corpo em vez de empurrá-lo sobre o rodapé. */
+.rp-slide:not(.is-cover) {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 20px;
+}
+.rp-slide:not(.is-cover) > .rp-head { flex: 0 0 auto; }
+
+/* ─── Cabeçalho e rodapé ─── */
+.rp-head { padding: 34px 54px 0; }
+/* Uma linha só: a paginação por altura (feedbacks, pendentes) conta com o
+   cabeçalho de sempre. Período + funções + cursos longos quebravam a tarja em
+   duas linhas e o último bloco da folha descia sobre o rodapé. O que não
+   cabe vira reticências — o rodapé repete o recorte por extenso. */
+.rp-eyebrow {
+    display: flex; align-items: baseline; white-space: nowrap;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.6px;
+    text-transform: uppercase; color: #028090;
+}
+.rp-title { margin: 6px 0 0; font-size: 28px; font-weight: 800; letter-spacing: -0.4px; }
+.rp-sub { margin: 4px 0 0; font-size: 13px; color: #55666b; }
+
+/* O corpo nunca pode invadir o rodapé. O teto é o que sobra dos 540px depois
+   do cabeçalho padrão (~34px de topo + título) e da faixa do rodapé, e é nele
+   que a paginação por altura se baseia; se o cabeçalho crescer além disso, o
+   flex encolhe o corpo. O overflow corta o que ainda assim passar —
+   preferível a texto sobreposto e ilegível. */
+.rp-body {
+    box-sizing: border-box;
+    padding: 20px 54px 0;
+    max-height: 383px;
+    overflow: hidden;
+    flex: 0 1 auto;
+    min-height: 0;
+}
+/* Folha sem subtítulo tem o cabeçalho mais curto, então o corpo pode crescer
+   na mesma medida (a classe é posta por slideHtml, não via :has(), para não
+   depender de suporte a seletor de pai na captura). */
+.rp-body.is-tall { max-height: 405px; }
+
+.rp-foot {
+    flex: 0 0 auto; margin: auto 54px 0;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding-top: 9px; border-top: 1px solid #dceaec;
+    font-size: 10px; color: #55666b;
+}
+.rp-foot b { color: #06333b; font-weight: 700; }
+
+/* ─── Capa ─── */
+.rp-slide.is-cover { background: #06333b; color: #ffffff; }
+.rp-cover-mark {
+    position: absolute; right: -120px; top: -120px;
+    width: 420px; height: 420px; border-radius: 50%; background: #0b4753;
+}
+.rp-cover-bar { position: absolute; left: 0; top: 0; width: 8px; height: 540px; background: #028090; }
+/* O bloco de texto vai de 92px até o topo dos KPIs (ancorados em bottom:96px,
+   ~85px de altura). Sem teto, um nome de três linhas empurrava o período por
+   cima dos cartões; o limite garante que os dois nunca se sobreponham. */
+.rp-cover-inner {
+    position: absolute; left: 62px; top: 92px; right: 62px;
+    box-sizing: border-box; max-height: 267px; overflow: hidden;
+}
+.rp-cover-eyebrow {
+    font-size: 11px; font-weight: 800; letter-spacing: 2.4px;
+    text-transform: uppercase; color: #02c39a;
+}
+.rp-cover-title { margin: 14px 0 0; font-size: 44px; font-weight: 800; letter-spacing: -1px; line-height: 1.08; }
+/* Degraus de tamanho por comprimento do nome (classe posta por coverHtml):
+   nomes longos encolhem para caber em duas linhas em vez de virar três. */
+.rp-cover-title.is-md { font-size: 38px; }
+.rp-cover-title.is-sm { font-size: 32px; letter-spacing: -0.6px; }
+.rp-cover-title.is-xs { font-size: 27px; letter-spacing: -0.3px; }
+.rp-cover-sub { margin: 12px 0 0; font-size: 15px; color: #c6dcde; max-width: 640px; }
+.rp-cover-meta { margin: 18px 0 0; font-size: 12px; color: #c6dcde; }
+.rp-cover-meta span { display: inline-block; margin-right: 18px; }
+.rp-cover-kpis { position: absolute; left: 62px; right: 62px; bottom: 96px; display: flex; gap: 16px; }
+.rp-cover-kpi { flex: 1; background: #0b4753; border-radius: 14px; padding: 16px 18px; }
+.rp-cover-kpi-value { font-size: 30px; font-weight: 800; color: #02c39a; line-height: 1; }
+.rp-cover-kpi-label { margin-top: 7px; font-size: 12px; font-weight: 600; color: #c6dcde; }
+.rp-cover-base {
+    position: absolute; left: 62px; right: 62px; bottom: 34px;
+    font-size: 10px; color: #8fb2b6;
+}
+
+/* ─── Blocos de indicador ─── */
+.rp-kpis { display: flex; gap: 14px; }
+.rp-kpi {
+    flex: 1; box-sizing: border-box;
+    background: #eef5f5; border: 1px solid #dceaec; border-radius: 14px;
+    padding: 14px 16px;
+}
+.rp-kpi-value { font-size: 28px; font-weight: 800; color: #028090; line-height: 1; }
+.rp-kpi-label { margin-top: 7px; font-size: 12px; font-weight: 700; }
+.rp-kpi-hint { margin-top: 3px; font-size: 10px; color: #55666b; }
+
+.is-ok { color: #00a896; }
+.is-warn { color: #c98a21; }
+.is-bad { color: #e76f51; }
+
+/* ─── Texto analítico ─── */
+.rp-section-title {
+    margin: 0 0 8px; font-size: 12px; font-weight: 800;
+    letter-spacing: 1.2px; text-transform: uppercase; color: #028090;
+}
+.rp-notes { margin: 0; padding: 0; list-style: none; }
+.rp-notes li {
+    position: relative; padding: 0 0 0 16px; margin-bottom: 9px;
+    font-size: 12.5px; color: #24484f;
+}
+.rp-notes li::before {
+    content: ''; position: absolute; left: 0; top: 6px;
+    width: 6px; height: 6px; border-radius: 50%; background: #028090;
+}
+.rp-notes li b { color: #06333b; }
+.rp-empty {
+    background: #eef5f5; border: 1px dashed #c6dcde; border-radius: 12px;
+    padding: 22px; text-align: center; font-size: 13px; color: #55666b;
+}
+
+/* ─── Curso a curso ─── */
+.rp-course {
+    box-sizing: border-box; display: flex; gap: 14px; align-items: center;
+    border: 1px solid #dceaec; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px;
+}
+.rp-course-index {
+    flex: 0 0 auto; width: 40px; text-align: center;
+    font-size: 20px; font-weight: 800; color: #c6dcde;
+}
+.rp-course-main { flex: 0 0 218px; min-width: 0; }
+.rp-course-name {
+    font-size: 13.5px; font-weight: 700; line-height: 1.2;
+    max-height: 33px; overflow: hidden;
+}
+.rp-course-sub { margin-top: 3px; font-size: 10.5px; color: #55666b; }
+.rp-metrics { flex: 1; display: flex; gap: 8px; }
+.rp-metric { flex: 1; box-sizing: border-box; background: #f4f9f9; border-radius: 10px; padding: 7px 9px; }
+.rp-metric-label {
+    font-size: 8.5px; font-weight: 800; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #55666b;
+}
+.rp-metric-value { margin-top: 3px; font-size: 14px; font-weight: 800; }
+.rp-metric-verdict { margin-top: 1px; font-size: 10px; font-weight: 700; }
+
+/* Card de curso do relatório de unidade: tem uma linha a mais (o veredito),
+   então aperta o espaçamento para três caberem na folha. */
+.rp-course.is-blocks { padding: 10px 14px; margin-bottom: 8px; }
+.rp-course.is-blocks .rp-course-name { font-size: 13px; max-height: 32px; }
+.rp-course.is-blocks .rp-metric { padding: 6px 9px; }
+.rp-course.is-blocks .rp-metric-hint { line-height: 1.2; max-height: 23px; overflow: hidden; }
+.rp-metric-hint { margin-top: 2px; font-size: 9.5px; color: #55666b; }
+
+/* ─── Gráficos ─── */
+.rp-split { display: flex; gap: 22px; }
+.rp-chart { flex: 1; }
+.rp-chart img { display: block; width: 100%; }
+.rp-side { flex: 0 0 272px; }
+.rp-chart-caption { margin-top: 6px; font-size: 10px; color: #55666b; text-align: center; }
+
+/* ─── Pendentes por curso (relatório da unidade) ─── */
+/* As medidas aqui alimentam PG_HEAD/PG_PERSON/PG_GAP em admin-pdf-report.js:
+   mexer numa altura exige rever a constante correspondente, senão a
+   paginação volta a estourar a folha. */
+.rp-pend-group { margin-bottom: 14px; }
+.rp-pend-head {
+    font-size: 12.5px; font-weight: 800; letter-spacing: 0.3px; color: #028090;
+}
+.rp-pend-sub { margin-top: 2px; font-size: 10.5px; color: #55666b; }
+.rp-pend-person {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 4px 0 3px; border-bottom: 1px solid #eef5f5;
+    font-size: 11.5px;
+}
+.rp-pend-person:last-child { border-bottom: none; }
+.rp-pend-name { color: #24484f; overflow: hidden; }
+.rp-pend-pct { font-weight: 800; white-space: nowrap; }
+
+/* ─── Feedbacks ─── */
+.rp-fb-course-head {
+    margin: 0 0 6px; font-size: 12px; font-weight: 800;
+    letter-spacing: 0.4px; color: #028090;
+}
+.rp-fb-course-head + .rp-fb { margin-top: 0; }
+.rp-fb + .rp-fb-course-head { margin-top: 12px; }
+.rp-fb-cont { font-weight: 600; color: #55666b; letter-spacing: 0; }
+.rp-fb-note {
+    margin-top: 10px; background: #eef5f5; border: 1px dashed #c6dcde;
+    border-radius: 10px; padding: 9px 14px; font-size: 11.5px; color: #24484f;
+}
+.rp-fb {
+    box-sizing: border-box; border-left: 3px solid #028090; background: #f4f9f9;
+    border-radius: 0 12px 12px 0; padding: 10px 14px; margin-bottom: 10px;
+}
+.rp-fb-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.rp-fb-course { font-size: 12.5px; font-weight: 700; }
+.rp-fb-stars { font-size: 12px; font-weight: 800; white-space: nowrap; }
+.rp-fb-text { margin-top: 5px; font-size: 12px; color: #24484f; max-height: 34px; overflow: hidden; }
+.rp-fb-date { margin-top: 4px; font-size: 10px; color: #55666b; }
+
+/* ─── Tabela (pendentes) ─── */
+.rp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rp-table th {
+    background: #06333b; color: #ffffff; text-align: left;
+    padding: 8px 12px; font-size: 10px; font-weight: 800;
+    letter-spacing: 0.8px; text-transform: uppercase;
+}
+.rp-table td { padding: 8px 12px; border-bottom: 1px solid #dceaec; }
+.rp-table tr:nth-child(even) td { background: #f4f9f9; }
+.rp-table .rp-td-num { text-align: right; font-weight: 800; }
+
+/* ─── Plano de ação ─── */
+.rp-action { display: flex; gap: 12px; margin-bottom: 11px; }
+.rp-action-num {
+    flex: 0 0 auto; box-sizing: border-box;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #028090; color: #ffffff;
+    font-size: 12px; font-weight: 800; text-align: center; line-height: 24px;
+}
+.rp-action-title { font-size: 13px; font-weight: 700; }
+.rp-action-text { margin-top: 2px; font-size: 11.5px; color: #55666b; }
+.rp-closing {
+    margin-top: 12px; background: #06333b; color: #ffffff;
+    border-radius: 14px; padding: 13px 18px; font-size: 12.5px;
+}
+.rp-closing b { color: #02c39a; }
+
+/* Recorte de data. A capa ganha uma linha própria e cada folha repete o
+   período ao lado do olho-de-seção: folha avulsa tem de dizer sozinha de
+   que período fala. */
+.rp-cover-period {
+    margin: 10px 0 0; font-size: 12px; color: #c6dcde;
+}
+.rp-cover-period b { color: #02c39a; font-weight: 800; }
+.rp-eyebrow-period {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    margin-left: 10px; padding-left: 10px; border-left: 1px solid #c6dcde;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: none; color: #55666b;
+}

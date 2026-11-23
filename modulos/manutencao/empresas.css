@@ -1,0 +1,49 @@
+/* ═══════════════════════════════════════════════════════════
+   empresas.css — Módulo Empresas Terceirizadas
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Hero da view ── */
+.emp-view-hero {
+  background: linear-gradient(135deg, var(--night) 0%, var(--night-mid) 100%);
+  border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.emp-view-hero::before {
+  content: ''; position: absolute; right: -20px; top: -20px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: rgba(0,168,204,0.08); border: 1px solid rgba(0,168,204,0.15);
+}
+.emp-view-hero-name {
+  font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; line-height: 1.35;
+}
+.emp-view-hero-sub {
+  font-family: 'DM Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.45);
+}
+
+/* ── Lista genérica (contatos / responsáveis) ── */
+.emp-list-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 10px 14px;
+  transition: var(--transition);
+}
+.emp-list-item-body {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.emp-list-item-label {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 2px 7px; border-radius: 10px; white-space: nowrap;
+}
+.emp-list-item-val {
+  font-size: 13px; color: var(--text-primary);
+}
+.emp-list-empty {
+  font-size: 12.5px; color: var(--text-muted); padding: 10px 0;
+  text-align: center;
+}
+
+/* ── Tab panel ── */
+.emp-tab-panel { display: none; }
+.emp-tab-panel.active { display: block; }

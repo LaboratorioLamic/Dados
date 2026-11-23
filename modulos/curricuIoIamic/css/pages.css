@@ -1,0 +1,2215 @@
+/* ===== Estilos específicos de módulos ===== */
+
+/* ---- Funcionários: grid de cards ---- */
+.func-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.func-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 18px;
+    cursor: pointer;
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.func-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); border-color: var(--accent-soft-2); }
+
+.func-card .func-status {
+    position: absolute; top: 16px; right: 16px;
+    width: 9px; height: 9px; border-radius: 50%;
+}
+.func-card .func-status.on { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+.func-card .func-status.off { background: var(--muted); box-shadow: 0 0 0 3px var(--surface-3); }
+/* De férias = ativo, porém ausente: ponto próprio em vez de verde "presente" */
+.func-card .func-status.ferias { background: var(--info); box-shadow: 0 0 0 3px var(--info-soft); }
+/* Alerta legal de férias — só para quem NÃO está gozando: amarelo ainda no prazo,
+   laranja já estourado (art. 137 CLT). */
+.func-card .func-status.vencendo { background: var(--venc-prox); box-shadow: 0 0 0 3px var(--venc-prox-soft); }
+.func-card .func-status.vencida { background: var(--venc-estourou); box-shadow: 0 0 0 3px var(--venc-estourou-soft); }
+/* Admissão futura: dado inconsistente, não um status — roxo, distinto de erro/urgência */
+.func-card .func-status.futuro { background: var(--futuro); box-shadow: 0 0 0 3px var(--futuro-soft); }
+.func-card .chip-soft.chip-futuro { background: var(--futuro-soft); border-color: #ddcdf7; color: var(--futuro); }
+.func-card .chip-soft.chip-futuro svg.icon { color: var(--futuro); }
+.func-card.em-ferias { border-color: #cdeae6; }
+.func-card .chip-soft.chip-ferias {
+    background: var(--ferias-soft); border-color: #cdeae6; color: var(--info);
+}
+.func-card .chip-soft.chip-ferias svg.icon { color: var(--info); }
+.txt-ferias { color: var(--info); font-weight: 600; }
+/* Contador do cabeçalho — mesmas cores do ponto do card */
+.txt-warning { color: #a16207; font-weight: 600; }   /* amarelo escurecido: contraste em texto */
+.txt-danger { color: var(--venc-estourou); font-weight: 600; }
+
+/* Chip de programação de férias no card — cor pela urgência legal.
+   Seletor combinado (.chip-soft.chip-prog-*) para vencer .func-card .chip-soft mais abaixo
+   no arquivo: mesma especificidade + ordem de origem apagava as cores sem isso. */
+.func-card .chip-soft.chip-prog-vencida { background: var(--danger-soft); border-color: #f7d4d4; color: var(--danger); }
+.func-card .chip-soft.chip-prog-vencida svg.icon { color: var(--danger); }
+.func-card .chip-soft.chip-prog-critica { background: var(--warning-soft); border-color: #f6e3c4; color: var(--warning); }
+.func-card .chip-soft.chip-prog-critica svg.icon { color: var(--warning); }
+.func-card .chip-soft.chip-prog-atencao { background: var(--info-soft); border-color: #cfe8f5; color: var(--info); }
+.func-card .chip-soft.chip-prog-atencao svg.icon { color: var(--info); }
+.func-card .chip-soft.chip-prog-aquisitivo svg.icon { color: var(--muted); }
+
+/* ---- Programação de férias (fila por urgência) ---- */
+.prog-resumo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.prog-kpi {
+    background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--border-strong);
+    border-radius: var(--radius); padding: 10px 14px;
+    display: flex; flex-direction: column; gap: 1px;
+}
+.prog-n { font-size: 22px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.prog-lbl { font-size: 11.5px; color: var(--text-2); font-weight: 500; }
+.prog-kpi.prog-vencida { border-left-color: var(--danger); }
+.prog-kpi.prog-vencida .prog-n { color: var(--danger); }
+.prog-kpi.prog-critica { border-left-color: var(--warning); }
+.prog-kpi.prog-critica .prog-n { color: var(--warning); }
+.prog-kpi.prog-atencao { border-left-color: var(--info); }
+.prog-kpi.prog-atencao .prog-n { color: var(--info); }
+.prog-kpi.prog-aquisitivo { border-left-color: var(--success); }
+.prog-kpi.prog-aquisitivo .prog-n { color: var(--text-2); }
+
+.prog-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.prog-dot.st-vencida { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+.prog-dot.st-critica { background: var(--warning); box-shadow: 0 0 0 3px var(--warning-soft); }
+.prog-dot.st-atencao { background: var(--info); box-shadow: 0 0 0 3px var(--info-soft); }
+.prog-dot.st-ok { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+
+.tab-count-alert { background: var(--danger-soft) !important; color: var(--danger) !important; }
+
+.transf-seta { color: var(--accent); font-weight: 700; margin: 0 4px; }
+
+.prog-aq { font-size: 11px; color: var(--muted); margin-top: 2px; padding-left: 16px; }
+.prog-adiado {
+    display: inline-block; margin-top: 3px; padding: 1px 6px; border-radius: 6px;
+    font-size: 10px; font-weight: 700; white-space: nowrap;
+    background: var(--surface-3); color: var(--muted);
+}
+/* Prazo legal — dias até a dobra */
+.prog-dias { font-size: 11px; font-weight: 700; color: var(--text-2); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* Alerta da DATA PREVISTA (operacional) — distinto do alerta legal (financeiro) */
+.prog-prev { font-size: 11px; font-weight: 600; margin-top: 2px; display: flex; align-items: center; gap: 3px; }
+.prog-prev svg.icon { width: 12px; height: 12px; }
+.prog-prev-ok { color: var(--muted); }
+.prog-prev-proximo { color: var(--warning); }
+.prog-prev-atrasado { color: var(--warning); font-weight: 700; }
+.prog-prev-estoura { color: var(--danger); font-weight: 700; }
+
+/* Aviso dentro do modal (sugestão pré-preenchida) */
+.form-note {
+    display: flex; align-items: flex-start; gap: 8px;
+    border-radius: 10px; padding: 9px 12px; margin-bottom: 14px;
+    font-size: 12.5px; line-height: 1.45;
+}
+.form-note svg.icon { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+.form-note-vencida { background: var(--danger-soft); color: var(--danger); }
+.form-note-critica { background: var(--warning-soft); color: var(--warning); }
+.form-note-atencao, .form-note-info { background: var(--info-soft); color: var(--info); }
+.form-note-aquisitivo { background: var(--surface-2); color: var(--text-2); }
+
+@media (max-width: 900px) {
+    .prog-resumo { grid-template-columns: repeat(2, 1fr); }
+}
+.func-card .func-top { display: flex; align-items: center; gap: 12px; }
+.func-card .func-nome { font-weight: 700; font-size: 14.5px; line-height: 1.25; padding-right: 14px; }
+.func-card .func-cargo { color: var(--muted); font-size: 12.5px; }
+.func-card .func-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.func-card .chip-soft {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 600; color: var(--text-2);
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 4px 9px; border-radius: 8px; max-width: 100%;
+}
+.func-card .chip-soft svg.icon { width: 13px; height: 13px; color: var(--muted); }
+.func-card .func-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 11px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+}
+.func-card .func-meta svg.icon { width: 14px; height: 14px; }
+
+/* Toolbar de filtros */
+.filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+/* ---- Drawer header/body ---- */
+.drawer-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 24px 26px 18px;
+    border-bottom: 1px solid var(--border);
+}
+.drawer-body { flex: 1; overflow-y: auto; padding: 22px 26px 28px; }
+
+.drawer-title-row { display: flex; align-items: flex-start; gap: 16px; width: 100%; }
+.drawer-title-row h3 { font-size: 19px; line-height: 1.2; letter-spacing: -.01em; }
+.drawer-title-row .drawer-sub { color: var(--text-2); font-size: 13px; margin-top: 3px; font-weight: 500; }
+.drawer-title-row .drawer-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.drawer-title-row .drawer-tags .badge svg.icon { width: 13px; height: 13px; }
+.drawer-title-row #fdEdit { flex-shrink: 0; }
+
+/* Ficha em seções agrupadas (substitui o grid chapado) */
+.fd-section {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.fd-section-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-2);
+}
+.fd-section-head svg.icon { width: 15px; height: 15px; color: var(--accent); }
+.fd-section-body { padding: 6px 16px; }
+.fd-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+}
+.fd-row:last-child { border-bottom: none; }
+.fd-row .fd-k { font-size: 13px; color: var(--muted); font-weight: 500; flex-shrink: 0; }
+.fd-row .fd-v { font-size: 13.5px; font-weight: 600; text-align: right; }
+
+/* Formas de pagamento na ficha: cada uma é um grupo com cabeçalho próprio, porque a mesma
+   pessoa pode ter mais de um destino e as linhas de duas formas não podem se misturar. */
+.fd-pag { padding: 4px 0 2px; border-bottom: 1px solid var(--border); }
+.fd-pag:last-child { border-bottom: none; }
+.fd-pag-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 0 6px; font-size: 13.5px; min-width: 0;
+}
+.fd-pag-ico { display: flex; flex-shrink: 0; }
+.fd-pag-ico svg.icon { width: 15px; height: 15px; color: var(--accent); }
+.fd-pag-head strong { flex-shrink: 0; }
+/* Resumo do destino (chave Pix, banco/agência): recuado à direita e discreto — serve para
+   distinguir duas formas de relance, os dados completos vêm nas linhas abaixo. */
+.fd-pag-resumo {
+    margin-left: auto; font-size: 12px; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fd-pag .fd-row { padding: 7px 0; }
+.fd-pag .fd-row:last-child { border-bottom: none; }
+
+/* Benefícios do funcionário */
+.benef-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+    background: var(--surface-2);
+}
+.benef-item .benef-top { display: flex; align-items: center; gap: 10px; }
+.benef-item .benef-nome { font-weight: 650; font-size: 13.5px; flex: 1; }
+.benef-item .benef-deps { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Timeline (histórico) */
+.timeline { position: relative; padding-left: 22px; }
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px; top: 4px; bottom: 4px;
+    width: 2px;
+    background: var(--border);
+    border-radius: 2px;
+}
+.tl-item { position: relative; padding-bottom: 18px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-item::before {
+    content: '';
+    position: absolute;
+    left: -21px; top: 4px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 3px solid var(--accent);
+}
+.tl-item.tl-danger::before { border-color: var(--danger); }
+.tl-item.tl-success::before { border-color: var(--success); }
+.tl-item.tl-warning::before { border-color: var(--warning); }
+.tl-item.tl-info::before { border-color: var(--info); }
+.tl-item .tl-date { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.tl-item .tl-title { font-size: 13.5px; font-weight: 600; margin: 1px 0; }
+.tl-item .tl-desc { font-size: 12.5px; color: var(--text-2); }
+/* Eventos com janela de detalhe própria (tudo exceto Admissão) — mesma affordance de .hist-row.
+   Sem margin/padding no .tl-item: o conector da timeline (::before) é posicionado em absoluto
+   relativo a ele, e alterar sua caixa desalinharia a bolinha com a data. */
+.tl-item.tl-clicavel { cursor: pointer; border-radius: 8px; transition: background .12s; }
+.tl-item.tl-clicavel:hover, .tl-item.tl-clicavel:focus-visible { background: var(--accent-soft); }
+.tl-item.tl-clicavel:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Sub-abas do histórico (nível 2 — mais discretas que .tabs-full) */
+.tabs.tabs-sub {
+    width: 100%;
+    background: transparent;
+    padding: 0;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.tabs.tabs-sub::-webkit-scrollbar { display: none; }
+.tabs.tabs-sub .tab {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 7px 6px;
+    font-size: 12px;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+.tabs.tabs-sub .tab.active {
+    background: transparent;
+    box-shadow: none;
+    border-bottom-color: var(--accent);
+    color: var(--accent-strong);
+}
+.tab-count {
+    display: inline-block;
+    min-width: 16px;
+    padding: 0 4px;
+    margin-left: 3px;
+    border-radius: 8px;
+    background: var(--border);
+    color: var(--text-2);
+    font-size: 10.5px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 700;
+}
+.tab.active .tab-count { background: var(--accent-soft); color: var(--accent-strong); }
+
+/* Linhas interativas do histórico (faltas, afastamentos, férias, treinamentos) */
+.hist-list { display: flex; flex-direction: column; gap: 6px; }
+.hist-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+}
+.hist-row:hover, .hist-row:focus-visible { background: var(--accent-soft); border-color: var(--accent); }
+.hist-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hist-main { flex: 1; min-width: 0; }
+.hist-top { display: flex; align-items: baseline; gap: 8px; }
+.hist-per {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.hist-dias { font-size: 12px; font-weight: 700; color: var(--text-2); white-space: nowrap; }
+.hist-sub { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.hist-meta { font-size: 11.5px; color: var(--muted); }
+.hist-clip svg.icon { width: 13px; height: 13px; color: var(--muted); display: block; }
+.hist-go svg.icon { width: 15px; height: 15px; color: var(--muted); display: block; }
+
+/* Anexos */
+.anexo-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    flex-shrink: 0;
+    user-select: none;
+}
+.anexo-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 8px;
+    transition: background .15s;
+    max-width: 100%;
+}
+.anexo-chip:hover { background: var(--accent-soft); }
+/* O chip também é usado como BOTÃO (célula "Documento" do lote de liberação, onde clicar
+   abre a janelinha do anexo daquela pessoa) — sem isto ele herdaria a moldura nativa. */
+button.anexo-chip { border: none; background: none; font: inherit; text-align: left; }
+.anexo-chip span:not(.anexo-ico) {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.anexo-field {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+}
+
+/* Balão da coluna de tabela: só a quantidade de anexos, não nome/ícone por item */
+.anexo-balao {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 12px;
+    font-weight: 700;
+    transition: background .15s, transform .1s;
+}
+.anexo-balao:hover { background: var(--accent-soft-2); }
+.anexo-balao:active { transform: scale(.96); }
+.anexo-balao svg.icon { width: 13px; height: 13px; }
+
+/* Lista de anexos já existentes no formulário (multi-anexo) */
+.ax-existing-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+/* Janela de visualização: ícones grandes com o título abaixo de cada um */
+.anexo-galeria {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 16px;
+}
+.anexo-galeria-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: background .15s, border-color .15s;
+}
+.anexo-galeria-item:hover { background: var(--surface-2); border-color: var(--border); }
+.anexo-galeria-item span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+}
+
+/* Cartões-botão de tipo de anexo (substituem o select) */
+.ax-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 520px) { .ax-types { grid-template-columns: 1fr; } }
+.ax-type {
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 12px 10px; border-radius: 11px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    cursor: pointer; text-align: left; font-family: var(--font);
+    transition: border-color .15s, background .15s, transform .1s;
+}
+.ax-type:hover { border-color: var(--accent-soft-2); background: var(--surface-2); }
+.ax-type:active { transform: scale(.98); }
+.ax-type svg { width: 22px; height: 22px; color: var(--muted); margin-bottom: 4px; transition: color .15s; }
+.ax-type strong { font-size: 13.5px; color: var(--text); font-weight: 650; }
+.ax-type span { font-size: 11px; color: var(--muted); line-height: 1.3; }
+.ax-type.active {
+    border-color: var(--accent); background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+.ax-type.active svg, .ax-type.active strong { color: var(--accent-strong); }
+
+/* Dropzone */
+.ax-drop {
+    position: relative;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 22px 16px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    outline: none;
+}
+.ax-drop:hover, .ax-drop:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+.ax-drop.dragging { border-color: var(--accent); background: var(--accent-soft); border-style: solid; }
+.ax-drop.has-file { border-style: solid; border-color: var(--border); background: var(--surface-2); padding: 12px 14px; }
+.ax-drop-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); text-align: center; }
+.ax-drop.has-file .ax-drop-inner { display: none; }
+.ax-drop-ico { width: 30px; height: 30px; color: var(--accent); }
+.ax-drop-txt { font-size: 13px; }
+.ax-drop-txt strong { color: var(--text-2); font-weight: 650; }
+.ax-drop-preview { display: flex; align-items: center; gap: 12px; }
+.ax-drop-preview strong { font-size: 13px; font-weight: 650; word-break: break-word; }
+.ax-drop-preview .muted { font-size: 11.5px; }
+.ax-drop-preview img { max-height: 130px; border-radius: 9px; display: block; }
+
+/* Anexo já existente na edição */
+.ax-existing { display: flex; align-items: center; gap: 12px; }
+.ax-existing strong { font-size: 13.5px; font-weight: 650; }
+.ax-existing .muted { font-size: 11.5px; }
+
+/* Header fixo ao rolar tabelas largas */
+.table-scroll { position: relative; max-height: 72vh; overflow: auto; }
+.folha-table thead th, .res-mensal thead th {
+    position: sticky; top: 0; z-index: 3;
+}
+
+/* Resultados: tabelas mensais — 1ª coluna (indicador) fixa ao rolar */
+.res-mensal td, .res-mensal th { padding: 9px 12px; font-size: 12.5px; }
+.res-mensal td.num { font-variant-numeric: tabular-nums; }
+.res-mensal td:last-child, .res-mensal th:last-child { background: var(--surface-2); font-weight: 650; }
+.res-mensal th:first-child, .res-mensal td:first-child {
+    position: sticky; left: 0; z-index: 2;
+    background: var(--surface);
+    box-shadow: 1px 0 0 var(--border);
+    font-weight: 600;
+}
+.res-mensal thead th:first-child { z-index: 4; background: var(--surface-2); }
+.res-mensal tbody tr:hover td:first-child { background: var(--surface-2); }
+
+/* Resultados: alternador tabela/gráfico */
+.view-toggle { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; }
+.view-toggle button {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border: 0; border-radius: 7px;
+    background: transparent; color: var(--text-2);
+    font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.view-toggle button svg.icon { width: 14px; height: 14px; }
+.view-toggle button:hover { color: var(--text); }
+.view-toggle button.active { background: var(--surface); color: var(--accent-strong); box-shadow: var(--shadow-sm); }
+.view-toggle[hidden] { display: none; }
+
+/* Título que agrupa uma faixa de gráficos */
+.res-grupo-tit {
+    font-size: 13px; font-weight: 700; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: .05em;
+    margin: 4px 0 12px;
+}
+.chart-card-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+/* Título ocupa o espaço livre (empurra ação e stats para a direita) e pode quebrar;
+   os números à direita nunca quebram nem somem */
+.chart-card-head > div:first-child { min-width: 0; flex: 1; }
+.chart-card-acao { flex-shrink: 0; }
+.chart-card-stats { flex-shrink: 0; white-space: nowrap; text-align: right; }
+
+/* Contagem fixa de colunas (o auto-fill padrão não garante "3 por linha") */
+.chart-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.chart-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1200px) { .chart-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .chart-grid-3, .chart-grid-4 { grid-template-columns: 1fr; } }
+
+/* Empilhado (largo) + ranking (estreito) lado a lado, ocupando a faixa inteira */
+.chart-duo { display: grid; grid-template-columns: 1.8fr 1fr; gap: 16px; margin-bottom: 22px; }
+.chart-duo .chart-box { height: 300px; }
+@media (max-width: 900px) { .chart-duo { grid-template-columns: 1fr; } }
+
+/* Paginação de gráfico (ex.: ranking com mais de 10 itens) */
+.chart-pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+.chart-pager-txt { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chart-pager button:disabled { opacity: .35; cursor: default; }
+
+/* Botão "Legenda" no cabeçalho do empilhado */
+.chart-card-acao { display: flex; align-items: center; }
+.chart-legenda-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 10px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-2); color: var(--text-2);
+    font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+.chart-legenda-btn svg.icon { width: 13px; height: 13px; }
+.chart-legenda-btn:hover { background: var(--surface-3); border-color: var(--border-strong); }
+.chart-legenda-btn.active { background: var(--accent-soft); border-color: var(--accent-soft-2); color: var(--accent-strong); }
+
+/* Botão "i" de info no título do card (Resultados) */
+.chart-card-title { display: inline-flex; align-items: center; gap: 6px; }
+.chart-info-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+    border: 0; padding: 0; cursor: pointer;
+    background: var(--surface-3); color: var(--muted);
+    transition: background .15s, color .15s;
+}
+.chart-info-btn svg.icon { width: 11px; height: 11px; }
+.chart-info-btn:hover { background: var(--accent-soft); color: var(--accent-strong); }
+
+/* Modal de explicação do gráfico — "campo bonito", não um tooltip apertado */
+.modal-chart-info { width: 460px; }
+.chart-info-body { display: flex; flex-direction: column; gap: 18px; }
+.chart-info-sec { display: flex; gap: 14px; align-items: flex-start; }
+.chart-info-ico {
+    width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft); color: var(--accent);
+}
+.chart-info-ico svg.icon { width: 18px; height: 18px; }
+.chart-info-sec strong { display: block; font-size: 12.5px; color: var(--text-2); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 4px; }
+.chart-info-sec p { font-size: 14px; line-height: 1.55; color: var(--text); margin: 0; }
+.chart-info-sec .grow { min-width: 0; flex: 1; }
+/* Seção "Cálculo" (barra horizontal com os itens que somam o total) — sempre a última */
+.chart-info-calc-box { position: relative; width: 100%; margin-top: 8px; }
+.modal-chart-info .table-wrap { margin-top: 2px; }
+
+/* Linha da aba Geral clicável quando tem explicação (o "i" vira a linha inteira) */
+.ind-row-info { cursor: pointer; }
+.ind-row-info:hover { background: var(--accent-soft); }
+.ind-info-chevron { color: var(--muted); flex-shrink: 0; display: flex; }
+.ind-info-chevron svg.icon { width: 14px; height: 14px; }
+.ind-row-info:hover .ind-info-chevron { color: var(--accent-strong); }
+
+/* Popover de multisseleção da legenda */
+.pop-multi { min-width: 220px; max-height: 340px; overflow: auto; }
+.pop-multi .pop-swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+.pop-multi .pop-check { display: flex; align-items: center; gap: 9px; opacity: .55; }
+.pop-multi .pop-check.selected { opacity: 1; }
+.pop-multi .pop-reset { color: var(--accent-strong); font-weight: 600; }
+.pop-multi .pop-reset svg.icon { width: 13px; height: 13px; }
+/* .chart-box genérico (250px, abaixo) é do dashboard e vence por ordem de carga;
+   dentro de um chart-card a altura é a do card. */
+.chart-card .chart-box { height: 190px; margin-top: 0; }
+/* Empilhado ocupa a faixa inteira: são 12 meses × N categorias, precisa de largura */
+.chart-grid-full { grid-template-columns: 1fr; }
+.chart-grid-full .chart-card .chart-box { height: 300px; }
+
+/* Resultados: painéis de indicadores lado a lado */
+.res-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.res-grid > .table-wrap { margin-bottom: 0 !important; }
+@media (max-width: 1000px) { .res-grid { grid-template-columns: 1fr; } }
+
+/* Painel de indicadores (aba Geral) — lista com ícone, não tabela:
+   são pares rótulo/valor, e o ícone deixa varrer a lista sem ler cada linha. */
+.ind-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.ind-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+}
+.ind-head strong { font-size: 13.5px; font-weight: 650; }
+.ind-head-ico {
+    width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft); color: var(--accent);
+}
+.ind-head-ico svg.icon { width: 16px; height: 16px; }
+.ind-list { display: flex; flex-direction: column; }
+.ind-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--border);
+    transition: background .12s;
+}
+.ind-row:last-child { border-bottom: 0; }
+.ind-row:hover { background: var(--surface-2); }
+.ind-ico {
+    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-3); color: var(--muted);
+}
+.ind-ico svg.icon { width: 15px; height: 15px; }
+.ind-lbl { flex: 1; font-size: 13px; color: var(--text-2); line-height: 1.35; }
+.ind-val {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* Tons semânticos dos indicadores — o que o número significa, não decoração */
+.ind-ico.tom-ok { background: var(--success-soft); color: var(--success); }
+.ind-ico.tom-alerta { background: var(--danger-soft); color: var(--danger); }
+.ind-ico.tom-info { background: var(--info-soft); color: var(--info); }
+.ind-ico.tom-custo { background: var(--warning-soft); color: var(--warning); }
+.ind-head-ico.tom-ok { background: var(--success-soft); color: var(--success); }
+.ind-head-ico.tom-alerta { background: var(--danger-soft); color: var(--danger); }
+.ind-head-ico.tom-info { background: var(--info-soft); color: var(--info); }
+.ind-head-ico.tom-custo { background: var(--warning-soft); color: var(--warning); }
+.ind-val.txt-tom-alerta { color: var(--danger); }
+
+/* Dashboard: caixas de gráfico */
+.chart-box { position: relative; height: 250px; margin-top: 14px; }
+
+/* Folha: grade mensal — nome do funcionário fixo ao rolar */
+.folha-table td, .folha-table th { padding: 9px 11px; }
+.folha-table th:first-child, .folha-table td:first-child {
+    position: sticky; left: 0; z-index: 2;
+    background: var(--surface);
+    box-shadow: 1px 0 0 var(--border);
+}
+.folha-table thead th:first-child { z-index: 4; background: var(--surface-2); }
+.folha-table tbody tr:hover td:first-child { background: var(--surface-2); }
+.folha-table .folha-cell {
+    width: 104px;
+    padding: 6px 8px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    border-radius: 8px;
+}
+.folha-table tfoot td {
+    position: sticky; bottom: 0; z-index: 3;
+    background: var(--surface-3);
+    border-top: 2px solid var(--border-strong);
+    font-variant-numeric: tabular-nums;
+}
+.folha-table tfoot td:first-child { z-index: 4; box-shadow: 1px 0 0 var(--border-strong); }
+
+/* Quadro recomendado por cargo (form de unidade) */
+.rec-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; margin-bottom: 8px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.rec-item .rec-nome { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13.5px; flex: 1; }
+/* CBO ao lado do nome: a meta é por cargo, e cargos homônimos só se distinguem pelo código */
+.rec-item .rec-cbo { font-weight: 500; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rec-item .rec-nome svg.icon { width: 15px; height: 15px; color: var(--accent); }
+.rec-item .rec-qtd {
+    font-size: 12px; font-weight: 600; color: var(--accent-strong);
+    background: var(--accent-soft); padding: 3px 10px; border-radius: 999px;
+}
+.rec-empty {
+    padding: 16px; text-align: center; font-size: 13px; color: var(--muted);
+    background: var(--surface-2); border: 1px dashed var(--border-strong); border-radius: var(--radius); margin-bottom: 10px;
+}
+.rec-add { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.rec-add .select, .rec-add .picker-btn { flex: 1; }
+
+/* Alerta de equipe incompleta (dashboard) */
+.alert-card {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--warning-soft); border: 1px solid transparent; border-left: 4px solid var(--warning);
+    border-radius: var(--radius); padding: 14px 18px; margin-bottom: 18px;
+}
+.alert-card .alert-ico {
+    width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(217,119,6,.14); color: var(--warning);
+}
+.alert-card > .grow > strong { font-size: 14px; }
+.alert-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.alert-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.alert-uni { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; min-width: 150px; }
+.alert-uni svg.icon { width: 14px; height: 14px; color: var(--warning); }
+.alert-detail { display: flex; flex-wrap: wrap; gap: 6px; }
+.alert-gap {
+    font-size: 12px; font-weight: 500; color: var(--text-2);
+    background: var(--surface); border: 1px solid var(--border); padding: 2px 9px; border-radius: 8px;
+    font-variant-numeric: tabular-nums;
+}
+.alert-gap b { color: var(--warning); font-weight: 700; }
+
+/* Alerta de cobertura (férias) — visualmente distinto do alerta de vaga:
+   problema temporário, ação diferente (escalar, não contratar) */
+.alert-card.alert-cobertura {
+    background: var(--ferias-soft);
+    border-left-color: var(--ferias);
+}
+.alert-cobertura .alert-ico { background: rgba(13,148,136,.14); color: var(--ferias); }
+.alert-cobertura .alert-uni svg.icon { color: var(--ferias); }
+.alert-cobertura .alert-gap b { color: var(--ferias-strong); }
+.alert-sub { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.alert-retornos { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 4px 158px; }
+.alert-retornos span { font-size: 11.5px; color: var(--ferias-strong); }
+.alert-retornos span::before { content: '↩ '; opacity: .7; }
+
+/* Popover simples do sino — uma linha por notificação, clique abre o detalhe completo */
+.pop-notif { width: 320px; max-width: calc(100vw - 16px); padding: 6px; }
+.pop-notif [data-pop-list] { max-height: 360px; overflow-y: auto; }
+.pop-notif-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 8px; border-radius: 9px; cursor: pointer;
+}
+.pop-notif-tipo { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.pop-notif-row .grow strong { display: block; font-size: 13px; }
+.pop-notif-qtd { font-weight: 400; color: var(--muted); font-size: 12px; }
+.pop-notif-row .grow .muted { font-size: 11.5px; margin-top: 1px; }
+.pop-notif-row svg.icon:last-child { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+.pop-notif-chevron { display: flex; flex-shrink: 0; transition: transform .15s ease; }
+.pop-notif-chevron svg.icon { width: 15px; height: 15px; color: var(--muted); }
+.pop-notif-chevron.open { transform: rotate(180deg); }
+.pop-notif-sub { padding-left: 6px; border-left: 2px solid var(--border); margin: 0 0 4px 23px; }
+.pop-notif-subrow { padding: 7px 8px; }
+.pop-notif-subrow .grow strong { font-size: 12.5px; }
+.pop-notif-subrow .grow .muted { font-size: 11px; }
+.pop-notif-empty {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 10px; font-size: 13px; color: var(--muted);
+}
+.alert-ico-sm {
+    width: 28px; height: 28px; flex-shrink: 0; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(217,119,6,.14); color: var(--warning);
+}
+.alert-ico-sm-ferias { background: rgba(13,148,136,.14); color: var(--ferias); }
+.alert-ico-sm-aso { background: var(--danger-soft); color: var(--danger); }
+/* Banco de horas em âmbar, não vermelho: ASO vencido impede a pessoa de trabalhar hoje;
+   ciclo vencido custa dinheiro. Grave, mas de outra natureza — a cor separa as duas. */
+.alert-ico-sm-bh { background: var(--warning-soft); color: var(--warning); }
+.alert-ico-sm-decimo { background: var(--warning-soft); color: var(--warning); }
+/* Contrato de aprendizagem em vermelho, junto do ASO: passar do termo não custa dinheiro —
+   descaracteriza o contrato, e o efeito (vínculo por prazo indeterminado) não se desfaz
+   pagando. É a mesma família de dano do ASO vencido, não a do ciclo de banco. */
+.alert-ico-sm-aprendiz { background: var(--danger-soft); color: var(--danger); }
+
+/* Situação do ASO no topo da aba Documentos da ficha — responde de relance a única
+   pergunta que a ficha precisa responder: pode exercer a função hoje? */
+.fd-aso-sit {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: var(--radius);
+    border: 1px solid var(--border); border-left-width: 3px;
+    background: var(--surface-2);
+}
+.fd-aso-sit .prog-dot { flex-shrink: 0; }
+.fd-aso-vencido, .fd-aso-sem_historico { background: var(--danger-soft); border-left-color: var(--danger); }
+.fd-aso-critico { background: var(--warning-soft); border-left-color: var(--warning); }
+.fd-aso-em_dia { background: var(--success-soft); border-left-color: var(--success); }
+
+/* Alerta de ASO — vermelho: sem exame válido o colaborador não pode exercer a função
+   (NR-7). Não é "planeje-se" como o de férias; é impedimento legal já em curso. */
+.alert-card.alert-aso { background: var(--danger-soft); border-left-color: var(--danger); }
+.alert-aso .alert-ico { background: rgba(220,38,38,.14); color: var(--danger); }
+.alert-aso .alert-uni svg.icon { color: var(--danger); }
+.alert-card.alert-bh { background: var(--warning-soft); border-left-color: var(--warning); }
+.alert-bh .alert-ico { background: rgba(217,119,6,.14); color: var(--warning); }
+.alert-bh .alert-uni svg.icon { color: var(--warning); }
+/* 13º em âmbar pelo mesmo critério do banco de horas: o prazo custa dinheiro (multa), não
+   impede ninguém de trabalhar hoje. Vermelho fica reservado para o que para a operação. */
+.alert-card.alert-decimo { background: var(--warning-soft); border-left-color: var(--warning); }
+.alert-decimo .alert-ico { background: rgba(217,119,6,.14); color: var(--warning); }
+.alert-decimo .alert-uni svg.icon { color: var(--warning); }
+.aso-notif-lista { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 2px; }
+.aso-notif-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; padding: 4px 8px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+}
+
+/* Nota dos cargos "Não se aplica" na Programação: informa quem ficou de fora da fila.
+   Neutra de propósito — é informação, não pendência. */
+.aso-isentos {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px; padding: 9px 14px;
+    font-size: 12.5px; color: var(--text-2);
+    background: var(--surface-2); border: 1px dashed var(--border-strong); border-radius: var(--radius);
+}
+.aso-isentos svg.icon { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+
+/* ---- Agenda de férias: linha do tempo anual (1 linha por colaborador) ---- */
+/* A identificação está no rótulo da linha, então a cor codifica ESTADO, não pessoa. */
+.gt-scroll { overflow-x: auto; padding-bottom: 4px; }
+.gt { min-width: 760px; display: flex; flex-direction: column; gap: 2px; }
+.gt-row { display: grid; grid-template-columns: 190px 1fr; align-items: center; gap: 10px; }
+.gt-row:not(.gt-head) { padding: 3px 0; border-radius: 8px; }
+.gt-row:not(.gt-head):hover { background: var(--surface-2); }
+
+.gt-lbl { min-width: 0; padding-left: 4px; }
+.gt-nome {
+    font-size: 12.5px; font-weight: 650; line-height: 1.3;
+    display: flex; align-items: center; gap: 5px;
+}
+.gt-nome-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gt-uni {
+    font-size: 10.5px; color: var(--muted); line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Selo curto — o texto completo está no title da linha; truncar a urgência a esconderia */
+.gt-sit {
+    flex-shrink: 0; font-size: 9.5px; font-weight: 800;
+    white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.gt-sit-vencida { color: var(--danger); }
+.gt-sit-critica { color: var(--warning); }
+.gt-sit-atencao { color: var(--info); }
+
+.gt-track {
+    position: relative; height: 22px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+.gt-head .gt-track { background: transparent; border-color: transparent; height: 18px; }
+.gt-regua { position: relative; }
+.gt-m {
+    position: absolute; top: 0;
+    font-size: 9.5px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .03em;
+    text-align: center; border-left: 1px solid var(--border);
+    padding-left: 3px;
+}
+.gt-grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border); }
+.gt-hoje { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--accent); border-radius: 1px; z-index: 3; }
+
+.gt-bar {
+    position: absolute; top: 3px; bottom: 3px;
+    border-radius: 4px; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; transition: filter .12s;
+}
+.gt-bar[data-id] { cursor: pointer; }
+.gt-bar[data-id]:hover { filter: brightness(.92); }
+.gt-txt {
+    font-size: 9.5px; font-weight: 700; color: #fff; white-space: nowrap;
+    padding: 0 4px; pointer-events: none;
+}
+.gt-real  { background: var(--ferias); }
+.gt-curso { background: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft-2); }
+/* Período previsto: hachura 45° (não aconteceu ainda) em AZUL forte. O cinza antigo empatava
+   com a janela legal desenhada por baixo e com o fundo da trilha — e o previsto é justamente
+   o que o RH precisa enxergar para agir. Azul puro, não o violeta de .gt-curso: hachurado e
+   sólido já se distinguem, mas o tom separado evita ler "previsto" como "em curso". */
+.gt-prev {
+    background: repeating-linear-gradient(45deg, #deffce 0 4px, #dceafb 4px 8px);
+    border: 1px solid #71e47b;
+}
+.gt-prev .gt-txt { color: #0f3a6b; font-weight: 800; }
+.gt-conf { box-shadow: inset 0 0 0 2px var(--warning); }
+
+/* ---- Marcos pontuais (ASO) ----
+   Férias ocupam um período (barra com largura); um exame acontece num DIA. Losango
+   centrado na data, em vez de barra: a forma comunica "evento", não "intervalo". */
+.gt-mark {
+    position: absolute; top: 50%; width: 11px; height: 11px;
+    margin-left: -5.5px; margin-top: -5.5px;
+    transform: rotate(45deg); border-radius: 2px; z-index: 2;
+}
+.gt-mark[data-id], .gt-mark[data-prev] { cursor: pointer; }
+.gt-mark[data-id]:hover, .gt-mark[data-prev]:hover { filter: brightness(.9); transform: rotate(45deg) scale(1.25); }
+.gt-mark-real { background: var(--success); }
+/* Projetado: fundo âmbar claro — ainda não aconteceu, mas precisa se destacar na grade
+   (contorno vazado sobre fundo claro ficava ilegível). */
+.gt-mark-prev { background: var(--warning-soft); border: 1.5px dashed var(--warning); }
+/* Projetado para quem JÁ está vencido/sem ASO: fundo vermelho claro — mesma lógica do
+   âmbar, mas sinalizando urgência. Declarado depois de .gt-mark-prev de propósito: mesma
+   especificidade, e o elemento carrega as duas classes — quem vem por último vence. */
+.gt-mark-prev.gt-mark-vencido { background: var(--danger-soft); border-color: var(--danger); }
+.gt-mark-vencido { background: var(--danger); box-shadow: 0 0 0 2px var(--danger-soft); }
+/* Agenda de FÉRIAS: os dois marcos legais da competência em aberto — o dia em que o direito
+   nasce (verde) e o último dia para conceder sem pagar em dobro (vermelho). NÃO é o losango
+   do ASO: losango é "evento" (algo que se lança), estes dois são moldura da linha (limites
+   que ela nunca deixa de ter). Uma barra fina com um traço no meio lê como marcador de régua,
+   discreto o bastante para não competir com a barra de férias de verdade. z-index acima das
+   barras: o "conceder até" quase sempre cai perto do período previsto, e sumir embaixo dele
+   apagaria justamente o aviso. */
+.gt-mark-direito, .gt-mark-prazo {
+    top: 3px; bottom: 3px; height: auto;
+    width: 2px; margin-left: -1px; margin-top: 0;
+    transform: none; border-radius: 1px; opacity: .6; z-index: 4;
+}
+.gt-mark-direito { background: var(--success); }
+.gt-mark-prazo { background: var(--danger); }
+.gt-mark-direito::after, .gt-mark-prazo::after {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    width: 7px; height: 2px; border-radius: 1px;
+    transform: translate(-50%, -50%);
+    background: inherit;
+}
+.gt-mark-direito:hover, .gt-mark-prazo:hover { opacity: .95; }
+
+/* Janela legal entre os dois marcos: o intervalo em que estas férias PODEM ser concedidas.
+   Mesma hachura 45° de .gt-prev, mas em AZUL e no rodapé da pilha (atrás de barras e marcos):
+   a forma diz "faixa de contexto, não período lançado", e a cor separa do cinza do previsto. */
+.gt-janela {
+    position: absolute; top: 4px; bottom: 4px; z-index: 1;
+    border-radius: 4px; opacity: .5;
+    background: repeating-linear-gradient(45deg, #b3b8ea 0 4px, #e7e9fb 4px 8px);
+}
+.gt-chip.gt-mark-chip {
+    width: 10px; height: 10px; border-radius: 2px; transform: rotate(45deg); margin: 0 3px;
+}
+/* Chip da legenda dos marcos de férias: mesma barra fina com traço central da trilha, só que
+   alta o bastante (altura do chip padrão) para o traço central ficar visível em 16px. */
+.gt-chip.gt-mark-direito, .gt-chip.gt-mark-prazo {
+    position: relative; width: 2px; height: 16px; margin: 0 6px;
+    border-radius: 1px; transform: none; opacity: .6;
+}
+.gt-chip.gt-janela-chip {
+    background: repeating-linear-gradient(45deg, #b3b8ea 0 3px, #e7e9fb 3px 6px);
+    opacity: .7; border-radius: 3px;
+}
+
+.gt-legenda {
+    display: flex; flex-wrap: wrap; gap: 6px 16px;
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+}
+.gt-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-2); }
+.gt-chip { width: 16px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.gt-chip.gt-conf-leg { background: var(--surface-3); box-shadow: inset 0 0 0 2px var(--warning); }
+
+@media (max-width: 720px) {
+    .gt-row { grid-template-columns: 130px 1fr; }
+}
+
+@media (max-width: 720px) {
+    .alert-retornos { margin-left: 0; }
+}
+
+/* Navegação de mês/ano (folha, lançamentos) */
+.month-nav {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 12px; padding: 4px; box-shadow: var(--shadow-sm);
+}
+.month-nav button {
+    width: 32px; height: 32px; border-radius: 9px;
+    border: none; background: transparent; color: var(--text-2);
+    font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s;
+}
+.month-nav button:hover { background: var(--accent-soft); color: var(--accent-strong); }
+.month-nav .month-label {
+    min-width: 150px; text-align: center; font-weight: 700; font-size: 14px;
+    letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+}
+
+/* Lista de participantes (treinamentos) */
+.part-list {
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    background: var(--surface-2);
+}
+
+/* Seção com título dentro do drawer */
+.drawer-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+    margin: 18px 0 10px;
+}
+.drawer-section-title:first-child { margin-top: 0; }
+
+/* ============ BANCO DE HORAS ============
+   Saldo positivo e negativo são duas DIREÇÕES da mesma conta, não certo e errado: nem
+   verde nem vermelho. Índigo (acento) = a empresa deve horas; âmbar = o funcionário deve.
+   O vermelho fica reservado para o que é de fato problema — ciclo vencido sem liquidar. */
+.bh-pos { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bh-neg { color: var(--warning); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bh-sep { color: var(--border-strong); margin: 0 2px; }
+
+/* Célula HH:MM: monoespaçada e estreita — a coluna é lida de cima para baixo, e dígito
+   com largura variável destrói a comparação visual. */
+.bh-table .bh-cell {
+    width: 88px; text-align: right; padding: 6px 8px;
+    font-variant-numeric: tabular-nums; font-size: 13px;
+}
+.bh-table .bh-cell::placeholder { color: var(--border-strong); }
+.bh-table td, .bh-table th { vertical-align: middle; }
+.bh-table tfoot td { background: var(--surface-2); border-top: 2px solid var(--border-strong); }
+
+.bh-passivo-aviso {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--warning-soft); border: 1px solid #f5dcb4;
+    border-radius: var(--radius); padding: 11px 14px; margin-bottom: 14px;
+    font-size: 13px; color: var(--text-2);
+}
+.bh-passivo-aviso .icon { color: var(--warning); flex-shrink: 0; margin-top: 2px; }
+.bh-passivo-aviso strong { color: var(--text); }
+.bh-passivo-aviso .muted { font-size: 12px; }
+
+.bh-aviso-futuro {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--futuro-soft); border: 1px solid #ddd0f8;
+    border-radius: var(--radius); padding: 9px 13px; margin-bottom: 12px;
+    font-size: 12.5px; color: var(--text-2);
+}
+.bh-aviso-futuro .icon { color: var(--futuro); flex-shrink: 0; }
+
+/* ---- Sub-aba Ciclos ---- */
+.bh-ciclos-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px;
+}
+.bh-ciclo-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+    padding: 16px; display: flex; flex-direction: column;
+}
+.bh-ciclo-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.bh-ciclo-head .prog-aq { padding-left: 16px; }
+
+.bh-ciclo-saldo { margin: 14px 0 12px; }
+.bh-saldo-big { font-size: 26px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.bh-saldo-comp { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+
+/* Barra de progresso do ciclo + um ponto por mês. A barra mostra QUANTO do prazo já
+   passou; os pontos, o que foi lançado em cada mês. Juntos respondem "quanto tempo resta
+   e onde o saldo se formou" — que é a pergunta do fechamento. */
+.bh-prog-wrap { margin-top: auto; }
+.bh-prog-bar {
+    height: 6px; background: var(--surface-3); border-radius: 99px; overflow: hidden;
+}
+.bh-prog-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s ease; }
+.bh-prog-fill.is-critico { background: var(--warning); }
+.bh-prog-fill.is-vencido { background: var(--danger); }
+
+.bh-prog-meses { display: flex; gap: 4px; margin-top: 7px; }
+.bh-mes-dot { flex: 1; height: 4px; border-radius: 99px; background: var(--surface-3); }
+.bh-mes-dot.is-pos { background: var(--accent); }
+.bh-mes-dot.is-neg { background: var(--warning); }
+.bh-mes-dot.is-zero { background: var(--border-strong); }
+.bh-mes-dot.is-vazio { background: var(--surface-3); }
+
+.bh-ciclo-datas {
+    display: flex; justify-content: space-between; gap: 8px;
+    font-size: 11px; color: var(--muted); margin-top: 6px;
+    font-variant-numeric: tabular-nums;
+}
+.bh-ciclo-datas .txt-danger { font-weight: 700; }
+
+.bh-hist { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; }
+.bh-hist-tit {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--muted); margin-bottom: 7px;
+}
+.bh-hist-row {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 10px;
+    align-items: center; padding: 4px 0; font-size: 12px;
+}
+
+/* ---- Modal de fechamento ---- */
+.bh-fech-resumo {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px;
+}
+.bh-fech-lbl {
+    display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--muted); margin-bottom: 4px;
+}
+.bh-fech-resumo .bh-saldo-big { font-size: 22px; }
+
+/* Decomposição "12:00 extra · 03:20 atraso" sob o saldo: é uma frase, não pode quebrar no
+   meio. Placeholder "–" em vez de "00:00" — célula vazia significa SEM lançamento, e num
+   sistema onde o primeiro lançamento cria o ciclo, sugerir "zero horas" é mentira cara. */
+.bh-decomp { white-space: nowrap; font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Badge longo ("Saldo acima da capacidade de compensação") empurrava o nome e quebrava em
+   duas linhas. O nome é a âncora de leitura do card: não cede espaço para o status. */
+.bh-ciclo-head { min-height: 40px; }
+.bh-ciclo-head > div:first-child { min-width: 0; flex: 1; }
+.bh-ciclo-head strong { overflow-wrap: anywhere; }
+.bh-ciclo-head .badge { flex-shrink: 0; max-width: 42%; text-align: center; line-height: 1.35; }
+
+/* Ciclo vencido com a barra 100% cheia lia como "concluído" — o oposto do que é. A hachura
+   vai no PREENCHIMENTO (o trilho fica escondido embaixo dele quando está 100%): listras
+   dizem "prazo estourado", enquanto sólido diz "progresso". */
+.bh-prog-fill.is-vencido {
+    background: repeating-linear-gradient(45deg,
+        var(--danger) 0 5px, #f0736f 5px 10px);
+}
+
+/* Card sem histórico deixava um vão entre o saldo e a barra (margin-top:auto empurrando
+   contra a altura do vizinho mais alto). Agora o card diz "primeiro ciclo" em vez de deixar
+   buraco: o espaço passa a carregar informação, e as barras seguem alinhadas entre cards. */
+.bh-ciclo-saldo { margin-bottom: 10px; }
+.bh-hist-vazio { font-size: 12px; }
+
+/* ============ QUITAÇÃO ============
+   Quitar ≠ fechar. Quitação paga meses DURANTE o ciclo: eles saem do saldo em aberto e
+   travam para edição, e o ciclo segue correndo. Verde é a cor do "já resolvido" aqui —
+   distinta do índigo (a empresa deve) e do âmbar (o funcionário deve). */
+.row-clickable { cursor: pointer; }
+.row-clickable:hover { background: var(--surface-2); }
+
+/* Linha da grade com mês quitado: fundo levemente esverdeado + célula travada. O usuário
+   entende que não pode editar antes de tentar clicar. */
+.bh-row-quitada { background: linear-gradient(90deg, var(--success-soft) 0%, transparent 60%); }
+.bh-quit-tag {
+    background: var(--success-soft); border: 1px solid #c4e8d1; color: var(--success);
+    border-radius: 99px; padding: 2px 9px; font-size: 11px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+}
+.bh-quit-tag:hover { background: #d8f2e2; }
+.bh-quit-tag .icon { width: 11px; height: 11px; }
+.bh-quit-mini { color: var(--success); font-weight: 600; }
+.bh-quit-mini .icon { width: 10px; height: 10px; vertical-align: -1px; }
+
+.bh-quit-resumo {
+    display: flex; align-items: center; gap: 5px; margin-top: 7px;
+    background: var(--success-soft); border-radius: 7px; padding: 5px 9px;
+    font-size: 11.5px; color: var(--success);
+}
+.bh-quit-resumo .icon { width: 12px; height: 12px; flex-shrink: 0; }
+.bh-quit-resumo strong { font-variant-numeric: tabular-nums; }
+.bh-mes-dot.is-quitado { background: var(--success); }
+
+.bh-fech-motivo {
+    display: flex; align-items: flex-start; gap: 8px;
+    background: var(--surface-2); border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0; padding: 9px 12px; margin: 12px 0 4px;
+    font-size: 12.5px; color: var(--text-2);
+}
+.bh-fech-motivo .icon { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+.bh-fech-motivo svg { width: 15px; height: 15px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+/* ---- Liberação coletiva: barra de seleção em lote ---- */
+.bh-lib-barra {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 10px 12px; margin-top: 14px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0; border-bottom: none;
+}
+.bh-lib-barra .bl-chk { cursor: pointer; }
+/* Linha que não pode receber a liberação (aprendiz, mês quitado, ciclo fechado). Cinza, não
+   verde: o verde de .bh-row-quitada significa "resolvido", e aqui o sentido é o oposto. */
+.bh-row-bloq { opacity: .55; }
+.bh-row-bloq .bl-lock svg { width: 14px; height: 14px; color: var(--muted); }
+
+/* ---- Seleção de meses a quitar ---- */
+.qt-meses { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.qt-mes input { position: absolute; opacity: 0; pointer-events: none; }
+.qt-mes-box {
+    display: block; border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 10px 12px; cursor: pointer; transition: border-color .12s, background .12s;
+}
+.qt-mes-box:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.qt-mes input:checked + .qt-mes-box { border-color: var(--accent); background: var(--accent-soft); }
+.qt-mes-lbl { display: block; font-size: 12px; font-weight: 700; }
+.qt-mes-val { display: block; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; margin: 1px 0; }
+.qt-mes-dec { display: block; font-size: 10px; color: var(--muted); }
+
+.qt-restante {
+    display: flex; align-items: center; gap: 7px; margin-top: 10px; padding-top: 9px;
+    border-top: 1px dashed var(--border-strong); font-size: 12px; color: var(--text-2);
+}
+.qt-restante .icon { width: 13px; height: 13px; color: var(--accent); flex-shrink: 0; }
+
+/* ---- Janela: situação do ciclo ---- */
+.dc-hero {
+    border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 18px;
+    border: 1px solid var(--border);
+}
+.dc-hero.is-ok { background: var(--accent-soft); border-color: var(--accent-soft-2); }
+.dc-hero.is-critico { background: var(--warning-soft); border-color: #f5dcb4; }
+.dc-hero.is-vencido { background: var(--danger-soft); border-color: #f7c9c9; }
+.dc-hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.dc-hero-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.dc-lbl {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--muted);
+}
+.dc-saldo { font-size: 32px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.dc-decomp { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.dc-passivo {
+    display: flex; flex-direction: column; align-items: flex-end;
+    font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--warning);
+}
+.dc-passivo span { font-size: 10px; font-weight: 500; color: var(--muted); }
+.dc-desc { font-size: 12.5px; color: var(--text-2); margin: 12px 0 0; line-height: 1.5; }
+
+.dc-sec { margin-bottom: 18px; }
+.dc-sec-tit {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 10px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--muted);
+}
+.dc-sec-tit .icon { width: 13px; height: 13px; }
+.dc-sec-badge {
+    background: var(--success-soft); color: var(--success); border-radius: 99px;
+    padding: 1px 8px; font-size: 10px; letter-spacing: 0; text-transform: none;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Um bloco por mês do ciclo: o RH lê a trajetória inteira sem abrir a grade. */
+.dc-meses { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 5px; }
+.dc-mes {
+    position: relative; border-radius: 8px; padding: 8px 4px; text-align: center;
+    background: var(--surface-2); border: 1px solid var(--border);
+}
+.dc-mes-lbl { display: block; font-size: 9.5px; color: var(--muted); font-weight: 600; }
+.dc-mes-val { display: block; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dc-mes.is-pos .dc-mes-val { color: var(--accent); }
+.dc-mes.is-neg .dc-mes-val { color: var(--warning); }
+.dc-mes.is-vazio .dc-mes-val { color: var(--border-strong); }
+.dc-mes.is-quitado { background: var(--success-soft); border-color: #c4e8d1; }
+.dc-mes.is-quitado .dc-mes-val { color: var(--success); }
+.dc-mes-tag { position: absolute; top: 3px; right: 3px; color: var(--success); }
+.dc-mes-tag .icon { width: 9px; height: 9px; }
+
+.dc-datas {
+    display: flex; justify-content: space-between; gap: 8px; margin-top: 8px;
+    font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+
+.dc-quits { display: flex; flex-direction: column; gap: 2px; }
+.dc-quit {
+    display: flex; align-items: center; gap: 10px; padding: 9px 8px;
+    border-radius: 9px; cursor: pointer; border: 1px solid transparent;
+    font-size: 12.5px;
+}
+.dc-quit:hover { background: var(--surface-2); border-color: var(--border); }
+.dc-quit .muted { font-size: 11px; }
+.dc-quit .icon { color: var(--muted); width: 14px; height: 14px; }
+.dc-quit-ico {
+    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: var(--success-soft); color: var(--success);
+}
+.dc-quit-ico .icon { color: var(--success); width: 13px; height: 13px; }
+
+.dc-vazio, .dc-nota {
+    display: flex; align-items: flex-start; gap: 8px;
+    background: var(--surface-2); border-radius: var(--radius); padding: 10px 13px;
+    font-size: 12.5px; color: var(--text-2);
+}
+.dc-vazio .icon, .dc-nota .icon { color: var(--muted); flex-shrink: 0; margin-top: 1px; }
+.dc-nota { background: var(--info-soft); border: 1px solid #cfe8f5; }
+.dc-nota .icon { color: var(--info); }
+.dc-fech {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--success-soft); border: 1px solid #c4e8d1;
+    border-radius: var(--radius); padding: 11px 14px; font-size: 12.5px;
+}
+.dc-fech .icon { color: var(--success); flex-shrink: 0; }
+.dc-fech .muted { font-size: 11.5px; }
+
+/* ---- Janela: detalhe da quitação ---- */
+.dq-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 18px;
+}
+.dq-head .muted { font-size: 11.5px; margin-top: 2px; }
+.dq-valor { text-align: right; display: flex; flex-direction: column; }
+.dq-valor span { font-size: 19px; font-weight: 800; color: var(--success); font-variant-numeric: tabular-nums; }
+.dq-valor strong { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+.dq-meses { display: flex; flex-wrap: wrap; gap: 6px; }
+.dq-mes {
+    background: var(--success-soft); color: var(--success); border: 1px solid #c4e8d1;
+    border-radius: 7px; padding: 4px 10px; font-size: 12px; font-weight: 700;
+}
+.dq-mes-sm { padding: 2px 7px; font-size: 10.5px; margin-right: 3px; }
+
+/* ---- Janela de férias do funcionário (clique na linha da Programação) ---- */
+.df-hero {
+    border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 12px; padding: 15px 17px; margin-bottom: 16px; background: var(--surface-2);
+}
+.df-hero.is-vencida { border-left-color: var(--danger); background: var(--danger-soft); }
+.df-hero.is-critica { border-left-color: var(--warning); background: var(--warning-soft); }
+.df-hero.is-ok { border-left-color: var(--success); }
+.df-hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+/* O número grande é o direito em aberto: é a resposta que o RH veio buscar. */
+.df-saldo {
+    font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -.5px;
+    font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 5px;
+}
+.df-saldo small { font-size: 13px; font-weight: 600; color: var(--muted); }
+.df-decomp { font-size: 11.5px; color: var(--text-2); margin-top: 3px; }
+.df-emcurso {
+    display: flex; align-items: center; gap: 5px; margin-top: 7px;
+    font-size: 11px; font-weight: 700; color: var(--accent);
+}
+.df-emcurso svg { width: 12px; height: 12px; }
+.df-dobra {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding-top: 11px;
+    border-top: 1px dashed var(--border); font-size: 11.5px; line-height: 1.45; color: var(--text-2);
+}
+.df-dobra svg { width: 14px; height: 14px; color: var(--danger); flex-shrink: 0; margin-top: 1px; }
+.df-nota {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding-top: 11px;
+    border-top: 1px dashed var(--border); font-size: 11.5px; line-height: 1.45; color: var(--text-2);
+}
+.df-nota svg { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; margin-top: 1px; }
+
+.df-comps { display: flex; flex-direction: column; gap: 11px; }
+.df-comp {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 13px;
+    border-left: 3px solid var(--border);
+}
+/* Vencida devendo é o que custa dinheiro; gozada é história; formação ainda não é assunto. */
+.df-comp.is-vencida { border-left-color: var(--danger); }
+.df-comp.is-vigente { border-left-color: var(--info); }
+.df-comp.is-gozada { border-left-color: var(--success); opacity: .78; }
+.df-comp.is-formacao { border-left-color: var(--border); opacity: .68; }
+.df-comp-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 9px; }
+.df-comp-top strong { font-size: 12.5px; }
+.df-comp-top .muted { font-size: 11px; margin-top: 2px; }
+
+.df-comp-bar {
+    height: 6px; border-radius: 4px; background: var(--surface-2);
+    overflow: hidden; border: 1px solid var(--border);
+}
+.df-comp-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+.df-comp-fill.is-gozada { background: var(--success); }
+.df-comp-fill.is-vencida { background: var(--danger); }
+.df-comp-fill.is-vigente { background: var(--accent); }
+.df-comp-nums {
+    display: flex; align-items: center; gap: 8px; margin-top: 7px;
+    font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+.df-comp-nums strong { margin-left: auto; }
+.df-frac {
+    background: var(--warning-soft); color: var(--warning); border-radius: 20px;
+    padding: 1px 7px; font-size: 10px; font-weight: 700;
+}
+
+.df-comp-lancs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.df-lanc {
+    display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 7px; background: var(--surface);
+    padding: 4px 9px; font-size: 10.5px; font-weight: 600; color: var(--text-2);
+}
+.df-lanc:hover { border-color: var(--accent); color: var(--accent); }
+.df-lanc svg { width: 11px; height: 11px; }
+.df-lanc span { color: var(--muted); font-weight: 700; }
+
+.df-hist { display: flex; flex-direction: column; gap: 8px; }
+.df-hist-item {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+}
+.df-hist-item:hover { border-color: var(--accent); background: var(--surface-2); }
+.df-hist-item.is-curso { border-color: var(--accent); background: var(--accent-soft); }
+.df-hist-item.is-futura { border-style: dashed; }
+.df-hist-item strong { font-size: 12.5px; }
+.df-hist-item .muted { font-size: 11px; margin-top: 2px; }
+.df-hist-item .badge { margin-left: 6px; }
+.df-hist-item > svg:last-child { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; }
+.df-hist-ico {
+    display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px;
+    background: var(--accent-soft); color: var(--accent); flex-shrink: 0;
+}
+.df-hist-ico svg { width: 13px; height: 13px; }
+
+/* ---- Férias: efeito do lançamento na competência ---- */
+.fa-comp { margin: 10px 0 4px; }
+.fa-comp-box {
+    display: flex; align-items: flex-start; gap: 9px;
+    border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+}
+.fa-comp-box svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+.fa-comp-box strong { font-size: 12.5px; display: block; }
+.fa-comp-box .muted { font-size: 11.5px; line-height: 1.45; margin-top: 2px; }
+/* Fechar a competência é o desfecho normal; deixá-la aberta é o que exige atenção — o prazo
+   legal continua correndo sobre o saldo. */
+.fa-comp-box.is-fecha { border-color: var(--success); background: var(--success-soft); }
+.fa-comp-box.is-fecha svg, .fa-comp-box.is-fecha strong { color: var(--success); }
+.fa-comp-box.is-parcial { border-color: var(--warning); background: var(--warning-soft); }
+.fa-comp-box.is-parcial svg, .fa-comp-box.is-parcial strong { color: var(--warning); }
+/* Excede o direito: quase sempre erro de digitação na data de retorno — vermelho porque o
+   save vai barrar mesmo. */
+.fa-comp-box.is-erro { border-color: var(--danger); background: var(--danger-soft); }
+.fa-comp-box.is-erro svg, .fa-comp-box.is-erro strong { color: var(--danger); }
+
+/* Competências atrasadas: o direito acumulado aparece ANTES de o RH digitar — é o que
+   autoriza um período maior que 30 dias. */
+.fa-comp-acum {
+    display: flex; align-items: flex-start; gap: 6px; margin-top: 7px; padding-top: 7px;
+    border-top: 1px dashed var(--border); font-size: 11px; line-height: 1.4;
+}
+.fa-comp-acum svg { width: 12px; height: 12px; margin-top: 2px; color: var(--text-2); }
+
+/* ---- Cargo: perfil de remuneração ---- */
+.fc-perfil-btn { width: 100%; justify-content: space-between; }
+.fc-perfil-btn span { flex: 1; text-align: left; }
+/* As verbas trocam conforme o perfil; a área não pode saltar a cada troca. */
+.cargo-verbas { display: flex; flex-direction: column; }
+.fc-min {
+    display: flex; align-items: center; gap: 8px; margin-top: 8px;
+    cursor: pointer; font-size: 12px; color: var(--text-2);
+}
+/* Campo travado pelo mínimo: visível (o RH precisa ver o valor), mas claramente não editável. */
+.cargo-verbas .input:disabled {
+    background: var(--surface-2); color: var(--text-2); cursor: not-allowed;
+}
+.fc-min-tag {
+    background: var(--accent-soft); color: var(--accent); border-radius: 20px;
+    padding: 1px 6px; font-size: 9.5px; font-weight: 800; cursor: help;
+}
+
+/* Coparticipação maior que o benefício: o excedente sai do salário do funcionário e não
+   abate o custo da empresa. O asterisco marca a linha onde lançado ≠ efetivo. */
+.folha-desc-x, .txt-warn {
+    color: var(--warning); font-weight: 800; cursor: help;
+}
+
+/* Valor legado na folha: existe, soma, mas não se edita mais. */
+.folha-legado {
+    display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end;
+    color: var(--text-2); font-variant-numeric: tabular-nums; cursor: help;
+}
+.folha-legado svg { width: 11px; height: 11px; opacity: .6; }
+
+/* Variante destravável (Benefícios/Desconto benef.): o cadeado é um botão de verdade. */
+.folha-legado-lock { cursor: default; }
+.folha-legado-lock [data-unlock-benef-btn] {
+    width: 18px; height: 18px; padding: 0; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.folha-legado-lock [data-unlock-benef-btn]:hover svg { opacity: 1; color: var(--accent); }
+
+.folha-unlock-wrap { display: inline-flex; align-items: center; gap: 4px; }
+.folha-unlock-wrap [data-relock-benef-btn] {
+    width: 18px; height: 18px; padding: 0; flex: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.folha-unlock-wrap [data-relock-benef-btn] svg { width: 12px; height: 12px; opacity: .7; }
+.folha-unlock-wrap [data-relock-benef-btn]:hover svg { opacity: 1; color: var(--accent); }
+
+/* ---- Janela do ciclo: abas Situação × Histórico ---- */
+.dc-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.dc-tab {
+    display: flex; align-items: center; gap: 6px; padding: 9px 14px; border: 0;
+    background: none; cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--muted);
+    border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 7px 7px 0 0;
+}
+.dc-tab:hover { color: var(--text); background: var(--surface-2); }
+.dc-tab.is-active { color: var(--accent); border-bottom-color: var(--accent); }
+.dc-tab svg { width: 14px; height: 14px; }
+.dc-tab-badge {
+    background: var(--surface-2); color: var(--text-2); border-radius: 20px;
+    padding: 1px 6px; font-size: 10.5px; font-weight: 700;
+}
+.dc-tab.is-active .dc-tab-badge { background: var(--accent-soft); color: var(--accent); }
+
+.dc-hist-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.dc-hist-resumo > div {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px;
+    padding: 8px 11px; display: flex; flex-direction: column; gap: 1px;
+}
+.dc-hist-resumo span { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+.dc-hist-resumo strong { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.dc-hist { display: flex; flex-direction: column; gap: 10px; }
+.dc-hist-item {
+    border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px;
+    /* Faixa lateral: o estado do ciclo lido antes de qualquer texto. */
+    border-left: 3px solid var(--border);
+}
+.dc-hist-item.is-fechado { border-left-color: var(--success); }
+.dc-hist-item.is-corrente { border-left-color: var(--accent); background: var(--accent-soft); }
+.dc-hist-item.is-aberto { border-left-color: var(--danger); }
+.dc-hist-item.is-zerado { opacity: .72; }
+
+.dc-hist-per { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+.dc-hist-per strong { font-size: 13px; }
+.dc-hist-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 7px; }
+.dc-hist-nums > div { display: flex; flex-direction: column; gap: 1px; }
+.dc-hist-nums span { font-size: 10px; color: var(--muted); font-weight: 600; }
+.dc-hist-nums strong { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+
+.dc-hist-fech {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 9px;
+    border-top: 1px dashed var(--border); font-size: 11.5px; color: var(--text-2);
+}
+.dc-hist-fech svg { width: 14px; height: 14px; color: var(--success); flex-shrink: 0; }
+.dc-hist-fech > span { flex: 1; line-height: 1.4; }
+.dc-hist-fech .btn { flex-shrink: 0; }
+
+/* ---- Quitação: destino, sugerido × pago ---- */
+.dq-destino { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dq-destino .muted { font-size: 12px; line-height: 1.45; }
+
+/* Sugerido e pago lado a lado: a comparação é o ponto: o olho tem que bater um no outro
+   sem procurar. */
+.dq-valores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.dq-vitem {
+    border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+    background: var(--surface-2); display: flex; flex-direction: column; gap: 2px;
+}
+.dq-vitem > span { font-size: 11px; color: var(--muted); font-weight: 600; }
+.dq-vitem > strong { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.dq-vitem > em { font-style: normal; font-size: 10.5px; color: var(--text-2); line-height: 1.35; }
+/* Divergência não é erro — é decisão humana. Âmbar sinaliza "olha aqui", não "conserta". */
+.dq-vitem-warn { border-color: var(--warning); background: var(--warning-soft); }
+.dq-vitem-warn > strong,
+.dq-vitem-warn > em { color: var(--warning); }
+
+.dq-dif {
+    display: block; font-size: 10.5px; font-weight: 700; color: var(--warning);
+    font-variant-numeric: tabular-nums; margin-top: 1px;
+}
+.bx-hint-warn { color: var(--warning) !important; }
+
+@media (max-width: 560px) { .dq-valores { grid-template-columns: 1fr; } }
+
+/* ---- Extra Banco: hora extra paga fora do ciclo ---- */
+.bh-extra-nota {
+    display: flex; align-items: flex-start; gap: 9px;
+    background: var(--info-soft); border: 1px solid #cfe8f5;
+    border-radius: var(--radius); padding: 10px 13px; margin-bottom: 12px;
+    font-size: 12.5px; color: var(--text-2);
+}
+.bh-extra-nota .icon { color: var(--info); flex-shrink: 0; margin-top: 1px; }
+
+/* Memória de cálculo. O valor da hora extra não é digitado: é a conta, mostrada linha a
+   linha. Um total que aparece pronto é um número que o RH não confere e não defende numa
+   reclamatória — a conta visível é o que separa sugestão de mágica. */
+.bx-calc {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 13px 15px; margin: 4px 0 16px;
+}
+.bx-calc[hidden] { display: none; }
+.bx-calc-tit {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--muted); margin-bottom: 9px;
+}
+.bx-calc-tit .icon { width: 13px; height: 13px; }
+.bx-calc-grid {
+    display: grid; grid-template-columns: 1fr auto; gap: 3px 14px;
+    font-size: 12.5px; color: var(--text-2);
+}
+.bx-calc-grid strong { color: var(--text); font-variant-numeric: tabular-nums; }
+/* "(padrão)" ao lado da jornada: distingue o contrato individual do fallback de 220h — sem
+   isso, o RH não sabe se o divisor veio da ficha ou de uma suposição do sistema. */
+.bx-calc-nota { font-style: normal; color: var(--muted); font-size: 11px; }
+.bx-calc-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border-strong);
+    font-size: 13px;
+}
+.bx-calc-total strong { font-size: 19px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.bx-calc-vazio { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); }
+.bx-calc-vazio .icon { width: 14px; height: 14px; }
+
+.bh-fech-folha {
+    display: flex; align-items: flex-start; gap: 9px;
+    background: var(--accent-soft); border: 1px solid var(--accent-soft-2);
+    border-radius: var(--radius); padding: 10px 13px; margin-bottom: 4px;
+    font-size: 12.5px; color: var(--text-2);
+}
+.bh-fech-folha[hidden] { display: none; }
+.bh-fech-folha .icon { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+/* Célula derivada da folha: parece valor, clica como botão. O tracejado diz "isto veio de
+   outro lugar" sem precisar de legenda. */
+.folha-he-banco {
+    background: none; border: none; padding: 2px 4px; cursor: pointer;
+    font: inherit; font-variant-numeric: tabular-nums; font-weight: 600;
+    color: var(--accent); border-bottom: 1px dashed var(--accent-soft-2);
+    border-radius: 3px;
+}
+.folha-he-banco:hover { background: var(--accent-soft); border-bottom-color: var(--accent); }
+
+.he-origem-lista { display: flex; flex-direction: column; gap: 2px; }
+.he-origem-row {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 2px; border-bottom: 1px solid var(--border);
+}
+.he-origem-row:last-child { border-bottom: none; }
+.he-origem-row .muted { font-size: 11.5px; margin-top: 1px; }
+.he-origem-ico {
+    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    display: grid; place-items: center;
+}
+.he-origem-ico.is-fech { background: var(--accent-soft); color: var(--accent); }
+.he-origem-ico.is-extra { background: var(--warning-soft); color: var(--warning); }
+.he-origem-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 14px; padding-top: 12px; border-top: 2px solid var(--border-strong);
+    font-size: 13px;
+}
+.he-origem-total strong { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* ---- Resultados → Banco de horas ---- */
+.bh-kpi-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px; margin-bottom: 18px;
+}
+.bh-kpi {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 14px 16px;
+}
+.bh-kpi-ico {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    display: grid; place-items: center;
+}
+.bh-kpi-ico.tom-ok { background: var(--success-soft); color: var(--success); }
+.bh-kpi-ico.tom-alerta { background: var(--danger-soft); color: var(--danger); }
+.bh-kpi-ico.tom-custo { background: var(--warning-soft); color: var(--warning); }
+.bh-kpi-txt { display: flex; flex-direction: column; min-width: 0; }
+.bh-kpi-lbl { font-size: 11px; color: var(--muted); font-weight: 600; }
+.bh-kpi-val { font-size: 20px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.bh-kpi-sub { font-size: 10.5px; color: var(--muted); }
+
+/* ---- Mapa de ciclos ----
+   O gráfico que justifica a aba. Uma linha por pessoa, barra do início ao fim do CICLO
+   dela — não do ano civil. É por isso que as barras não se alinham: cada uma começa no
+   primeiro mês lançado para aquele funcionário. Uma grade Jan–Dez não consegue mostrar
+   isso, e é exatamente a informação que decide quem recebe atenção primeiro. */
+.bh-mapa-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+    padding: 16px 18px; margin-bottom: 22px;
+}
+.bh-mapa-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.bh-mapa { position: relative; }
+
+.bh-mapa-eixo {
+    display: flex; margin-left: 180px; margin-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+.bh-eixo-cel {
+    flex: 1; font-size: 10px; color: var(--muted); text-align: left;
+    white-space: nowrap; padding-bottom: 3px;
+}
+.bh-eixo-cel.is-marca { border-left: 1px solid var(--border-strong); padding-left: 3px; }
+
+/* Linha vertical do "hoje" — a referência que transforma a barra em prazo. */
+.bh-mapa-hoje {
+    position: absolute; top: 18px; bottom: 0; width: 1px;
+    background: var(--accent); opacity: .5; z-index: 1; pointer-events: none;
+}
+.bh-mapa-hoje::before {
+    content: 'hoje'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; color: var(--accent); font-weight: 700;
+}
+
+.bh-mapa-linha { display: flex; align-items: center; gap: 0; height: 26px; }
+.bh-mapa-linha:hover { background: var(--surface-2); }
+.bh-mapa-nome {
+    width: 180px; flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+    font-size: 12px; padding-right: 10px;
+}
+.bh-mapa-nome-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bh-mapa-trilho { position: relative; flex: 1; height: 100%; }
+
+.bh-mapa-barra {
+    position: absolute; top: 6px; height: 14px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 5px;
+}
+.bh-mapa-barra.st-em_dia { background: #5b5bd6; }
+.bh-mapa-barra.st-critico, .bh-mapa-barra.st-atencao { background: #d97706; }
+/* Vencido hachurado, pelo mesmo motivo da barra de progresso do card: sólido lê como
+   "completo", e um ciclo estourado é o oposto de completo. */
+.bh-mapa-barra.st-vencido {
+    background: repeating-linear-gradient(45deg, #dc2626 0 5px, #f0736f 5px 10px);
+}
+.bh-mapa-saldo {
+    font-size: 9.5px; font-weight: 700; color: #fff;
+    font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+
+/* Losango = marco pontual (o ciclo FECHA num dia), mesma linguagem da agenda de ASO. */
+.bh-mapa-marco {
+    position: absolute; top: 9px; width: 8px; height: 8px;
+    transform: translateX(-50%) rotate(45deg);
+    border: 1.5px solid var(--surface);
+}
+.bh-mapa-marco.st-em_dia { background: #5b5bd6; }
+.bh-mapa-marco.st-critico, .bh-mapa-marco.st-atencao { background: #d97706; }
+.bh-mapa-marco.st-vencido { background: #dc2626; }
+
+.bh-mapa-legenda {
+    display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--border); font-size: 11px; color: var(--text-2);
+}
+.bh-leg-item { display: flex; align-items: center; gap: 5px; }
+.bh-leg-cor { width: 12px; height: 8px; border-radius: 2px; }
+.bh-leg-cor.st-em_dia { background: #5b5bd6; }
+.bh-leg-cor.st-critico, .bh-leg-cor.st-atencao { background: #d97706; }
+.bh-leg-cor.st-vencido { background: repeating-linear-gradient(45deg, #dc2626 0 3px, #f0736f 3px 6px); }
+.bh-leg-marco { width: 7px; height: 7px; background: var(--text-2); transform: rotate(45deg); }
+
+@media (max-width: 900px) {
+    .bh-ciclos-grid { grid-template-columns: 1fr; }
+    .bh-fech-resumo { grid-template-columns: 1fr; }
+    .bh-mapa-eixo { margin-left: 110px; }
+    .bh-mapa-nome { width: 110px; font-size: 11px; }
+}
+
+/* ============ 13º SALÁRIO (Lançamentos → 13º Salário) ============
+   Reaproveita o máximo do que já existe: .bh-kpi-row para os indicadores, .tabs.tabs-sub
+   para as sub-abas, .bx-calc para a memória de cálculo, .table para as grades. O que está
+   aqui é só o que a aba tem de próprio: os cards de prazo, a régua de avos e o lote. */
+
+/* ---- Cards de prazo legal (30/11 e 20/12) ----
+   Duas datas fixas em lei, iguais para a empresa inteira — por isso card, e não coluna:
+   é o único lugar do sistema onde o prazo não é individual. A barra mostra progresso de
+   COBERTURA (quantos já receberam), que é a pergunta real: "posso fechar novembro?" */
+.dc-prazos {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px; margin-bottom: 18px;
+}
+.dc-prazo {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--border-strong);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 13px 15px;
+}
+.dc-prazo.is-warn { border-left-color: var(--warning); background: var(--warning-soft); }
+.dc-prazo.is-late { border-left-color: var(--danger); background: var(--danger-soft); }
+.dc-prazo.is-ok { border-left-color: var(--success); }
+.dc-prazo-top {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    font-size: 12px; color: var(--text-2); margin-bottom: 9px;
+}
+.dc-prazo-top strong { font-size: 13.5px; color: var(--text); font-variant-numeric: tabular-nums; }
+.dc-prazo-bar {
+    height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden;
+}
+.dc-prazo-fill {
+    height: 100%; background: var(--accent); border-radius: 3px;
+    transition: width .3s ease;
+}
+.dc-prazo.is-ok .dc-prazo-fill { background: var(--success); }
+.dc-prazo.is-late .dc-prazo-fill { background: var(--danger); }
+.dc-prazo-nums {
+    display: flex; justify-content: space-between; gap: 8px;
+    font-size: 11px; color: var(--muted); margin-top: 6px;
+}
+
+/* ---- Tabela da competência ---- */
+.dc-func strong { display: block; font-size: 13px; }
+.dc-func .muted { font-size: 11px; }
+.dc-avos {
+    font-variant-numeric: tabular-nums; font-weight: 700;
+    background: var(--surface-3); border-radius: var(--radius-sm);
+    padding: 2px 7px; font-size: 12px;
+}
+.dc-avos em { font-style: normal; color: var(--muted); font-weight: 500; font-size: 11px; }
+/* Adiantamento em destaque: é a coluna que explica por que a 1ª parcela de alguém veio
+   menor — sem marcá-la, o RH acha que o sistema errou a conta. */
+.dc-adiant { color: var(--ferias-strong); font-weight: 600; }
+
+/* ---- Régua de avos (janela do funcionário) ----
+   O gráfico que justifica o número. 12 quadrados, um por mês: cheio = avo integral,
+   listrado = mês existiu mas não fechou 15 dias, vazio = fora do vínculo. Sem isto o
+   "7/12" é um total que ninguém confere. */
+.dc-meses {
+    display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px;
+}
+.dc-mes {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 7px 2px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface-2);
+    font-size: 10px; color: var(--muted); cursor: default;
+}
+.dc-mes span { font-weight: 600; }
+.dc-mes em { font-style: normal; font-variant-numeric: tabular-nums; font-size: 9.5px; }
+.dc-mes.is-on {
+    background: var(--accent-soft); border-color: var(--accent-soft-2); color: var(--accent);
+}
+.dc-mes.is-on em { font-weight: 700; }
+.dc-mes.is-parcial {
+    background: repeating-linear-gradient(45deg, var(--warning-soft) 0 4px, var(--surface-2) 4px 8px);
+    border-color: var(--warning); color: var(--warning);
+}
+.dc-mes.is-off { opacity: .45; }
+/* Nota abaixo da régua: explica POR QUE o número de avos é o que é (ano completo, admissão
+   no meio do ano, rescisão) — sem ela, "10/12" é um total que o RH não consegue conferir. */
+.dc-nota {
+    display: flex; align-items: flex-start; gap: 7px; margin-top: 9px;
+    font-size: 11.5px; color: var(--muted); line-height: 1.5;
+}
+.dc-nota .icon { width: 13px; height: 13px; flex-shrink: 0; margin-top: 2px; }
+.dc-nota strong { color: var(--text-2); }
+
+/* ---- Janela do funcionário ---- */
+.dc-jan-head { margin-bottom: 14px; }
+.dc-jan-nums {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px; margin-bottom: 18px;
+}
+.dc-jan-nums > div {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 2px;
+}
+.dc-jan-nums span { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+.dc-jan-nums strong { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.dc-sec { margin-bottom: 18px; }
+.dc-sec:last-child { margin-bottom: 0; }
+.dc-sec-tit {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--muted); margin-bottom: 9px;
+}
+.dc-sec-tit .icon { width: 13px; height: 13px; }
+.dc-alerta {
+    display: flex; align-items: flex-start; gap: 9px;
+    border-radius: var(--radius); padding: 10px 13px;
+    font-size: 12.5px; color: var(--text-2);
+}
+.dc-alerta.is-danger { background: var(--danger-soft); border: 1px solid var(--danger); }
+.dc-alerta .icon { width: 15px; height: 15px; flex-shrink: 0; color: var(--danger); margin-top: 1px; }
+.dc-alerta strong { display: block; color: var(--text); }
+.dc-alerta .muted { font-size: 11.5px; }
+
+/* ---- Listas (parcelas, adiantamentos) ---- */
+.dc-lista { display: flex; flex-direction: column; gap: 6px; }
+.dc-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 9px 12px;
+}
+.dc-item.is-link { cursor: pointer; transition: background .15s, border-color .15s; }
+.dc-item.is-link:hover { background: var(--surface-3); border-color: var(--border-strong); }
+.dc-item strong { font-size: 12.5px; }
+.dc-item .muted { font-size: 11px; }
+.dc-item .num { font-variant-numeric: tabular-nums; }
+.dc-item-ico {
+    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent);
+}
+.dc-item-ico .icon { width: 14px; height: 14px; }
+.dc-vazio {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 22px; color: var(--muted); font-size: 12.5px;
+}
+.dc-vazio .icon { width: 16px; height: 16px; }
+
+/* ---- Lançamento em lote ---- */
+.dc-lote-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0 10px; border-bottom: 1px solid var(--border);
+    font-size: 12.5px; margin-bottom: 4px;
+}
+.dc-lote-tot { font-size: 12px; color: var(--muted); }
+.dc-lote-tot strong { color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
+.dc-lote-tot em { font-style: normal; }
+.dc-lote { display: flex; flex-direction: column; gap: 5px; max-height: 340px; overflow-y: auto; padding: 2px; }
+.dc-lote-item {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 9px 12px;
+    transition: background .15s, border-color .15s;
+}
+.dc-lote-item:hover { background: var(--surface-3); border-color: var(--border-strong); }
+.dc-lote-item strong { font-size: 12.5px; }
+.dc-lote-item .muted { font-size: 11px; }
+.dc-lote-val { text-align: right; }
+.dc-lote-val strong { display: block; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.dc-lote-val em { font-style: normal; font-size: 10.5px; color: var(--muted); }
+
+@media (max-width: 900px) {
+    .dc-meses { grid-template-columns: repeat(6, 1fr); }
+    .dc-prazos { grid-template-columns: 1fr; }
+}
+
+/* ---- Seletor de avos (botão + popover) ----
+   Avos são uma FRAÇÃO do direito, e um <select> com "6 de 9 avos" obriga a abrir a lista para
+   entender a proporção. Aqui a régua de 12 quadrados mostra o corte de relance: cheios = os
+   que entram na parcela, vazios = os que sobram para a 2ª, riscados = os que a pessoa não tem
+   (admitida no meio do ano). Mesma ideia da régua da janela do funcionário. */
+.avos-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 9px 11px; cursor: pointer;
+    font: inherit; color: var(--text); text-align: left;
+    transition: border-color .15s, box-shadow .15s;
+}
+.avos-btn:hover { border-color: var(--border-strong); }
+.avos-btn:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+/* Variante somente-visual: avos da 1ª parcela são fixos (metade do direito) quando essa
+   metade é exata — mesma régua do botão clicável, mas sem cursor de interação nem foco. Some
+   quando o direito é ímpar: aí o campo vira clicável (ver `avosOpcoes` em decimo.js) porque a
+   metade não-inteira tem duas opções válidas para o RH escolher. */
+.avos-btn.is-static { cursor: default; }
+.avos-btn.is-static:hover { border-color: var(--border); }
+.avos-btn > .icon { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+.avos-btn-lbl { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.avos-btn-lbl em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 11.5px; }
+.avos-btn-val {
+    margin-left: auto; font-size: 13px; font-weight: 700;
+    color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* A régua: 12 marcas proporcionais — só visual, os avos da 1ª parcela são fixos (metade do
+   direito, Lei 4.749 art. 2º), sem escolha do RH. */
+.avos-regua { display: flex; gap: 2px; flex-shrink: 0; }
+.avos-regua i {
+    width: 7px; height: 16px; border-radius: 2px; display: block;
+    background: var(--surface-3); transition: background .15s;
+}
+.avos-regua i.is-on { background: var(--accent); }
+.avos-regua i.is-resto { background: var(--surface-3); }
+/* Fora do direito: quem entrou em março não tem os avos de jan/fev — não é "não escolhido",
+   é "não existe". A hachura separa as duas coisas. */
+.avos-regua i.is-fora {
+    background: repeating-linear-gradient(45deg, var(--border) 0 2px, transparent 2px 4px);
+    opacity: .6;
+}
+
+/* "metade": marca o padrão legal (6 de 12, Lei 4.749 art. 2º) — a única proporção que a
+   1ª parcela usa. */
+.avos-tag {
+    margin-left: 6px; padding: 1px 5px; border-radius: 999px;
+    background: var(--surface-3); color: var(--muted);
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+}
+
+/* Popover das opções de avo quando o direito é ímpar (ver openAvosPopover em decimo.js) —
+   cada linha repete a régua do campo principal, para o RH comparar visualmente as opções em
+   vez de só ler números soltos. */
+.popover.avos-pop { min-width: 260px; padding: 6px; }
+.avos-pop-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    transition: background .12s;
+}
+.avos-pop-item:hover { background: var(--accent-soft); }
+.avos-pop-item.selected { background: var(--accent-soft); }
+.avos-pop-item .avos-regua { flex-shrink: 0; }
+.avos-pop-item > svg.icon { width: 15px; height: 15px; color: var(--accent); flex-shrink: 0; }
+.avos-pop-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.avos-pop-lbl { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.avos-pop-lbl em { font-style: normal; font-weight: 700; color: var(--accent); }
+.avos-pop-val { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---- Configurações → Backup ---- */
+.bkp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+}
+.bkp-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+}
+.bkp-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.bkp-card h3 { font-size: 16px; margin: 0; }
+.bkp-card p { font-size: 13.5px; line-height: 1.55; color: var(--text-2); margin: 0; flex: 1; }
+.bkp-card p code {
+    background: var(--surface-3); color: var(--text-2);
+    padding: 1px 5px; border-radius: 5px; font-size: 12px;
+}
+.bkp-card > .btn { margin-top: 4px; }
+.bkp-card-ico {
+    width: 44px; height: 44px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft); color: var(--accent);
+}
+.bkp-card-ico svg.icon { width: 22px; height: 22px; }
+.bkp-card-ico.bkp-ico-danger { background: var(--danger-soft); color: var(--danger); }
+.bkp-card-danger {
+    border-color: var(--danger-soft);
+    background: linear-gradient(180deg, var(--danger-soft) 0%, var(--surface) 90px);
+}
+
+/* Aviso dentro do modal de confirmação com senha (restaurar/apagar) */
+.bkp-warn {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--danger-soft); border-radius: var(--radius);
+    padding: 14px 16px;
+}
+.bkp-warn svg.icon { width: 20px; height: 20px; color: var(--danger); flex-shrink: 0; margin-top: 1px; }
+.bkp-warn p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--text); }
+
+/* ===== INSS: resumo em chips (Parâmetros) + editor no modal ===== */
+/* FGTS + Dias de experiência empilhados à esquerda; INSS ocupa as duas linhas à direita */
+.form-row-inss { align-items: flex-start; }
+.inss-col-esq { display: flex; flex-direction: column; gap: 16px; }
+.inss-resumo-card {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 12px 14px; border-radius: var(--radius);
+    background: var(--surface-2); border: 1px solid var(--border);
+}
+.inss-chips { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.inss-chip {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 10px 6px 12px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    font-size: 12px;
+}
+.inss-chip-faixa { color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inss-chip-aliq {
+    font-weight: 700; color: var(--accent-strong);
+    background: var(--accent-soft); border-radius: 999px;
+    padding: 2px 8px; flex-shrink: 0;
+}
+.inss-resumo-card .btn { align-self: flex-start; }
+
+/* Lista de faixas dentro do modal "Editar faixas" */
+.inss-faixa-lista { display: flex; flex-direction: column; gap: 10px; }
+.inss-faixa-row {
+    display: grid; grid-template-columns: 28px 1fr 1fr 36px;
+    align-items: flex-end; gap: 10px;
+    padding: 10px; border-radius: var(--radius);
+    background: var(--surface-2); border: 1px solid var(--border);
+}
+.inss-faixa-num {
+    align-self: center; text-align: center;
+    font-size: 12px; font-weight: 700; color: var(--muted);
+}
+.inss-faixa-row .btn-icon { align-self: center; color: var(--danger); }
+.inss-faixa-row .btn-icon:hover { background: var(--danger-soft); }
+@media (max-width: 520px) {
+    .inss-faixa-row { grid-template-columns: 1fr 1fr; }
+    .inss-faixa-num { display: none; }
+}
+.bkp-warn strong { color: var(--danger); }
+
+/* ===== Relatório de funcionários (js/relatorio-func.js) ===== */
+.popover.pop-relatorio { width: 320px; padding: 8px; }
+.rel-pop-title {
+    padding: 6px 10px 8px; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted);
+}
+.rel-pop-opt {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 10px; border: 1px solid transparent; border-radius: 11px;
+    background: transparent; font-family: var(--font); text-align: left; cursor: pointer;
+    color: var(--text); transition: background .14s, border-color .14s, transform .1s;
+}
+.rel-pop-opt + .rel-pop-opt { margin-top: 4px; }
+.rel-pop-opt:hover { background: var(--surface-2); border-color: var(--border); }
+.rel-pop-opt:active { transform: scale(.985); }
+.rel-pop-opt .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.rel-pop-opt strong { font-size: 13.5px; font-weight: 650; }
+.rel-pop-opt small { font-size: 11.5px; color: var(--muted); line-height: 1.3; }
+.rel-pop-opt > svg.icon { width: 15px; height: 15px; color: var(--muted); transition: transform .14s, color .14s; }
+.rel-pop-opt:hover > svg.icon { transform: translateX(2px); color: var(--text-2); }
+.rel-pop-ico {
+    width: 40px; height: 40px; flex-shrink: 0; border-radius: 11px;
+    display: grid; place-items: center;
+}
+.rel-pop-ico svg.icon { width: 21px; height: 21px; }
+.rel-pop-ico.pdf { background: #fdecec; color: #dc2626; box-shadow: inset 0 0 0 1px #f8d4d4; }
+.rel-pop-ico.xlsx { background: #e8f7ee; color: #16a34a; box-shadow: inset 0 0 0 1px #cdeedb; }
+
+.rel-modal-head { display: flex; align-items: center; gap: 12px; flex: 1; }
+.rel-modal-head h3 { font-size: 17px; }
+.rel-modal-sub { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+
+.rel-topo { display: grid; grid-template-columns: 1fr auto; gap: 14px; margin-bottom: 16px; align-items: end; }
+@media (max-width: 600px) { .rel-topo { grid-template-columns: 1fr; } }
+
+.rel-seg {
+    display: inline-flex; gap: 3px; padding: 3px;
+    background: var(--surface-3); border-radius: 11px; border: 1px solid var(--border);
+}
+.rel-seg button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 7px 14px; border: none; border-radius: 8px; background: transparent;
+    font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--text-2);
+    cursor: pointer; transition: background .14s, color .14s, box-shadow .14s; white-space: nowrap;
+}
+.rel-seg button svg.icon { width: 15px; height: 15px; }
+.rel-seg button:hover { color: var(--text); }
+.rel-seg button.active { background: var(--surface); color: var(--accent-strong); box-shadow: var(--shadow-sm); }
+.rel-seg-wide { display: flex; }
+.rel-seg-wide button { flex: 1; }
+.rel-seg-n {
+    font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+    background: var(--border); color: var(--text-2);
+}
+.rel-seg button.active .rel-seg-n { background: var(--accent-soft); color: var(--accent-strong); }
+@media (max-width: 600px) { .rel-seg-wide { flex-direction: column; } }
+
+.rel-opcoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+@media (max-width: 680px) { .rel-opcoes { grid-template-columns: 1fr; } }
+.rel-opc {
+    display: flex; align-items: center; gap: 11px; padding: 11px 13px;
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2);
+    cursor: pointer; transition: border-color .15s, background .15s;
+}
+.rel-opc[hidden] { display: none; }
+.rel-opc:hover { border-color: var(--border-strong); }
+.rel-opc:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.rel-opc > span:last-child { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rel-opc strong { font-size: 13px; font-weight: 650; color: var(--text); }
+.rel-opc small { font-size: 11.5px; color: var(--muted); line-height: 1.3; }
+
+.rel-campos-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.rel-campos-head strong { font-size: 14px; }
+.rel-campos-head .muted { font-size: 12.5px; }
+.rel-campos-acoes { display: flex; gap: 4px; }
+
+.rel-grupos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 680px) { .rel-grupos { grid-template-columns: 1fr; } }
+.rel-grupo {
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+    overflow: hidden; transition: border-color .15s, box-shadow .15s;
+}
+.rel-grupo.on { border-color: var(--accent-soft-2); box-shadow: var(--shadow-sm); }
+.rel-grupo-head {
+    display: flex; align-items: center; gap: 9px; padding: 10px 12px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+}
+.rel-grupo-head strong { font-size: 13px; font-weight: 650; flex: 1; }
+.rel-grupo-ico {
+    width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+    background: var(--surface); color: var(--muted); border: 1px solid var(--border);
+    transition: background .15s, color .15s;
+}
+.rel-grupo-ico svg.icon { width: 14px; height: 14px; }
+.rel-grupo.on .rel-grupo-ico { background: var(--accent); color: #fff; border-color: var(--accent); }
+.rel-grupo-n { font-size: 11.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rel-grupo.on .rel-grupo-n { color: var(--accent-strong); }
+/* "Parcial": nem todos do grupo ligados — trilho meio-tom */
+.rel-grupo-head .switch input:indeterminate + .track { background: var(--accent-soft-2); }
+.rel-grupo-head .switch input:indeterminate + .track::after { transform: translateX(9px); }
+.rel-grupo-body { padding: 4px 6px; }
+.rel-campo {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 7px 8px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; color: var(--text-2); transition: background .12s, color .12s;
+}
+.rel-campo:hover { background: var(--surface-2); }
+.rel-campo:has(input:checked) { color: var(--text); font-weight: 550; }
+.rel-campo .switch .track { width: 34px; height: 19px; }
+.rel-campo .switch .track::after { width: 13px; height: 13px; }
+.rel-campo .switch input:checked + .track::after { transform: translateX(15px); }
+.rel-campo.fixo { cursor: default; }
+.rel-campo.fixo .switch { opacity: .55; cursor: default; }
+.rel-campo small {
+    font-size: 10.5px; font-weight: 600; color: var(--muted); margin-left: 6px;
+    padding: 1px 6px; border-radius: 999px; background: var(--surface-3);
+}
+
+.modal-footer .rel-foot-info {
+    margin-right: auto; display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: var(--text-2);
+}
+.rel-foot-info svg.icon { width: 15px; height: 15px; color: var(--muted); }

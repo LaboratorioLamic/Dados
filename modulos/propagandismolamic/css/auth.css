@@ -1,0 +1,770 @@
+/* ============================================================
+   Acesso, usuários e permissões
+   Depende de tokens.css — nenhuma cor literal nova.
+   ============================================================ */
+
+/* Sem sessão o app não existe: só a tela de login ocupa a página. */
+body.sessao-fechada .app-header,
+body.sessao-fechada .app-nav {
+    display: none;
+}
+
+/*
+ * Esconder a nav não basta: a partir de 768px o grid do body reserva uma
+ * coluna fixa de `--nav-largura`, e ela apareceria como uma faixa clara à
+ * esquerda do login. Aqui o grid é reduzido a uma única área.
+ */
+body.sessao-fechada {
+    grid-template-areas: "main";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    /* O body do app é claro (--bg). Como ele mede 100dvh, sobraria uma faixa
+       clara sob a tela de login em janelas mais altas que a viewport. */
+    background: var(--bg-deep);
+}
+
+/*
+ * `grid` em vez de bloco: o `.auth` vira item de grade e estica até a altura
+ * do main sozinho. Com `min-height: 100%` a altura ficava indefinida e o
+ * cartão colava no topo em vez de centralizar.
+ */
+body.sessao-fechada .app-main {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    background: var(--bg-deep);
+}
+
+/*
+ * A partir de 1200px o layout limita `.app-main > *` a 1280px para conter a
+ * medida de leitura. Na tela de login isso cortaria o fundo escuro no meio —
+ * quem centraliza aqui é o próprio `.auth`, com flex.
+ */
+body.sessao-fechada .app-main > * {
+    max-width: none;
+    margin: 0;
+}
+
+/* ============================================================
+   Tela de login
+   ============================================================ */
+
+.auth {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-4);
+    padding: var(--sp-5) var(--sp-4);
+    background: var(--bg-deep);
+}
+
+.auth__sistema {
+    margin: 0;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    text-align: center;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.auth-card__topo {
+    padding: var(--sp-5) var(--sp-5) var(--sp-4);
+    background: linear-gradient(160deg, #1e3a8a, #172554);
+    color: #fff;
+    text-align: center;
+}
+
+.auth-card__titulo {
+    margin: 0;
+    font-size: var(--fs-xl);
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+
+.auth-card__sub {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-sm);
+    color: #cbd5e1;
+}
+
+.auth-card__corpo {
+    padding: var(--sp-5);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.auth-form__erro:not(:empty) {
+    display: block;
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--danger-light);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+
+.auth-aviso {
+    display: flex;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    background: var(--primary-light);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+    color: var(--text);
+}
+
+.auth-aviso svg {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+}
+
+.auth__nota {
+    max-width: 420px;
+    margin: 0;
+    font-size: var(--fs-xs);
+    line-height: 1.6;
+    color: var(--text-soft);
+    text-align: center;
+}
+
+.auth__nota--alerta {
+    color: var(--warning);
+}
+
+/* Campo de senha com botão de revelar */
+.campo-senha {
+    position: relative;
+}
+
+.campo-senha .campo__controle {
+    padding-right: 44px;
+}
+
+.campo-senha__olho {
+    position: absolute;
+    top: 50%;
+    right: var(--sp-1);
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: color var(--transicao), background var(--transicao);
+}
+
+.campo-senha__olho:hover {
+    background: var(--bg);
+    color: var(--primary);
+}
+
+.campo-senha__olho svg {
+    width: 18px;
+    height: 18px;
+}
+
+.btn--alto {
+    padding-top: var(--sp-3);
+    padding-bottom: var(--sp-3);
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+/* ============================================================
+   Tela de bloqueio de rota
+   ============================================================ */
+
+.sem-acesso {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-3);
+    max-width: 420px;
+    margin: var(--sp-6) auto;
+    padding: var(--sp-5);
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.sem-acesso svg {
+    width: 40px;
+    height: 40px;
+    color: var(--text-soft);
+}
+
+.sem-acesso h1 {
+    margin: 0;
+    font-size: var(--fs-lg);
+}
+
+.sem-acesso p {
+    margin: 0;
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   Selos
+   ============================================================ */
+
+.selo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: 2px var(--sp-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+.selo svg {
+    width: 12px;
+    height: 12px;
+}
+
+.selo--admin {
+    background: var(--primary-light);
+    border: 1px solid var(--primary-border);
+    color: var(--primary-dark);
+}
+
+.selo--padrao {
+    background: var(--warning-light);
+    border: 1px solid var(--warning-border);
+    color: var(--warning-dark);
+}
+
+.selo--inativo {
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   Abas de Ajustes
+   ============================================================ */
+
+.abas {
+    display: flex;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+
+.aba {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color var(--transicao), border-color var(--transicao);
+}
+
+.aba:hover {
+    color: var(--text);
+}
+
+.aba svg {
+    width: 16px;
+    height: 16px;
+}
+
+.aba--ativa {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+/* Sub-abas em pílula (Lista / Novo / Grupos) */
+.sub-abas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+}
+
+.sub-aba {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all var(--transicao);
+}
+
+.sub-aba:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.sub-aba svg {
+    width: 15px;
+    height: 15px;
+}
+
+.sub-aba--ativa {
+    background: var(--bg-deep);
+    border-color: var(--bg-deep);
+    color: #fff;
+}
+
+/* ============================================================
+   Toggle (interruptor)
+   ============================================================ */
+
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle__trilho {
+    position: relative;
+    display: block;
+    width: 44px;
+    height: 24px;
+    background: var(--border-strong);
+    border-radius: var(--radius-pill);
+    transition: background var(--transicao);
+}
+
+.toggle__trilho::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transicao);
+}
+
+.toggle input:checked + .toggle__trilho {
+    background: var(--success);
+}
+
+.toggle input:checked + .toggle__trilho::after {
+    transform: translateX(20px);
+}
+
+.toggle input:focus-visible + .toggle__trilho {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.toggle--sm .toggle__trilho {
+    width: 36px;
+    height: 20px;
+}
+
+.toggle--sm .toggle__trilho::after {
+    width: 14px;
+    height: 14px;
+}
+
+.toggle--sm input:checked + .toggle__trilho::after {
+    transform: translateX(16px);
+}
+
+/* Linha "rótulo + interruptor" */
+.perm-opcao {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-2) 0;
+}
+
+.perm-opcao__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.perm-opcao__rotulo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Sem regra global de svg no projeto: cada contexto dimensiona o seu. */
+.perm-opcao__rotulo svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+}
+
+.perm-opcao__ajuda {
+    font-size: var(--fs-xs);
+    line-height: 1.4;
+    color: var(--text-soft);
+}
+
+/* Bloco destacado com checkbox (Administrador Geral) */
+.destaque-check {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    background: var(--primary-light);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.destaque-check input {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.destaque-check strong {
+    display: block;
+    font-size: var(--fs-base);
+    color: var(--text);
+}
+
+.destaque-check em {
+    font-size: var(--fs-sm);
+    font-style: normal;
+    color: var(--primary-dark);
+}
+
+/* Campo neutralizado (grupo, quando o usuário é admin) */
+.campo--desativado {
+    opacity: .5;
+}
+
+/* ============================================================
+   Lista de usuários
+   ============================================================ */
+
+.lista-registros {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+.registro {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.registro:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+}
+
+.registro--inativo {
+    opacity: .6;
+}
+
+.registro__info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.registro__nome {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--text);
+}
+
+.registro__meta {
+    margin-top: 2px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.registro__acoes {
+    display: flex;
+    gap: var(--sp-1);
+    flex-shrink: 0;
+}
+
+.lista-vazia {
+    padding: var(--sp-5);
+    text-align: center;
+    font-size: var(--fs-base);
+    color: var(--text-soft);
+    background: var(--surface);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+}
+
+/* ============================================================
+   Grupos e permissões
+   ============================================================ */
+
+.grupos-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+    align-items: start;
+}
+
+/*
+ * `.card` recorta o conteúdo (overflow: hidden — é o que corta a faixa
+ * colorida nos cantos arredondados dos cards de visita/médico). O card de
+ * "Grupos cadastrados" cresce ao expandir um grupo: com o recorte herdado,
+ * um grupo aberto com vários módulos junto ficava com o rodapé cortado
+ * pelo próprio card, sem barra de rolagem nenhuma pra alcançá-lo.
+ */
+.card--sem-recorte {
+    overflow: visible;
+}
+
+@media (min-width: 900px) {
+    .grupos-layout {
+        grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    }
+}
+
+/*
+ * Sanfona: só um módulo fica aberto por vez (ver `ligarModulos`), então
+ * a altura do editor não precisa caber vários corpos empilhados — só a
+ * lista de cabeçalhos fechados mais um corpo aberto por cima.
+ */
+.permissoes-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    max-height: 420px;
+    overflow-y: auto;
+    padding: var(--sp-2);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.modulo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.modulo__cab {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    padding: var(--sp-3);
+    background: none;
+    border: 0;
+    font-family: inherit;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.modulo__cab svg {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+}
+
+.modulo__seta {
+    display: inline-flex;
+    margin-left: auto;
+    color: var(--text-soft);
+    transition: transform var(--transicao);
+}
+
+.modulo__seta svg {
+    width: 16px;
+    height: 16px;
+}
+
+.modulo--aberto .modulo__seta {
+    transform: rotate(180deg);
+}
+
+.modulo__corpo {
+    display: none;
+    padding: 0 var(--sp-3) var(--sp-3);
+    border-top: 1px solid var(--border);
+}
+
+.modulo--aberto .modulo__corpo {
+    display: block;
+}
+
+.grupo-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.grupo-item + .grupo-item {
+    margin-top: var(--sp-2);
+}
+
+.grupo-item__cab {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-3);
+    background: none;
+    border: 0;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.grupo-item__seta {
+    display: inline-flex;
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--text-soft);
+    transition: transform var(--transicao);
+}
+
+.grupo-item__seta svg {
+    width: 18px;
+    height: 18px;
+}
+
+.grupo-item--aberto .grupo-item__seta {
+    transform: rotate(180deg);
+}
+
+.grupo-item__corpo {
+    display: none;
+    max-height: 70vh;
+    padding: var(--sp-3);
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.grupo-item--aberto .grupo-item__corpo {
+    display: block;
+}
+
+.contagem {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.contagem strong {
+    color: var(--primary);
+}
+
+/* Cabeçalho de card com ícone quadrado, como no painel de grupos */
+.bloco-titulo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-3);
+}
+
+.bloco-titulo__icone {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-deep);
+    color: #fff;
+}
+
+.bloco-titulo__icone svg {
+    width: 18px;
+    height: 18px;
+}
+
+.bloco-titulo__texto strong {
+    display: block;
+    font-size: var(--fs-md);
+}
+
+.bloco-titulo__texto span {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}

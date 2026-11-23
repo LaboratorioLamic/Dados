@@ -1,0 +1,563 @@
+/* ===================================================================
+   Aba "Cursos" (unificação de Temas/Assuntos/Módulos/Avaliações)
+   Todas as regras escopadas sob #cfg-root, seguindo a convenção de
+   css/admin.css. Os modais desta aba ficam fora de #cfg-root no DOM
+   (mesmo padrão dos demais modais do projeto), então usam seletores
+   por id/classe própria, também já prefixados (.course-*, .cfg-mstack-*).
+   =================================================================== */
+
+/* ─── Modal Stack: empilhamento de janelas com profundidade crescente ─── */
+/* Reaproveita .modal/.modal-content de admin.css; só adiciona o efeito
+   de profundidade (dim progressivo) e o z-index dinâmico via JS inline. */
+body.cfg-mstack-open { overflow: hidden; }
+.modal.cfg-mstack-dimmed { background: rgba(9,15,30,0.72); }
+.modal.cfg-mstack-dimmed .modal-content,
+.modal.cfg-mstack-dimmed .course-drawer-content {
+    filter: brightness(0.94) saturate(0.92);
+    transition: filter 0.18s ease;
+}
+
+/* ─── Barra de filtro/ações no topo da aba Cursos ─── */
+#cfg-root .courses-toolbar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+#cfg-root .courses-toolbar-spacer { flex: 1 1 auto; }
+
+/* ─── Popover de filtro por Tema (generaliza o padrão .roles-picker) ─── */
+#cfg-root .filter-popover-wrap { position: relative; }
+#cfg-root .filter-picker-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; min-width: 220px;
+    background: var(--cfg-surface); border: 1.5px solid var(--cfg-border);
+    border-radius: var(--r-lg, 12px); cursor: pointer; font-family: inherit;
+    transition: border-color 0.16s, box-shadow 0.16s, background 0.16s;
+}
+#cfg-root .filter-picker-btn:hover { border-color: #cbd5e1; }
+#cfg-root .filter-picker-btn.is-on { border-color: var(--cfg-primary); background: var(--cfg-primary-light, #eff6ff); }
+#cfg-root .filter-picker-icon {
+    width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--cfg-primary), #3b82f6);
+    color: #fff; font-size: 13px;
+}
+#cfg-root .filter-picker-text { display: flex; flex-direction: column; gap: 1px; text-align: left; flex: 1; }
+#cfg-root .filter-picker-text strong { font-size: 13.5px; font-weight: 700; color: var(--text); }
+#cfg-root .filter-picker-text small { font-size: 11px; color: var(--text-3); }
+#cfg-root .filter-picker-arrow { color: var(--text-3); font-size: 12px; transition: transform 0.16s; }
+#cfg-root .filter-picker-btn[aria-expanded="true"] .filter-picker-arrow { transform: rotate(180deg); }
+
+#cfg-root .filter-popover {
+    position: fixed; z-index: 1200;
+    background: var(--cfg-surface); border: 1px solid var(--cfg-border);
+    border-radius: var(--r-lg, 12px); box-shadow: var(--cfg-shadow-lg, 0 20px 44px -12px rgba(9,15,30,0.32));
+    padding: 10px; display: flex; flex-direction: column; gap: 8px;
+}
+#cfg-root .filter-popover[hidden] { display: none; }
+#cfg-root .filter-popover-head { display: flex; gap: 7px; align-items: center; }
+#cfg-root .filter-popover-search {
+    flex: 1; padding: 8px 10px; border: 1.5px solid var(--cfg-border); border-radius: 9px;
+    font-size: 13px; font-family: inherit; background: #fafbfc;
+}
+#cfg-root .filter-popover-search:focus { outline: none; border-color: var(--cfg-primary); }
+#cfg-root .filter-popover-clear {
+    border: none; background: none; color: var(--cfg-primary); font-size: 12px;
+    font-weight: 600; cursor: pointer; padding: 6px 8px; border-radius: 7px; white-space: nowrap;
+}
+#cfg-root .filter-popover-clear:hover { background: var(--cfg-primary-light, #eff6ff); }
+#cfg-root .filter-popover-list {
+    display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 260px;
+}
+#cfg-root .filter-popover-option {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border: 1.5px solid transparent; border-radius: 9px;
+    background: none; cursor: pointer; font-family: inherit; font-size: 13px; text-align: left;
+    color: var(--text); transition: background 0.12s, border-color 0.12s, transform 0.12s;
+}
+#cfg-root .filter-popover-option:hover { border-color: var(--cfg-border); }
+#cfg-root .filter-popover-option.is-selected { background: var(--cfg-primary-light, #eff6ff); border-color: var(--cfg-primary); color: var(--cfg-primary-h); font-weight: 600; }
+#cfg-root .filter-popover-option-mark {
+    width: 16px; height: 16px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--text-3);
+}
+#cfg-root .filter-popover-option.is-selected .filter-popover-option-mark {
+    color: var(--cfg-primary);
+}
+#cfg-root .filter-popover-option-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+#cfg-root .filter-popover-empty,
+#cfg-root .filter-popover-hint { font-size: 11.5px; color: var(--text-3); margin: 0; padding: 4px 2px; }
+
+/* ─── Botão "Gerenciar Temas" ─── */
+#cfg-root .manage-themes-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-radius: var(--r-lg, 12px);
+    border: 1.5px solid var(--cfg-border); background: var(--cfg-surface);
+    color: var(--text); font-family: inherit; font-size: 13.5px; font-weight: 600;
+    cursor: pointer; transition: border-color 0.16s, transform 0.16s;
+}
+#cfg-root .manage-themes-btn:hover { border-color: var(--cfg-primary); transform: translateY(-1px); }
+#cfg-root .manage-themes-btn i { color: var(--cfg-primary); }
+
+/* ─── Segmentado "Ativos / Inativos / Ambos" ─── */
+#cfg-root .status-segment {
+    display: flex; align-items: center; gap: 2px;
+    padding: 3px; border-radius: var(--r-lg, 12px);
+    border: 1.5px solid var(--cfg-border); background: var(--cfg-surface);
+}
+#cfg-root .status-segment-btn {
+    padding: 7px 13px; border: none; border-radius: 9px; background: none;
+    font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-3);
+    cursor: pointer; transition: background 0.14s, color 0.14s;
+}
+#cfg-root .status-segment-btn:hover { color: var(--text); }
+#cfg-root .status-segment-btn.is-active { background: var(--cfg-primary); color: #fff; }
+
+#cfg-root .add-course-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: var(--r-lg, 12px); border: none;
+    background: linear-gradient(135deg, var(--cfg-primary), #3b82f6);
+    color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 8px 18px -6px rgba(37,99,235,0.55);
+    transition: transform 0.16s, box-shadow 0.16s, filter 0.16s;
+}
+#cfg-root .add-course-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+/* ─── Grid de cards de curso (Assunto) ─── */
+#cfg-root .courses-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+#cfg-root .courses-empty {
+    grid-column: 1 / -1; text-align: center; padding: 60px 20px;
+    color: var(--text-3);
+}
+#cfg-root .courses-empty i { font-size: 30px; margin-bottom: 10px; display: block; opacity: 0.5; }
+
+#cfg-root .admin-course-card {
+    background: var(--cfg-surface); border: 1px solid var(--cfg-border);
+    border-radius: var(--r-lg, 12px); overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: var(--cfg-shadow-sm, 0 1px 3px rgba(9,15,30,0.06));
+    transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
+    cursor: pointer;
+}
+#cfg-root .admin-course-card:hover {
+    transform: translateY(-3px); border-color: var(--cfg-primary);
+    box-shadow: var(--cfg-shadow-lg, 0 20px 34px -14px rgba(9,15,30,0.28));
+}
+#cfg-root .admin-course-card.is-inactive { opacity: 0.62; }
+
+#cfg-root .admin-course-card-media {
+    position: relative; width: 100%; height: 128px;
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+#cfg-root .admin-course-card-media img { width: 100%; height: 100%; object-fit: cover; }
+#cfg-root .admin-course-card-media .image-initials {
+    font-size: 24px; font-weight: 800; color: var(--cfg-primary); letter-spacing: 1px;
+}
+#cfg-root .admin-course-card-subject-tag {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(9,15,30,0.62); backdrop-filter: blur(4px);
+    color: #fff; font-size: 10.5px; font-weight: 600; padding: 4px 9px; border-radius: 999px;
+    display: flex; align-items: center; gap: 5px;
+}
+#cfg-root .admin-course-card-status {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+    background: rgba(220,38,38,0.92); color: #fff; letter-spacing: 0.3px;
+}
+
+#cfg-root .admin-course-card-body { padding: 10px 14px 8px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+#cfg-root .admin-course-card-body h3 {
+    font-size: 14px; font-weight: 700; color: var(--text); margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+#cfg-root .admin-course-card-desc {
+    font-size: 12px; color: var(--text-2); margin: 0; line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+#cfg-root .admin-course-card-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 1px; }
+#cfg-root .admin-course-card-badges .deadline-badge,
+#cfg-root .admin-course-card-badges .roles-badge { font-size: 10px; padding: 2px 7px; }
+#cfg-root .admin-course-card-badges .modules-count,
+#cfg-root .admin-course-card-badges .quiz-status-badge {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--cfg-border); color: var(--text-2);
+}
+#cfg-root .admin-course-card-badges .quiz-status-badge.is-on { background: #dcfce7; color: #15803d; }
+#cfg-root .admin-course-card-badges .quiz-status-badge.is-off { background: #fee2e2; color: #b91c1c; }
+
+#cfg-root .admin-course-card-footer {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border-top: 1px solid var(--cfg-border);
+}
+#cfg-root .admin-course-card-footer .order-buttons { display: flex; gap: 3px; }
+#cfg-root .admin-course-card-footer .card-actions { display: flex; align-items: center; gap: 6px; }
+/* Toggle liga/desliga do curso, tamanho reduzido pra caber no footer do card */
+#cfg-root .admin-course-card-footer .toggle-switch { transform: scale(0.82); margin: 0 -2px; }
+
+/* ─── Modal centralizado grande: drawer de detalhe do curso ─── */
+/* z-index destes 5 modais é aplicado dinamicamente pelo ModalStack (JS),
+   conforme a ordem de empilhamento — não fixar aqui para não confundir. */
+#cfg-course-detail-modal .course-drawer-content {
+    max-width: 560px; width: 92vw; max-height: 88vh; display: flex; flex-direction: column;
+}
+#cfg-root .course-drawer-hero,
+.course-drawer-hero {
+    display: flex; align-items: center; gap: 16px; padding: 20px 24px;
+    border-bottom: 1px solid var(--cfg-border); flex-shrink: 0;
+}
+.course-drawer-hero-thumb {
+    width: 64px; height: 64px; flex-shrink: 0; border-radius: 14px; overflow: hidden;
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: var(--cfg-primary);
+}
+.course-drawer-hero-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.course-drawer-hero-info { flex: 1; min-width: 0; }
+.course-drawer-hero-info h2 { font-size: 18px; font-weight: 800; color: var(--text); margin: 0 0 4px; letter-spacing: -0.3px; }
+.course-drawer-hero-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.course-drawer-tabs {
+    display: flex; gap: 4px; padding: 0 24px; border-bottom: 1px solid var(--cfg-border); flex-shrink: 0;
+}
+.course-drawer-tabs .tab-btn {
+    padding: 12px 16px; border: none; background: none; cursor: pointer;
+    font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--text-3);
+    border-bottom: 2.5px solid transparent; display: flex; align-items: center; gap: 7px;
+    transition: color 0.14s, border-color 0.14s;
+}
+.course-drawer-tabs .tab-btn:hover { color: var(--text); }
+.course-drawer-tabs .tab-btn.active { color: var(--cfg-primary); border-bottom-color: var(--cfg-primary); }
+.course-drawer-tabs .tab-btn .tab-count {
+    background: var(--cfg-border); color: var(--text-2); font-size: 10.5px; font-weight: 700;
+    padding: 1px 7px; border-radius: 999px;
+}
+.course-drawer-tabs .tab-btn.active .tab-count { background: var(--cfg-primary-light, #eff6ff); color: var(--cfg-primary-h); }
+
+.course-drawer-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+.course-drawer-section-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px;
+}
+.course-drawer-section-head h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0; }
+.course-drawer-section-head:has(.course-drawer-section-actions) { flex-wrap: wrap; }
+.course-drawer-section-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+
+/* listas de módulo/questão dentro do drawer, reaproveitando .module-card/.quiz-card */
+.course-drawer-list { display: flex; flex-direction: column; gap: 10px; }
+.course-drawer-empty { text-align: center; padding: 30px 10px; color: var(--text-3); font-size: 13px; }
+#cfg-root .quiz-card-number { color: var(--cfg-primary); font-weight: 800; margin-right: 2px; }
+
+/* ─── Aba "Informações" do drawer de detalhe ─── */
+.course-info-grid {
+    display: grid; grid-template-columns: 1fr;
+    gap: 12px; align-items: start;
+}
+.course-info-card {
+    background: #fafbfc; border: 1px solid var(--cfg-border); border-radius: var(--r-lg, 12px);
+    padding: 14px 16px;
+}
+.course-info-card-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px;
+}
+.course-info-card-head i { color: var(--cfg-primary); font-size: 12px; }
+.course-info-desc { font-size: 13.5px; color: var(--text); line-height: 1.6; margin: 0; }
+.course-info-muted { color: var(--text-3); font-size: 12.5px; margin: 0; font-style: italic; }
+.course-info-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.course-info-subrow {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 7px 0; font-size: 13px; border-top: 1px dashed var(--cfg-border);
+}
+.course-info-subrow:first-of-type { border-top: none; padding-top: 0; }
+.course-info-subrow span { color: var(--text-3); }
+.course-info-subrow strong { color: var(--text); font-weight: 600; text-align: right; }
+.course-info-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 999px;
+}
+.course-info-status.is-active { background: #dcfce7; color: #15803d; }
+.course-info-status.is-inactive { background: #fee2e2; color: #b91c1c; }
+.course-info-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.course-info-pill {
+    font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    background: var(--cfg-primary-light, #eff6ff); color: var(--cfg-primary-h);
+}
+
+/* ─── Modais empilhados de Módulo/Avaliação (à frente do drawer) ─── */
+#cfg-module-form-modal .modal-content,
+#cfg-quiz-form-modal .modal-content { max-width: 560px; max-height: 90vh; display: flex; flex-direction: column; }
+#cfg-module-form-modal .modal-body,
+#cfg-quiz-form-modal .modal-body { overflow-y: auto; }
+#cfg-theme-form-modal .modal-content { max-width: 640px; max-height: 92vh; display: flex; flex-direction: column; }
+#cfg-theme-form-modal .modal-body { overflow-y: auto; }
+#cfg-subject-manage-modal .modal-content { max-width: 480px; max-height: 86vh; display: flex; flex-direction: column; }
+#cfg-subject-manage-modal .modal-body { overflow-y: auto; }
+
+/* Lista de temas dentro do modal "Gerenciar Temas" */
+.subject-manage-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+
+@media (max-width: 640px) {
+    #cfg-root .courses-toolbar { flex-direction: column; align-items: stretch; }
+    #cfg-root .filter-picker-btn { min-width: 0; }
+    .course-drawer-hero { flex-wrap: wrap; }
+    .course-info-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── Seletor de tipo de conteúdo do módulo (popover) ─────────────────
+   Mesmo padrão visual de .roles-picker (css/admin.css): botão-resumo +
+   popover. Os três tipos são exclusivos, então o popover é um radiogroup
+   e cada painel .ctype-panel aparece só para o tipo ativo.
+   ------------------------------------------------------------------- */
+#cfg-root .ctype-picker { position: relative; }
+#cfg-root .ctype-picker-btn {
+    display: flex; align-items: center; gap: 13px; width: 100%;
+    padding: 13px 15px; border-radius: 12px; cursor: pointer;
+    border: 1.5px solid var(--cfg-border); background: var(--cfg-surface);
+    font-family: inherit; text-align: left;
+    transition: border-color 0.16s, box-shadow 0.16s, background 0.16s;
+}
+#cfg-root .ctype-picker-btn:hover {
+    border-color: var(--cfg-primary);
+    box-shadow: 0 4px 14px -8px rgba(37,99,235,0.55);
+}
+#cfg-root .ctype-picker-btn[aria-expanded="true"] {
+    border-color: var(--cfg-primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.16);
+}
+#cfg-root .ctype-picker-icon {
+    width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 15px;
+    transition: background 0.2s;
+}
+#cfg-root .ctype-picker-text { flex: 1; min-width: 0; }
+#cfg-root .ctype-picker-text strong {
+    display: block; font-size: 13px; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#cfg-root .ctype-picker-text small { display: block; font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+#cfg-root .ctype-picker-arrow {
+    color: var(--text-3); font-size: 12px;
+    transition: transform 0.18s;
+}
+#cfg-root .ctype-picker-btn[aria-expanded="true"] .ctype-picker-arrow { transform: rotate(180deg); }
+
+/* Gradiente por tipo — repetido no botão-resumo e na opção do popover,
+   para o admin reconhecer o tipo pela cor antes de ler o rótulo. */
+#cfg-root .ctype-picker-icon.is-video,
+#cfg-root .ctype-popover-option-mark.is-video { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+#cfg-root .ctype-picker-icon.is-pdf,
+#cfg-root .ctype-popover-option-mark.is-pdf { background: linear-gradient(135deg, #d97706, #fbbf24); }
+#cfg-root .ctype-picker-icon.is-shorts,
+#cfg-root .ctype-popover-option-mark.is-shorts { background: linear-gradient(135deg, #db2777, #a855f7); }
+#cfg-root .ctype-picker-icon.is-quiz,
+#cfg-root .ctype-popover-option-mark.is-quiz { background: linear-gradient(135deg, #0d9488, #34d399); }
+
+/* O card do formulário tem overflow:hidden e cortaria a lista: o popover é
+   movido para o fim de #cfg-root e posicionado em coordenadas de viewport
+   (position:fixed) por js/admin-courses.js. */
+#cfg-root .ctype-popover {
+    position: fixed; z-index: 3000;
+    background: #fff; border: 1.5px solid var(--cfg-border); border-radius: 12px;
+    box-shadow: 0 18px 44px -16px rgba(15,34,68,0.4);
+    padding: 10px; display: flex; flex-direction: column; gap: 6px;
+}
+#cfg-root .ctype-popover[hidden] { display: none; }
+#cfg-root .ctype-popover-option {
+    display: flex; align-items: center; gap: 11px; width: 100%; cursor: pointer;
+    padding: 10px 11px; border: 1.5px solid transparent; border-radius: 11px;
+    background: var(--bg); font-family: inherit; color: var(--text); text-align: left;
+    transition: background 0.16s, border-color 0.16s, transform 0.12s, box-shadow 0.16s;
+}
+#cfg-root .ctype-popover-option:hover { border-color: var(--cfg-primary); transform: translateY(-1px); }
+#cfg-root .ctype-popover-option:focus-visible {
+    outline: none; border-color: var(--cfg-primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
+}
+#cfg-root .ctype-popover-option.is-selected {
+    background: var(--cfg-primary-light); border-color: var(--cfg-primary);
+}
+#cfg-root .ctype-popover-option-mark {
+    width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px;
+}
+#cfg-root .ctype-popover-option-text { flex: 1; min-width: 0; }
+#cfg-root .ctype-popover-option-text strong {
+    display: block; font-size: 13px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#cfg-root .ctype-popover-option-text small { display: block; font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+#cfg-root .ctype-popover-option-check {
+    flex-shrink: 0; font-size: 12px; color: var(--cfg-primary); opacity: 0;
+    transition: opacity 0.16s;
+}
+#cfg-root .ctype-popover-option.is-selected .ctype-popover-option-check { opacity: 1; }
+#cfg-root .ctype-popover-hint { font-size: 11.5px; color: var(--text-3); margin: 2px 0 0; padding: 0 2px; }
+
+#cfg-root .ctype-panel[hidden] { display: none; }
+
+/* Lista de vídeos curtos: cada item vem do formulário de adicionar abaixo
+   dela (link + título opcional). Estado vivo em js/admin-courses.js,
+   espelhado no hidden #cfg-module-shorts-data que admin.js lê ao salvar. */
+#cfg-root .shorts-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+#cfg-root .shorts-list-empty { font-size: 12px; color: var(--text-3); margin: 0; padding: 2px; }
+#cfg-root .shorts-list-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 10px;
+    border: 1.5px solid var(--cfg-border); background: var(--cfg-surface);
+}
+#cfg-root .shorts-list-item-index {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--cfg-primary-light, #eff6ff); color: var(--cfg-primary-h);
+    font-size: 11px; font-weight: 700;
+}
+#cfg-root .shorts-list-item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#cfg-root .shorts-list-item-text strong {
+    font-size: 12.5px; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#cfg-root .shorts-list-item-text small { font-size: 11px; color: var(--text-3); }
+/* O item em edição fica destacado até o admin salvar ou cancelar (Esc,
+   botão X ou clicar em editar outro item). */
+#cfg-root .shorts-list-item.is-editing {
+    border-color: var(--cfg-primary); background: var(--cfg-primary-light, #eff6ff);
+}
+#cfg-root .shorts-list-item-edit,
+#cfg-root .shorts-list-item-remove {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px;
+    border: none; background: transparent; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background 0.16s;
+}
+#cfg-root .shorts-list-item-edit { color: var(--cfg-primary); }
+#cfg-root .shorts-list-item-edit:hover { background: var(--cfg-primary-light, #eff6ff); }
+#cfg-root .shorts-list-item-remove { color: var(--danger); }
+#cfg-root .shorts-list-item-remove:hover { background: #fef2f2; }
+
+/* Formulário de adicionar/editar: link + título opcional + botão. Empilha em
+   telas estreitas (o modal tem max-width: 560px — ver admin-courses.css). O
+   X de cancelar só aparece durante uma edição (ver updateShortsAddBtnLabel). */
+#cfg-root .shorts-add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+#cfg-root .shorts-add-row .form-control { flex: 1 1 160px; min-width: 0; }
+#cfg-root .shorts-add-btn { flex-shrink: 0; white-space: nowrap; }
+#cfg-root .shorts-cancel-edit-btn { flex-shrink: 0; }
+
+/* Selo de tipo no card do módulo (populateModules em js/admin.js). */
+#cfg-root .module-type-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    background: var(--cfg-primary-light, #eff6ff); color: var(--cfg-primary-h);
+    margin-bottom: 6px;
+}
+#cfg-root .module-type-tag.is-pdf { background: #fef3c7; color: #b45309; }
+#cfg-root .module-type-tag.is-shorts { background: #fce7f3; color: #be185d; }
+#cfg-root .module-type-tag.is-quiz { background: #d1fae5; color: #047857; }
+
+/* ─── Perguntas do módulo de Quiz ───
+   Mesma mecânica da lista de vídeos curtos: lista acima, editor abaixo
+   (o mesmo editor serve para adicionar e para editar um item existente). */
+#cfg-root .mquiz-list-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;
+}
+#cfg-root .mquiz-list-head .form-label { margin-bottom: 0; }
+#cfg-root .mquiz-sheet-actions { display: flex; gap: 6px; }
+#cfg-root .mquiz-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+#cfg-root .mquiz-list-empty { font-size: 12px; color: var(--text-3); margin: 0; padding: 2px; }
+#cfg-root .mquiz-list-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 10px;
+    border: 1.5px solid var(--cfg-border); background: var(--cfg-surface);
+}
+#cfg-root .mquiz-list-item.is-editing {
+    border-color: #0d9488; background: #ecfdf5;
+}
+#cfg-root .mquiz-list-item-index {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #d1fae5; color: #047857;
+    font-size: 11px; font-weight: 700;
+}
+#cfg-root .mquiz-list-item-thumb {
+    flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px;
+    object-fit: cover; border: 1px solid var(--cfg-border);
+}
+#cfg-root .mquiz-list-item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#cfg-root .mquiz-list-item-text strong {
+    font-size: 12.5px; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#cfg-root .mquiz-list-item-text small {
+    font-size: 11px; color: var(--text-3);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#cfg-root .mquiz-list-item-hasexp { color: var(--cfg-primary); margin-left: 4px; }
+#cfg-root .mquiz-list-item-edit,
+#cfg-root .mquiz-list-item-remove {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px;
+    border: none; background: transparent; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background 0.16s;
+}
+#cfg-root .mquiz-list-item-edit { color: var(--cfg-primary); }
+#cfg-root .mquiz-list-item-edit:hover { background: var(--cfg-primary-light, #eff6ff); }
+#cfg-root .mquiz-list-item-remove { color: var(--danger); }
+#cfg-root .mquiz-list-item-remove:hover { background: #fef2f2; }
+
+#cfg-root .mquiz-editor {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 12px; border-radius: 12px;
+    border: 1.5px dashed var(--cfg-border); background: var(--bg);
+}
+#cfg-root .mquiz-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#cfg-root .mquiz-editor-title {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 700; color: #047857;
+    text-transform: uppercase; letter-spacing: 0.3px;
+}
+#cfg-root .mquiz-editor-cancel {
+    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+    border: 1px solid var(--cfg-border); background: #fff; color: var(--text-3);
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+#cfg-root .mquiz-editor-cancel:hover { color: var(--danger); border-color: var(--danger); }
+
+#cfg-root .mquiz-image-row { display: flex; gap: 12px; align-items: flex-start; }
+#cfg-root .mquiz-image-preview {
+    width: 66px; height: 66px; flex-shrink: 0; border-radius: 10px;
+    border: 1.5px solid var(--cfg-border); background: var(--cfg-surface);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    color: var(--text-3);
+}
+#cfg-root .mquiz-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+#cfg-root .mquiz-image-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+#cfg-root .mquiz-image-actions .form-hint { flex-basis: 100%; margin: 0; }
+
+/* Alternativas A–D: o rádio marca a correta, e a letra fica verde quando
+   selecionada — o admin vê a resposta certa sem precisar ler o rótulo. */
+#cfg-root .mquiz-options { display: flex; flex-direction: column; gap: 7px; }
+#cfg-root .mquiz-option { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+#cfg-root .mquiz-option input[type="radio"] { flex-shrink: 0; accent-color: #0d9488; width: 16px; height: 16px; cursor: pointer; }
+#cfg-root .mquiz-option-letter {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--cfg-surface); border: 1.5px solid var(--cfg-border);
+    font-size: 11.5px; font-weight: 700; color: var(--text-3);
+    transition: all 0.16s;
+}
+#cfg-root .mquiz-option input[type="radio"]:checked ~ .mquiz-option-letter {
+    background: #d1fae5; border-color: #0d9488; color: #047857;
+}
+#cfg-root .mquiz-option-input { flex: 1; min-width: 0; }
+#cfg-root .mquiz-explanation-input { min-height: 68px; resize: vertical; }
+#cfg-root .mquiz-add-btn { align-self: flex-start; }
+
+@media (max-width: 640px) {
+    #cfg-root .ctype-picker-text small,
+    #cfg-root .ctype-popover-option-text small { display: none; }
+}

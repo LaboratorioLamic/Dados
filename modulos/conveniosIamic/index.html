@@ -1,0 +1,2485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glosa | Gestão de Convênios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { navy: { 700: '#1e40af', 800: '#1e3a8a', 900: '#162036' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #172554; border-radius: 10px; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        @keyframes spinLoader { to { transform: rotate(360deg); } }
+        
+        /* Estilos personalizados para o filtro de data mensal */
+        input[type=\"month\"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(0.5);
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+        
+        input[type=\"month\"]:hover::-webkit-calendar-picker-indicator {
+            opacity: 1;
+            filter: invert(0.2);
+        }
+        
+        input[type=\"month\"]:focus::-webkit-calendar-picker-indicator {
+            opacity: 1;
+            filter: invert(0);
+        }
+        
+        input[type=\"month\"]::-webkit-inner-spin-button,
+        input[type=\"month\"]::-webkit-clear-button {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] font-sans text-slate-800 h-screen flex flex-col overflow-hidden">
+<script src="lamic-carregando.js" data-nome="Glosas"></script>
+    <div id="tela-dados" class="fixed inset-0 z-[10000] bg-navy-900 text-white items-center justify-center" style="display:none">
+        <div class="text-center px-6 max-w-md">
+            <img src="assents/circulo.png" alt="" class="h-20 w-20 mx-auto rounded-full bg-white p-2 mb-5">
+            <h2 id="tela-dados-titulo" class="text-lg font-black uppercase tracking-widest mb-2"></h2>
+            <p id="tela-dados-msg" class="text-sm text-blue-100 mb-6"></p>
+            <a href="https://laboratoriolamic.github.io/Dados/" target="_top" class="inline-block px-6 py-3 bg-white text-navy-900 rounded-xl font-black text-xs tracking-widest">ABRIR O DADOS LAMIC</a>
+        </div>
+    </div>
+    <div id="initial-loader" class="fixed inset-0 z-[9999] bg-navy-900 text-white flex items-center justify-center" style="opacity:0">
+        <div class="text-center px-6">
+            <div class="h-14 w-14 mx-auto rounded-full border-4 border-blue-300 border-t-blue-600 mb-4" style="animation: spinLoader 0.8s linear infinite;"></div>
+            <p class="text-sm font-black uppercase tracking-widest">Carregando Dashboard</p>
+            <p class="text-xs text-blue-200 mt-2">Sincronizando dados e preparando gráficos...</p>
+        </div>
+    </div>
+
+    <header class="bg-navy-900 text-white shadow-2xl shrink-0 z-50 border-b border-navy-700">
+        <div class="container mx-auto px-6 py-2 flex justify-between items-center">
+            <div class="flex items-center gap-6">
+                <img src="https://i.imgur.com/vXM6l52.png" alt="Logo" class="h-14 w-auto object-contain brightness-0 invert">
+                <div class="h-8 w-[1px] bg-navy-700 hidden md:block"></div>
+                <span class="text-lg font-light tracking-[0.2em] uppercase hidden md:block">Glosa<span class="font-black text-blue-400">LAMIC</span></span>
+            </div>
+            <nav class="flex bg-navy-800/50 rounded-xl p-1.5 border border-navy-700">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-6 py-2.5 rounded-lg bg-blue-600 transition-all font-bold text-xs tracking-widest shadow-lg">
+                    <i class="fas fa-chart-pie mr-2"></i>DASHBOARD
+                </button>
+                <button onclick="switchTab('dados')" id="btn-dados" class="px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1">
+                    <i class="fas fa-table-list mr-2"></i>DADOS
+                </button>
+                                <button onclick="switchTab('backup')" id="btn-backup" title="Backup" class="px-4 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1">
+                    <i class="fas fa-gear"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-auto p-6">
+        <section id="tab-dashboard" class="tab-content active container mx-auto">
+            
+            <div class="glass-card p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-navy-900 font-black text-sm uppercase tracking-tighter flex items-center gap-2">
+                        <i class="fas fa-filter text-blue-500"></i> Painel de Controle Analítico
+                    </h2>
+                    <select id="filter-type" onchange="toggleFilterInputs(); updateDashboardFiltersByTime()" class="text-xs font-bold border-slate-200 rounded-lg bg-slate-50">
+                        <option value="all">Geral (Lifetime)</option>
+                        <option value="range">Período Personalizado</option>
+                        <option value="month">Mês Específico</option>
+                        <option value="year" selected>Ano Inteiro</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
+                    <div id="box-start" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data Início</label>
+                        <input type="date" id="dash-start" onchange="updateDashboardFiltersByTime()" class="w-full border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div id="box-end" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data Fim</label>
+                        <input type="date" id="dash-end" onchange="updateDashboardFiltersByTime()" class="w-full border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div id="box-month" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Mês Referência</label>
+                        <input type="month" id="dash-month" onchange="updateDashboardFiltersByTime()" class="w-full border-slate-200 rounded-lg text-sm">
+                    </div>
+                    <div id="box-year">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Ano Base</label>
+                        <input type="number" id="dash-year" value="2026" onchange="updateDashboardFiltersByTime()" class="w-full border-slate-200 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Convênio</label>
+                        <select id="dash-convenio" onchange="updateDashboardFiltersByTime()" class="w-full border-slate-200 rounded-lg text-sm dynamic-select-convenio"><option value="">Todos</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Unidade</label>
+                        <select id="dash-unidade" onchange="updateDashboardFiltersByTime()" class="w-full border-slate-200 rounded-lg text-sm dynamic-select-unidade"><option value="">Todas</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Colaborador</label>
+                        <select id="dash-colaborador" onchange="updateDashboardFiltersByTime()" class="w-full border-slate-200 rounded-lg text-sm dynamic-select-colaborador"><option value="">Todos</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Motivo</label>
+                        <select id="dash-motivo" onchange="updateDashboardFiltersByTime()" class="w-full border-slate-200 rounded-lg text-sm dynamic-select-motivos"><option value="">Todos</option></select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="resetDashboardFilters()" title="Resetar filtros" class="h-11 w-11 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 transition-all flex items-center justify-center">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-600" title="Valor total das glosas registradas no período selecionado">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Total Glosado</p>
+                    <p id="kpi-total" class="text-xl font-black text-navy-900 mt-1">R$ 0,00</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-purple-600" title="Quantidade de guias glosadas no período selecionado">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Quantidade</p>
+                    <p id="kpi-quantidade" class="text-xl font-black text-purple-900 mt-1">0</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-green-500" title="Valor das glosas que foram totalmente acatadas pelos convênios">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Acatado</p>
+                    <p id="kpi-acatado" class="text-xl font-black text-green-600 mt-1">R$ 0,00</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-yellow-500" title="Valor das glosas que ainda estão em processo de contestação ou aguardando decisão">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Pendente</p>
+                    <p id="kpi-contestar" class="text-xl font-black text-yellow-600 mt-1">R$ 0,00</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-red-500" title="Valor das glosas que foram definitivamente perdidas">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Perdido</p>
+                    <p id="kpi-perdido" class="text-xl font-black text-red-600 mt-1">R$ 0,00</p>
+                </div>
+                <div class="bg-navy-900 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden" title="Percentual de eficiência na recuperação das glosas (Acatado / Total)">
+                    <div class="absolute -right-4 -bottom-4 opacity-10"><i class="fas fa-chart-line text-6xl"></i></div>
+                    <p class="text-blue-300 text-[10px] font-bold uppercase tracking-widest relative z-10">Acatados</p>
+                    <p id="kpi-taxa" class="text-2xl font-black mt-1 relative z-10">0%</p>
+                </div>
+                <div class="bg-green-600 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden" title="Valor total efetivamente pago pelos convênios">
+                    <div class="absolute -right-4 -bottom-4 opacity-10"><i class="fas fa-hand-holding-usd text-6xl"></i></div>
+                    <p class="text-green-200 text-[10px] font-bold uppercase tracking-widest relative z-10">Valor Pago</p>
+                    <p id="kpi-pago" class="text-xl font-black mt-1 relative z-10">R$ 0,00</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-chart-pie text-blue-500"></i> Proporção Conciliação - Geral</h3>
+                    <div class="h-72 relative"><canvas id="chartConciliacaoPie"></canvas></div>
+                </div>
+                <div class="lg:col-span-2 xl:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-chart-bar text-blue-500"></i> Acatado vs Pago Efetivo (Por Convênio) - Geral</h3>
+                    <div class="h-72 relative"><canvas id="chartConciliacaoBar"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+                <div class="lg:col-span-2 xl:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-navy-900 text-xs uppercase flex items-center gap-2"><i class="fas fa-chart-line text-blue-500"></i> Evolução Temporal de Glosas</h3>
+                        <button type="button" id="metric-btn-chartLine" onclick="toggleChartMetric('chartLine')" class="text-[10px] font-bold uppercase px-3 py-1 rounded-lg border border-slate-200 text-navy-900 hover:bg-slate-50 flex items-center gap-2"><i class="fas fa-exchange-alt text-blue-500"></i> <span>Valor</span></button>
+                    </div>
+                    <div class="h-72 relative"><canvas id="chartLine"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-chart-pie text-blue-500"></i> Status das Contestações</h3>
+                    <div class="h-72 relative"><canvas id="chartStatus"></canvas></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+                <div class="lg:col-span-2 xl:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-navy-900 text-xs uppercase flex items-center gap-2"><i class="fas fa-balance-scale text-blue-500"></i> Glosado vs Acatado (Convênios)</h3>
+                        <button type="button" id="metric-btn-chartCompare" onclick="toggleChartMetric('chartCompare')" class="text-[10px] font-bold uppercase px-3 py-1 rounded-lg border border-slate-200 text-navy-900 hover:bg-slate-50 flex items-center gap-2"><i class="fas fa-exchange-alt text-blue-500"></i> <span>Valor</span></button>
+                    </div>
+                    <div class="h-72 relative"><canvas id="chartCompare"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-tags text-blue-500"></i> Ticket Médio por Convênio</h3>
+                    <div class="h-72 relative"><canvas id="chartTicket"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+                <div class="lg:col-span-2 xl:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-navy-900 text-xs uppercase flex items-center gap-2"><i class="fas fa-chart-line text-blue-500"></i> Glosas Perdidas</h3>
+                        <button type="button" id="metric-btn-chartPerdidasLine" onclick="toggleChartMetric('chartPerdidasLine')" class="text-[10px] font-bold uppercase px-3 py-1 rounded-lg border border-slate-200 text-navy-900 hover:bg-slate-50 flex items-center gap-2"><i class="fas fa-exchange-alt text-blue-500"></i> <span>Valor</span></button>
+                    </div>
+                    <div class="h-72 relative"><canvas id="chartPerdidasLine"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-chart-pie text-blue-500"></i> Glosas Perdidas por Convênio</h3>
+                    <div class="h-72 relative"><canvas id="chartPerdidasDonut"></canvas></div>
+                </div>
+            </div>
+
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-user-md text-blue-500"></i> Ranking de Glosa por Colaborador</h3>
+                    <div class="h-72 flex flex-col">
+                        <div class="flex-1 overflow-auto border border-slate-100 rounded-xl">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-[0.15em] font-black sticky top-0">
+                                    <tr>
+                                        <th class="p-3 border-b border-slate-200 w-12 text-center">#</th>
+                                        <th class="p-3 border-b border-slate-200">Colaborador</th>
+                                        <th class="p-3 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortColaboradorRanking('quantidade')">Volume de Glosa</th>
+                                        <th class="p-3 border-b border-slate-200 text-right w-36 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortColaboradorRanking('valor')">Valor</th>
+                                        <th class="p-3 border-b border-slate-200 w-48">Proporção</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="colaborador-ranking-body" class="text-sm divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-hospital text-blue-500"></i> Ranking de Volume de Glosas por Unidade</h3>
+                    <div class="h-72 flex flex-col">
+                        <div class="flex-1 overflow-auto border border-slate-100 rounded-xl">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-[0.15em] font-black sticky top-0">
+                                    <tr>
+                                        <th class="p-3 border-b border-slate-200 w-12 text-center">#</th>
+                                        <th class="p-3 border-b border-slate-200">Unidade</th>
+                                        <th class="p-3 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortUnidadeRanking('quantidade')">Volume de Glosa</th>
+                                        <th class="p-3 border-b border-slate-200 text-right w-36 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortUnidadeRanking('valor')">Valor</th>
+                                        <th class="p-3 border-b border-slate-200 w-48">Proporção</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unidade-ranking-body" class="text-sm divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
+                <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-list-ol text-blue-500"></i> Ranking de Volume de Glosas por Motivo</h3>
+                <div class="overflow-auto border border-slate-100 rounded-xl max-h-96">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-[0.15em] font-black sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 border-b border-slate-200 w-12 text-center">#</th>
+                                <th class="p-3 border-b border-slate-200">Motivo</th>
+                                <th class="p-3 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortMotivoRanking('volume')">Volume de Glosa</th>
+                                <th class="p-3 border-b border-slate-200 text-right w-36 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortMotivoRanking('valor')">Valor</th>
+                                <th class="p-3 border-b border-slate-200 w-48">Proporção</th>
+                            </tr>
+                        </thead>
+                        <tbody id="motivo-ranking-body" class="text-sm divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
+                <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-list-ol text-red-500"></i> Ranking de Volume de Glosas Perdidas por Motivo</h3>
+                <div class="overflow-auto border border-slate-100 rounded-xl max-h-96">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-[0.15em] font-black sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 border-b border-slate-200 w-12 text-center">#</th>
+                                <th class="p-3 border-b border-slate-200">Motivo</th>
+                                <th class="p-3 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortMotivoPerdidoRanking('volume')">Volume de Glosa</th>
+                                <th class="p-3 border-b border-slate-200 text-right w-36 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortMotivoPerdidoRanking('valor')">Valor</th>
+                                <th class="p-3 border-b border-slate-200 w-48">Proporção</th>
+                            </tr>
+                        </thead>
+                        <tbody id="motivo-perdido-ranking-body" class="text-sm divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
+                <h3 class="font-bold text-navy-900 text-xs uppercase mb-6 flex items-center gap-2"><i class="fas fa-list-ol text-slate-500"></i> Ranking de Volume de Glosas Isentas por Motivo</h3>
+                <div class="overflow-auto border border-slate-100 rounded-xl max-h-96">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-[0.15em] font-black sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 border-b border-slate-200 w-12 text-center">#</th>
+                                <th class="p-3 border-b border-slate-200">Motivo</th>
+                                <th class="p-3 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortMotivoIsentoRanking('volume')">Volume de Glosa</th>
+                                <th class="p-3 border-b border-slate-200 text-right w-36 cursor-pointer hover:bg-slate-100 transition-colors" onclick="sortMotivoIsentoRanking('valor')">Valor</th>
+                                <th class="p-3 border-b border-slate-200 w-48">Proporção</th>
+                            </tr>
+                        </thead>
+                        <tbody id="motivo-isento-ranking-body" class="text-sm divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-dados" class="tab-content container mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="p-6 bg-slate-50 border-b border-slate-200">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                        <div>
+                            <h2 class="text-2xl font-black text-navy-900 tracking-tighter uppercase">Protocolo de Glosas</h2>
+                            <p class="text-xs text-slate-400 font-bold">GESTÃO DE LANÇAMENTOS E AUDITORIA</p>
+                        </div>
+                        <div class="flex flex-wrap gap-3 w-full lg:w-auto">
+                            <button onclick="openManageListsModal()" class="flex-1 lg:flex-none px-5 py-2.5 border-2 border-navy-800 text-navy-800 rounded-xl hover:bg-navy-800 hover:text-white font-black text-[10px] tracking-widest transition-all">
+                                <i class="fas fa-cog mr-2"></i>PARÂMETROS
+                            </button>
+                            <button onclick="openRecordModal()" class="flex-1 lg:flex-none px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-black text-[10px] tracking-widest shadow-lg transition-all">
+                                <i class="fas fa-plus mr-2"></i>NOVA GLOSA
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 flex-1">
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="table-search" onkeyup="renderTable()" placeholder="Buscar Paciente ou Lote..." class="w-full pl-11 pr-4 py-3 bg-white border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 shadow-sm">
+                            </div>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-calendar-alt text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                                </div>
+                                <input type="month" id="table-filter-date" onchange="renderTable()" class="w-full pl-10 pr-4 py-3 bg-white border-slate-200 rounded-xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-500 shadow-sm transition-all hover:border-blue-300 cursor-pointer" placeholder="Selecione o mês">
+                            </div>
+                            <select id="table-filter-conv" onchange="updateTableFilters(); renderTable()" class="border-slate-200 rounded-xl text-sm font-bold text-slate-600 shadow-sm dynamic-select-convenio">
+                                <option value="">Todos os Convênios</option>
+                            </select>
+                            <select id="table-filter-uni" onchange="updateTableFilters(); renderTable()" class="border-slate-200 rounded-xl text-sm font-bold text-slate-600 shadow-sm dynamic-select-unidade">
+                                <option value="">Todas as Unidades</option>
+                            </select>
+                            <select id="table-filter-colab" onchange="updateTableFilters(); renderTable()" class="border-slate-200 rounded-xl text-sm font-bold text-slate-600 shadow-sm dynamic-select-colaborador">
+                                <option value="">Todos os Colaboradores</option>
+                            </select>
+                            <select id="table-filter-status" onchange="renderTable()" class="border-slate-200 rounded-xl text-sm font-bold text-slate-600 shadow-sm">
+                                <option value="">Todos os Status</option>
+                                <option value="A contestar">A contestar</option>
+                                <option value="Contestado">Contestado</option>
+                                <option value="Acatado">Acatado</option>
+                                <option value="Parcial">Parcial</option>
+                                <option value="Recontestar">Recontestar</option>
+                                <option value="Perdido">Perdido</option>
+                                <option value="Isento">Isento</option>
+                            </select>
+                        </div>
+                        <div class="lg:ml-4 flex justify-end">
+                            <button onclick="resetTableFilters()" title="Resetar filtros da tabela" class="h-11 w-11 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-all flex items-center justify-center shadow-sm">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-navy-900 text-white text-[10px] uppercase tracking-[0.2em] font-black">
+                            <tr>
+                                <th class="p-5 border-b border-navy-800">Data</th>
+                                <th class="p-5 border-b border-navy-800">Convênio / Unidade</th>
+                                <th class="p-5 border-b border-navy-800">Paciente / Lote</th>
+                                <th class="p-5 border-b border-navy-800">Colaborador</th>
+                                <th class="p-5 border-b border-navy-800 text-right">Valor Glosa</th>
+                                <th class="p-5 border-b border-navy-800 text-center">Status</th>
+                                <th class="p-5 border-b border-navy-800 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="text-sm divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500">
+                    <button id="dados-prev" onclick="changeDadosPage(-1)" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">Anterior</button>
+                    <span id="dados-page-info">Página 1 de 1</span>
+                    <button id="dados-next" onclick="changeDadosPage(1)" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">Próxima</button>
+                </div>
+            </div>
+        </section>
+
+        
+        <section id="tab-backup" class="tab-content container mx-auto">
+            <div class="bg-gradient-to-br from-slate-50 via-white to-blue-50 rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="px-8 py-7 border-b border-slate-200 bg-white/70 backdrop-blur-sm">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl lg:text-3xl font-black text-navy-900 tracking-tight uppercase flex items-center gap-3">
+                                <span class="h-11 w-11 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shadow-sm">
+                                    <i class="fas fa-shield-halved"></i>
+                                </span>
+                                Central de Backup
+                            </h2>
+                            <p class="text-sm text-slate-500 font-semibold mt-2">Proteja seus dados com exportacao segura e restauracao completa.</p>
+                        </div>
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-[11px] font-black tracking-widest uppercase border border-blue-100 w-fit">
+                            <i class="fas fa-database"></i>Dados Locais
+                        </span>
+                    </div>
+                </div>
+
+                <div class="p-8 grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    <div class="xl:col-span-5 border border-blue-100 bg-white rounded-2xl p-6 shadow-sm">
+                        <div class="h-12 w-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
+                            <i class="fas fa-file-arrow-down text-lg"></i>
+                        </div>
+                        <h3 class="font-black uppercase text-sm tracking-wide text-navy-900 mb-2">Exportar Backup</h3>
+                        <p class="text-sm text-slate-500 mb-6 leading-relaxed">Crie um arquivo JSON completo com listas, glosas e pagamentos para guardar em local seguro.</p>
+                        <button onclick="downloadBackup()" class="w-full px-6 py-3.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-black text-[11px] tracking-widest shadow-lg transition-all">
+                            <i class="fas fa-download mr-2"></i>BAIXAR BACKUP
+                        </button>
+                    </div>
+
+                    <div class="xl:col-span-7 border border-slate-200 bg-white rounded-2xl p-6 shadow-sm">
+                        <div class="h-12 w-12 rounded-xl text-navy-900 flex items-center justify-center mb-4 bg-slate-100">
+                            <i class="fas fa-file-import text-lg"></i>
+                        </div>
+                        <h3 class="font-black uppercase text-sm tracking-wide text-navy-900 mb-2">Restaurar Backup</h3>
+                        <p class="text-sm text-slate-500 mb-5 leading-relaxed">Selecione um arquivo JSON para restaurar os dados. A importacao substitui integralmente o conteudo atual.</p>
+                        
+                        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 bg-slate-50/60 mb-4">
+                            <label for="backup-file-input" class="block text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">Arquivo de Backup</label>
+                            <input id="backup-file-input" type="file" accept=".json,application/json" class="w-full text-sm border border-slate-200 bg-white rounded-xl p-3">
+                            <p class="text-[11px] text-slate-400 mt-2">Formato aceito: .json</p>
+                        </div>
+
+                        <button onclick="uploadBackup()" class="w-full px-6 py-3.5 bg-navy-900 text-white rounded-xl hover:bg-blue-700 font-black text-[11px] tracking-widest shadow-lg transition-all">
+                            <i class="fas fa-upload mr-2"></i>CARREGAR E SUBSTITUIR DADOS
+                        </button>
+
+                        <p class="mt-3 text-[11px] text-slate-400 font-semibold">Dica: faca um backup atual antes de restaurar um arquivo antigo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-record" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden border border-white/20 my-auto">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="modal-title" class="font-black uppercase tracking-tight text-xl">Lançamento de Glosa</h3>
+                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Auditoria Operacional</p>
+                </div>
+                <button onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form id="record-form" onsubmit="saveRecord(event)" class="p-10 grid grid-cols-3 gap-6">
+                <input type="hidden" id="reg-id">
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Data da Ocorrência</label>
+                    <input type="date" id="reg-data" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Número do Lote</label>
+                    <input type="text" id="reg-lote" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm" placeholder="Ex: L-9982">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Convênio Saúde</label>
+                    <select id="reg-convenio" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm dynamic-select-convenio"></select>
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Unidade Prestadora</label>
+                    <select id="reg-unidade" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm dynamic-select-unidade"></select>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Motivo de Glosa</label>
+                    <select id="reg-motivo" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm dynamic-select-motivos"></select>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome Completo do Paciente</label>
+                    <input type="text" id="reg-paciente" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Colaborador Responsável</label>
+                    <input list="reg-colaborador-list" id="reg-colaborador" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm" placeholder="Digite para buscar...">
+                    <datalist id="reg-colaborador-list"></datalist>
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Valor da Glosa (R$)</label>
+                    <input type="number" id="reg-valor" step="0.01" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm font-bold text-navy-900">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Status do Processo</label>
+                    <select id="reg-status" required onchange="toggleStatusFields()" class="w-full border-slate-200 rounded-xl py-3 shadow-sm font-bold text-slate-700 focus:ring-blue-500">
+                        <option value="A contestar">A contestar</option>
+                        <option value="Contestado">Contestado</option>
+                        <option value="Acatado">Acatado</option>
+                        <option value="Parcial">Parcial</option>
+                        <option value="Recontestar">Recontestar</option>
+                        <option value="Perdido">Perdido</option>
+                        <option value="Isento">Isento</option>
+                    </select>
+                </div>
+                <div class="col-span-1" id="box-pago-checkbox">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Pagamento Recebido</label>
+                    <div class="flex items-center h-12">
+                        <input type="checkbox" id="reg-pago" onchange="togglePagoField()" class="w-5 h-5 text-green-600 border-slate-300 rounded focus:ring-green-500 focus:ring-2">
+                        <label for="reg-pago" class="ml-3 text-sm font-bold text-slate-700 cursor-pointer">Pago</label>
+                    </div>
+                </div>
+                <div class="col-span-3">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Contestação</label>
+                    <textarea id="reg-contestacao" rows="4" class="w-full border-slate-200 rounded-xl p-4 shadow-sm text-sm" placeholder="Adicione observações sobre a contestação ou justificativa do motivo..."></textarea>
+                </div>
+                <div class="col-span-3 hidden" id="box-motivo-perdida">
+                    <label class="block text-[10px] font-black text-red-600 uppercase mb-2">Motivo da Perda (Obrigatório)</label>
+                    <textarea id="reg-motivo-perdida" rows="4" class="w-full border-red-200 rounded-xl p-4 shadow-sm text-sm" placeholder="Descreva detalhadamente o motivo pelo qual a glosa foi perdida..."></textarea>
+                </div>
+                
+                <div class="col-span-3 hidden bg-green-50 p-4 rounded-xl border border-green-200" id="box-valor-pago">
+                    <label class="block text-[10px] font-black text-green-800 uppercase mb-2">Valor Pago pelo Convênio (R$)</label>
+                    <input type="number" id="reg-valor-pago" step="0.01" class="w-full border-green-300 rounded-xl py-3 shadow-sm text-green-900 font-bold focus:ring-green-500" placeholder="0.00">
+                    <p class="text-[9px] text-green-700 mt-2 uppercase tracking-widest font-bold"><i class="fas fa-check-circle mr-1"></i>Informe o valor efetivamente recebido do convênio.</p>
+                </div>
+
+                <div class="col-span-3 hidden bg-orange-50 p-4 rounded-xl border border-orange-200" id="box-valor-parcial">
+                    <label class="block text-[10px] font-black text-orange-800 uppercase mb-2">Valor Parcial Acatado/Pago (R$)</label>
+                    <input type="number" id="reg-valor-parcial" step="0.01" class="w-full border-orange-300 rounded-xl py-3 shadow-sm text-orange-900 font-bold focus:ring-orange-500" placeholder="0.00">
+                    <p class="text-[9px] text-orange-700 mt-2 uppercase tracking-widest font-bold"><i class="fas fa-exclamation-triangle mr-1"></i>A diferença em relação ao valor da glosa será declarada como PERDIDA.</p>
+                </div>
+
+                <div class="col-span-3 mt-6 flex gap-4">
+                    <button type="submit" class="flex-1 bg-navy-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 shadow-xl transition-all uppercase tracking-widest text-xs">Confirmar Lançamento</button>
+                    <button type="button" onclick="closeModals()" class="px-8 py-4 border-2 border-slate-100 rounded-2xl font-black text-slate-400 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-pagos" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
+            <div class="bg-green-700 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="modal-pagos-title" class="font-black uppercase tracking-tight text-xl">Registrar Depósito</h3>
+                    <p class="text-[10px] text-green-200 font-bold uppercase tracking-widest">Livro Caixa Conciliação</p>
+                </div>
+                <button onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form id="pagos-form" onsubmit="savePagamento(event)" class="p-8 grid grid-cols-1 gap-6">
+                <input type="hidden" id="pago-id">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Data do Repasse</label>
+                    <input type="date" id="pago-data" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Convênio</label>
+                    <select id="pago-convenio" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm dynamic-select-convenio"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Valor Depositado (R$)</label>
+                    <input type="number" id="pago-valor" step="0.01" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm font-bold text-green-700 text-xl">
+                </div>
+                <div class="mt-4 flex gap-3">
+                    <button type="submit" class="flex-1 bg-green-600 text-white font-black py-4 rounded-xl hover:bg-green-800 shadow-xl transition-all uppercase tracking-widest text-xs">Salvar Recebimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-valor-pago" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
+            <div class="bg-green-700 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-black uppercase tracking-tight text-xl">Registrar Pagamento</h3>
+                    <p class="text-[10px] text-green-200 font-bold uppercase tracking-widest">Valor Recebido do Convênio</p>
+                </div>
+                <button onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form id="valor-pago-form" onsubmit="saveValorPago(event)" class="p-8 grid grid-cols-1 gap-6">
+                <input type="hidden" id="valor-pago-id">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Valor Pago (R$)</label>
+                    <input type="number" id="valor-pago-valor" step="0.01" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm font-bold text-green-700 text-xl" placeholder="0.00">
+                </div>
+                <div class="mt-4 flex gap-3">
+                    <button type="submit" class="flex-1 bg-green-600 text-white font-black py-4 rounded-xl hover:bg-green-800 shadow-xl transition-all uppercase tracking-widest text-xs">Confirmar Pagamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-contestacao" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-black uppercase text-sm tracking-widest">Motivo de Glosa e Contestação</h3>
+                    <p class="text-[10px] text-blue-200 font-bold uppercase tracking-widest">Apenas motivo e contestação</p>
+                </div>
+                <button onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form id="contestacao-form" onsubmit="saveContestacao(event)" class="p-8 grid grid-cols-1 gap-6">
+                <input type="hidden" id="contestacao-id">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Motivo de Glosa</label>
+                    <select id="contestacao-motivo" required class="w-full border-slate-200 rounded-xl py-3 shadow-sm dynamic-select-motivos"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Contestação</label>
+                    <textarea id="contestacao-text" rows="5" class="w-full border-slate-200 rounded-2xl p-4 shadow-sm text-sm" placeholder="Descreva a contestação ou justificativa do motivo..."></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 shadow-xl transition-all uppercase tracking-widest text-xs">Salvar Contestação</button>
+                    <button type="button" onclick="closeModals()" class="px-8 py-4 border-2 border-slate-100 rounded-2xl font-black text-slate-400 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-obs" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
+                <h3 class="font-black uppercase text-sm tracking-widest">Anotações da Glosa</h3>
+                <button onclick="closeModals()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-8">
+                <input type="hidden" id="obs-id">
+                <textarea id="obs-text" rows="6" class="w-full border-slate-200 rounded-2xl p-5 focus:ring-navy-800 text-sm shadow-inner bg-slate-50" placeholder="Insira aqui as justificativas, protocolos de recurso ou observações técnicas..."></textarea>
+                <button onclick="saveObservation()" class="w-full mt-6 bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-navy-900 transition-all uppercase tracking-widest text-xs">Salvar Histórico</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-lists" class="modal fixed inset-0 bg-navy-900/90 z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-navy-900 p-5 text-white flex justify-between items-center">
+                <h3 class="font-black uppercase tracking-widest text-xs">Gerenciar Parâmetros</h3>
+                <button onclick="closeModals()"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-8">
+                <select id="list-selector" onchange="renderListManager()" class="w-full border-slate-200 rounded-xl mb-6 font-black text-navy-900 uppercase text-xs tracking-widest bg-slate-50">
+                    <option value="convenios">CONVÊNIOS</option>
+                    <option value="unidades">UNIDADES</option>
+                    <option value="motivos">MOTIVOS DE GLOSA</option>
+                </select>
+                <div class="flex gap-2 mb-6">
+                    <input type="text" id="new-list-item" class="flex-1 border-slate-200 rounded-xl shadow-sm text-sm" placeholder="Nome do item...">
+                    <button onclick="addListItem()" class="bg-blue-600 text-white px-5 rounded-xl hover:bg-blue-700 shadow-md transition-all"><i class="fas fa-plus"></i></button>
+                </div>
+                <ul id="list-items-container" class="border border-slate-100 rounded-2xl max-h-60 overflow-y-auto divide-y divide-slate-50 shadow-inner"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados Iniciais
+        let listas = {
+            convenios: [],
+            unidades: [],
+            colaboradores: [],
+            motivos: []
+        };
+
+        // Adicionado "valorParcial", "motivo" e "contestacao" à estrutura de glosas
+        let glosas = [];
+
+        // Novo array para a aba de Pagos
+        let pagamentos = [];
+
+        const COLABORADORES_API_URL = "https://script.google.com/macros/s/AKfycbzUd6efhfzkCmYd88_eIIL6dGIQxIINsw-6Y_qM3PRemUbZ06obtF9xKY1S8WRfvXyq9Q/exec";
+        let instances = {};
+        let colaboradorRanking = [];
+        const chartMetricMode = { chartLine: 'valor', chartCompare: 'valor', chartPerdidasLine: 'valor' };
+        let metricChartsCtx = null;
+        let colaboradorRankingPage = 1;
+        const colaboradorRankingPageSize = 8;
+        let colaboradorSortField = 'quantidade';
+        let colaboradorSortOrder = 'desc';
+        let unidadeRanking = [];
+        let unidadeRankingPage = 1;
+        const unidadeRankingPageSize = 8;
+        let unidadeSortField = 'quantidade';
+        let unidadeSortOrder = 'desc';
+        let motivoRanking = [];
+        let motivoRankingPage = 1;
+        const motivoRankingPageSize = 8;
+        let motivoSortField = 'volume';
+        let motivoSortOrder = 'desc';
+        let motivoPerdidoRanking = [];
+        let motivoPerdidoRankingPage = 1;
+        const motivoPerdidoRankingPageSize = 8;
+        let motivoPerdidoSortField = 'volume';
+        let motivoPerdidoSortOrder = 'desc';
+        let motivoIsentoRanking = [];
+        let motivoIsentoRankingPage = 1;
+        const motivoIsentoRankingPageSize = 8;
+        let motivoIsentoSortField = 'volume';
+        let motivoIsentoSortOrder = 'desc';
+        let dadosPage = 1;
+        let pagosPage = 1;
+        const tablePageSize = 20;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD38STN_vG08tlYJBXFtRUWtlcyRexw7Mc",
+            authDomain: "applamic.firebaseapp.com",
+            databaseURL: "https://applamic-default-rtdb.firebaseio.com",
+            projectId: "applamic"
+        };
+
+        const firebaseApp = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database(firebaseApp);
+        // Dados no applamic, nó "convenios" (acesso dado no Dados LAMIC pelo link "Glosas").
+        const dbRootRef = database.ref('convenios/glosaAppData');
+        const DADOS_URL = 'https://laboratoriolamic.github.io/Dados/';
+
+        function telaDados(titulo, msg) {
+            document.getElementById('tela-dados-titulo').textContent = titulo;
+            document.getElementById('tela-dados-msg').textContent = msg;
+            document.getElementById('tela-dados').style.display = 'flex';
+            if (window.LamicCarregando) window.LamicCarregando.fim();
+        }
+
+        // Mesma regra do link "Glosas" no Dados: admin, quem edita módulos ou grupo com o link.
+        // O id do link é achado pela URL e gravado em acesso_links/glosas (as regras leem dali).
+        async function verificarAcessoDados() {
+            const user = await new Promise(res => { const off = firebase.auth().onAuthStateChanged(u => { off(); res(u); }); });
+            if (!user) return 'Entre pelo Dados LAMIC para usar o Glosas.';
+            const val = async p => (await database.ref(p).once('value')).val();
+            const login = await val(`uids/${user.uid}`);
+            const perfil = login && await val(`usuarios/${login}`);
+            if (!perfil || perfil.ativo !== true) return 'Sua conta está desativada no Dados LAMIC.';
+            const grupo = perfil.grupo;
+            const g = (grupo && grupo !== 'admin' && await val(`grupos/${grupo}`)) || {};
+            const gerente = grupo === 'admin' || g.perms?.modulos_gerenciar === true;
+            let ref = await val('acesso_links/glosas');
+            if (!ref?.link || gerente) {
+                const mods = (await val('modulos')) || {};
+                let achou = null;
+                for (const [mod, m] of Object.entries(mods))
+                    for (const [link, l] of Object.entries(m?.links || {}))
+                        if (String(l?.url || '').includes('conveniosIamic')) achou = achou || { mod, link };
+                if (achou && gerente && (achou.mod !== ref?.mod || achou.link !== ref?.link)) {
+                    await database.ref('acesso_links/glosas').set(achou).catch(e => console.warn(e));
+                }
+                ref = achou || ref;
+            }
+            if (gerente) return null;
+            if (!ref) return 'O link "Glosas" não foi achado no Dados LAMIC.';
+            const ok = g.links ? g.links[ref.link] === true : (await val(`modulos/${ref.mod}/grupos/${grupo}`)) === true;
+            return ok ? null : 'Seu grupo no Dados LAMIC não tem acesso ao Glosas. Peça a um administrador.';
+        }
+        const initialChartIds = ['chartConciliacaoPie', 'chartConciliacaoBar', 'chartLine', 'chartStatus', 'chartPerdidasLine', 'chartPerdidasDonut', 'chartCompare', 'chartTicket', 'chartMotivoDonut'];
+
+        window.onload = async () => {
+            const yearInput = document.getElementById('dash-year');
+            if (yearInput) yearInput.value = new Date().getFullYear();
+
+            setInitialLoadingState(true);
+            const negado = await verificarAcessoDados().catch(e => e.message || String(e));
+            if (negado) {
+                document.getElementById('initial-loader').classList.add('hidden');
+                return telaDados(negado.startsWith('Entre') ? 'Sessão do Dados LAMIC' : 'Sem acesso', negado);
+            }
+            await loadDataFromFirebase();
+            await loadColaboradoresFromAPI();
+            refreshAllUI();
+            // Garantir que os filtros do dashboard sejam atualizados após carregamento inicial
+            setTimeout(() => updateDashboardFiltersByTime(), 100);
+            await waitForInitialChartsReady();
+            setInitialLoadingState(false);
+            if (window.LamicCarregando) window.LamicCarregando.fim();
+            setupRealtimeSync();
+        };
+
+        function normalizeString(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        }
+
+        async function loadColaboradoresFromAPI() {
+            try {
+                const response = await fetch(COLABORADORES_API_URL, { cache: "no-store" });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const payload = await response.json();
+                if (!Array.isArray(payload)) throw new Error("Formato inválido");
+
+                const colaboradores = payload
+                    .map(item => typeof item === 'string' ? item.trim() : '')
+                    .filter(Boolean);
+
+                if (colaboradores.length > 0) {
+                    listas.colaboradores = [...new Set(colaboradores)];
+                }
+            } catch (error) {
+                console.warn("Não foi possível carregar colaboradores via API.", error);
+            }
+        }
+
+        const LOCAL_CACHE_KEY = 'glosaAppDataCache';
+
+        function saveAppStateToLocalCache() {
+            try {
+                const cachePayload = { listas, glosas, pagamentos, updatedAt: new Date().toISOString() };
+                localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(cachePayload));
+            } catch (error) {
+                console.warn('Não foi possível salvar cache local.', error);
+            }
+        }
+
+        function clearAppLocalCache() {
+            try {
+                localStorage.removeItem(LOCAL_CACHE_KEY);
+            } catch (error) {
+                console.warn('Não foi possível limpar cache local.', error);
+            }
+        }
+
+        function loadAppStateFromLocalCache() {
+            try {
+                const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (error) {
+                console.warn('Cache local inválido. Limpando cache.', error);
+                clearAppLocalCache();
+                return null;
+            }
+        }
+
+        async function loadDataFromFirebase() {
+            try {
+                const snapshot = await dbRootRef.get();
+                if (!snapshot.exists()) {
+                    clearAppLocalCache();
+                    return;
+                }
+
+                const payload = snapshot.val() || {};
+                if (payload.listas && typeof payload.listas === 'object') {
+                    listas = {
+                        convenios: Array.isArray(payload.listas.convenios) ? payload.listas.convenios.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.convenios,
+                        unidades: Array.isArray(payload.listas.unidades) ? payload.listas.unidades.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.unidades,
+                        colaboradores: Array.isArray(payload.listas.colaboradores) ? payload.listas.colaboradores.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.colaboradores,
+                        motivos: Array.isArray(payload.listas.motivos) ? payload.listas.motivos.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.motivos
+                    };
+                }
+                if (Array.isArray(payload.glosas)) glosas = payload.glosas;
+                if (Array.isArray(payload.pagamentos)) pagamentos = payload.pagamentos;
+
+                saveAppStateToLocalCache();
+            } catch (error) {
+                console.warn('Falha ao carregar dados do Firebase. Tentando fallback do cache local.', error);
+                const cached = loadAppStateFromLocalCache();
+                if (cached) {
+                    if (cached.listas && typeof cached.listas === 'object') {
+                        listas = {
+                            convenios: Array.isArray(cached.listas.convenios) ? cached.listas.convenios.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.convenios,
+                            unidades: Array.isArray(cached.listas.unidades) ? cached.listas.unidades.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.unidades,
+                            colaboradores: Array.isArray(cached.listas.colaboradores) ? cached.listas.colaboradores.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.colaboradores,
+                            motivos: Array.isArray(cached.listas.motivos) ? cached.listas.motivos.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.motivos
+                        };
+                    }
+                    if (Array.isArray(cached.glosas)) glosas = cached.glosas;
+                    if (Array.isArray(cached.pagamentos)) pagamentos = cached.pagamentos;
+                }
+            }
+        }
+
+        function persistDataToFirebase() {
+            const payload = { listas, glosas, pagamentos, updatedAt: new Date().toISOString() };
+            return dbRootRef.set(payload)
+                .then(() => {
+                    console.log('Dados salvos com sucesso no Firebase');
+                    saveAppStateToLocalCache();
+                })
+                .catch(error => {
+                    console.error('Falha ao salvar dados no Firebase:', error);
+                    saveAppStateToLocalCache();
+                    throw error;
+                });
+        }
+
+        function refreshAllUI() {
+            updateDropdownsUI();
+            updateDashboardFiltersByTime();
+            renderTable();
+            updateTableFilters();
+        }
+
+        function setupRealtimeSync() {
+            dbRootRef.on('value', async snapshot => {
+                if (!snapshot.exists()) return;
+                const payload = snapshot.val() || {};
+                console.log('Dados recebidos do Firebase:', payload);
+                
+                if (payload.listas && typeof payload.listas === 'object') {
+                    listas = {
+                        convenios: Array.isArray(payload.listas.convenios) ? payload.listas.convenios.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.convenios,
+                        unidades: Array.isArray(payload.listas.unidades) ? payload.listas.unidades.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.unidades,
+                        colaboradores: Array.isArray(payload.listas.colaboradores) ? payload.listas.colaboradores.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.colaboradores,
+                        motivos: Array.isArray(payload.listas.motivos) ? payload.listas.motivos.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.motivos
+                    };
+                }
+                if (Array.isArray(payload.glosas)) {
+                    console.log('Atualizando glosas:', payload.glosas.length, 'itens');
+                    glosas = payload.glosas;
+                }
+                if (Array.isArray(payload.pagamentos)) {
+                    console.log('Atualizando pagamentos:', payload.pagamentos.length, 'itens');
+                    pagamentos = payload.pagamentos;
+                }
+
+                saveAppStateToLocalCache();
+                await loadColaboradoresFromAPI();
+                refreshAllUI();
+                // Garantir que os filtros do dashboard sejam atualizados após carregar os dados
+                setTimeout(() => updateDashboardFiltersByTime(), 100);
+            }, error => {
+                console.error("Falha na sincronização em tempo real com Firebase.", error);
+            });
+        }
+
+        function setInitialLoadingState(isLoading) {
+            const loader = document.getElementById('initial-loader');
+            const header = document.querySelector('header');
+            const main = document.querySelector('main');
+            if (!loader || !header || !main) return;
+
+            if (isLoading) {
+                loader.classList.remove('hidden');
+                header.classList.add('invisible');
+                main.classList.add('invisible');
+                document.body.style.overflow = 'hidden';
+            } else {
+                loader.classList.add('hidden');
+                header.classList.remove('invisible');
+                main.classList.remove('invisible');
+                document.body.style.overflow = '';
+            }
+        }
+
+        async function waitForInitialChartsReady(timeoutMs = 10000) {
+            const start = Date.now();
+            const isChartReady = (chartId) => {
+                const canvas = document.getElementById(chartId);
+                if (!canvas) return true;
+                const wrapper = canvas.parentElement;
+                const hiddenByNoData = wrapper && wrapper.style.display === 'none';
+                return !!instances[chartId] || hiddenByNoData;
+            };
+
+            while (Date.now() - start < timeoutMs) {
+                const allReady = initialChartIds.every(isChartReady);
+                if (allReady) return;
+                await new Promise(resolve => setTimeout(resolve, 80));
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            const common = "px-6 py-2.5 rounded-lg transition-all font-bold text-xs tracking-widest ";
+            document.getElementById('btn-dashboard').className = common + (tab === 'dashboard' ? 'bg-blue-600 shadow-lg' : 'hover:bg-navy-700 ml-1');
+            document.getElementById('btn-dados').className = common + (tab === 'dados' ? 'bg-blue-600 shadow-lg' : 'hover:bg-navy-700 ml-1');
+            document.getElementById('btn-pagos').className = common + (tab === 'pagos' ? 'bg-blue-600 shadow-lg' : 'hover:bg-navy-700 ml-1');
+            document.getElementById('btn-backup').className = "px-4 py-2.5 rounded-lg transition-all font-bold text-xs tracking-widest ml-1 " + (tab === 'backup' ? 'bg-blue-600 shadow-lg' : 'hover:bg-navy-700');
+            
+            if(tab === 'dashboard') updateDashboard();
+        }
+
+        function toggleFilterInputs() {
+            const type = document.getElementById('filter-type').value;
+            document.getElementById('box-start').classList.toggle('hidden', type !== 'range');
+            document.getElementById('box-end').classList.toggle('hidden', type !== 'range');
+            document.getElementById('box-month').classList.toggle('hidden', type !== 'month');
+            document.getElementById('box-year').classList.toggle('hidden', type !== 'year');
+        }
+
+        function toggleStatusFields() {
+            const status = document.getElementById('reg-status').value;
+            const isParcial = status === 'Parcial';
+            const isPerdido = status === 'Perdido';
+            const isIsento = status === 'Isento';
+
+            // Handle Parcial case
+            document.getElementById('box-valor-parcial').classList.toggle('hidden', !isParcial);
+            if(!isParcial) document.getElementById('reg-valor-parcial').value = '';
+
+            // Handle Perdido case - show motivo da perda field
+            const motivoPerdidaField = document.getElementById('reg-motivo-perdida');
+            document.getElementById('box-motivo-perdida').classList.toggle('hidden', !isPerdido);
+
+            if (isPerdido) {
+                motivoPerdidaField.setAttribute('required', 'required');
+            } else {
+                motivoPerdidaField.removeAttribute('required');
+                motivoPerdidaField.value = '';
+            }
+
+            // Handle Isento case - pagamento não se aplica
+            const pagoCheckbox = document.getElementById('reg-pago');
+            document.getElementById('box-pago-checkbox').classList.toggle('hidden', isIsento);
+            if (isIsento) {
+                pagoCheckbox.checked = false;
+                document.getElementById('reg-valor-pago').value = '';
+                togglePagoField();
+            }
+        }
+
+        function matchesDashboardTimeFilter(dateValue) {
+            if (!dateValue) return false;
+            const type = document.getElementById('filter-type').value;
+            if (type === 'all') return true;
+            if (type === 'year') return dateValue.startsWith(document.getElementById('dash-year').value);
+            if (type === 'month') return dateValue.startsWith(document.getElementById('dash-month').value);
+            if (type === 'range') {
+                const s = document.getElementById('dash-start').value;
+                const e = document.getElementById('dash-end').value;
+                return (s ? dateValue >= s : true) && (e ? dateValue <= e : true);
+            }
+            return true;
+        }
+
+        function resetDashboardFilters() {
+            const filterType = document.getElementById('filter-type');
+            const dashYear = document.getElementById('dash-year');
+            const dashMonth = document.getElementById('dash-month');
+            const dashStart = document.getElementById('dash-start');
+            const dashEnd = document.getElementById('dash-end');
+            const dashConvenio = document.getElementById('dash-convenio');
+            const dashUnidade = document.getElementById('dash-unidade');
+            const dashColaborador = document.getElementById('dash-colaborador');
+            const dashMotivo = document.getElementById('dash-motivo');
+
+            if (filterType) filterType.value = 'year';
+            if (dashYear) dashYear.value = new Date().getFullYear();
+            if (dashMonth) dashMonth.value = '';
+            if (dashStart) dashStart.value = '';
+            if (dashEnd) dashEnd.value = '';
+            if (dashConvenio) dashConvenio.value = '';
+            if (dashUnidade) dashUnidade.value = '';
+            if (dashColaborador) dashColaborador.value = '';
+            if (dashMotivo) dashMotivo.value = '';
+
+            toggleFilterInputs();
+            updateDashboardFiltersByTime();
+        }
+
+        function updateDashboardFiltersByTime() {
+            // Verificar se os dados estão carregados
+            if (!glosas || glosas.length === 0) {
+                console.log('Dados ainda não carregados, aguardando...');
+                return;
+            }
+
+            const convenioSelect = document.getElementById('dash-convenio');
+            const unidadeSelect = document.getElementById('dash-unidade');
+            const colaboradorSelect = document.getElementById('dash-colaborador');
+            const motivoSelect = document.getElementById('dash-motivo');
+
+            const selectedConvenio = convenioSelect.value;
+            const selectedUnidade = unidadeSelect.value;
+            const selectedColaborador = colaboradorSelect.value;
+            const selectedMotivo = motivoSelect.value;
+
+            const glosasNoPeriodo = glosas.filter(g => matchesDashboardTimeFilter(g.data));
+            const pagosNoPeriodo = pagamentos.filter(p => matchesDashboardTimeFilter(p.data));
+
+            // Corrigir dependência circular - cada filtro usa apenas os outros filtros, não ele mesmo
+            const glosasForConv = glosasNoPeriodo.filter(g =>
+                (selectedUnidade ? g.unidade === selectedUnidade : true) &&
+                (selectedColaborador ? g.colaborador === selectedColaborador : true)
+                // Removido: (selectedMotivo ? g.motivo === selectedMotivo : true)
+            );
+            const glosasForUnidade = glosasNoPeriodo.filter(g =>
+                (selectedConvenio ? g.convenio === selectedConvenio : true) &&
+                (selectedColaborador ? g.colaborador === selectedColaborador : true)
+                // Removido: (selectedMotivo ? g.motivo === selectedMotivo : true)
+            );
+            const glosasForColab = glosasNoPeriodo.filter(g =>
+                (selectedConvenio ? g.convenio === selectedConvenio : true) &&
+                (selectedUnidade ? g.unidade === selectedUnidade : true)
+                // Removido: (selectedMotivo ? g.motivo === selectedMotivo : true)
+            );
+
+            const conveniosComDados = [...new Set([
+                ...glosasForConv.map(g => g.convenio),
+                ...((!selectedUnidade && !selectedColaborador) ? pagosNoPeriodo.map(p => p.convenio) : [])
+            ])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            const unidadesComDados = [...new Set(glosasForUnidade.map(g => g.unidade))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            const colaboradoresComDados = [...new Set(glosasForColab.map(g => g.colaborador))]
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            
+            // Calcular motivos com dados usando mesma lógica do ranking (ordenado por volume/quantidade)
+            // Usar dados já filtrados por convênio, unidade e colaborador para respeitar outros filtros
+            const dadosFiltradosParaMotivo = glosasNoPeriodo.filter(g =>
+                (selectedConvenio ? g.convenio === selectedConvenio : true) &&
+                (selectedUnidade ? g.unidade === selectedUnidade : true) &&
+                (selectedColaborador ? g.colaborador === selectedColaborador : true)
+            );
+            
+            const motivoVolumeMap = dadosFiltradosParaMotivo.reduce((acc, curr) => {
+                const key = curr.motivo || 'Sem Motivo';
+                if (!acc[key]) acc[key] = { valor: 0, volume: 0 };
+                acc[key].valor += curr.valor;
+                acc[key].volume += 1;
+                return acc;
+            }, {});
+            const motivosComDados = Object.entries(motivoVolumeMap)
+                .filter(([nome, { volume }]) => volume > 0) // Ocultar motivos com soma zero
+                .map(([nome]) => nome)
+                .sort((a, b) => {
+                    // Ordenar por quantidade (volume) como no ranking
+                    const volumeA = motivoVolumeMap[a].volume;
+                    const volumeB = motivoVolumeMap[b].volume;
+                    return volumeB - volumeA;
+                });
+
+            convenioSelect.innerHTML = `<option value="">Todos</option>` + conveniosComDados.map(i => `<option value="${i}">${i}</option>`).join('');
+            unidadeSelect.innerHTML = `<option value="">Todas</option>` + unidadesComDados.map(i => `<option value="${i}">${i}</option>`).join('');
+            colaboradorSelect.innerHTML = `<option value="">Todos</option>` + colaboradoresComDados.map(i => `<option value="${i}">${i}</option>`).join('');
+            motivoSelect.innerHTML = `<option value="">Todos</option>` + motivosComDados.map(i => `<option value="${i}">${i}</option>`).join('');
+
+            convenioSelect.value = conveniosComDados.includes(selectedConvenio) ? selectedConvenio : '';
+            unidadeSelect.value = unidadesComDados.includes(selectedUnidade) ? selectedUnidade : '';
+            colaboradorSelect.value = colaboradoresComDados.includes(selectedColaborador) ? selectedColaborador : '';
+            motivoSelect.value = motivosComDados.includes(selectedMotivo) ? selectedMotivo : '';
+
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const type = document.getElementById('filter-type').value;
+            const conv = document.getElementById('dash-convenio').value;
+            const uni = document.getElementById('dash-unidade').value;
+            const colab = document.getElementById('dash-colaborador').value;
+            const motiv = document.getElementById('dash-motivo').value;
+
+            // Filtra Glosas
+            let filtered = glosas.filter(g => {
+                let matchTime = true;
+                if (type === 'all') matchTime = true;
+                else if (type === 'year') matchTime = g.data.startsWith(document.getElementById('dash-year').value);
+                else if (type === 'month') matchTime = g.data.startsWith(document.getElementById('dash-month').value);
+                else if (type === 'range') {
+                    const s = document.getElementById('dash-start').value;
+                    const e = document.getElementById('dash-end').value;
+                    matchTime = (s ? g.data >= s : true) && (e ? g.data <= e : true);
+                }
+                return matchTime && 
+                       (conv ? g.convenio === conv : true) && 
+                       (uni ? g.unidade === uni : true) &&
+                       (colab ? g.colaborador === colab : true) &&
+                       (motiv ? g.motivo === motiv : true);
+            });
+
+            // Filtra Glosas sem aplicar filtro de colaborador (para gráficos gerais)
+            let filteredNoColab = glosas.filter(g => {
+                let matchTime = true;
+                if (type === 'all') matchTime = true;
+                else if (type === 'year') matchTime = g.data.startsWith(document.getElementById('dash-year').value);
+                else if (type === 'month') matchTime = g.data.startsWith(document.getElementById('dash-month').value);
+                else if (type === 'range') {
+                    const s = document.getElementById('dash-start').value;
+                    const e = document.getElementById('dash-end').value;
+                    matchTime = (s ? g.data >= s : true) && (e ? g.data <= e : true);
+                }
+                return matchTime && 
+                       (conv ? g.convenio === conv : true) && 
+                       (uni ? g.unidade === uni : true) &&
+                       (motiv ? g.motivo === motiv : true);
+            });
+
+            // Filtra Glosas sem aplicar filtro de colaborador e unidade (para conciliação)
+            let filteredNoColabNoUnit = glosas.filter(g => {
+                let matchTime = true;
+                if (type === 'all') matchTime = true;
+                else if (type === 'year') matchTime = g.data.startsWith(document.getElementById('dash-year').value);
+                else if (type === 'month') matchTime = g.data.startsWith(document.getElementById('dash-month').value);
+                else if (type === 'range') {
+                    const s = document.getElementById('dash-start').value;
+                    const e = document.getElementById('dash-end').value;
+                    matchTime = (s ? g.data >= s : true) && (e ? g.data <= e : true);
+                }
+                return matchTime && 
+                       (conv ? g.convenio === conv : true) &&
+                       (motiv ? g.motivo === motiv : true);
+            });
+
+            // Filtra Pagamentos dos itens marcados como pagos
+            let filteredPagos = filtered.filter(g => g.pago && g.valorPago && g.status !== 'Isento');
+
+            // Lógica de Negócio de KPIs com o Status Parcial
+            let total = 0, acatado = 0, contestar = 0, perdido = 0;
+            filtered.forEach(g => {
+                total += g.valor;
+                if(g.status === 'Acatado') acatado += g.valor;
+                else if(g.status === 'Perdido') perdido += g.valor;
+                else if(g.status === 'Parcial') {
+                    acatado += g.valorParcial;
+                    perdido += (g.valor - g.valorParcial);
+                }
+                else if(g.status === 'Isento') {
+                    // Sem impacto financeiro: conta apenas como volume de glosa (total)
+                }
+                else { // A contestar, Contestado ou Recontestar
+                    contestar += g.valor;
+                }
+            });
+
+            // Calcular quantidade de guias glosadas
+            const quantidade = filtered.length;
+
+            let totalPago = filteredPagos.reduce((acc, curr) => acc + curr.valorPago, 0);
+            const taxa = total > 0 ? ((acatado / total) * 100).toFixed(1) : 0;
+
+            let acatadoConciliacao = 0;
+            filtered.forEach(g => {
+                if(g.status === 'Acatado') acatadoConciliacao += g.valor;
+                else if(g.status === 'Parcial') acatadoConciliacao += g.valorParcial;
+            });
+            const percentualPago = acatadoConciliacao > 0 ? ((totalPago / acatadoConciliacao) * 100).toFixed(1) : 0;
+
+            document.getElementById('kpi-total').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpi-quantidade').innerText = quantidade.toLocaleString('pt-BR');
+            document.getElementById('kpi-acatado').innerText = acatado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpi-contestar').innerText = contestar.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpi-perdido').innerText = perdido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpi-taxa').innerText = taxa + '%';
+            document.getElementById('kpi-pago').innerText = totalPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            renderCharts(filtered, filteredPagos, acatadoConciliacao, totalPago, filtered);
+        }
+
+        function renderCharts(data, pagamentosData, totalAcatadoGeral, totalPagoGeral, conciliationData = data) {
+            const statusConfig = { "A contestar": "#fde047", "Contestado": "#60a5fa", "Acatado": "#22c55e", "Parcial": "#fb923c", "Recontestar": "#fb923c", "Perdido": "#ef4444", "Isento": "#94a3b8" };
+            
+            // --- Novos Gráficos: Acatado vs Pago (Conciliação) --- //
+            
+            // Pie: Conciliação Geral (Diferença entre o que foi Acatado e o que efetivamente caiu na conta)
+            // Se o que foi pago for maior que acatado (recebimento atrasado), limitamos a view ou mostramos o "sobra". Vamos manter simples.
+            let pendentePgto = Math.max(0, totalAcatadoGeral - totalPagoGeral);
+            const conciliacaoLabels = ['Aguardando Depósito', 'Valor Já Pago'];
+            const conciliacaoValues = [pendentePgto, totalPagoGeral];
+            const conciliacaoTotal = conciliacaoValues.reduce((sum, val) => sum + val, 0);
+            const conciliacaoLabelsWithPercentage = conciliacaoLabels.map((label, idx) => 
+                formatLabelWithPercentage(label, conciliacaoValues[idx], conciliacaoTotal)
+            );
+            
+            refreshChart('chartConciliacaoPie', 'doughnut', {
+                labels: conciliacaoLabelsWithPercentage,
+                datasets: [{ data: conciliacaoValues, backgroundColor: ['#fca5a5', '#16a34a'], borderWeight: 0 }]
+            }, { plugins: { legend: { position: 'bottom' } }, cutout: '75%' });
+
+            // Bar: Acatado vs Pago por Convênio (somente convênios com dados no período)
+            const concilConvs = [...new Set([...conciliationData.map(g=>g.convenio), ...pagamentosData.map(p=>p.convenio)])];
+            
+            const acatadoPorConv = concilConvs.map(c => conciliationData.filter(g => g.convenio === c).reduce((acc, g) => {
+                if(g.status === 'Acatado') return acc + g.valor;
+                if(g.status === 'Parcial') return acc + g.valorParcial;
+                return acc;
+            }, 0));
+
+            const pagoPorConv = concilConvs.map(c => pagamentosData.filter(p => p.convenio === c).reduce((acc, p) => acc + p.valorPago, 0));
+
+            const convsComDados = concilConvs.filter((_, idx) => acatadoPorConv[idx] > 0 || pagoPorConv[idx] > 0);
+            const acatadoPorConvComDados = convsComDados.map(c => conciliationData.filter(g => g.convenio === c).reduce((acc, g) => {
+                if(g.status === 'Acatado') return acc + g.valor;
+                if(g.status === 'Parcial') return acc + g.valorParcial;
+                return acc;
+            }, 0));
+            const pagoPorConvComDados = convsComDados.map(c => pagamentosData.filter(p => p.convenio === c).reduce((acc, p) => acc + p.valorPago, 0));
+
+            refreshChart('chartConciliacaoBar', 'bar', {
+                labels: convsComDados,
+                datasets: [
+                    { label: 'Acatado (A Receber)', data: acatadoPorConvComDados, backgroundColor: '#1e3a8a', borderRadius: 5 },
+                    { label: 'Efetivo Pago', data: pagoPorConvComDados, backgroundColor: '#22c55e', borderRadius: 5 }
+                ]
+            });
+
+            // --- Gráficos Originais Ajustados --- //
+
+            // Agrupar "Recontestar" como "A contestar" e dividir "Parcial" entre Acatado e Perdido (igual aos KPIs)
+            const statusMapRaw = data.reduce((acc, curr) => {
+                if (curr.status === 'Recontestar') {
+                    acc['A contestar'] = (acc['A contestar'] || 0) + curr.valor;
+                } else if (curr.status === 'Parcial') {
+                    acc['Acatado'] = (acc['Acatado'] || 0) + (curr.valorParcial || 0);
+                    acc['Perdido'] = (acc['Perdido'] || 0) + (curr.valor - (curr.valorParcial || 0));
+                } else {
+                    acc[curr.status] = (acc[curr.status] || 0) + curr.valor;
+                }
+                return acc;
+            }, {});
+            const statusMap = statusMapRaw;
+            const statusLabels = Object.keys(statusMap);
+            const statusValues = Object.values(statusMap);
+            const statusTotal = statusValues.reduce((sum, val) => sum + val, 0);
+            const statusLabelsWithPercentage = statusLabels.map((label, idx) => 
+                formatLabelWithPercentage(label, statusValues[idx], statusTotal)
+            );
+            
+            refreshChart('chartStatus', 'doughnut', {
+                labels: statusLabelsWithPercentage,
+                datasets: [{ data: statusValues, backgroundColor: statusLabels.map(k => statusConfig[k]), borderWeight: 0 }]
+            }, { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10, weight: 'bold' } } } }, cutout: '70%' });
+
+            const motivoMap = data.reduce((acc, curr) => { const key = curr.motivo || 'Sem Motivo'; acc[key] = (acc[key] || 0) + curr.valor; return acc; }, {});
+            const motivoEntries = Object.entries(motivoMap).sort((a,b) => b[1] - a[1]);
+            const motivoLabels = motivoEntries.map(([label]) => label);
+            const motivoValues = motivoEntries.map(([, valor]) => valor);
+            const motivoColors = motivoLabels.map((_, idx) => ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#f97316', '#0ea5e9', '#ec4899'][idx % 7]);
+            const motivoTotal = motivoValues.reduce((sum, val) => sum + val, 0);
+            const motivoLabelsWithPercentage = motivoLabels.map((label, idx) => 
+                formatLabelWithPercentage(label, motivoValues[idx], motivoTotal)
+            );
+
+            refreshChart('chartMotivoDonut', 'doughnut', {
+                labels: motivoLabelsWithPercentage,
+                datasets: [{ data: motivoValues, backgroundColor: motivoColors, borderWeight: 0 }]
+            }, { plugins: { legend: { position: 'bottom' } }, cutout: '70%' });
+
+            const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            const lostGlosas = data.filter(g => g.status === 'Perdido');
+            metricChartsCtx = { data, lostGlosas, months, concilConvs };
+            Object.keys(chartMetricMode).forEach(renderMetricChart);
+
+            const lostByConvenioMap = lostGlosas.reduce((acc, curr) => { acc[curr.convenio] = (acc[curr.convenio] || 0) + curr.valor; return acc; }, {});
+            const lostConvenios = Object.keys(lostByConvenioMap);
+            const lostConvenioValues = Object.values(lostByConvenioMap);
+            const donutColors = ['#ef4444', '#f97316', '#f59e0b', '#facc15', '#22c55e', '#38bdf8', '#818cf8'];
+            const lostTotal = lostConvenioValues.reduce((sum, val) => sum + val, 0);
+            const lostLabelsWithPercentage = lostConvenios.map((label, idx) => 
+                formatLabelWithPercentage(label, lostConvenioValues[idx], lostTotal)
+            );
+            
+            refreshChart('chartPerdidasDonut', 'doughnut', {
+                labels: lostLabelsWithPercentage,
+                datasets: [{ data: lostConvenioValues, backgroundColor: lostConvenios.map((_, idx) => donutColors[idx % donutColors.length]), borderWeight: 0 }]
+            }, { plugins: { legend: { position: 'bottom' } }, cutout: '70%' });
+
+            const colabMap = data.reduce((acc, curr) => { 
+                if (!acc[curr.colaborador]) {
+                    acc[curr.colaborador] = { valor: 0, quantidade: 0 };
+                }
+                acc[curr.colaborador].valor += curr.valor;
+                acc[curr.colaborador].quantidade += 1;
+                return acc; 
+            }, {});
+            colaboradorRanking = Object.entries(colabMap)
+                .map(([nome, { valor, quantidade }]) => ({ nome, valor, quantidade }))
+                .sort((a, b) => b.quantidade - a.quantidade);
+            colaboradorRankingPage = 1;
+            renderColaboradorRankingTable();
+
+            const ticketMap = concilConvs.map(c => {
+                const registros = data.filter(g => g.convenio === c);
+                return registros.length > 0 ? (registros.reduce((a, b) => a + b.valor, 0) / registros.length).toFixed(2) : 0;
+            });
+            refreshChart('chartTicket', 'polarArea', {
+                labels: concilConvs,
+                datasets: [{ data: ticketMap, backgroundColor: ['#1e3a8a', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'] }]
+            });
+
+            const uniMap = data.reduce((acc, curr) => { 
+                if (!acc[curr.unidade]) {
+                    acc[curr.unidade] = { valor: 0, quantidade: 0 };
+                }
+                acc[curr.unidade].valor += curr.valor;
+                acc[curr.unidade].quantidade += 1;
+                return acc; 
+            }, {});
+            unidadeRanking = Object.entries(uniMap)
+                .map(([nome, { valor, quantidade }]) => ({ nome, valor, quantidade }))
+                .sort((a, b) => b.quantidade - a.quantidade);
+            unidadeRankingPage = 1;
+            renderUnidadeRankingTable();
+
+            // Compute motivo ranking with volume count (glosas isentas ficam no ranking próprio)
+            const motivoVolumeMap = data.filter(g => g.status !== 'Isento').reduce((acc, curr) => {
+                const key = curr.motivo || 'Sem Motivo';
+                if (!acc[key]) acc[key] = { valor: 0, volume: 0 };
+                acc[key].valor += curr.valor;
+                acc[key].volume += 1;
+                return acc;
+            }, {});
+            motivoRanking = Object.entries(motivoVolumeMap)
+                .map(([nome, { valor, volume }]) => ({ nome, valor, volume }))
+                .sort((a, b) => b.volume - a.volume);
+            motivoRankingPage = 1;
+            renderMotivoRankingTable();
+
+            // Compute motivo ranking for "Perdido" status only
+            const motivoPerdidoMap = data.filter(g => g.status === 'Perdido').reduce((acc, curr) => {
+                const key = curr.motivo || 'Sem Motivo';
+                if (!acc[key]) acc[key] = { valor: 0, volume: 0 };
+                acc[key].valor += curr.valor;
+                acc[key].volume += 1;
+                return acc;
+            }, {});
+            motivoPerdidoRanking = Object.entries(motivoPerdidoMap)
+                .map(([nome, { valor, volume }]) => ({ nome, valor, volume }))
+                .sort((a, b) => b.volume - a.volume);
+            motivoPerdidoRankingPage = 1;
+            renderMotivoPerdidoRankingTable();
+
+            // Compute motivo ranking for "Isento" status only
+            const motivoIsentoMap = data.filter(g => g.status === 'Isento').reduce((acc, curr) => {
+                const key = curr.motivo || 'Sem Motivo';
+                if (!acc[key]) acc[key] = { valor: 0, volume: 0 };
+                acc[key].valor += curr.valor;
+                acc[key].volume += 1;
+                return acc;
+            }, {});
+            motivoIsentoRanking = Object.entries(motivoIsentoMap)
+                .map(([nome, { valor, volume }]) => ({ nome, valor, volume }))
+                .sort((a, b) => b.volume - a.volume);
+            motivoIsentoRankingPage = 1;
+            renderMotivoIsentoRankingTable();
+        }
+
+        function renderMotivoRankingTable() {
+            const body = document.getElementById('motivo-ranking-body');
+            if (!body) return;
+
+            body.innerHTML = '';
+
+            if (!motivoRanking.length) {
+                body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">Sem dados para o período selecionado</td></tr>`;
+                return;
+            }
+
+            // Calculate total for proportion calculation based on current sort field
+            const totalField = motivoRanking.reduce((sum, item) => sum + item[motivoSortField], 0);
+            const maxField = Math.max(...motivoRanking.map(item => item[motivoSortField]));
+
+            motivoRanking.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const posicao = index + 1;
+                const fieldValue = item[motivoSortField];
+                const percentage = ((fieldValue / totalField) * 100).toFixed(1);
+                const barWidth = (fieldValue / maxField) * 100; // For visual bar width
+                
+                // Determine bar color based on position
+                let barColor = 'bg-blue-500';
+                if (posicao === 1) barColor = 'bg-green-500';
+                else if (posicao === 2) barColor = 'bg-blue-400';
+                else if (posicao === 3) barColor = 'bg-blue-300';
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-center font-black text-slate-400">${posicao}</td>
+                    <td class="p-3 font-bold text-slate-700">${item.nome}</td>
+                    <td class="p-3">${item.volume}</td>
+                    <td class="p-3 text-right font-black text-navy-900">${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 bg-slate-100 rounded-full h-6 relative overflow-hidden">
+                                <div class="${barColor} h-full rounded-full transition-all duration-500 ease-out" style="width: ${barWidth}%"></div>
+                            </div>
+                            <span class="text-xs font-bold text-slate-600 min-w-[3rem] text-right">${percentage}%</span>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function renderMotivoPerdidoRankingTable() {
+            const body = document.getElementById('motivo-perdido-ranking-body');
+            if (!body) return;
+
+            body.innerHTML = '';
+
+            if (!motivoPerdidoRanking.length) {
+                body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">Sem dados de glosas perdidas para o período selecionado</td></tr>`;
+                return;
+            }
+
+            // Calculate total for proportion calculation based on current sort field
+            const totalField = motivoPerdidoRanking.reduce((sum, item) => sum + item[motivoPerdidoSortField], 0);
+            const maxField = Math.max(...motivoPerdidoRanking.map(item => item[motivoPerdidoSortField]));
+
+            motivoPerdidoRanking.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const posicao = index + 1;
+                const fieldValue = item[motivoPerdidoSortField];
+                const percentage = ((fieldValue / totalField) * 100).toFixed(1);
+                const barWidth = (fieldValue / maxField) * 100; // For visual bar width
+                
+                // Determine bar color based on position
+                let barColor = 'bg-red-500';
+                if (posicao === 1) barColor = 'bg-red-600';
+                else if (posicao === 2) barColor = 'bg-red-400';
+                else if (posicao === 3) barColor = 'bg-red-300';
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-center font-black text-slate-400">${posicao}</td>
+                    <td class="p-3 font-bold text-slate-700">${item.nome}</td>
+                    <td class="p-3">${item.volume}</td>
+                    <td class="p-3 text-right font-black text-navy-900">${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 bg-slate-100 rounded-full h-6 relative overflow-hidden">
+                                <div class="${barColor} h-full rounded-full transition-all duration-500 ease-out" style="width: ${barWidth}%"></div>
+                            </div>
+                            <span class="text-xs font-bold text-slate-600 min-w-[3rem] text-right">${percentage}%</span>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function renderMotivoIsentoRankingTable() {
+            const body = document.getElementById('motivo-isento-ranking-body');
+            if (!body) return;
+
+            body.innerHTML = '';
+
+            if (!motivoIsentoRanking.length) {
+                body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">Sem dados de glosas isentas para o período selecionado</td></tr>`;
+                return;
+            }
+
+            // Calculate total for proportion calculation based on current sort field
+            const totalField = motivoIsentoRanking.reduce((sum, item) => sum + item[motivoIsentoSortField], 0);
+            const maxField = Math.max(...motivoIsentoRanking.map(item => item[motivoIsentoSortField]));
+
+            motivoIsentoRanking.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const posicao = index + 1;
+                const fieldValue = item[motivoIsentoSortField];
+                const percentage = ((fieldValue / totalField) * 100).toFixed(1);
+                const barWidth = (fieldValue / maxField) * 100; // For visual bar width
+
+                // Determine bar color based on position
+                let barColor = 'bg-slate-500';
+                if (posicao === 1) barColor = 'bg-slate-600';
+                else if (posicao === 2) barColor = 'bg-slate-400';
+                else if (posicao === 3) barColor = 'bg-slate-300';
+
+                tr.innerHTML = `
+                    <td class="p-3 text-center font-black text-slate-400">${posicao}</td>
+                    <td class="p-3 font-bold text-slate-700">${item.nome}</td>
+                    <td class="p-3">${item.volume}</td>
+                    <td class="p-3 text-right font-black text-navy-900">${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 bg-slate-100 rounded-full h-6 relative overflow-hidden">
+                                <div class="${barColor} h-full rounded-full transition-all duration-500 ease-out" style="width: ${barWidth}%"></div>
+                            </div>
+                            <span class="text-xs font-bold text-slate-600 min-w-[3rem] text-right">${percentage}%</span>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function updateTableFilters() {
+            const convSelect = document.getElementById('table-filter-conv');
+            const uniSelect = document.getElementById('table-filter-uni');
+            const colabSelect = document.getElementById('table-filter-colab');
+
+            const selectedConv = convSelect.value;
+            const selectedUni = uniSelect.value;
+            const selectedColab = colabSelect.value;
+
+            const filteredGlosas = glosas.filter(g =>
+                (selectedConv ? g.convenio === selectedConv : true) &&
+                (selectedUni ? g.unidade === selectedUni : true) &&
+                (selectedColab ? g.colaborador === selectedColab : true)
+            );
+
+            const convenios = [...new Set(filteredGlosas.map(g => g.convenio))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            const unidades = [...new Set(filteredGlosas.map(g => g.unidade))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            const colaboradores = [...new Set(filteredGlosas.map(g => g.colaborador))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+            convSelect.innerHTML = `<option value="">Todos os Convênios</option>` + convenios.map(i => `<option value="${i}">${i}</option>`).join('');
+            uniSelect.innerHTML = `<option value="">Todas as Unidades</option>` + unidades.map(i => `<option value="${i}">${i}</option>`).join('');
+            colabSelect.innerHTML = `<option value="">Todos os Colaboradores</option>` + colaboradores.map(i => `<option value="${i}">${i}</option>`).join('');
+
+            // Restore selections if still valid
+            if (convenios.includes(selectedConv)) convSelect.value = selectedConv;
+            if (unidades.includes(selectedUni)) uniSelect.value = selectedUni;
+            if (colaboradores.includes(selectedColab)) colabSelect.value = selectedColab;
+        }
+
+        function resetTableFilters() {
+            const tableSearch = document.getElementById('table-search');
+            const tableFilterDate = document.getElementById('table-filter-date');
+            const tableFilterConv = document.getElementById('table-filter-conv');
+            const tableFilterUni = document.getElementById('table-filter-uni');
+            const tableFilterColab = document.getElementById('table-filter-colab');
+            const tableFilterStatus = document.getElementById('table-filter-status');
+
+            if (tableSearch) tableSearch.value = '';
+            if (tableFilterDate) tableFilterDate.value = '';
+            if (tableFilterConv) tableFilterConv.value = '';
+            if (tableFilterUni) tableFilterUni.value = '';
+            if (tableFilterColab) tableFilterColab.value = '';
+            if (tableFilterStatus) tableFilterStatus.value = '';
+
+            // Resetar página para a primeira
+            dadosPage = 1;
+            
+            // Atualizar os filtros e renderizar a tabela
+            updateTableFilters();
+            renderTable();
+        }
+
+        // Gráficos com alternância entre valor (R$) e quantidade de glosas
+        function renderMetricChart(id) {
+            if (!metricChartsCtx) return;
+            const { data, lostGlosas, months, concilConvs } = metricChartsCtx;
+            const isQtd = chartMetricMode[id] === 'quantidade';
+            const options = isQtd ? { scales: { y: { ticks: { precision: 0 } } } } : {};
+            const byMonth = (rows) => {
+                const arr = new Array(12).fill(0);
+                rows.forEach(g => { const m = new Date(g.data).getUTCMonth(); arr[m] += isQtd ? 1 : g.valor; });
+                return arr;
+            };
+
+            const btnLabel = document.querySelector(`#metric-btn-${id} span`);
+            if (btnLabel) btnLabel.innerText = isQtd ? 'Quantidade' : 'Valor';
+
+            if (id === 'chartLine') {
+                refreshChart('chartLine', 'line', {
+                    labels: months,
+                    datasets: [{ label: isQtd ? 'Quantidade de Glosas' : 'Valor Glosado', data: byMonth(data), borderColor: '#1e3a8a', tension: 0.4, fill: true, backgroundColor: 'rgba(30, 58, 138, 0.05)', pointBackgroundColor: '#60a5fa' }]
+                }, options);
+            } else if (id === 'chartPerdidasLine') {
+                refreshChart('chartPerdidasLine', 'line', {
+                    labels: months,
+                    datasets: [{ label: isQtd ? 'Quantidade de Glosas Perdidas' : 'Glosas Perdidas', data: byMonth(lostGlosas), borderColor: '#ef4444', tension: 0.4, fill: true, backgroundColor: 'rgba(239, 68, 68, 0.1)', pointBackgroundColor: '#f97316' }]
+                }, options);
+            } else if (id === 'chartCompare') {
+                const glosadoData = concilConvs.map(c => data.filter(g => g.convenio === c).reduce((a, b) => a + (isQtd ? 1 : b.valor), 0));
+                const acatadoData = concilConvs.map(c => data.filter(g => g.convenio === c).reduce((acc, g) => {
+                    if(g.status === 'Acatado') return acc + (isQtd ? 1 : g.valor);
+                    if(g.status === 'Parcial') return acc + (isQtd ? 1 : g.valorParcial);
+                    return acc;
+                }, 0));
+                refreshChart('chartCompare', 'bar', {
+                    labels: concilConvs,
+                    datasets: [
+                        { label: isQtd ? 'Qtd. Glosada' : 'Total Glosado', data: glosadoData, backgroundColor: '#172554', borderRadius: 5 },
+                        { label: isQtd ? 'Qtd. Acatada' : 'Total Acatado', data: acatadoData, backgroundColor: '#3b82f6', borderRadius: 5 }
+                    ]
+                }, options);
+            }
+        }
+
+        function toggleChartMetric(id) {
+            chartMetricMode[id] = chartMetricMode[id] === 'valor' ? 'quantidade' : 'valor';
+            renderMetricChart(id);
+        }
+
+        function formatLabelWithPercentage(label, value, total) {
+            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+            return `${label} (${percentage}%)`;
+        }
+
+        function refreshChart(id, type, data, options = {}) {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+
+            const wrapper = canvas.parentElement;
+            const datasets = Array.isArray(data?.datasets) ? data.datasets : [];
+            const hasMeaningfulData = datasets.some(ds =>
+                Array.isArray(ds?.data) &&
+                ds.data.some(v => Number.isFinite(Number(v)) && Number(v) !== 0)
+            );
+
+            if (!hasMeaningfulData) {
+                if (instances[id]) {
+                    instances[id].destroy();
+                    delete instances[id];
+                }
+                if (wrapper) wrapper.style.display = 'none';
+                return;
+            }
+
+            if (wrapper) wrapper.style.display = '';
+            if (instances[id]) instances[id].destroy();
+
+            const defaultOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            };
+
+            instances[id] = new Chart(canvas, {
+                type,
+                data,
+                options: {
+                    ...defaultOptions,
+                    ...options,
+                    plugins: {
+                        ...defaultOptions.plugins,
+                        ...(options.plugins || {})
+                    }
+                }
+            });
+        }
+
+        function renderColaboradorRankingTable() {
+            const body = document.getElementById('colaborador-ranking-body');
+            if (!body) return;
+
+            body.innerHTML = '';
+
+            if (!colaboradorRanking.length) {
+                body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">Sem dados para o período selecionado</td></tr>`;
+                return;
+            }
+
+            // Calcular total e máximo baseado no campo de ordenamento atual
+            const totalField = colaboradorRanking.reduce((sum, item) => sum + item[colaboradorSortField], 0);
+            const maxField = colaboradorRanking[0]?.[colaboradorSortField] || 0;
+            
+            colaboradorRanking.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const posicao = index + 1;
+                const fieldValue = item[colaboradorSortField];
+                const percentage = totalField > 0 ? ((fieldValue / totalField) * 100).toFixed(1) : '0.0';
+                const barWidth = maxField > 0 ? (fieldValue / maxField) * 100 : 0;
+                
+                // Determine bar color based on position
+                let barColor = 'bg-blue-500';
+                if (posicao === 1) barColor = 'bg-green-500';
+                else if (posicao === 2) barColor = 'bg-blue-400';
+                else if (posicao === 3) barColor = 'bg-blue-300';
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-center font-black text-slate-400">${posicao}</td>
+                    <td class="p-3 font-bold text-slate-700">${item.nome}</td>
+                    <td class="p-3 text-center font-bold text-slate-600">${item.quantidade}</td>
+                    <td class="p-3 text-right font-black text-navy-900">${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="p-3 py-2">
+                        <div class="text-xs font-bold text-slate-600 mb-1 text-center">${percentage}%</div>
+                        <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full transition-all duration-500 ease-out" style="width:${barWidth}%"></div>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function renderUnidadeRankingTable() {
+            const body = document.getElementById('unidade-ranking-body');
+            if (!body) return;
+
+            body.innerHTML = '';
+
+            if (!unidadeRanking.length) {
+                body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">Sem dados para o período selecionado</td></tr>`;
+                return;
+            }
+
+            // Calcular total e máximo baseado no campo de ordenamento atual
+            const totalField = unidadeRanking.reduce((sum, item) => sum + item[unidadeSortField], 0);
+            const maxField = unidadeRanking[0]?.[unidadeSortField] || 0;
+            
+            unidadeRanking.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const posicao = index + 1;
+                const fieldValue = item[unidadeSortField];
+                const percentage = totalField > 0 ? ((fieldValue / totalField) * 100).toFixed(1) : '0.0';
+                const barWidth = maxField > 0 ? (fieldValue / maxField) * 100 : 0;
+                
+                // Determine bar color based on position
+                let barColor = 'bg-blue-500';
+                if (posicao === 1) barColor = 'bg-green-500';
+                else if (posicao === 2) barColor = 'bg-blue-400';
+                else if (posicao === 3) barColor = 'bg-blue-300';
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-center font-black text-slate-400">${posicao}</td>
+                    <td class="p-3 font-bold text-slate-700">${item.nome}</td>
+                    <td class="p-3 text-center font-bold text-slate-600">${item.quantidade}</td>
+                    <td class="p-3 text-right font-black text-navy-900">${item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="p-3 py-2">
+                        <div class="text-xs font-bold text-slate-600 mb-1 text-center">${percentage}%</div>
+                        <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full transition-all duration-500 ease-out" style="width:${barWidth}%"></div>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        // ================= FUNÇÕES DE ORDENAMENTO ================= //
+        function sortColaboradorRanking(field) {
+            if (colaboradorSortField === field) {
+                colaboradorSortOrder = colaboradorSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                colaboradorSortField = field;
+                colaboradorSortOrder = 'desc';
+            }
+            
+            colaboradorRanking.sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+                
+                if (field === 'nome') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                    return colaboradorSortOrder === 'asc' ? aVal.localeCompare(bVal, 'pt-BR') : bVal.localeCompare(aVal, 'pt-BR');
+                } else {
+                    return colaboradorSortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+            
+            renderColaboradorRankingTable();
+        }
+
+        function sortUnidadeRanking(field) {
+            if (unidadeSortField === field) {
+                unidadeSortOrder = unidadeSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                unidadeSortField = field;
+                unidadeSortOrder = 'desc';
+            }
+            
+            unidadeRanking.sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+                
+                if (field === 'nome') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                    return unidadeSortOrder === 'asc' ? aVal.localeCompare(bVal, 'pt-BR') : bVal.localeCompare(aVal, 'pt-BR');
+                } else {
+                    return unidadeSortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+            
+            renderUnidadeRankingTable();
+        }
+
+        function sortMotivoRanking(field) {
+            if (motivoSortField === field) {
+                motivoSortOrder = motivoSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                motivoSortField = field;
+                motivoSortOrder = 'desc';
+            }
+            
+            motivoRanking.sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+                
+                if (field === 'nome') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                    return motivoSortOrder === 'asc' ? aVal.localeCompare(bVal, 'pt-BR') : bVal.localeCompare(aVal, 'pt-BR');
+                } else {
+                    return motivoSortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+            
+            renderMotivoRankingTable();
+        }
+
+        function sortMotivoPerdidoRanking(field) {
+            if (motivoPerdidoSortField === field) {
+                motivoPerdidoSortOrder = motivoPerdidoSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                motivoPerdidoSortField = field;
+                motivoPerdidoSortOrder = 'desc';
+            }
+            
+            motivoPerdidoRanking.sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+                
+                if (field === 'nome') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                    return motivoPerdidoSortOrder === 'asc' ? aVal.localeCompare(bVal, 'pt-BR') : bVal.localeCompare(aVal, 'pt-BR');
+                } else {
+                    return motivoPerdidoSortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+            
+            renderMotivoPerdidoRankingTable();
+        }
+
+        function sortMotivoIsentoRanking(field) {
+            if (motivoIsentoSortField === field) {
+                motivoIsentoSortOrder = motivoIsentoSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                motivoIsentoSortField = field;
+                motivoIsentoSortOrder = 'desc';
+            }
+
+            motivoIsentoRanking.sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+
+                if (field === 'nome') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                    return motivoIsentoSortOrder === 'asc' ? aVal.localeCompare(bVal, 'pt-BR') : bVal.localeCompare(aVal, 'pt-BR');
+                } else {
+                    return motivoIsentoSortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+
+            renderMotivoIsentoRankingTable();
+        }
+
+        // ================= TABELA GLOSAS ================= //
+        function changeDadosPage(direction) {
+            const totalItems = glosas.filter(g => {
+                const searchQuery = normalizeString(document.getElementById('table-search').value);
+                const filterConv = document.getElementById('table-filter-conv').value;
+                const filterUni = document.getElementById('table-filter-uni').value;
+                const filterColab = document.getElementById('table-filter-colab').value;
+                const filterDate = document.getElementById('table-filter-date').value;
+                const filterStatus = document.getElementById('table-filter-status').value;
+                const matchSearch = normalizeString(g.paciente).includes(searchQuery) || normalizeString(g.lote).includes(searchQuery);
+                const matchConv = filterConv === "" || g.convenio === filterConv;
+                const matchUni = filterUni === "" || g.unidade === filterUni;
+                const matchColab = filterColab === "" || g.colaborador === filterColab;
+                const matchDate = filterDate === "" || g.data.startsWith(filterDate);
+                const matchStatus = filterStatus === "" || g.status === filterStatus;
+                return matchSearch && matchConv && matchUni && matchColab && matchDate && matchStatus;
+            }).length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / tablePageSize));
+            dadosPage = Math.min(totalPages, Math.max(1, dadosPage + direction));
+            renderTable();
+        }
+
+        function renderTable() {
+            const body = document.getElementById('table-body');
+            const searchQuery = normalizeString(document.getElementById('table-search').value);
+            const filterConv = document.getElementById('table-filter-conv').value;
+            const filterUni = document.getElementById('table-filter-uni').value;
+            const filterColab = document.getElementById('table-filter-colab').value;
+            const filterDate = document.getElementById('table-filter-date').value;
+            const filterStatus = document.getElementById('table-filter-status').value;
+
+            body.innerHTML = '';
+            
+            const filteredData = glosas.filter(g => {
+                const matchSearch = normalizeString(g.paciente).includes(searchQuery) || normalizeString(g.lote).includes(searchQuery);
+                const matchConv = filterConv === "" || g.convenio === filterConv;
+                const matchUni = filterUni === "" || g.unidade === filterUni;
+                const matchColab = filterColab === "" || g.colaborador === filterColab;
+                const matchDate = filterDate === "" || g.data.startsWith(filterDate);
+                const matchStatus = filterStatus === "" || g.status === filterStatus;
+                return matchSearch && matchConv && matchUni && matchColab && matchDate && matchStatus;
+            });
+
+            const sortedData = filteredData.sort((a,b) => new Date(b.data) - new Date(a.data));
+            const totalPages = Math.max(1, Math.ceil(sortedData.length / tablePageSize));
+            if (dadosPage > totalPages) dadosPage = totalPages;
+            if (dadosPage < 1) dadosPage = 1;
+            const start = (dadosPage - 1) * tablePageSize;
+            const pageData = sortedData.slice(start, start + tablePageSize);
+
+            pageData.forEach(g => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors group";
+                
+                let valorRender = g.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                if(g.status === 'Parcial') {
+                    valorRender += `<div class="text-[9px] text-orange-600 font-bold mt-1">Ac: ${g.valorParcial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>`;
+                    if(g.pago && g.valorPago) {
+                        valorRender += `<div class="text-[9px] text-green-600 font-bold mt-1">Pago: ${g.valorPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>`;
+                    }
+                } else if(g.pago && g.valorPago) {
+                    valorRender += `<div class="text-[9px] text-green-600 font-bold mt-1">Pago: ${g.valorPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-5 font-bold text-slate-400 text-xs">${g.data.split('-').reverse().join('/')}</td>
+                    <td class="p-5">
+                        <div class="font-black text-navy-900 uppercase text-xs">${g.convenio}</div>
+                        <div class="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">${g.unidade}</div>
+                    </td>
+                    <td class="p-5">
+                        <div class="text-slate-700 font-bold">${g.paciente}</div>
+                        <div class="text-[9px] bg-slate-100 px-2 inline-block rounded font-black text-slate-500 font-mono">ID: ${g.lote}</div>
+                        <div class="text-[10px] uppercase tracking-[0.15em] mt-2 text-slate-400">Motivo: ${g.motivo || 'Não informado'}</div>
+                    </td>
+                    <td class="p-5 text-slate-500 text-[11px] font-bold">
+                        <i class="fas fa-user-circle mr-1 opacity-50"></i>${g.colaborador}
+                    </td>
+                    <td class="p-5 font-black text-navy-900 text-right">${valorRender}</td>
+                    <td class="p-5 text-center">
+                        <span class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase border-2 shadow-sm ${getStatusClass(g.status)}">${g.status}</span>
+                    </td>
+                    <td class="p-5 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="openValorPagoModal(${g.id})" class="h-8 w-8 rounded-lg flex items-center justify-center ${g.pago && g.valorPago ? 'bg-green-50 text-green-600 border border-green-200' : 'text-slate-300 hover:bg-slate-100'} transition-all" title="Registrar Pagamento"><i class="fas fa-dollar-sign"></i></button>
+                            <button onclick="openContestModal(${g.id})" class="h-8 w-8 rounded-lg flex items-center justify-center ${g.contestacao ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'text-slate-300 hover:bg-slate-100'} transition-all"><i class="fas fa-clipboard-list"></i></button>
+                            <button onclick="openObsModal(${g.id})" class="h-8 w-8 rounded-lg flex items-center justify-center ${g.obs ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-slate-300 hover:bg-slate-100'} transition-all"><i class="fas ${g.obs ? 'fa-comment-dots' : 'fa-comment'}"></i></button>
+                            <button onclick="editRecord(${g.id})" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-navy-900 hover:text-white transition-all"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteRecord(${g.id})" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+
+            const prevBtn = document.getElementById('dados-prev');
+            const nextBtn = document.getElementById('dados-next');
+            const info = document.getElementById('dados-page-info');
+            if (prevBtn && nextBtn && info) {
+                prevBtn.disabled = dadosPage <= 1;
+                nextBtn.disabled = dadosPage >= totalPages;
+                info.innerText = `Página ${dadosPage} de ${totalPages}`;
+            }
+        }
+
+        function getStatusClass(s) {
+            const config = { 
+                "A contestar": "bg-yellow-50 text-yellow-700 border-yellow-200", 
+                "Contestado": "bg-blue-50 text-blue-700 border-blue-200", 
+                "Acatado": "bg-green-50 text-green-700 border-green-200", 
+                "Parcial": "bg-orange-50 text-orange-700 border-orange-200", 
+                "Recontestar": "bg-orange-50 text-orange-700 border-orange-200",
+                "Perdido": "bg-red-50 text-red-700 border-red-200",
+                "Isento": "bg-slate-100 text-slate-600 border-slate-300"
+            };
+            return config[s] || "";
+        }
+
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
+        
+        function openRecordModal() { 
+            document.getElementById('record-form').reset(); 
+            document.getElementById('reg-id').value = '';
+            document.getElementById('modal-title').innerText = "Novo Lançamento";
+            document.getElementById('reg-motivo').value = '';
+            document.getElementById('reg-contestacao').value = '';
+            document.getElementById('reg-motivo-perdida').value = '';
+            toggleStatusFields();
+            document.getElementById('modal-record').classList.add('active'); 
+        }
+
+        function saveRecord(e) {
+            e.preventDefault();
+            const id = document.getElementById('reg-id').value;
+            const status = document.getElementById('reg-status').value;
+            const colaborador = document.getElementById('reg-colaborador').value.trim();
+            const motivo = document.getElementById('reg-motivo').value;
+            const valorParcial = status === 'Parcial' ? (parseFloat(document.getElementById('reg-valor-parcial').value) || 0) : 0;
+            const pagoCheckbox = document.getElementById('reg-pago').checked;
+            const valorPago = pagoCheckbox ? (parseFloat(document.getElementById('reg-valor-pago').value) || 0) : 0;
+
+            if (!listas.colaboradores.includes(colaborador)) {
+                alert('Selecione um colaborador válido a partir da lista.');
+                return;
+            }
+            if (!listas.motivos.includes(motivo)) {
+                alert('Selecione um motivo de glosa válido.');
+                return;
+            }
+
+            const contestacaoValue = document.getElementById('reg-contestacao').value.trim();
+            const motivoPerdidaValue = document.getElementById('reg-motivo-perdida').value.trim();
+            const existingRecord = id ? glosas.find(g => g.id == id) : null;
+            
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                data: document.getElementById('reg-data').value,
+                lote: document.getElementById('reg-lote').value,
+                convenio: document.getElementById('reg-convenio').value,
+                unidade: document.getElementById('reg-unidade').value,
+                colaborador: colaborador,
+                paciente: document.getElementById('reg-paciente').value,
+                valor: parseFloat(document.getElementById('reg-valor').value),
+                status: status,
+                valorParcial: valorParcial,
+                motivo: motivo,
+                contestacao: contestacaoValue,
+                obs: motivoPerdidaValue,
+                pago: pagoCheckbox,
+                valorPago: valorPago
+            };
+            if(id) glosas = glosas.map(g => g.id == id ? data : g); else glosas.push(data);
+            persistDataToFirebase();
+            closeModals(); renderTable(); updateDashboard();
+        }
+
+        function deleteRecord(id) { if(confirm("Confirmar exclusão definitiva do registro?")) { glosas = glosas.filter(g => g.id !== id); persistDataToFirebase(); renderTable(); updateDashboard(); } }
+        
+        function editRecord(id) {
+            const g = glosas.find(x => x.id == id);
+            if (!g) return;
+            document.getElementById('reg-id').value = g.id;
+            document.getElementById('reg-data').value = g.data;
+            document.getElementById('reg-lote').value = g.lote;
+            document.getElementById('reg-convenio').value = g.convenio;
+            document.getElementById('reg-unidade').value = g.unidade;
+            document.getElementById('reg-colaborador').value = g.colaborador;
+            document.getElementById('reg-paciente').value = g.paciente;
+            document.getElementById('reg-motivo').value = g.motivo || '';
+            document.getElementById('reg-contestacao').value = g.contestacao || '';
+            document.getElementById('reg-motivo-perdida').value = g.obs || '';
+            document.getElementById('reg-valor').value = g.valor;
+            document.getElementById('reg-status').value = g.status;
+            document.getElementById('reg-pago').checked = g.pago || false;
+            document.getElementById('reg-valor-pago').value = g.valorPago || '';
+            
+            toggleStatusFields();
+            togglePagoField();
+            if(g.status === 'Parcial') document.getElementById('reg-valor-parcial').value = g.valorParcial;
+
+            document.getElementById('modal-title').innerText = "Editar Lançamento";
+            document.getElementById('modal-record').classList.add('active');
+        }
+
+        function openContestModal(id) {
+            const g = glosas.find(x => x.id == id);
+            if (!g) return;
+            document.getElementById('contestacao-id').value = g.id;
+            document.getElementById('contestacao-motivo').value = g.motivo || '';
+            document.getElementById('contestacao-text').value = g.contestacao || '';
+            document.getElementById('modal-contestacao').classList.add('active');
+        }
+
+        function saveContestacao(e) {
+            e.preventDefault();
+            const id = document.getElementById('contestacao-id').value;
+            const motivo = document.getElementById('contestacao-motivo').value;
+            const contestacao = document.getElementById('contestacao-text').value.trim();
+            if (!listas.motivos.includes(motivo)) {
+                alert('Selecione um motivo de glosa válido.');
+                return;
+            }
+            glosas = glosas.map(g => g.id == id ? {...g, motivo, contestacao} : g);
+            persistDataToFirebase();
+            closeModals(); renderTable(); updateDashboard();
+        }
+
+        function openObsModal(id) {
+            const g = glosas.find(x => x.id == id);
+            document.getElementById('obs-id').value = g.id;
+            document.getElementById('obs-text').value = g.obs;
+            document.getElementById('modal-obs').classList.add('active');
+        }
+
+        function saveObservation() {
+            const id = document.getElementById('obs-id').value;
+            glosas = glosas.map(g => g.id == id ? {...g, obs: document.getElementById('obs-text').value} : g);
+            persistDataToFirebase();
+            closeModals(); renderTable();
+        }
+
+        function togglePagoField() {
+            const pagoCheckbox = document.getElementById('reg-pago');
+            const valorPagoBox = document.getElementById('box-valor-pago');
+            
+            if (pagoCheckbox.checked) {
+                valorPagoBox.classList.remove('hidden');
+                document.getElementById('reg-valor-pago').required = true;
+            } else {
+                valorPagoBox.classList.add('hidden');
+                document.getElementById('reg-valor-pago').required = false;
+                document.getElementById('reg-valor-pago').value = '';
+            }
+        }
+
+        function openValorPagoModal(id) {
+            const g = glosas.find(x => x.id == id);
+            if (!g) return;
+            
+            document.getElementById('valor-pago-id').value = g.id;
+            document.getElementById('valor-pago-valor').value = g.valorPago || '';
+            document.getElementById('modal-valor-pago').classList.add('active');
+        }
+
+        function saveValorPago(e) {
+            e.preventDefault();
+            const id = document.getElementById('valor-pago-id').value;
+            const valorPago = parseFloat(document.getElementById('valor-pago-valor').value);
+            
+            glosas = glosas.map(g => g.id == id ? {...g, pago: true, valorPago: valorPago} : g);
+            persistDataToFirebase();
+            closeModals(); renderTable(); updateDashboard();
+        }
+
+        // ================= ABA PAGOS (LIVRO CAIXA) ================= //
+        function changePagosPage(direction) {
+            const totalPages = Math.max(1, Math.ceil(pagamentos.length / tablePageSize));
+            pagosPage = Math.min(totalPages, Math.max(1, pagosPage + direction));
+            renderPagosTable();
+        }
+
+        function renderPagosTable() {
+            const body = document.getElementById('table-pagos-body');
+            body.innerHTML = '';
+            
+            const pagosOrder = [...pagamentos].sort((a,b) => new Date(b.data) - new Date(a.data));
+            const totalPages = Math.max(1, Math.ceil(pagosOrder.length / tablePageSize));
+            if (pagosPage > totalPages) pagosPage = totalPages;
+            if (pagosPage < 1) pagosPage = 1;
+            const start = (pagosPage - 1) * tablePageSize;
+            const pageData = pagosOrder.slice(start, start + tablePageSize);
+
+            pageData.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors group";
+                tr.innerHTML = `
+                    <td class="p-5 font-bold text-slate-400 text-xs">${p.data.split('-').reverse().join('/')}</td>
+                    <td class="p-5 font-black text-navy-900 uppercase text-xs">${p.convenio}</td>
+                    <td class="p-5 font-black text-green-700 text-right text-base">${p.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td class="p-5 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="editPagamento(${p.id})" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-green-700 hover:text-white transition-all"><i class="fas fa-edit"></i></button>
+                            <button onclick="deletePagamento(${p.id})" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+
+            const prevBtn = document.getElementById('pagos-prev');
+            const nextBtn = document.getElementById('pagos-next');
+            const info = document.getElementById('pagos-page-info');
+            if (prevBtn && nextBtn && info) {
+                prevBtn.disabled = pagosPage <= 1;
+                nextBtn.disabled = pagosPage >= totalPages;
+                info.innerText = `Página ${pagosPage} de ${totalPages}`;
+            }
+        }
+
+        function openPagosModal() {
+            document.getElementById('pagos-form').reset();
+            document.getElementById('pago-id').value = '';
+            document.getElementById('modal-pagos-title').innerText = "Registrar Depósito";
+            document.getElementById('modal-pagos').classList.add('active');
+        }
+
+        function savePagamento(e) {
+            e.preventDefault();
+            const id = document.getElementById('pago-id').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                data: document.getElementById('pago-data').value,
+                convenio: document.getElementById('pago-convenio').value,
+                valor: parseFloat(document.getElementById('pago-valor').value)
+            };
+            if(id) pagamentos = pagamentos.map(p => p.id == id ? data : p); else pagamentos.push(data);
+            persistDataToFirebase();
+            closeModals(); updateDashboard();
+        }
+
+        function deletePagamento(id) { 
+            if(confirm("Deseja apagar este registro financeiro? O indicador de conciliação será afetado.")) { 
+                pagamentos = pagamentos.filter(p => p.id !== id); 
+                persistDataToFirebase();
+                updateDashboard(); 
+            } 
+        }
+        
+        function editPagamento(id) {
+            const p = pagamentos.find(x => x.id == id);
+            document.getElementById('pago-id').value = p.id;
+            document.getElementById('pago-data').value = p.data;
+            document.getElementById('pago-convenio').value = p.convenio;
+            document.getElementById('pago-valor').value = p.valor;
+            document.getElementById('modal-pagos-title').innerText = "Editar Depósito";
+            document.getElementById('modal-pagos').classList.add('active');
+        }
+
+
+        // ================= CONFIGURAÇÕES E LISTAS ================= //
+        function updateDropdownsUI() {
+            const fillSelect = (cls, key, all = false) => {
+                const items = listas[key].slice().sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                document.querySelectorAll(`.${cls}`).forEach(s => {
+                    const val = s.value;
+                    const options = all ? `<option value="">${cls.includes('convenio') ? 'Todos os Convênios' : cls.includes('unidade') ? 'Todas as Unidades' : cls.includes('motivos') ? 'Todos os Motivos' : 'Todos os Colaboradores'}</option>` : '';
+                    s.innerHTML = options + items.map(i => `<option value="${i}">${i}</option>`).join('');
+                    if (val && items.includes(val)) s.value = val;
+                });
+            };
+
+            const fillDatalist = (id, key) => {
+                const datalist = document.getElementById(id);
+                if (!datalist) return;
+                datalist.innerHTML = listas[key].slice().sort((a, b) => a.localeCompare(b, 'pt-BR')).map(i => `<option value="${i}"></option>`).join('');
+            };
+
+            fillSelect('dynamic-select-convenio', 'convenios', true);
+            fillSelect('dynamic-select-unidade', 'unidades', true);
+            fillSelect('dynamic-select-colaborador', 'colaboradores', true);
+            fillSelect('dynamic-select-motivos', 'motivos', true);
+            fillDatalist('reg-colaborador-list', 'colaboradores');
+        }
+
+        function openManageListsModal() { renderListManager(); document.getElementById('modal-lists').classList.add('active'); }
+        
+        function renderListManager() {
+            const key = document.getElementById('list-selector').value;
+            document.getElementById('list-items-container').innerHTML = listas[key].sort((a, b) => a.localeCompare(b, 'pt-BR')).map((item, idx) => `
+                <li class="p-4 flex justify-between items-center text-xs font-black uppercase tracking-widest text-slate-600" id="list-item-${idx}">
+                    <span class="item-text">${item}</span>
+                    <div class="flex gap-2">
+                        <button onclick="editListItem('${key}', ${idx})" class="h-8 w-8 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition-all"><i class="fas fa-edit"></i></button>
+                        <button onclick="removeListItem('${key}', ${idx})" class="h-8 w-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash"></i></button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function addListItem() {
+            const key = document.getElementById('list-selector').value;
+            if (key === 'colaboradores') return;
+            const val = document.getElementById('new-list-item').value.trim();
+            if(val && !listas[key].includes(val)) { 
+                listas[key].push(val); 
+                listas[key].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                persistDataToFirebase(); 
+                document.getElementById('new-list-item').value = ''; 
+                renderListManager(); 
+                updateDropdownsUI(); 
+            }
+        }
+
+        function removeListItem(key, idx) {
+            if (key === 'colaboradores') return;
+            listas[key].splice(idx, 1);
+            listas[key].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            persistDataToFirebase();
+            renderListManager();
+            updateDropdownsUI();
+        }
+
+        function editListItem(key, idx) {
+            if (key === 'colaboradores') return;
+            const item = listas[key][idx];
+            const listItem = document.getElementById(`list-item-${idx}`);
+            const currentText = listItem.querySelector('.item-text').textContent;
+            
+            listItem.innerHTML = `
+                <input type="text" id="edit-input-${idx}" value="${currentText}" class="flex-1 px-3 py-2 border border-blue-300 rounded-lg text-sm font-bold text-slate-700 focus:ring-blue-500 focus:border-blue-500">
+                <div class="flex gap-2">
+                    <button onclick="saveListItem('${key}', ${idx})" class="h-8 w-8 rounded-lg bg-green-50 text-green-500 hover:bg-green-500 hover:text-white transition-all"><i class="fas fa-check"></i></button>
+                    <button onclick="cancelEdit('${key}', ${idx}, '${currentText.replace(/'/g, "\\'")}')" class="h-8 w-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-500 hover:text-white transition-all"><i class="fas fa-times"></i></button>
+                </div>
+            `;
+            
+            // Focar no input de edição
+            setTimeout(() => {
+                const input = document.getElementById(`edit-input-${idx}`);
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 50);
+        }
+
+        function saveListItem(key, idx) {
+            if (key === 'colaboradores') return;
+            const newValue = document.getElementById(`edit-input-${idx}`).value.trim();
+            
+            if (!newValue) {
+                alert('O nome não pode estar vazio.');
+                return;
+            }
+            
+            if (listas[key].includes(newValue) && listas[key][idx] !== newValue) {
+                alert('Este item já existe na lista.');
+                return;
+            }
+            
+            listas[key][idx] = newValue;
+            listas[key].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            persistDataToFirebase();
+            renderListManager();
+            updateDropdownsUI();
+        }
+
+        function cancelEdit(key, idx, originalValue) {
+            renderListManager();
+        }
+
+        // ================= BACKUP ================= //
+        function downloadBackup() {
+            const payload = {
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                listas,
+                glosas,
+                pagamentos
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateTag = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `glosamaster-backup-${dateTag}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function uploadBackup() {
+            const input = document.getElementById('backup-file-input');
+            const file = input.files[0];
+            if (!file) {
+                alert("Selecione um arquivo de backup para continuar.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+
+                    if (!data || typeof data !== 'object') throw new Error("Arquivo inválido.");
+                    if (!data.listas || !data.glosas || !data.pagamentos) throw new Error("Estrutura de backup incompleta.");
+                    if (!Array.isArray(data.listas.convenios) || !Array.isArray(data.listas.unidades) || !Array.isArray(data.listas.colaboradores)) {
+                        throw new Error("Listas inválidas no backup.");
+                    }
+                    if (!Array.isArray(data.glosas) || !Array.isArray(data.pagamentos)) throw new Error("Dados de glosas/pagamentos inválidos.");
+
+                    const confirmReplace = confirm("Este processo vai substituir TODOS os dados atuais. Deseja continuar?");
+                    if (!confirmReplace) return;
+
+                    listas = {
+                        convenios: Array.isArray(data.listas.convenios) ? data.listas.convenios.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.convenios,
+                        unidades: Array.isArray(data.listas.unidades) ? data.listas.unidades.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.unidades,
+                        colaboradores: Array.isArray(data.listas.colaboradores) ? data.listas.colaboradores.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.colaboradores,
+                        motivos: Array.isArray(data.listas.motivos) ? data.listas.motivos.sort((a, b) => a.localeCompare(b, 'pt-BR')) : listas.motivos
+                    };
+                    glosas = data.glosas;
+                    pagamentos = data.pagamentos;
+                    await loadColaboradoresFromAPI();
+                    await persistDataToFirebase();
+
+                    updateDropdownsUI();
+                    renderTable();
+                    updateDashboard();
+                    input.value = '';
+                    alert("Backup carregado com sucesso. Todos os dados foram substituídos.");
+                } catch (error) {
+                    alert(`Falha ao carregar backup: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>

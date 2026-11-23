@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acervo de Protocolos — LAMIC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --sidebar-w: 256px;
+            --topbar-h: 38px;
+            --sidebar-bg: #162036;
+            --sidebar-border: rgba(255,255,255,0.07);
+            --sidebar-hover: rgba(255,255,255,0.07);
+            --sidebar-active-bg: rgba(46,125,199,0.14);
+            --sidebar-active-text: #8FD3E0;
+            --sidebar-text: #9FB3CC;
+            --surface: #F4F8FC;
+            --card-bg: #ffffff;
+            --border: #E2E9F1;
+            --text-primary: #162036;
+            --text-secondary: #5C6B7C;
+            --text-muted: #9FB3CC;
+            --primary: #162036;
+            --primary-hover: #1F2D4D;
+            --accent: #2E7DC7;
+            --radius-card: 14px;
+            --radius-btn: 8px;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--surface);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        #sidebar {
+            position: fixed;
+            left: 0; top: 0; bottom: 0;
+            width: var(--sidebar-w);
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+
+        .sidebar-header {
+            padding: 18px 18px 14px;
+            border-bottom: 1px solid var(--sidebar-border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .sidebar-logo img {
+            height: 34px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            object-fit: contain;
+        }
+
+        .sidebar-brand {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #FBFCFE;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+        }
+        .sidebar-subtitle {
+            font-size: 0.68rem;
+            color: #5C6B7C;
+            margin-top: 2px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        .sidebar-section {
+            padding: 14px 18px 0;
+        }
+
+        .sidebar-section-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #1E2B3A;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-nav {
+            padding: 4px 10px 8px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            color: var(--sidebar-text);
+            font-size: 0.83rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            text-decoration: none;
+        }
+
+        .sidebar-link:hover {
+            background: var(--sidebar-hover);
+            color: #E2E9F1;
+        }
+
+        .sidebar-link.active {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-active-text);
+        }
+
+        .sidebar-link svg { flex-shrink: 0; opacity: 0.75; }
+        .sidebar-link.active svg { opacity: 1; }
+
+        .sidebar-sector-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            border-radius: 7px;
+            color: var(--sidebar-text);
+            font-size: 0.79rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .sidebar-sector-item:hover {
+            background: var(--sidebar-hover);
+            color: #E2E9F1;
+        }
+
+        .sidebar-sector-item.active {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-active-text);
+        }
+
+        .sector-badge {
+            background: rgba(255,255,255,0.09);
+            border-radius: 20px;
+            padding: 1px 7px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: #5C6B7C;
+            flex-shrink: 0;
+        }
+
+        .sidebar-sector-item.active .sector-badge {
+            background: rgba(143,211,224,0.15);
+            color: var(--sidebar-active-text);
+        }
+
+        /* ===== MAIN AREA ===== */
+        #main-wrapper {
+            margin-left: var(--sidebar-w);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== TOPBAR ===== */
+        #topbar {
+            position: sticky;
+            top: 0;
+            height: var(--topbar-h);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .topbar-search {
+            flex: 1;
+            max-width: 440px;
+            position: relative;
+        }
+
+        .topbar-search input {
+            width: 100%;
+            padding: 9px 14px 9px 40px;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 9px;
+            font-size: 0.855rem;
+            font-family: inherit;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .topbar-search input::placeholder { color: var(--text-muted); }
+        .topbar-search input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(46,125,199,0.1);
+        }
+
+        .topbar-search .search-icon {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .topbar-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #FBFCFE;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .topbar-badge span {
+            background: var(--primary);
+            color: white;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .btn-fav {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-btn);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: white;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+            margin-right: 100px;
+        }
+
+        .btn-fav:hover {
+            border-color: #f59e0b;
+            color: #d97706;
+            background: #fffbeb;
+        }
+
+        .btn-fav.active {
+            border-color: #f59e0b;
+            background: #fef3c7;
+            color: #b45309;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
+        }
+
+        /* ===== PAGE CONTENT ===== */
+        #page-content {
+            flex: 1;
+            padding: 26px 24px 32px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .page-title {
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .page-desc {
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        /* ===== STATS ===== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .stat-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.blue { background: #EAF3FB; color: #2E7DC7; }
+        .stat-icon.green { background: #f0fdf4; color: #16a34a; }
+        .stat-icon.amber { background: #fffbeb; color: #d97706; }
+
+        .stat-val {
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-lbl {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .filter-label strong {
+            color: var(--text-primary);
+        }
+
+        /* ===== CARDS GRID ===== */
+        #spreadsheetList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 15px;
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 18px 18px 16px;
+            transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .card:hover {
+            box-shadow: 0 6px 24px rgba(14,46,90,0.09);
+            transform: translateY(-2px);
+            border-color: #CDE6F2;
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .card-icon-wrap {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #EAF3FB;
+            color: #2E7DC7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .star {
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 3px 5px;
+            border-radius: 6px;
+            transition: color 0.15s, background 0.15s;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .star.favorited { color: #f59e0b; }
+        .star:not(.favorited) { color: #CFDAE6; }
+        .star:hover { background: #fef9c3; color: #f59e0b; }
+
+        .card-body { flex: 1; }
+
+        .card-title {
+            font-size: 0.93rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.45;
+            margin-bottom: 8px;
+        }
+
+        .card-sector-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #1257A5;
+            background: #EAF3FB;
+            border-radius: 5px;
+            padding: 3px 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            border-top: 1px solid #F4F8FC;
+            padding-top: 14px;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 13px;
+            background: var(--primary);
+            color: white;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 3px 10px rgba(18,60,116,0.28);
+        }
+
+        .btn-form {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 13px;
+            background: #faf5ff;
+            color: #2AA7BE;
+            border: 1.5px solid #e9d5ff;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s, border-color 0.2s;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-form:hover {
+            background: #f3e8ff;
+            border-color: #a855f7;
+        }
+
+        /* ===== DROPDOWNS ===== */
+        .dropdown, .form-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content, .form-dropdown-content {
+            display: none;
+            position: fixed;
+            background: white;
+            min-width: 200px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            z-index: 9999;
+            overflow: hidden;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .dropdown-content a, .form-dropdown-content a {
+            display: block;
+            padding: 9px 14px;
+            font-size: 0.81rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: inherit;
+            transition: background 0.1s;
+        }
+
+        .dropdown-content a:hover, .form-dropdown-content a:hover {
+            background: #F4F8FC;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 56px 24px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            opacity: 0.25;
+        }
+
+        .empty-state h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .empty-state p {
+            font-size: 0.83rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== FOOTER ===== */
+        #footer {
+            background: white;
+            border-top: 1px solid var(--border);
+            padding: 14px 24px;
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== DOC OVERLAY ===== */
+        #docOverlay {
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        #docTopBar {
+            background: #162036;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 54px;
+            flex-shrink: 0;
+            gap: 12px;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .topbar-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 14px;
+            background: rgba(255,255,255,0.07);
+            color: #E2E9F1;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 7px;
+            font-size: 0.79rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+
+        .topbar-button:hover {
+            background: rgba(255,255,255,0.14);
+        }
+
+        #docTitle {
+            font-size: 0.83rem;
+            color: #5C6B7C;
+            max-width: 38%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            text-align: center;
+        }
+
+        #docFrame {
+            flex: 1;
+            width: 100%;
+            border: 0;
+        }
+
+        /* ===== LOADING ===== */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(244,248,252,0.92);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(6px);
+        }
+
+        .loading-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .spinner {
+            border: 3px solid #E2E9F1;
+            border-top: 3px solid #162036;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            animation: spin 0.75s linear infinite;
+        }
+
+        .loading-text {
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== SCROLLBAR ===== */
+        #sidebar::-webkit-scrollbar { width: 4px; }
+        #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        /* ===== HAMBURGER ===== */
+        #hamburger {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 8px;
+            color: var(--text-primary);
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+
+        #hamburger:hover { background: var(--surface); }
+
+        /* ===== SIDEBAR OVERLAY ===== */
+        #sidebarOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 199;
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #sidebarOverlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 300;
+            }
+
+            #sidebar.open {
+                transform: translateX(0);
+            }
+
+            #main-wrapper {
+                margin-left: 0;
+            }
+
+            #hamburger {
+                display: flex;
+            }
+
+            .topbar-search {
+                max-width: 100%;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            #spreadsheetList {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-fav {
+                margin-right: 0;
+            }
+
+            #page-content {
+                padding: 18px 14px 28px;
+            }
+
+            .page-header {
+                margin-bottom: 16px;
+            }
+
+            .page-title {
+                font-size: 1.15rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #topbar {
+                padding: 0 14px;
+                gap: 8px;
+            }
+
+            .topbar-badge {
+                display: none;
+            }
+        }
+    
+        /* barra fina (dentro do portal) */
+        #topbar, .topbar { height: var(--topbar-h) !important; min-height: 0 !important; }
+        #topbar input, .topbar input { padding-top: 4px !important; padding-bottom: 4px !important; font-size: .8rem !important; }
+        #topbar button, .topbar button, .topbar-badge { padding-top: 3px !important; padding-bottom: 3px !important; font-size: .78rem !important; }
+        #hamburger { height: 28px !important; width: 28px !important; }
+    
+        /* documento aberto: só o documento rola */
+        html:has(#docOverlay[style*="flex"]), html:has(#docOverlay[style*="flex"]) body { overflow: hidden !important; }
+        html:has(#docOverlay[style*="flex"]) #main-content, html:has(#docOverlay[style*="flex"]) #page-content { overflow: hidden !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Loading -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-inner">
+            <div class="spinner"></div>
+            <span class="loading-text">Carregando acervo…</span>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="https://i.imgur.com/P13sT7A.png" alt="LAMIC">
+                <div class="sidebar-brand-wrap">
+                    <div class="sidebar-brand">Acervo de Protocolos</div>
+                    <div class="sidebar-subtitle">LAMIC · Gestão Documental</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">Navegação</div>
+        </div>
+        <nav class="sidebar-nav">
+            <button class="sidebar-link active" id="navAll" onclick="filterBySector(''); setActiveNav('navAll'); closeSidebar()">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Todos os Protocolos
+            </button>
+            <button class="sidebar-link" id="navFav" onclick="filterByFavorites(); closeSidebar()">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Favoritos
+            </button>
+        </nav>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">Categorias</div>
+        </div>
+        <nav class="sidebar-nav" id="sectorNav">
+            <!-- Populated dynamically -->
+        </nav>
+    </aside>
+
+    <!-- Main wrapper -->
+    <div id="main-wrapper">
+
+        <!-- Topbar -->
+        <header id="topbar">
+            <button id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="topbar-search">
+                <svg class="search-icon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="searchInput" placeholder="Buscar por título do Protocolo…">
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-badge">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Protocolos carregados <span id="topbarCount">—</span>
+                </div>
+                <button id="favoriteFilter" class="btn-fav" onclick="filterByFavorites()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    Favoritos
+                </button>
+            </div>
+        </header>
+
+        <!-- Page content -->
+        <main id="page-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Procedimentos Operacionais Padrão</h1>
+                    <p class="page-desc">Acervo centralizado de documentação técnica do Laboratório LAMIC</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <div>
+                        <div class="stat-val" id="statTotal">—</div>
+                        <div class="stat-lbl">Total de Protocolos</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    </div>
+                    <div>
+                        <div class="stat-val" id="statSectors">—</div>
+                        <div class="stat-lbl">Categorias</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon amber">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <div>
+                        <div class="stat-val" id="statFavs">—</div>
+                        <div class="stat-lbl">Favoritos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter bar info -->
+            <div class="filter-bar">
+                <p class="filter-label" id="filterInfo">Exibindo <strong id="filterCount">—</strong> procedimentos</p>
+            </div>
+
+            <!-- Cards -->
+            <div id="spreadsheetList"></div>
+        </main>
+
+        <footer id="footer">
+            &copy; 2025 Acervo de Protocolos LAMIC &nbsp;·&nbsp; Todos os direitos reservados
+        </footer>
+    </div>
+
+    <!-- Doc Overlay -->
+    <div id="docOverlay">
+        <div id="docTopBar">
+            <div class="topbar-left">
+                <button class="topbar-button" onclick="closeDoc()">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                    Voltar
+                </button>
+                <button id="btnEdit" class="topbar-button" onclick="switchToEditMode()">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    Editar
+                </button>
+                <button id="btnDownload" class="topbar-button" onclick="downloadDoc()">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Baixar
+                </button>
+            </div>
+            <div id="docTitle"></div>
+            <div style="width: 200px;"></div>
+        </div>
+        <iframe id="docFrame" referrerpolicy="no-referrer-when-downgrade" allow="clipboard-write; fullscreen"></iframe>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const isOpen = sidebar.classList.contains('open');
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('visible');
+            } else {
+                sidebar.classList.add('open');
+                overlay.classList.add('visible');
+            }
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('visible');
+        }
+    </script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD38STN_vG08tlYJBXFtRUWtlcyRexw7Mc",
+            authDomain: "applamic.firebaseapp.com",
+            databaseURL: "https://applamic-default-rtdb.firebaseio.com",
+            projectId: "applamic",
+            storageBucket: "applamic.firebasestorage.app",
+            messagingSenderId: "1038898074287",
+            appId: "1:1038898074287:web:ec9fa6ce997d415e48fa5a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        // Banco unificado (applamic, nó /docs). A sessão é a do Dados LAMIC (mesma origem); sem login,
+        // manda entrar por lá.
+        const sessaoDados = new Promise((resolve) => {
+            onAuthStateChanged(getAuth(app), (user) => {
+                if (user) return resolve(user);
+                document.body.insertAdjacentHTML('afterbegin', '<div style="position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.75);display:flex;align-items:center;justify-content:center;padding:16px"><div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;text-align:center;font-family:sans-serif"><h3 style="margin:0 0 8px">Entre pelo Dados LAMIC</h3><p style="margin:0 0 16px;color:#475569;font-size:14px">Este acervo usa o login do Dados LAMIC.</p><a href="https://laboratoriolamic.github.io/Dados/" style="display:inline-block;background:#1d4ed8;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700">Ir para o Dados LAMIC</a></div></div>');
+            });
+        });
+
+        const FAVORITES_KEY = 'lamic_protocolos_favorites_v1';
+        let favorites = JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
+        let spreadsheets = [];
+        let selectedSector = '';
+        let showFavorites = false;
+
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+
+        function filledCell(cell) {
+            return cell !== '' && cell != null;
+        }
+
+        function loadFileData(filename) {
+            if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+                try {
+                    var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                    var firstSheetName = workbook.SheetNames[0];
+                    var worksheet = workbook.Sheets[firstSheetName];
+                    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                    var filteredData = jsonData.filter(row => row.some(filledCell));
+                    var headerRowIndex = filteredData.findIndex((row, index) =>
+                        row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                    );
+                    if (headerRowIndex === -1 || headerRowIndex > 25) headerRowIndex = 0;
+                    var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+                    csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                    return csv;
+                } catch (e) {
+                    console.error(e);
+                    return "";
+                }
+            }
+            return gk_fileData[filename] || "";
+        }
+
+        function showLoading() {
+            const el = document.getElementById('loadingOverlay');
+            if (el) el.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const el = document.getElementById('loadingOverlay');
+            if (el) el.style.display = 'none';
+        }
+
+        function extractProtocolArray(rawData) {
+            if (!rawData) return [];
+            if (Array.isArray(rawData)) return rawData;
+            return Object.entries(rawData)
+                .sort(([a], [b]) => {
+                    const na = Number(a), nb = Number(b);
+                    if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+                    return String(a).localeCompare(String(b));
+                })
+                .map(([, value]) => value);
+        }
+
+        async function loadSpreadsheets() {
+            showLoading();
+            try {
+                await sessaoDados;   // regras do banco: só quem está logado no Dados LAMIC lê o acervo
+                const dataRef = ref(database, 'docs/categories/Protocolos');
+                const snapshot = await get(dataRef);
+                const rawData = snapshot.exists() ? snapshot.val() : null;
+
+                spreadsheets = extractProtocolArray(rawData);
+
+                spreadsheets.sort((a, b) => {
+                    if (a.sector < b.sector) return -1;
+                    if (a.sector > b.sector) return 1;
+                    if (a.title < b.title) return -1;
+                    if (a.title > b.title) return 1;
+                    return 0;
+                });
+
+                populateSectorNav();
+                renderCards();
+                updateStats();
+                updateCards();
+                abrirPorLink();
+            } catch (error) {
+                console.error('Error loading Firebase data:', error);
+                spreadsheets = [];
+                populateSectorNav();
+                renderCards();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function populateSectorNav() {
+            const uniqueSectors = [...new Set(spreadsheets.map(s => s.sector))].sort();
+            const nav = document.getElementById('sectorNav');
+            nav.innerHTML = '';
+            uniqueSectors.forEach(sector => {
+                const count = spreadsheets.filter(s => s.sector === sector).length;
+                const btn = document.createElement('button');
+                btn.className = 'sidebar-sector-item';
+                btn.dataset.sector = sector;
+                btn.innerHTML = `<span>${sector}</span><span class="sector-badge">${count}</span>`;
+                btn.onclick = () => {
+                    filterBySector(sector);
+                    document.querySelectorAll('.sidebar-sector-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('navAll').classList.remove('active');
+                    document.getElementById('navFav').classList.remove('active');
+                    closeSidebar();
+                };
+                nav.appendChild(btn);
+            });
+        }
+
+        function updateStats() {
+            const uniqueSectors = [...new Set(spreadsheets.map(s => s.sector))];
+            document.getElementById('statTotal').textContent = spreadsheets.length;
+            document.getElementById('statSectors').textContent = uniqueSectors.length;
+            document.getElementById('statFavs').textContent = favorites.length;
+            document.getElementById('topbarCount').textContent = spreadsheets.length;
+        }
+
+        function renderCards() {
+            closeActiveDropdown();
+            const list = document.getElementById('spreadsheetList');
+            list.innerHTML = '';
+            spreadsheets.forEach((sheet, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.sector = sheet.sector;
+                card.dataset.index = index;
+
+                const isFavorited = favorites.includes(index);
+
+                let formHtml = '';
+                if (sheet.forms && sheet.forms.length > 0) {
+                    if (sheet.forms.length === 1) {
+                        formHtml = `<a href="${sheet.forms[0].link}" target="_blank" class="btn-form">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            Formulário
+                        </a>`;
+                    } else {
+                        formHtml = `<div class="form-dropdown">
+                            <a href="#" class="btn-form">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                Formulário
+                            </a>
+                            <div class="form-dropdown-content">
+                                ${sheet.forms.map(f => `<a href="${f.link}" target="_blank">${f.title}</a>`).join('')}
+                            </div>
+                        </div>`;
+                    }
+                }
+
+                let linkHtml = '';
+                if (sheet.links && sheet.links.length > 0) {
+                    if (sheet.links.length === 1 && !sheet.links[0].title) {
+                        linkHtml = `<a href="#" onclick="openDoc(${index}); return false;" class="btn-primary">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Protocolo
+                        </a>`;
+                    } else {
+                        linkHtml = `<div class="dropdown">
+                            <a href="#" class="btn-primary">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Protocolo
+                            </a>
+                            <div class="dropdown-content">
+                                ${sheet.links.map(link => `<a href="#" onclick="openDoc(${index}, '${link.link}'); return false;">${link.title || link.link}</a>`).join('')}
+                            </div>
+                        </div>`;
+                    }
+                }
+
+                card.innerHTML = `
+                    <div class="card-top">
+                        <div class="card-icon-wrap">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        </div>
+                        <span class="star ${isFavorited ? 'favorited' : ''}" onclick="toggleFavorite(${index})">&#9733;</span>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="card-title">${sheet.title}</h2>
+                        <span class="card-sector-tag">${sheet.sector}</span>
+                    </div>
+                    <div class="card-footer">
+                        ${linkHtml}
+                        ${formHtml}
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+            bindDropdowns();
+        }
+
+        let activeDropdown = null;
+
+        function closeActiveDropdown() {
+            if (!activeDropdown) return;
+            const { wrapper, menu } = activeDropdown;
+            menu.style.display = 'none';
+            menu.removeAttribute('data-fd-open');
+            if (document.body.contains(menu)) {
+                document.body.removeChild(menu);
+            }
+            if (wrapper && wrapper.contains(menu) === false && wrapper.parentNode) {
+                wrapper.appendChild(menu);
+            }
+            activeDropdown = null;
+            document.removeEventListener('click', handleDocumentClick);
+            window.removeEventListener('resize', handleWindowChange);
+            window.removeEventListener('scroll', handleWindowChange, true);
+        }
+
+        function handleDocumentClick(event) {
+            if (!activeDropdown) return;
+            const { toggle, menu } = activeDropdown;
+            if (toggle.contains(event.target) || menu.contains(event.target)) return;
+            closeActiveDropdown();
+        }
+
+        function handleWindowChange() {
+            if (!activeDropdown) return;
+            positionDropdownMenu(activeDropdown.menu, activeDropdown.toggle);
+        }
+
+        function positionDropdownMenu(menu, toggle) {
+            const rect = toggle.getBoundingClientRect();
+            const margin = 8;
+            const width = Math.max(rect.width, 200);
+            let left = rect.left;
+            const maxRight = window.innerWidth - margin;
+            if (left + width > maxRight) {
+                left = Math.max(margin, maxRight - width);
+            }
+            menu.style.position = 'fixed';
+            menu.style.top = `${rect.bottom + 5}px`;
+            menu.style.left = `${left}px`;
+            menu.style.width = `${width}px`;
+            menu.style.zIndex = '9999';
+        }
+
+        function bindDropdowns() {
+            document.querySelectorAll('#spreadsheetList .dropdown, #spreadsheetList .form-dropdown')
+                .forEach(wrapper => {
+                    if (wrapper.dataset.fdBound) return;
+
+                    const toggle = wrapper.querySelector('a.btn-primary, a.btn-form');
+                    const menu = wrapper.querySelector('.dropdown-content, .form-dropdown-content');
+                    if (!toggle || !menu) return;
+
+                    toggle.addEventListener('click', event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        if (activeDropdown && activeDropdown.menu === menu) {
+                            closeActiveDropdown();
+                            return;
+                        }
+
+                        closeActiveDropdown();
+
+                        if (menu.parentNode !== document.body) {
+                            document.body.appendChild(menu);
+                        }
+
+                        positionDropdownMenu(menu, toggle);
+                        menu.style.display = 'block';
+                        menu.dataset.fdOpen = 'true';
+                        activeDropdown = { wrapper, toggle, menu };
+
+                        document.addEventListener('click', handleDocumentClick);
+                        window.addEventListener('resize', handleWindowChange);
+                        window.addEventListener('scroll', handleWindowChange, true);
+                    });
+
+                    menu.addEventListener('click', () => {
+                        if (activeDropdown && activeDropdown.menu === menu) {
+                            closeActiveDropdown();
+                        }
+                    });
+
+                    wrapper.dataset.fdBound = 'true';
+                });
+        }
+
+        function toggleFavorite(index) {
+            if (favorites.includes(index)) {
+                favorites = favorites.filter(f => f !== index);
+            } else {
+                favorites.push(index);
+            }
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+            document.getElementById('statFavs').textContent = favorites.length;
+            updateCards();
+        }
+
+        function normalizeString(str) {
+            return str.toLowerCase()
+                .normalize('NFD')
+                .replace(/[̀-ͯ]/g, '')
+                .replace(/[^\w\s]/g, '')
+                .trim();
+        }
+
+        function updateCards() {
+            const searchTerm = normalizeString(document.getElementById('searchInput').value);
+            const cards = document.getElementsByClassName('card');
+            let visible = 0;
+
+            Array.from(cards).forEach(card => {
+                const title = normalizeString(card.querySelector('.card-title').textContent);
+                const cardSector = card.getAttribute('data-sector');
+                const cardIndex = parseInt(card.getAttribute('data-index'));
+                const matchesSearch = title.includes(searchTerm);
+                const matchesSector = selectedSector === '' || cardSector === selectedSector;
+                const matchesFavorites = !showFavorites || favorites.includes(cardIndex);
+                const show = matchesSearch && matchesSector && matchesFavorites;
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+
+                const star = card.querySelector('.star');
+                if (star) star.classList.toggle('favorited', favorites.includes(cardIndex));
+            });
+
+            document.getElementById('filterCount').textContent = visible;
+
+            const list = document.getElementById('spreadsheetList');
+            const existing = list.querySelector('.empty-state');
+            if (existing) existing.remove();
+            if (visible === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.innerHTML = `
+                    <svg class="empty-state-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+                    <h3>Nenhum Protocolo encontrado</h3>
+                    <p>Tente ajustar os filtros ou o termo de busca.</p>
+                `;
+                list.appendChild(empty);
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', updateCards);
+
+        function setActiveNav(id) {
+            document.getElementById('navAll').classList.remove('active');
+            document.getElementById('navFav').classList.remove('active');
+            document.querySelectorAll('.sidebar-sector-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function filterBySector(sector) {
+            selectedSector = sector;
+            showFavorites = false;
+            document.getElementById('favoriteFilter').classList.remove('active');
+            if (sector === '') {
+                setActiveNav('navAll');
+            }
+            updateCards();
+        }
+
+        function filterByFavorites() {
+            showFavorites = !showFavorites;
+            selectedSector = '';
+            document.querySelectorAll('.sidebar-sector-item').forEach(b => b.classList.remove('active'));
+            const navFav = document.getElementById('navFav');
+            const favBtn = document.getElementById('favoriteFilter');
+            if (showFavorites) {
+                navFav.classList.add('active');
+                document.getElementById('navAll').classList.remove('active');
+                favBtn.classList.add('active');
+            } else {
+                navFav.classList.remove('active');
+                document.getElementById('navAll').classList.add('active');
+                favBtn.classList.remove('active');
+            }
+            updateCards();
+        }
+
+        let currentDocIndex = null;
+        let currentDocUrl = null;
+
+        function extractDocIdFromUrl(url) {
+            try {
+                const match = url.match(/\/document\/d\/([^\/#?]+)/);
+                return match ? match[1] : null;
+            } catch (e) { return null; }
+        }
+
+        function buildViewUrl(docId) {
+            return `https://docs.google.com/document/d/${docId}/preview`;
+        }
+
+        function buildEditUrl(docId) {
+            return `https://docs.google.com/document/d/${docId}/edit?rm=embedded`;
+        }
+
+        // ?doc=<título>: aberto por um vínculo de aviso do portal → abre direto no documento
+        function abrirPorLink() {
+            const alvo = new URLSearchParams(location.search).get('doc');
+            if (!alvo) return;
+            const n = (t) => String(t || '').trim().toLowerCase();
+            const i = spreadsheets.findIndex((s) => n(s.title) === n(alvo));
+            if (i >= 0) openDoc(i);
+            history.replaceState(null, '', location.pathname);
+        }
+
+        function openDoc(index, specificLink = null) {
+            currentDocIndex = index;
+            const sheet = spreadsheets[index];
+            const docUrl = specificLink || (sheet.links && sheet.links.length > 0 ? sheet.links[0].link : '');
+            currentDocUrl = docUrl;
+            const docId = extractDocIdFromUrl(docUrl);
+            const iframe = document.getElementById('docFrame');
+            document.getElementById('docTitle').textContent = sheet.title || '';
+            iframe.src = docId ? buildViewUrl(docId) : docUrl;
+            document.getElementById('docOverlay').style.display = 'flex';
+        }
+
+        function closeDoc() {
+            document.getElementById('docOverlay').style.display = 'none';
+            document.getElementById('docFrame').src = '';
+            currentDocIndex = null;
+            currentDocUrl = null;
+        }
+
+        function switchToEditMode() {
+            if (currentDocIndex == null || !currentDocUrl) return;
+            const docId = extractDocIdFromUrl(currentDocUrl);
+            document.getElementById('docFrame').src = docId ? buildEditUrl(docId) : currentDocUrl;
+        }
+
+        function downloadDoc() {
+            if (currentDocIndex == null || !currentDocUrl) return;
+            const docId = extractDocIdFromUrl(currentDocUrl);
+            const exportUrl = docId
+                ? `https://docs.google.com/document/d/${docId}/export?format=pdf`
+                : currentDocUrl;
+            window.open(exportUrl, '_blank', 'noopener');
+        }
+
+        window.openDoc = openDoc;
+        window.closeDoc = closeDoc;
+        window.switchToEditMode = switchToEditMode;
+        window.downloadDoc = downloadDoc;
+        window.filterBySector = filterBySector;
+        window.filterByFavorites = filterByFavorites;
+        window.toggleFavorite = toggleFavorite;
+        window.setActiveNav = setActiveNav;
+
+        loadSpreadsheets();
+    </script>
+</body>
+</html>

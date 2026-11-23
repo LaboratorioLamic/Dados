@@ -1,0 +1,86 @@
+/* =========================================================================
+   AUDITORIA LAMIC — Variáveis do Design System
+   ========================================================================= */
+
+/* A fonte Inter é carregada por <link> no <head> do index.html (faixa 300..900):
+   como @import aqui ela só começava a baixar depois deste arquivo chegar. */
+
+:root {
+    /* ----- Marca / Núcleo ----- */
+    --primary:        #0f172a;
+    --primary-light:  #1e293b;
+    --primary-soft:   #334155;
+    --accent:         #2563eb;
+    --accent-light:   #3b82f6;
+    --accent-soft:    #dbeafe;
+    --accent-vivid:   #1d4ed8;
+
+    /* ----- Gradiente corporativo ----- */
+    --grad-sidebar:   #162036;
+    --grad-accent:    linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    --grad-header:    linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%);
+
+    /* ----- Superfícies ----- */
+    --bg:             #f1f5f9;
+    --bg-elevated:    #e8edf5;
+    --card-bg:        #ffffff;
+    --surface-muted:  #f8fafc;
+    --surface-hover:  #f0f4f8;
+
+    /* ----- Texto ----- */
+    --text:           #0f172a;
+    --text-strong:    #020617;
+    --text-light:     #64748b;
+    --text-muted:     #94a3b8;
+    --text-xmuted:    #b8c4d4;
+
+    /* ----- Bordas ----- */
+    --border:         #e2e8f0;
+    --border-strong:  #cbd5e1;
+
+    /* ----- Cores de Status ----- */
+    --c-blue:    #2563eb;
+    --c-green:   #16a34a;
+    --c-red:     #dc2626;
+    --c-orange:  #ea580c;
+    --c-yellow:  #ca8a04;
+    --c-purple:  #9333ea;
+    --c-default: #64748b;
+
+    /* ----- Indicadores ----- */
+    --ind-green:  #16a34a;
+    --ind-yellow: #ca8a04;
+    --ind-red:    #dc2626;
+
+    /* ----- Espaçamentos ----- */
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+    --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+
+    /* ----- Raios ----- */
+    --r-xs:  6px;
+    --r-sm:  8px;
+    --r-md:  12px;
+    --r-lg:  16px;
+    --r-xl:  20px;
+    --r-2xl: 24px;
+    --r-3xl: 32px;
+    --r-full: 9999px;
+
+    /* ----- Sombras ----- */
+    --shadow-xs: 0 1px 3px rgba(15,23,42,0.05), 0 1px 2px rgba(15,23,42,0.04);
+    --shadow-sm: 0 2px 8px rgba(15,23,42,0.07), 0 1px 3px rgba(15,23,42,0.04);
+    --shadow-md: 0 6px 24px rgba(15,23,42,0.09), 0 2px 8px rgba(15,23,42,0.05);
+    --shadow-lg: 0 16px 48px rgba(15,23,42,0.13), 0 4px 16px rgba(15,23,42,0.07);
+    --shadow-xl: 0 28px 64px rgba(15,23,42,0.20), 0 8px 24px rgba(15,23,42,0.10);
+    --shadow-accent: 0 8px 24px rgba(37,99,235,0.30);
+
+    /* ----- Transições ----- */
+    --ease:   cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --t-fast: 0.15s var(--ease);
+    --t-base: 0.25s var(--ease);
+    --t-slow: 0.4s var(--ease);
+
+    /* ----- Sidebar ----- */
+    --sidebar-w: 256px;
+}

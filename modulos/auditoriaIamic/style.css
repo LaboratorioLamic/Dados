@@ -1,0 +1,11 @@
+/* =========================================================================
+   AUDITORIA LAMIC — Design System v3.0
+
+   Os módulos CSS que este arquivo importava agora são <link> diretos no <head>
+   do index.html, na MESMA ordem (a ordem define a cascata). O encadeamento por
+   @import obrigava o navegador a baixar este arquivo antes de sequer descobrir
+   os outros 21 — uma cascata serial no caminho crítico de renderização.
+
+   Este arquivo não é mais referenciado. Ao adicionar um módulo CSS novo,
+   registre-o no <head> do index.html.
+   ========================================================================= */

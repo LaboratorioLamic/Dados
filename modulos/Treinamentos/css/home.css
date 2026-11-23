@@ -1,0 +1,346 @@
+/** ─── HOME / SELEÇÃO DE PLATAFORMA ─── **/
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --primary: #162036;
+    --accent: #4f8ef7;
+    --surface: #f1f5f9;
+    --surface-2: #e2e8f0;
+    --card: #ffffff;
+    --text: #0f172a;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --border-focus: #4f8ef7;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --radius: 12px;
+    --radius-lg: 18px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 4px 18px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+    --shadow-lg: 0 18px 45px rgba(15,23,42,0.14), 0 6px 14px rgba(15,23,42,0.06);
+
+    --c-treinamentos: #4f8ef7;
+    --c-educacao: #10b981;
+    --c-estagios: #f59e0b;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background:
+        radial-gradient(1100px 520px at 50% -180px, rgba(79,142,247,0.16), transparent 70%),
+        var(--surface);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 24px 64px;
+}
+
+/** ─── ENTRAR / CADASTRAR (botão de conta) ─── **/
+.home-account {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), #3b6fd8);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85em;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(79,142,247,0.32);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    z-index: 10;
+}
+
+.home-account:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(79,142,247,0.4);
+}
+
+.home-account:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+@media (max-width: 560px) {
+    .home-account {
+        position: static;
+        margin: 0 auto 24px;
+    }
+}
+
+/** ─── CABEÇALHO ─── **/
+.home-head {
+    text-align: center;
+    max-width: 720px;
+    margin-bottom: 44px;
+}
+
+.home-logo {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 22px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #1a2b49, #0f1923);
+    color: #fff;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(26,43,73,0.32);
+}
+
+.home-head h1 {
+    font-size: 2.35em;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+}
+
+.home-head .home-sub {
+    margin-top: 12px;
+    font-size: 0.76em;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+/** ─── GRID DE CARDS ─── **/
+.platform-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 26px;
+    width: 100%;
+    max-width: 1080px;
+}
+
+.platform-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.platform-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--card-color, var(--accent));
+}
+
+.platform-card:hover,
+.platform-card:focus-visible {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--card-color, var(--accent));
+    outline: none;
+}
+
+.platform-card.is-active {
+    border-color: var(--card-color, var(--accent));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-color, var(--accent)) 18%, transparent), var(--shadow);
+}
+
+/** ─── TOPO DO CARD ─── **/
+.card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 26px 24px 0;
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 19px;
+    background: var(--card-color, var(--accent));
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--card-color, var(--accent)) 38%, transparent);
+}
+
+.card-heading { flex: 1; min-width: 0; }
+
+.card-heading h2 {
+    font-size: 1.14em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+}
+
+.card-heading .card-kicker {
+    margin-top: 5px;
+    font-size: 0.68em;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.card-badge {
+    flex-shrink: 0;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.63em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--card-color, var(--accent));
+    background: color-mix(in srgb, var(--card-color, var(--accent)) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-color, var(--accent)) 32%, transparent);
+}
+
+/** ─── CORPO DO CARD ─── **/
+.card-desc {
+    padding: 16px 24px 0;
+    font-size: 0.9em;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 18px 24px 0;
+}
+
+.card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    font-size: 0.74em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.card-tag i { font-size: 0.9em; color: var(--card-color, var(--accent)); }
+
+.card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 20px 24px 0;
+}
+
+.card-stat {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 11px 8px;
+    text-align: center;
+    background: #fbfdff;
+}
+
+.card-stat .stat-value {
+    font-size: 1.25em;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.card-stat .stat-label {
+    margin-top: 4px;
+    font-size: 0.6em;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.card-stat.is-loading .stat-value {
+    color: var(--text-muted);
+}
+
+/** ─── RODAPÉ DO CARD ─── **/
+.card-foot {
+    margin-top: auto;
+    padding: 22px 24px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.card-enter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--card-color, var(--accent));
+}
+
+.platform-card:hover .card-enter i { transform: translateX(3px); }
+.card-enter i { transition: transform 0.18s ease; }
+
+.card-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 24px;
+}
+
+/** ─── RODAPÉ DA PÁGINA ─── **/
+.home-foot {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+.home-foot button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 15px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-secondary);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.home-foot button:hover { border-color: var(--accent); color: var(--accent); }
+
+/** ─── RESPONSIVO ─── **/
+@media (max-width: 900px) {
+    .platform-grid { grid-template-columns: 1fr; max-width: 520px; }
+    body { padding: 40px 18px 48px; }
+    .home-head h1 { font-size: 1.9em; }
+}

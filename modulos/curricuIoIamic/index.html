@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RH LAMIC — Gestão de Pessoas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;800&display=swap" rel="stylesheet">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- Estilos -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+<script src="lamic-carregando.js" data-nome="RH LAMIC" data-espera="#loginMsg"></script>
+
+<!-- ===== Login ===== -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-card">
+        <div class="login-logo">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h1>RH LAMIC</h1>
+        <p class="login-sub">Sistema de gestão de pessoas</p>
+
+        <div class="login-error" id="loginError"></div>
+
+        <p class="login-hint" id="loginMsg" style="margin-bottom:16px">Verificando sua sessão do Dados LAMIC…</p>
+        <a class="btn btn-primary btn-block" id="btnDados" href="https://laboratoriolamic.github.io/Dados/" style="display:none">Entrar pelo Dados LAMIC</a>
+
+        <div class="login-hint" id="loginHint"></div>
+    </div>
+</div>
+
+<!-- ===== App ===== -->
+<div class="app" id="app">
+    <!-- Sidebar suspensa: fica sobre o conteúdo e é aberta pelo hambúrguer da topbar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="brand-text">
+                <div class="brand-name">RH LAMIC</div>
+                <div class="brand-sub">Gestão de pessoas</div>
+            </div>
+            <button class="sidebar-close" id="sidebarClose" title="Fechar menu" aria-label="Fechar menu">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer" id="sidebarUser"></div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <button class="hamburger" id="btnMenu" title="Menu (M)" aria-label="Abrir menu" aria-expanded="false" aria-controls="sidebar">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="page-title" id="pageTitle"></div>
+            <div class="topbar-right" id="topbarActions"></div>
+        </header>
+        <main class="page" id="pageContainer"></main>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Scripts  -->
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/router.js"></script>
+<script src="js/anexos.js?v=20261123w"></script>
+<script src="js/cbo-data.js"></script>
+<script src="js/cbo.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/config.js"></script>
+<script src="js/funcionarios.js"></script>
+<script src="js/relatorio-func.js"></script>
+<script src="js/lancamentos.js"></script>
+<script src="js/aso.js"></script>
+<script src="js/cat.js"></script>
+<script src="js/disciplinar.js"></script>
+<script src="js/folha.js"></script>
+<script src="js/bancohoras.js"></script>
+<script src="js/ausparcial.js"></script>
+<script src="js/decimo.js"></script>
+<script src="js/resultados.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/notificacoes.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocAdmin — Gerenciador de Documentos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+    --bg:#F4F8FC;
+    --surface:#ffffff;
+    --surface-2:#FBFCFE;
+    --navy:#162036;
+    --navy-mid:#123C74;
+    --navy-light:#1257A5;
+    --blue:#1257A5;
+    --blue-hover:#1257A5;
+    --blue-light:#EAF3FB;
+    --text-1:#0E2E5A;
+    --text-2:#5C6B7C;
+    --text-3:#9FB3CC;
+    --border:#E2E9F1;
+    --success:#059669;
+    --success-bg:#ecfdf5;
+    --danger:#dc2626;
+    --danger-bg:#fef2f2;
+    --r-sm:6px;
+    --r:10px;
+    --r-lg:16px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+    --shadow:0 4px 16px rgba(14,46,90,.12);
+    --shadow-lg:0 20px 48px rgba(14,46,90,.2);
+    --t:all .2s cubic-bezier(.4,0,.2,1);
+}
+
+html{scroll-behavior:smooth}
+body{
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:14px;
+    background:var(--bg);
+    color:var(--text-1);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+}
+
+/* ── Navbar ── */
+.navbar{
+    position:sticky;top:0;z-index:100;
+    background:var(--navy);
+    height:64px;
+    display:flex;align-items:center;
+    padding:0 28px;gap:14px;
+    box-shadow:0 2px 20px rgba(0,0,0,.3);
+}
+.navbar-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.brand-icon{
+    width:38px;height:38px;
+    background:var(--blue);
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;color:#fff;
+    box-shadow:0 2px 8px rgba(18,87,165,.4);
+}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-title{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.4px}
+.brand-sub{font-size:10px;font-weight:500;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px}
+.navbar-divider{width:1px;height:28px;background:rgba(255,255,255,.1);flex-shrink:0}
+.category-badge{
+    display:none;align-items:center;gap:7px;
+    padding:5px 13px;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:20px;
+    font-size:12px;font-weight:600;color:rgba(255,255,255,.8);
+}
+.category-badge .dot{width:6px;height:6px;border-radius:50%;background:#34d399;flex-shrink:0}
+.navbar-spacer{flex:1}
+.navbar-actions{display:flex;align-items:center;gap:8px}
+.nav-btn{
+    display:flex;align-items:center;gap:7px;
+    padding:8px 16px;border-radius:8px;border:none;
+    cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;
+    transition:var(--t);white-space:nowrap;
+}
+.nav-btn-ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.12)}
+.nav-btn-ghost:hover{background:rgba(255,255,255,.13);color:#fff}
+.nav-btn-primary{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(18,87,165,.35)}
+.nav-btn-primary:hover{background:var(--blue-hover)}
+
+/* ── Layout ── */
+.main-wrapper{max-width:1280px;margin:0 auto;padding:36px 28px 72px}
+.page-header{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    margin-bottom:28px;gap:16px;flex-wrap:wrap;
+}
+.page-header-info h2{font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--text-1)}
+.page-header-info p{font-size:13px;color:var(--text-2);margin-top:3px}
+
+/* ── Buttons ── */
+.btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 20px;border-radius:var(--r);border:none;
+    cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;
+    transition:var(--t);line-height:1;white-space:nowrap;text-decoration:none;
+}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(18,87,165,.3)}
+.btn-primary:hover{background:var(--blue-hover);transform:translateY(-1px);box-shadow:0 6px 20px rgba(18,87,165,.35)}
+.btn-primary:active{transform:translateY(0)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#b91c1c;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text-2);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text-1);border-color:#c0cfe0}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:var(--r-sm)}
+
+/* ── Cards ── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+@media(min-width:1100px){.cards-grid{grid-template-columns:repeat(3,1fr)}}
+
+.card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r-lg);
+    box-shadow:var(--shadow-sm);
+    transition:var(--t);
+    overflow:hidden;
+    display:flex;flex-direction:column;
+}
+.card:hover{box-shadow:var(--shadow);transform:translateY(-2px);border-color:#c8d5e8}
+.card-accent{height:3px;background:linear-gradient(90deg,var(--blue),#8FD3E0);flex-shrink:0}
+.card-body{padding:20px;flex:1;display:flex;flex-direction:column;gap:10px}
+.card-body h3{font-size:15px;font-weight:700;color:var(--text-1);letter-spacing:-.3px;line-height:1.4}
+.card-sector{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:4px 10px;
+    background:var(--blue-light);color:var(--blue);
+    border-radius:20px;font-size:11px;font-weight:700;
+    letter-spacing:.1px;align-self:flex-start;
+}
+.card-footer{
+    padding:12px 20px;
+    border-top:1px solid var(--border);
+    background:var(--surface-2);
+    display:flex;gap:8px;
+}
+.empty-state{
+    grid-column:1/-1;
+    display:flex;flex-direction:column;align-items:center;
+    padding:72px 24px;text-align:center;gap:14px;
+}
+.empty-icon{
+    width:72px;height:72px;
+    background:var(--surface);
+    border:2px dashed var(--border);
+    border-radius:18px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;color:var(--text-3);
+}
+.empty-state h3{font-size:16px;font-weight:700;color:var(--text-2)}
+.empty-state p{font-size:13px;color:var(--text-3);max-width:260px;line-height:1.5}
+
+/* ── Tab ── */
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeUp .3s ease-out}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Toast ── */
+.warning-message{
+    display:none;
+    position:fixed;top:24px;left:50%;
+    transform:translateX(-50%);
+    z-index:9999;
+    background:var(--navy);color:#fff;
+    padding:12px 22px;
+    border-radius:10px;
+    box-shadow:var(--shadow-lg);
+    font-size:13px;font-weight:600;
+    white-space:nowrap;
+    border-left:3px solid var(--success);
+    animation:toastIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes toastIn{
+    from{opacity:0;transform:translateX(-50%) translateY(-16px) scale(.95)}
+    to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+}
+
+/* ── Modals ── */
+.modal{
+    display:none;position:fixed;inset:0;
+    background:rgba(14,46,90,.65);
+    backdrop-filter:blur(5px);
+    justify-content:center;align-items:center;
+    z-index:2000;padding:24px;
+}
+.modal-content{
+    position:relative;
+    background:var(--surface);
+    border-radius:var(--r-lg);
+    box-shadow:var(--shadow-lg);
+    width:100%;max-width:520px;
+    max-height:90vh;overflow-y:auto;
+    animation:modalIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes modalIn{
+    from{opacity:0;transform:scale(.95) translateY(12px)}
+    to{opacity:1;transform:scale(1) translateY(0)}
+}
+.modal-content.error{animation:shake .4s ease-in-out;border:2px solid var(--danger)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+#category-modal .modal-content{max-width:380px}
+#create-password-modal .modal-content{max-width:400px}
+#backup-modal .modal-content{max-width:440px}
+
+.modal-header{
+    padding:24px 24px 0;
+    display:flex;align-items:center;gap:14px;
+}
+.modal-header-icon{
+    width:46px;height:46px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;flex-shrink:0;
+    background:var(--blue-light);color:var(--blue);
+}
+.modal-header-text h2{font-size:17px;font-weight:800;color:var(--text-1);letter-spacing:-.4px}
+.modal-header-text p{font-size:13px;color:var(--text-2);margin-top:3px}
+.modal-body{padding:20px 24px 24px}
+
+/* ── Forms ── */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.form-group:last-child{margin-bottom:0}
+.form-label{font-size:13px;font-weight:600;color:var(--text-1);letter-spacing:-.1px}
+.form-control{
+    padding:10px 14px;
+    border:1.5px solid var(--border);
+    border-radius:var(--r);
+    font-family:inherit;font-size:14px;color:var(--text-1);
+    background:var(--surface);transition:var(--t);width:100%;outline:none;
+}
+.form-control:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,87,165,.1)}
+.form-control::placeholder{color:var(--text-3)}
+select.form-control{
+    appearance:none;cursor:pointer;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;
+}
+
+/* ── Lockout ── */
+.lockout-message{
+    display:none;padding:10px 14px;
+    background:var(--danger-bg);border:1px solid #fca5a5;
+    border-radius:var(--r);color:var(--danger);
+    font-size:13px;font-weight:600;text-align:center;margin-bottom:14px;
+}
+.progress-bar-container{
+    display:none;width:100%;height:5px;
+    background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:14px;
+}
+.progress-bar{height:100%;background:var(--danger);width:0%;border-radius:99px;transition:width 10s linear}
+
+/* ── Login overlay ── */
+.login-loading-overlay{
+    display:none;position:absolute;inset:0;
+    background:rgba(255,255,255,.93);backdrop-filter:blur(8px);
+    z-index:20;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;padding:24px;border-radius:var(--r-lg);
+}
+.loading-overlay-box{
+    width:min(100%,320px);text-align:center;
+    padding:22px;background:var(--surface);
+    border-radius:var(--r-lg);box-shadow:var(--shadow-lg);border:1px solid var(--border);
+}
+.loading-overlay-title{font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:16px}
+.loading-bar-container{
+    display:none;width:100%;height:5px;
+    background:var(--border);border-radius:99px;overflow:hidden;margin:12px 0 8px;
+}
+.loading-bar{
+    width:0%;height:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--blue),#8FD3E0,var(--blue));
+    background-size:200% 100%;animation:shimmer 1.8s ease-in-out infinite;
+}
+.loading-percentage{display:none;font-size:13px;font-weight:700;color:var(--blue);margin-top:6px}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+.loading-spinner{
+    display:none;width:20px;height:20px;
+    border:2.5px solid rgba(18,87,165,.2);border-top-color:var(--blue);
+    border-radius:50%;animation:spin .8s linear infinite;margin:12px auto;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Section (card form) ── */
+.section{border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.section-header{
+    padding:10px 14px;background:var(--surface-2);
+    border-bottom:1.5px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+}
+.section-header h4{
+    font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.7px;color:var(--text-2);
+    display:flex;align-items:center;gap:7px;
+}
+.section-body{padding:14px}
+
+.dynamic-field{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.dynamic-field:last-child{margin-bottom:0}
+.dynamic-field input{
+    flex:1;min-width:0;padding:9px 12px;
+    border:1.5px solid var(--border);border-radius:var(--r-sm);
+    font-family:inherit;font-size:13px;color:var(--text-1);outline:none;transition:var(--t);
+}
+.dynamic-field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,87,165,.1)}
+.dynamic-field input::placeholder{color:var(--text-3)}
+
+.add-btn{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    width:100%;padding:8px;margin-top:8px;
+    background:transparent;border:1.5px dashed var(--border);border-radius:var(--r-sm);
+    color:var(--text-2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:var(--t);
+}
+.add-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+
+.remove-btn{
+    width:32px;height:32px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:1.5px solid var(--border);border-radius:var(--r-sm);
+    color:var(--text-3);cursor:pointer;transition:var(--t);font-size:11px;
+}
+.remove-btn:hover{background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)}
+
+/* ── Sector ── */
+.sector-container{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sector-container select,.sector-container input[type="text"]{
+    flex:1;min-width:0;padding:10px 14px;
+    border:1.5px solid var(--border);border-radius:var(--r);
+    font-family:inherit;font-size:14px;color:var(--text-1);outline:none;transition:var(--t);background:var(--surface);
+}
+.sector-container select:focus,.sector-container input[type="text"]:focus{
+    border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,87,165,.1)
+}
+.sector-container select{
+    appearance:none;cursor:pointer;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;
+}
+.sector-toggle{
+    display:flex;align-items:center;gap:6px;
+    font-size:12px;font-weight:600;color:var(--text-2);
+    cursor:pointer;white-space:nowrap;flex-shrink:0;user-select:none;
+}
+.sector-toggle input[type="checkbox"]{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+
+/* ── Button group ── */
+.button-group{display:flex;gap:10px;margin-top:20px}
+.button-group .btn{flex:1;justify-content:center}
+#cancel-card{background:var(--danger);color:#fff}
+#cancel-card:hover{background:#b91c1c}
+
+/* ── Backup ── */
+.backup-options{display:flex;flex-direction:column;gap:10px}
+.backup-option{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 16px;border:1.5px solid var(--border);border-radius:var(--r);
+    cursor:pointer;transition:var(--t);text-align:left;background:var(--surface);
+    font-family:inherit;width:100%;
+}
+.backup-option:hover{border-color:var(--blue);background:var(--blue-light)}
+.bk-icon{
+    width:40px;height:40px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+}
+.bk-icon.dl{background:#EAF3FB;color:var(--blue)}
+.bk-icon.ul{background:#f0fdf4;color:#059669}
+.bk-icon.cl{background:#fff1f2;color:#e11d48}
+.backup-option strong{display:block;font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:2px}
+.backup-option span{font-size:12px;color:var(--text-2)}
+#upload-input{display:none}
+
+/* ── Backup Button ── */
+#backup-btn{margin-right:100px}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+    .navbar{padding:0 16px}
+    .brand-text{display:none}
+    .nav-btn span{display:none}
+    .nav-btn{padding:9px 12px}
+    .main-wrapper{padding:24px 16px 48px}
+    .cards-grid{grid-template-columns:1fr}
+    .button-group{flex-direction:column}
+    .page-header{flex-direction:column;align-items:flex-start}
+    .dynamic-field{flex-wrap:wrap}
+}
+    </style>
+</head>
+<body>
+<script src="lamic-carregando.js" data-nome="DocAdmin" data-espera="#sessao-dados"></script>
+
+<!-- ── Category / Login Modal ── -->
+<div class="modal" id="category-modal">
+    <div class="modal-content" id="modal-content">
+        <div class="modal-header">
+            <div class="modal-header-icon"><i class="fas fa-layer-group"></i></div>
+            <div class="modal-header-text">
+                <h2>Selecionar Categoria</h2>
+                <p>Acesse um módulo do sistema</p>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="lockout-message" id="lockout-message"><i class="fas fa-lock" style="margin-right:6px"></i>Aguarde para tentar novamente</div>
+            <div class="progress-bar-container" id="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="category-select">Categoria</label>
+                <select id="category-select" class="form-control">
+                    <option value="">Selecione uma categoria</option>
+                    <option value="Planilhas">Planilhas</option>
+                    <option value="POPs">POPs</option>
+                    <option value="Protocolos">Protocolos</option>
+                    <option value="Termos">Termos</option>
+                </select>
+            </div>
+            <div class="form-group" id="password-group" style="display:none">
+                <input type="password" id="password-input" class="form-control">
+            </div>
+            <p id="sessao-dados" style="font-size:13px;color:var(--text-2);margin:0 0 12px">Verificando sua sessão do Dados LAMIC…</p>
+            <a id="ir-dados" href="https://laboratoriolamic.github.io/Dados/" class="btn btn-primary" style="display:none;width:100%;justify-content:center;margin-bottom:8px"><i class="fas fa-sign-in-alt"></i> Entrar pelo Dados LAMIC</a>
+            <div class="loading-spinner" id="category-loading-spinner"></div>
+            <button id="category-submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px">
+                <i class="fas fa-sign-in-alt"></i> Entrar
+            </button>
+            <div class="login-loading-overlay" id="login-loading-overlay" aria-hidden="true">
+                <div class="loading-overlay-box">
+                    <div class="loading-overlay-title"><i class="fas fa-circle-notch fa-spin" style="margin-right:8px;color:var(--blue)"></i>Carregando dados...</div>
+                    <div class="loading-bar-container" id="loading-bar-container">
+                        <div class="loading-bar" id="loading-bar"></div>
+                    </div>
+                    <div class="loading-percentage" id="loading-percentage">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Card Modal ── -->
+<div class="modal" id="card-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-header-icon"><i class="fas fa-file-alt"></i></div>
+            <div class="modal-header-text">
+                <h2 id="modal-title">Adicionar Card</h2>
+                <p>Preencha as informações do documento</p>
+            </div>
+        </div>
+        <div class="modal-body">
+            <form id="card-form">
+                <div class="form-group">
+                    <label class="form-label" for="card-title">Título do Card</label>
+                    <input type="text" id="card-title" class="form-control" placeholder="Ex: POP de Atendimento" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Setor</label>
+                    <div class="sector-container">
+                        <select id="card-sector-select">
+                            <option value="">Selecione um setor</option>
+                        </select>
+                        <input type="text" id="card-sector-input" list="sectors-list" placeholder="Digite ou selecione" style="display:none">
+                        <datalist id="sectors-list"></datalist>
+                        <label class="sector-toggle">
+                            <input type="checkbox" id="edit-sector-mode"> Editar
+                        </label>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <h4><i class="fas fa-link"></i> Links</h4>
+                    </div>
+                    <div class="section-body">
+                        <div id="links-container"></div>
+                        <button type="button" class="add-btn" id="add-link"><i class="fas fa-plus"></i> Adicionar Link</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <h4><i class="fas fa-clipboard-list"></i> Formulários</h4>
+                    </div>
+                    <div class="section-body">
+                        <div id="forms-container"></div>
+                        <button type="button" class="add-btn" id="add-form"><i class="fas fa-plus"></i> Adicionar Formulário</button>
+                    </div>
+                </div>
+                <div class="loading-spinner" id="card-loading-spinner"></div>
+                <div class="button-group">
+                    <button type="submit" id="save-card-btn" class="btn btn-primary"><i class="fas fa-save"></i> Salvar</button>
+                    <button type="button" id="cancel-card" class="btn"><i class="fas fa-times"></i> Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── Backup Modal ── -->
+<div class="modal" id="backup-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-header-icon" style="background:#faf5ff;color:#2AA7BE"><i class="fas fa-database"></i></div>
+            <div class="modal-header-text">
+                <h2>Backup de Dados</h2>
+                <p>Exporte ou importe dados do sistema</p>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="backup-options">
+                <button id="download-btn" class="backup-option">
+                    <div class="bk-icon dl"><i class="fas fa-download"></i></div>
+                    <div><strong>Exportar JSON</strong><span>Baixe um backup dos dados atuais</span></div>
+                </button>
+                <label class="backup-option" for="upload-input">
+                    <div class="bk-icon ul"><i class="fas fa-upload"></i></div>
+                    <div><strong>Importar JSON</strong><span>Carregue dados de um arquivo de backup</span></div>
+                </label>
+                <input type="file" id="upload-input" accept=".json">
+                <button id="close-backup" class="backup-option">
+                    <div class="bk-icon cl"><i class="fas fa-times"></i></div>
+                    <div><strong>Fechar</strong><span>Voltar ao sistema</span></div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+    <div class="navbar-brand">
+        <div class="brand-icon"><i class="fas fa-file-alt"></i></div>
+        <div class="brand-text">
+            <span class="brand-title">DocAdmin</span>
+            <span class="brand-sub">Gestão de Documentos</span>
+        </div>
+    </div>
+    <div class="navbar-divider"></div>
+    <div class="category-badge" id="category-badge">
+        <span class="dot"></span>
+        <span id="category-badge-text"></span>
+    </div>
+    <div class="navbar-spacer"></div>
+    <div class="navbar-actions">
+        <button class="nav-btn nav-btn-ghost" id="change-category-btn">
+            <i class="fas fa-exchange-alt"></i><span>Categoria</span>
+        </button>
+        <button class="nav-btn nav-btn-primary" id="backup-btn">
+            <i class="fas fa-database"></i><span>Backup</span>
+        </button>
+    </div>
+</nav>
+
+<!-- ── Toast ── -->
+<div class="warning-message" id="warning-message"><span id="warning-text"></span></div>
+
+<!-- ── Main ── -->
+<main class="main-wrapper">
+    <div class="tab-content active" id="subjects-tab">
+        <div class="page-header">
+            <div class="page-header-info">
+                <h2>Documentos</h2>
+                <p id="page-subtitle">Selecione uma categoria para visualizar os documentos</p>
+            </div>
+            <button class="btn btn-primary" id="add-card-btn">
+                <i class="fas fa-plus"></i> Novo Card
+            </button>
+        </div>
+        <div id="cards-list" class="cards-grid"></div>
+    </div>
+</main>
+
+<script>
+    const firebaseConfig = {
+            apiKey: "AIzaSyD38STN_vG08tlYJBXFtRUWtlcyRexw7Mc",
+            authDomain: "applamic.firebaseapp.com",
+            databaseURL: "https://applamic-default-rtdb.firebaseio.com",
+            projectId: "applamic",
+            storageBucket: "applamic.firebasestorage.app",
+            messagingSenderId: "1038898074287",
+            appId: "1:1038898074287:web:ec9fa6ce997d415e48fa5a"
+        };
+    // Banco unificado: o acervo vive no projeto do Dados LAMIC (applamic), no nó /docs.
+    // Sem senha própria: entra quem está logado no Dados LAMIC e é administrador ou tem a
+    // permissão "Gerenciar documentos" (docadmin.gerenciar). As regras do banco exigem o mesmo.
+    firebase.initializeApp(firebaseConfig);
+    const rootDb = firebase.database();
+    const db = { ref: (p) => rootDb.ref('docs/' + String(p || '').replace(/^\/+/, '')) };
+    const DADOS_URL = 'https://laboratoriolamic.github.io/Dados/';
+
+    let currentCategory = null;
+    let isAuthenticated = false;
+    let data = [];
+    let editingIndex = -1;
+    let loginAttempts = 0;
+    let isLocked = false;
+    let isSaving = false;
+    let loadingAnimationId = null;
+    let loadingAnimationStart = null;
+    let loadingCompleted = false;
+
+    function logWithTimestamp(message, type = 'log') {
+        const timestamp = new Date().toISOString();
+        console[type](`[${timestamp}] ${message}`);
+    }
+
+    function showWarning(message) {
+        logWithTimestamp(`Exibindo aviso: ${message}`);
+        const warningMessage = document.getElementById('warning-message');
+        const warningText = document.getElementById('warning-text');
+        warningText.textContent = message;
+        warningMessage.style.display = 'block';
+        setTimeout(() => { warningMessage.style.display = 'none'; }, 3000);
+    }
+
+    function updateCategoryBadge() {
+        const badge = document.getElementById('category-badge');
+        const badgeText = document.getElementById('category-badge-text');
+        const subtitle = document.getElementById('page-subtitle');
+        if (currentCategory) {
+            badgeText.textContent = currentCategory;
+            badge.style.display = 'flex';
+            if (subtitle) subtitle.textContent = `Categoria: ${currentCategory}`;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function showModal() {
+        logWithTimestamp('Exibindo modal de categoria');
+        document.getElementById('category-modal').style.display = 'flex';
+        document.getElementById('category-select').value = '';
+        document.getElementById('password-input').value = '';
+        document.getElementById('modal-content').classList.remove('error');
+        document.getElementById('lockout-message').style.display = 'none';
+        document.getElementById('progress-bar-container').style.display = 'none';
+        document.getElementById('category-submit').disabled = isLocked;
+        document.getElementById('category-loading-spinner').style.display = 'none';
+        document.getElementById('password-group').style.display = 'none';
+    }
+
+    function hideModal() {
+        logWithTimestamp('Fechando modal de categoria');
+        document.getElementById('category-modal').style.display = 'none';
+    }
+
+    function showCardModal(index = -1) {
+        logWithTimestamp(`Abrindo modal de card, índice: ${index}`);
+        editingIndex = index;
+        const modal = document.getElementById('card-modal');
+        const title = document.getElementById('modal-title');
+        const form = document.getElementById('card-form');
+        const sectorSelect = document.getElementById('card-sector-select');
+        const sectorInput = document.getElementById('card-sector-input');
+        const editModeCheckbox = document.getElementById('edit-sector-mode');
+        const cancelButton = document.getElementById('cancel-card');
+        document.getElementById('card-loading-spinner').style.display = 'none';
+        editModeCheckbox.checked = false;
+        sectorSelect.style.display = 'block';
+        sectorInput.style.display = 'none';
+        cancelButton.disabled = false;
+
+        updateSectorsList();
+
+        if (index >= 0) {
+            title.textContent = 'Editar Card';
+            const card = data[index];
+            document.getElementById('card-title').value = card.title || '';
+            if (card.sector && ![...sectorSelect.options].some(option => option.value === card.sector)) {
+                const option = document.createElement('option');
+                option.value = card.sector;
+                option.textContent = card.sector;
+                sectorSelect.appendChild(option);
+                const datalist = document.getElementById('sectors-list');
+                datalist.innerHTML += `<option value="${card.sector}">`;
+            }
+            sectorSelect.value = card.sector || '';
+            sectorInput.value = card.sector || '';
+            renderDynamicFields('links-container', card.links || []);
+            renderDynamicFields('forms-container', card.forms || []);
+        } else {
+            title.textContent = 'Adicionar Card';
+            form.reset();
+            sectorSelect.value = '';
+            sectorInput.value = '';
+            renderDynamicFields('links-container', [{ title: '', link: '' }]);
+            renderDynamicFields('forms-container', [{ title: '', link: '' }]);
+        }
+        modal.style.display = 'flex';
+    }
+
+    function hideCardModal() {
+        if (isSaving) {
+            logWithTimestamp('Tentativa de fechar modal de card bloqueada: salvamento em andamento');
+            showWarning('Aguarde o salvamento concluir antes de fechar.');
+            return;
+        }
+        logWithTimestamp('Fechando modal de card');
+        document.getElementById('card-modal').style.display = 'none';
+        editingIndex = -1;
+    }
+
+    function updateSectorsList() {
+        logWithTimestamp('Atualizando lista de setores');
+        const select = document.getElementById('card-sector-select');
+        const datalist = document.getElementById('sectors-list');
+        const sectors = [...new Set(data.map(card => card.sector).filter(s => s))];
+        select.innerHTML = '<option value="">Selecione um setor</option>' +
+                          sectors.map(sector => `<option value="${sector}">${sector}</option>`).join('');
+        datalist.innerHTML = sectors.map(sector => `<option value="${sector}">`).join('');
+    }
+
+    function toggleSectorMode() {
+        logWithTimestamp('Alternando modo de setor');
+        const sectorSelect = document.getElementById('card-sector-select');
+        const sectorInput = document.getElementById('card-sector-input');
+        const editModeCheckbox = document.getElementById('edit-sector-mode');
+        if (editModeCheckbox.checked) {
+            sectorSelect.style.display = 'none';
+            sectorInput.style.display = 'block';
+            sectorInput.value = sectorSelect.value;
+        } else {
+            sectorSelect.style.display = 'block';
+            sectorInput.style.display = 'none';
+            sectorSelect.value = sectorInput.value;
+        }
+    }
+
+    function renderDynamicFields(containerId, fields) {
+        logWithTimestamp(`Renderizando campos dinâmicos em: ${containerId}`);
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        fields.forEach((field, idx) => {
+            const div = document.createElement('div');
+            div.className = 'dynamic-field';
+            div.innerHTML = `
+                <input type="text" placeholder="Título" value="${field.title || ''}">
+                <input type="url" placeholder="URL" value="${field.link || ''}">
+                <button type="button" class="remove-btn" onclick="removeField('${containerId}', ${idx})"><i class="fas fa-minus"></i></button>
+            `;
+            container.appendChild(div);
+        });
+        if (container.children.length === 0) {
+            const div = document.createElement('div');
+            div.className = 'dynamic-field';
+            div.innerHTML = `
+                <input type="text" placeholder="Título">
+                <input type="url" placeholder="URL">
+                <button type="button" class="remove-btn" onclick="removeField('${containerId}', 0)"><i class="fas fa-minus"></i></button>
+            `;
+            container.appendChild(div);
+        }
+    }
+
+    function addDynamicField(containerId) {
+        logWithTimestamp(`Adicionando campo dinâmico em: ${containerId}`);
+        const container = document.getElementById(containerId);
+        const div = document.createElement('div');
+        div.className = 'dynamic-field';
+        div.innerHTML = `
+            <input type="text" placeholder="Título">
+            <input type="url" placeholder="URL">
+            <button type="button" class="remove-btn" onclick="removeField('${containerId}', ${container.children.length})"><i class="fas fa-minus"></i></button>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeField(containerId, idx) {
+        logWithTimestamp(`Removendo campo em: ${containerId}, índice: ${idx}`);
+        const container = document.getElementById(containerId);
+        if (container.children.length > 1) {
+            container.removeChild(container.children[idx]);
+        } else {
+            container.children[0].querySelectorAll('input').forEach(input => input.value = '');
+        }
+    }
+
+    function renderCards() {
+        logWithTimestamp('Renderizando cards');
+        const container = document.getElementById('cards-list');
+        container.innerHTML = '';
+        data.forEach((card, idx) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.innerHTML = `
+                <div class="card-accent"></div>
+                <div class="card-body">
+                    <span class="card-sector"><i class="fas fa-building" style="font-size:10px"></i> ${card.sector || '—'}</span>
+                    <h3>${card.title || ''}</h3>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-sm btn-ghost" onclick="showCardModal(${idx})"><i class="fas fa-pen"></i> Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteCard(${idx})"><i class="fas fa-trash"></i> Excluir</button>
+                </div>
+            `;
+            container.appendChild(cardEl);
+        });
+        if (data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+                    <h3>Nenhum documento cadastrado</h3>
+                    <p>Adicione o primeiro card clicando em "Novo Card"</p>
+                </div>
+            `;
+        }
+    }
+
+    async function addCard(e) {
+        e.preventDefault();
+        if (isSaving) { showWarning('Aguarde o salvamento atual concluir.'); return; }
+        isSaving = true;
+        const spinner = document.getElementById('card-loading-spinner');
+        const saveButton = document.getElementById('save-card-btn');
+        const cancelButton = document.getElementById('cancel-card');
+        spinner.style.display = 'block';
+        saveButton.disabled = true;
+        cancelButton.disabled = true;
+        logWithTimestamp('Função addCard chamada');
+
+        const title = document.getElementById('card-title').value.trim();
+        const editModeCheckbox = document.getElementById('edit-sector-mode');
+        const sector = editModeCheckbox.checked ?
+            document.getElementById('card-sector-input').value.trim() :
+            document.getElementById('card-sector-select').value.trim();
+        logWithTimestamp(`Título: ${title}, Setor: ${sector}, Categoria: ${currentCategory}`);
+
+        if (!title || !sector) {
+            showWarning('Título e Setor são obrigatórios.');
+            spinner.style.display = 'none'; saveButton.disabled = false; cancelButton.disabled = false; isSaving = false;
+            return;
+        }
+        if (!currentCategory) {
+            showWarning('Nenhuma categoria selecionada. Selecione uma categoria primeiro.');
+            spinner.style.display = 'none'; saveButton.disabled = false; cancelButton.disabled = false; isSaving = false;
+            showModal(); return;
+        }
+
+        const links = Array.from(document.querySelectorAll('#links-container .dynamic-field')).map(div => {
+            return { title: div.querySelector('input[type="text"]').value.trim(), link: div.querySelector('input[type="url"]').value.trim() };
+        }).filter(field => field.title || field.link);
+        const forms = Array.from(document.querySelectorAll('#forms-container .dynamic-field')).map(div => {
+            return { title: div.querySelector('input[type="text"]').value.trim(), link: div.querySelector('input[type="url"]').value.trim() };
+        }).filter(field => field.title || field.link);
+        const newCard = { title, sector, links, forms };
+        logWithTimestamp(`Novo card a ser adicionado: ${JSON.stringify(newCard)}`);
+
+        try {
+            data.push(newCard);
+            const success = await saveData();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            spinner.style.display = 'none'; saveButton.disabled = false; cancelButton.disabled = false; isSaving = false;
+            if (success) {
+                renderCards(); updateSectorsList(); hideCardModal(); showWarning('Card adicionado com sucesso!');
+            } else {
+                data.pop();
+                throw new Error('Falha ao salvar dados');
+            }
+        } catch (error) {
+            logWithTimestamp(`Erro ao adicionar card: ${error.message}`, 'error');
+            data.pop();
+            spinner.style.display = 'none'; saveButton.disabled = false; cancelButton.disabled = false; isSaving = false;
+            hideCardModal();
+            showWarning('Erro ao adicionar o card. Verifique a conexão ou tente novamente.');
+        }
+    }
+
+    async function saveCard(e) {
+        e.preventDefault();
+        if (isSaving) { showWarning('Aguarde o salvamento atual concluir.'); return; }
+        if (editingIndex < 0) { return addCard(e); }
+        isSaving = true;
+        const spinner = document.getElementById('card-loading-spinner');
+        const saveButton = document.getElementById('save-card-btn');
+        const cancelButton = document.getElementById('cancel-card');
+        spinner.style.display = 'block'; saveButton.disabled = true; cancelButton.disabled = true;
+        logWithTimestamp('Função saveCard chamada para edição');
+
+        const title = document.getElementById('card-title').value.trim();
+        const editModeCheckbox = document.getElementById('edit-sector-mode');
+        const sector = editModeCheckbox.checked ?
+            document.getElementById('card-sector-input').value.trim() :
+            document.getElementById('card-sector-select').value.trim();
+
+        if (!title || !sector) {
+            showWarning('Título e Setor são obrigatórios.');
+            spinner.style.display = 'none'; saveButton.disabled = false; cancelButton.disabled = false; isSaving = false;
+            return;
+        }
+        if (!currentCategory) {
+            showWarning('Nenhuma categoria selecionada.');
+            spinner.style.display = 'none'; saveButton.disabled = false; cancelButton.disabled = false; isSaving = false;
+            showModal(); return;
+        }
+
+        const links = Array.from(document.querySelectorAll('#links-container .dynamic-field')).map(div => {
+            return { title: div.querySelector('input[type="text"]').value.trim(), link: div.querySelector('input[type="url"]').value.trim() };
+        }).filter(field => field.title || field.link);
+        const forms = Array.from(document.querySelectorAll('#forms-container .dynamic-field')).map(div => {
+            return { title: div.querySelector('input[type="text"]').value.trim(), link: div.querySelector('input[type="url"]').value.trim() };
+        }).filter(field => field.title || field.link);
+        const updatedCard = { title, sector, links, forms };
+
+        try {
+            data[editingIndex] = updatedCard;
+            const success = await saveData();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            spinner.style.display = 'none'; saveButton.disabled = false; cancelButton.disabled = false; isSaving = false;
+            if (success) {
+                renderCards(); updateSectorsList(); hideCardModal(); showWarning('Card atualizado com sucesso!');
+            } else {
+                throw new Error('Falha ao salvar dados');
+            }
+        } catch (error) {
+            logWithTimestamp(`Erro ao editar card: ${error.message}`, 'error');
+            spinner.style.display = 'none'; saveButton.disabled = false; cancelButton.disabled = false; isSaving = false;
+            hideCardModal();
+            showWarning('Erro ao atualizar o card. Verifique a conexão ou tente novamente.');
+        }
+    }
+
+    function deleteCard(idx) {
+        if (confirm('Tem certeza que deseja excluir este card?')) {
+            logWithTimestamp(`Deletando card no índice: ${idx}`);
+            data.splice(idx, 1);
+            saveData().then(success => {
+                if (success) { renderCards(); updateSectorsList(); showWarning('Card excluído com sucesso!'); }
+            });
+        }
+    }
+
+    async function checkAndShowModal() {
+        showModal();
+        const msg = document.getElementById('sessao-dados');
+        const btnDados = document.getElementById('ir-dados');
+        const entrar = document.getElementById('category-submit');
+        entrar.disabled = true;
+        firebase.auth().onAuthStateChanged(async (user) => {
+            isAuthenticated = false;
+            if (!user) {
+                msg.textContent = 'O DocAdmin usa o login do Dados LAMIC. Entre por lá e abra o DocAdmin novamente.';
+                btnDados.style.display = 'flex';
+                return;
+            }
+            try {
+                const login = (await rootDb.ref('uids/' + user.uid).once('value')).val();
+                const perfil = login && (await rootDb.ref('usuarios/' + login).once('value')).val();
+                if (!perfil || perfil.ativo !== true) throw new Error('Sua conta está desativada no Dados LAMIC.');
+                let ok = perfil.grupo === 'admin';
+                if (!ok && perfil.grupo) ok = (await rootDb.ref(`grupos/${perfil.grupo}/perms/docadmin_gerenciar`).once('value')).val() === true;
+                if (!ok) throw new Error('Você não tem permissão para gerenciar documentos. Peça a um administrador do Dados LAMIC.');
+                isAuthenticated = true;
+                msg.textContent = `Olá, ${String(perfil.nome || login).split(' ')[0]}. Escolha a categoria.`;
+                btnDados.style.display = 'none';
+                entrar.disabled = false;
+            } catch (error) {
+                msg.textContent = error.message;
+                btnDados.style.display = 'none';
+            }
+        });
+    }
+
+    async function validatePassword() { return isAuthenticated; }
+
+    function startLockout() {
+        logWithTimestamp('Iniciando bloqueio por tentativas excessivas');
+        isLocked = true; loginAttempts = 0;
+        const lockoutMessage = document.getElementById('lockout-message');
+        const progressBar = document.getElementById('progress-bar');
+        const progressBarContainer = document.getElementById('progress-bar-container');
+        lockoutMessage.style.display = 'block';
+        progressBarContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressBar.style.transition = 'width 10s linear';
+        setTimeout(() => { progressBar.style.width = '100%'; }, 0);
+        setTimeout(() => {
+            isLocked = false;
+            lockoutMessage.style.display = 'none';
+            progressBarContainer.style.display = 'none';
+            progressBar.style.transition = 'none';
+            progressBar.style.width = '0%';
+            document.getElementById('category-submit').disabled = false;
+            logWithTimestamp('Bloqueio finalizado');
+        }, 10000);
+    }
+
+    function updateLoadingProgress(timestamp) {
+        if (!loadingAnimationStart) loadingAnimationStart = timestamp;
+        const elapsed = timestamp - loadingAnimationStart;
+        const duration = 15000;
+        const progressBase = Math.min(98, (elapsed / duration) * 98);
+        const jitter = (Math.random() - 0.5) * 2 * (1 - Math.min(elapsed, duration) / duration);
+        const progressValue = loadingCompleted ? 100 : Math.max(0, Math.min(98, progressBase + jitter));
+        const displayValue = loadingCompleted ? 100 : Math.min(99, Math.floor((elapsed / duration) * 99));
+        document.getElementById('loading-bar').style.width = `${progressValue}%`;
+        document.getElementById('loading-percentage').textContent = `${displayValue}%`;
+        if (!loadingCompleted) loadingAnimationId = requestAnimationFrame(updateLoadingProgress);
+    }
+
+    function showLoadingUI() {
+        const overlay = document.getElementById('login-loading-overlay');
+        const barContainer = document.getElementById('loading-bar-container');
+        const percentage = document.getElementById('loading-percentage');
+        overlay.style.display = 'flex';
+        barContainer.style.display = 'block';
+        percentage.style.display = 'block';
+        loadingAnimationStart = null; loadingCompleted = false;
+        if (loadingAnimationId) cancelAnimationFrame(loadingAnimationId);
+        loadingAnimationId = requestAnimationFrame(updateLoadingProgress);
+    }
+
+    function hideLoadingUI() {
+        const overlay = document.getElementById('login-loading-overlay');
+        if (loadingAnimationId) cancelAnimationFrame(loadingAnimationId);
+        loadingAnimationId = null; loadingAnimationStart = null; loadingCompleted = false;
+        document.getElementById('loading-bar').style.width = '0%';
+        overlay.style.display = 'none';
+        document.getElementById('loading-bar-container').style.display = 'none';
+        document.getElementById('loading-percentage').style.display = 'none';
+    }
+
+    function completeLoadingUI(callback) {
+        loadingCompleted = true;
+        if (loadingAnimationId) cancelAnimationFrame(loadingAnimationId);
+        document.getElementById('loading-bar').style.width = '100%';
+        document.getElementById('loading-percentage').textContent = '100%';
+        setTimeout(() => { hideLoadingUI(); if (typeof callback === 'function') callback(); }, 800);
+    }
+
+    function handleCategorySubmit() {
+        if (isLocked) { logWithTimestamp('Submissão bloqueada: lockout ativo'); return; }
+        const category = document.getElementById('category-select').value;
+        if (!category) { showWarning('Por favor, selecione uma categoria.'); return; }
+
+        if (!isAuthenticated) { showWarning('Entre pelo Dados LAMIC.'); return; }
+        if (isAuthenticated) {
+            document.getElementById('category-loading-spinner').style.display = 'block';
+            document.getElementById('category-submit').disabled = true;
+            showLoadingUI();
+            currentCategory = category;
+            updateCategoryBadge();
+            fetchData().then(() => {
+                completeLoadingUI(() => {
+                    document.getElementById('category-loading-spinner').style.display = 'none';
+                    document.getElementById('category-submit').disabled = false;
+                    hideModal();
+                });
+            }).catch(() => {
+                document.getElementById('category-loading-spinner').style.display = 'none';
+                document.getElementById('category-submit').disabled = false;
+                hideLoadingUI();
+            });
+            return;
+        }
+
+        const password = document.getElementById('password-input').value;
+        if (!password) { showWarning('Por favor, insira a senha.'); return; }
+        document.getElementById('category-loading-spinner').style.display = 'block';
+        document.getElementById('category-submit').disabled = true;
+        showLoadingUI();
+        validatePassword(password).then(isValid => {
+            const modalContent = document.getElementById('modal-content');
+            if (!isValid) {
+                loginAttempts++;
+                modalContent.classList.add('error');
+                showWarning('Senha incorreta.');
+                setTimeout(() => modalContent.classList.remove('error'), 500);
+                document.getElementById('category-loading-spinner').style.display = 'none';
+                document.getElementById('category-submit').disabled = false;
+                hideLoadingUI();
+                if (loginAttempts >= 5) startLockout();
+                return;
+            }
+            isAuthenticated = true;
+            currentCategory = category;
+            loginAttempts = 0;
+            updateCategoryBadge();
+            logWithTimestamp(`Autenticado. Categoria: ${category}`);
+            fetchData().then(() => {
+                completeLoadingUI(() => {
+                    document.getElementById('category-loading-spinner').style.display = 'none';
+                    document.getElementById('category-submit').disabled = false;
+                    hideModal();
+                });
+            }).catch(() => {
+                document.getElementById('category-loading-spinner').style.display = 'none';
+                document.getElementById('category-submit').disabled = false;
+                hideLoadingUI();
+            });
+        }).catch(() => {
+            document.getElementById('category-loading-spinner').style.display = 'none';
+            document.getElementById('category-submit').disabled = false;
+            hideLoadingUI();
+        });
+    }
+
+    document.getElementById('category-submit').addEventListener('click', handleCategorySubmit);
+    document.getElementById('password-input').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); handleCategorySubmit(); }
+    });
+    document.getElementById('change-category-btn').addEventListener('click', () => showModal());
+    document.getElementById('backup-btn').addEventListener('click', () => {
+        document.getElementById('backup-modal').style.display = 'flex';
+    });
+    document.getElementById('close-backup').addEventListener('click', () => {
+        document.getElementById('backup-modal').style.display = 'none';
+    });
+    document.getElementById('download-btn').addEventListener('click', () => {
+        const dataStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_${currentCategory || 'dados'}_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+    document.getElementById('upload-input').addEventListener('change', () => {
+        const file = document.getElementById('upload-input').files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const newData = JSON.parse(e.target.result);
+                const confirm = prompt('Digite "SIM" para confirmar o upload e substituir todos os dados:');
+                if (confirm === 'SIM') {
+                    data = newData;
+                    renderCards(); updateSectorsList(); saveData();
+                    document.getElementById('backup-modal').style.display = 'none';
+                    showWarning('Dados carregados com sucesso.');
+                } else {
+                    showWarning('Upload cancelado.');
+                }
+            } catch (error) {
+                showWarning('Erro ao ler o arquivo JSON.');
+            }
+        };
+        reader.readAsText(file);
+    });
+    document.getElementById('edit-sector-mode').addEventListener('change', toggleSectorMode);
+
+    async function fetchData() {
+        if (!currentCategory) { logWithTimestamp('currentCategory não definido', 'error'); showModal(); return; }
+        logWithTimestamp(`Carregando dados da categoria: ${currentCategory}`);
+        try {
+            const snapshot = await db.ref(`categories/${currentCategory}`).once('value');
+            const val = snapshot.val();
+            data = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+            logWithTimestamp(`Dados carregados: ${data.length} cards`);
+            renderCards(); updateSectorsList();
+        } catch (error) {
+            logWithTimestamp(`Erro ao carregar dados: ${error.message}`, 'error');
+            showWarning('Não foi possível carregar os dados. Tente novamente.');
+            showModal();
+        }
+    }
+
+    async function saveData() {
+        logWithTimestamp(`Salvando dados na categoria: ${currentCategory}`);
+        if (!currentCategory) { showWarning('Nenhuma categoria selecionada.'); return false; }
+        try {
+            await db.ref(`categories/${currentCategory}`).set(data);
+            logWithTimestamp(`Dados salvos com sucesso em ${currentCategory}`);
+            return true;
+        } catch (error) {
+            logWithTimestamp(`Erro ao salvar dados: ${error.message}`, 'error');
+            showWarning(`Não foi possível salvar os dados: ${error.message}`);
+            return false;
+        }
+    }
+
+    document.getElementById('add-card-btn').addEventListener('click', () => showCardModal());
+    document.getElementById('card-form').addEventListener('submit', (e) => {
+        if (editingIndex >= 0) { saveCard(e); } else { addCard(e); }
+    });
+    document.getElementById('cancel-card').addEventListener('click', hideCardModal);
+    document.getElementById('add-link').addEventListener('click', () => addDynamicField('links-container'));
+    document.getElementById('add-form').addEventListener('click', () => addDynamicField('forms-container'));
+
+    window.onload = () => {
+        logWithTimestamp('Página carregada, verificando senha');
+        checkAndShowModal();
+    };
+
+    document.onkeydown = function(event) {
+        if (
+            event.keyCode === 123 ||
+            ctrlShiftKey(event, 'I') ||
+            ctrlShiftKey(event, 'J') ||
+            ctrlShiftKey(event, 'C') ||
+            (event.ctrlKey && event.keyCode === 'U'.charCodeAt(0)) ||
+            (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0))
+        ) { event.preventDefault(); return false; }
+    };
+    function ctrlShiftKey(event, key) {
+        return event.ctrlKey && event.shiftKey && event.key.toUpperCase() === key;
+    }
+    document.addEventListener('contextmenu', function(evento) { evento.preventDefault(); });
+</script>
+</body>
+</html>

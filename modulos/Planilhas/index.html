@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acervo de Planilhas LAMIC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-w: 256px;
+            --tabbar-h: 26px;
+            --topbar-h: 38px;
+            --navy: #162036;
+            --blue: #1257A5;
+            --blue-light: #2E7DC7;
+            --purple: #2AA7BE;
+            --gold: #f59e0b;
+            --bg: #F4F8FC;
+            --text-1: #162036;
+            --text-2: #5C6B7C;
+            --border: #E2E9F1;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-1);
+            overflow: hidden;
+        }
+
+        /* ── LOADING ── */
+        .loading-overlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, #162036 0%, #1F2D4D 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 16px; z-index: 9999;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(255,255,255,.1);
+            border-top-color: var(--blue-light);
+            border-radius: 50%;
+            animation: spin .85s linear infinite;
+        }
+        .loading-text {
+            color: rgba(255,255,255,.4);
+            font-size: .72rem; font-weight: 500;
+            letter-spacing: 2.5px; text-transform: uppercase;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── TAB BAR ── */
+        .tab-bar {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--tabbar-h);
+            background: #162036;
+            display: flex; align-items: center;
+            gap: 8px; padding: 0 16px;
+            z-index: 400;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            box-shadow: 0 2px 12px rgba(0,0,0,.3);
+        }
+        .tab-back {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 12px; border-radius: 8px;
+            color: rgba(255,255,255,.8); cursor: pointer;
+            border: 1px solid rgba(255,255,255,.08);
+            background: transparent;
+            transition: all .18s; flex-shrink: 0; user-select: none;
+        }
+        .tab-back:hover { background: rgba(255,255,255,.08); color: white; }
+        .tab-back-logo { font-size: .9rem; font-weight: 700; letter-spacing: 1px; }
+        .tab-divider { width: 1px; height: 24px; background: rgba(255,255,255,.08); flex-shrink: 0; margin: 0 4px; }
+
+        #tabs {
+            display: flex; align-items: center;
+            gap: 4px; flex: 1; overflow-x: auto; padding: 2px 0;
+            scrollbar-width: none;
+        }
+        #tabs::-webkit-scrollbar { display: none; }
+
+        .tab {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.68);
+            padding: 6px 12px; border-radius: 7px;
+            cursor: pointer; transition: all .18s;
+            max-width: 180px; min-width: 90px; flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,.07);
+            font-size: .785rem; font-weight: 500;
+            animation: tabIn .25s ease; user-select: none;
+        }
+        .tab:hover { background: rgba(255,255,255,.1); color: white; }
+        .tab.active { background: rgba(46,125,199,.18); color: #8FD3E0; border-color: rgba(46,125,199,.35); }
+        .tab.dragging { opacity: .6; transform: rotate(1.5deg) scale(1.03); cursor: grabbing; }
+        .tab.drag-over { border-left: 3px solid var(--blue-light); background: rgba(46,125,199,.1); }
+        @keyframes tabIn {
+            from { opacity: 0; transform: translateY(-8px) scale(.92); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .tab.closing { animation: tabOut .2s ease forwards; }
+        @keyframes tabOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to   { opacity: 0; transform: translateY(-6px) scale(.9); }
+        }
+        .tab span.tab-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tab-close {
+            width: 15px; height: 15px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; opacity: .4; font-size: .6rem;
+            flex-shrink: 0; transition: all .15s;
+        }
+        .tab-close:hover { opacity: 1; background: rgba(239,68,68,.6); }
+
+        /* ── IFRAME ── */
+        .content-frame {
+            position: fixed;
+            top: var(--tabbar-h); left: 0;
+            width: 100%; height: calc(100% - var(--tabbar-h));
+            z-index: 50; border: none;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            position: fixed;
+            top: var(--tabbar-h); left: 0;
+            width: var(--sidebar-w);
+            height: calc(100vh - var(--tabbar-h));
+            background: #162036;
+            display: flex; flex-direction: column;
+            z-index: 200;
+            border-right: 1px solid rgba(255,255,255,.05);
+            transform: translateX(0);
+            transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .35s ease;
+            opacity: 1;
+        }
+        .sidebar.hidden {
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .sidebar-header {
+            padding: 20px 18px 18px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            flex-shrink: 0;
+        }
+        .sidebar-brand { display: flex; align-items: center; gap: 11px; }
+        .sidebar-logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #1257A5, #2E7DC7);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .sidebar-brand-name { font-size: .93rem; font-weight: 700; color: white; letter-spacing: .4px; }
+        .sidebar-brand-sub { font-size: .68rem; color: rgba(255,255,255,.32); margin-top: 1px; }
+
+        .sidebar-section { padding: 16px 12px 8px; flex-shrink: 0; }
+        .sidebar-section-label {
+            display: block;
+            font-size: .62rem; font-weight: 700;
+            letter-spacing: 1.8px; text-transform: uppercase;
+            color: rgba(255,255,255,.26);
+            padding: 0 6px; margin-bottom: 5px;
+        }
+        .sidebar-nav-item {
+            display: flex; align-items: center; gap: 9px;
+            padding: 9px 10px; border-radius: 8px;
+            color: rgba(255,255,255,.65);
+            cursor: pointer; transition: all .15s;
+            font-size: .84rem; font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            border: 1px solid transparent;
+            width: 100%; text-align: left; background: transparent;
+            user-select: none;
+        }
+        .sidebar-nav-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.92); }
+        .sidebar-nav-item.active {
+            background: rgba(46,125,199,.14);
+            color: #8FD3E0;
+            border-color: rgba(46,125,199,.22);
+        }
+        .nav-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: .7; }
+        .sidebar-nav-item.active .nav-icon { opacity: 1; }
+        .nav-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .nav-badge {
+            margin-left: auto; flex-shrink: 0;
+            font-size: .67rem; font-weight: 600;
+            color: rgba(255,255,255,.32);
+            background: rgba(255,255,255,.07);
+            padding: 1px 7px; border-radius: 10px;
+            min-width: 22px; text-align: center;
+        }
+        .sidebar-nav-item.active .nav-badge { background: rgba(46,125,199,.2); color: #8FD3E0; }
+
+        .sidebar-scroll {
+            flex: 1; overflow-y: auto;
+            padding: 8px 12px 16px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,.08) transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar { width: 3px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+        /* ── MAIN ── */
+        #mainContent {
+            margin-left: var(--sidebar-w);
+            margin-top: var(--tabbar-h);
+            height: calc(100vh - var(--tabbar-h));
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            height: var(--topbar-h);
+            padding: 0 24px;
+            display: flex; align-items: center; gap: 12px;
+            flex-shrink: 0;
+            box-shadow: 0 1px 6px rgba(0,0,0,.04);
+        }
+        .topbar-title { font-size: .95rem; font-weight: 600; color: var(--text-1); white-space: nowrap; }
+        .topbar-count {
+            font-size: .74rem; font-weight: 500;
+            color: var(--text-2);
+            background: var(--bg);
+            padding: 2px 9px; border-radius: 20px;
+            white-space: nowrap;
+        }
+        .topbar-sep { flex: 1; }
+
+        .search-wrapper { position: relative; width: 280px; }
+        .search-icon {
+            position: absolute; left: 11px;
+            top: 50%; transform: translateY(-50%);
+            color: #9FB3CC; pointer-events: none;
+            width: 15px; height: 15px;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 8px 14px 8px 34px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: .845rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-1);
+            background: #FBFCFE;
+            outline: none;
+            transition: all .18s;
+        }
+        #searchInput::placeholder { color: #9FB3CC; }
+        #searchInput:focus {
+            border-color: var(--blue-light);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(46,125,199,.1);
+        }
+
+        .topbar-fav-btn {
+            display: flex; align-items: center; gap: 7px;
+            padding: 7px 14px;
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-2);
+            font-size: .83rem; font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer; transition: all .18s;
+            white-space: nowrap;
+        }
+        .topbar-fav-btn:hover { border-color: var(--gold); color: #92400e; background: #fffbeb; }
+        .topbar-fav-btn.active { background: #fffbeb; border-color: var(--gold); color: #92400e; font-weight: 600; }
+
+        /* ── STATS BAR ── */
+        .stats-bar {
+            padding: 16px 24px 12px;
+            display: flex; gap: 14px;
+            flex-shrink: 0;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            flex: 1; min-width: 0;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .stat-icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .stat-icon.blue   { background: #EAF3FB; color: var(--blue); }
+        .stat-icon.purple { background: #f5f3ff; color: var(--purple); }
+        .stat-icon.amber  { background: #fffbeb; color: #d97706; }
+        .stat-value { font-size: 1.45rem; font-weight: 700; color: var(--text-1); line-height: 1; }
+        .stat-label { font-size: .74rem; color: var(--text-2); margin-top: 3px; }
+
+        /* ── CARDS WRAPPER ── */
+        .cards-wrapper {
+            flex: 1; overflow-y: auto;
+            padding: 0 24px 32px; min-height: 0;
+            scrollbar-width: thin; scrollbar-color: #CFDAE6 transparent;
+        }
+        .cards-wrapper::-webkit-scrollbar { width: 6px; }
+        .cards-wrapper::-webkit-scrollbar-track { background: transparent; }
+        .cards-wrapper::-webkit-scrollbar-thumb { background: #CFDAE6; border-radius: 3px; }
+
+        #spreadsheetList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+            gap: 16px;
+        }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            grid-column: 1/-1;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 72px 24px;
+            text-align: center; color: var(--text-2);
+        }
+        .empty-icon {
+            width: 52px; height: 52px;
+            background: #E2E9F1; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 14px; color: #9FB3CC;
+        }
+        .empty-state h3 { font-size: 1rem; font-weight: 600; color: var(--text-1); margin-bottom: 5px; }
+        .empty-state p { font-size: .845rem; }
+
+        /* ── CARD ── */
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e4eaf1;
+            display: flex; flex-direction: column;
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(14,46,90,.09);
+            border-color: #CDE6F2;
+        }
+        .card-header {
+            padding: 16px 16px 0;
+            display: flex; align-items: flex-start;
+            justify-content: space-between;
+        }
+        .card-icon {
+            width: 38px; height: 38px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .star {
+            cursor: pointer; font-size: 1.05rem; line-height: 1;
+            transition: transform .18s, color .18s;
+            flex-shrink: 0; padding: 2px;
+        }
+        .star:hover { transform: scale(1.3); }
+        .star.favorited { color: var(--gold); }
+        .star:not(.favorited) { color: #d1dae6; }
+
+        .card-body {
+            padding: 12px 16px 14px;
+            flex: 1; display: flex; flex-direction: column; gap: 8px;
+        }
+        .card-title { font-size: .9rem; font-weight: 600; color: var(--text-1); line-height: 1.5; flex: 1; }
+
+        .sector-badge {
+            display: inline-block;
+            font-size: .67rem; font-weight: 600;
+            letter-spacing: .5px; text-transform: uppercase;
+            color: #1257A5;
+            background: #EAF3FB;
+            border: 1px solid #DCEEF8;
+            border-radius: 5px;
+            padding: 3px 8px;
+            max-width: 100%; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+            align-self: flex-start;
+        }
+        .card-footer {
+            border-top: 1px solid #F4F8FC;
+            padding: 11px 16px;
+            display: flex; gap: 8px;
+            flex-wrap: wrap; align-items: center;
+        }
+
+        /* ── BUTTONS ── */
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 14px;
+            background: #1F2D4D; color: white;
+            border-radius: 7px;
+            font-size: .78rem; font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            text-decoration: none; cursor: pointer; border: none;
+            transition: all .18s; white-space: nowrap;
+        }
+        .btn-primary:hover { background: #1F2D4D; box-shadow: 0 4px 12px rgba(22,32,54,.3); }
+
+        .btn-form {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 13px;
+            background: transparent; color: var(--purple);
+            border: 1.5px solid rgba(124,58,237,.3);
+            border-radius: 7px;
+            font-size: .78rem; font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            text-decoration: none; cursor: pointer;
+            transition: all .18s; white-space: nowrap;
+        }
+        .btn-form:hover { background: var(--purple); color: white; border-color: var(--purple); box-shadow: 0 4px 12px rgba(124,58,237,.25); }
+
+        /* ── DROPDOWN PANEL (global, lives in <body> to escape transforms) ── */
+        #drop-panel {
+            display: none;
+            position: fixed;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
+            z-index: 9999; min-width: 190px; max-height: 200px;
+            overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: #CFDAE6 #FBFCFE;
+        }
+        #drop-panel a {
+            display: block; padding: 9px 14px;
+            font-size: .82rem; font-family: 'Inter', sans-serif;
+            color: var(--text-1); text-decoration: none;
+            transition: background .1s; white-space: nowrap;
+        }
+        #drop-panel a:first-child { border-radius: 9px 9px 0 0; }
+        #drop-panel a:last-child  { border-radius: 0 0 9px 9px; }
+        #drop-panel a:hover { background: #F4F8FC; color: var(--blue); }
+
+        @keyframes dropConfirm { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+        /* ── HAMBURGER ── */
+        .hamburger {
+            display: none;
+            align-items: center; justify-content: center;
+            width: 36px; height: 36px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 8px;
+            color: rgba(255,255,255,.8);
+            cursor: pointer; flex-shrink: 0;
+            transition: all .18s;
+        }
+        .hamburger:hover { background: rgba(255,255,255,.08); color: white; }
+        .hamburger svg { display: block; }
+
+        /* ── OVERLAY (mobile) ── */
+        .sidebar-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.45);
+            z-index: 199;
+            backdrop-filter: blur(2px);
+        }
+        .sidebar-overlay.active { display: block; }
+
+        /* ── MOBILE ── */
+        @media (max-width: 767px) {
+            .hamburger { display: flex; }
+
+            .sidebar {
+                top: var(--tabbar-h);
+                transform: translateX(-100%);
+                opacity: 0;
+                pointer-events: none;
+                z-index: 300;
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            #mainContent {
+                margin-left: 0;
+            }
+
+            .topbar {
+                padding: 0 12px;
+                gap: 8px;
+            }
+            .search-wrapper { width: 100%; }
+            .topbar-fav-btn span { display: none; }
+
+            .stats-bar { padding: 10px 12px 8px; gap: 8px; }
+            .stat-card { padding: 10px 12px; gap: 8px; }
+            .stat-value { font-size: 1.1rem; }
+
+            .cards-wrapper { padding: 0 12px 32px; }
+            #spreadsheetList { grid-template-columns: 1fr; }
+        }
+    
+        /* barra fina (dentro do portal) */
+        #topbar, .topbar { height: var(--topbar-h) !important; min-height: 0 !important; }
+        #topbar input, .topbar input { padding-top: 4px !important; padding-bottom: 4px !important; font-size: .8rem !important; }
+        #topbar button, .topbar button, .topbar-badge { padding-top: 3px !important; padding-bottom: 3px !important; font-size: .78rem !important; }
+        #hamburger { height: 28px !important; width: 28px !important; }
+    
+        /* abas ultrafinas (dentro do portal) */
+        .tab-bar { padding: 0 6px !important; gap: 4px !important; box-shadow: none !important; }
+        .tab-back { padding: 1px 8px !important; border-radius: 5px !important; gap: 5px !important; }
+        .tab-back svg { width: 11px !important; height: 11px !important; }
+        .tab-back-logo { font-size: .7rem !important; }
+        .tab-divider { height: 14px !important; }
+        #tabs { padding: 0 !important; gap: 3px !important; }
+        .tab { padding: 1px 8px !important; border-radius: 5px !important; font-size: .7rem !important; min-width: 70px !important; }
+        .tab-close { width: 12px !important; height: 12px !important; }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay" class="loading-overlay" style="display:none;">
+    <div class="spinner"></div>
+    <span class="loading-text">Carregando acervo</span>
+</div>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- TAB BAR -->
+<div id="tabBar" class="tab-bar">
+    <button class="hamburger" id="hamburgerBtn" title="Menu" onclick="toggleSidebar()" aria-label="Abrir menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+    </button>
+    <div id="backButton" class="tab-back" title="Voltar ao Início" onclick="goToHome()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span class="tab-back-logo">LAMIC</span>
+    </div>
+    <div class="tab-divider"></div>
+    <div id="tabs"></div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">
+            <div class="sidebar-logo-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="3" y1="9" x2="21" y2="9"/>
+                    <line x1="3" y1="15" x2="21" y2="15"/>
+                    <line x1="9" y1="9" x2="9" y2="21"/>
+                </svg>
+            </div>
+            <div>
+                <div class="sidebar-brand-name">LAMIC</div>
+                <div class="sidebar-brand-sub">Acervo de Planilhas</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-section">
+        <span class="sidebar-section-label">Navegação</span>
+        <button class="sidebar-nav-item active" id="navAll" onclick="filterBySector('')">
+            <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            <span class="nav-label">Todas as Planilhas</span>
+            <span class="nav-badge" id="navAllBadge">0</span>
+        </button>
+        <button class="sidebar-nav-item" id="navFavorites" onclick="filterByFavorites()">
+            <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <span class="nav-label">Favoritos</span>
+            <span class="nav-badge" id="navFavBadge">0</span>
+        </button>
+    </div>
+
+    <div class="sidebar-scroll">
+        <span class="sidebar-section-label">Categorias</span>
+        <div id="sectorNav"></div>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main id="mainContent">
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="search-wrapper">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Buscar por título...">
+        </div>
+        <div class="topbar-sep"></div>
+        <button id="favoriteFilter" class="topbar-fav-btn" onclick="filterByFavorites()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            Favoritos
+        </button>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="3" y1="9" x2="21" y2="9"/>
+                    <line x1="3" y1="15" x2="21" y2="15"/>
+                    <line x1="9" y1="9" x2="9" y2="21"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stat-value" id="statTotal">—</div>
+                <div class="stat-label">Planilhas</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stat-value" id="statCategories">—</div>
+                <div class="stat-label">Categorias</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon amber">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stat-value" id="statFavorites">—</div>
+                <div class="stat-label">Favoritos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARDS GRID -->
+    <div class="cards-wrapper">
+        <div id="spreadsheetList"></div>
+    </div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+            apiKey: "AIzaSyD38STN_vG08tlYJBXFtRUWtlcyRexw7Mc",
+            authDomain: "applamic.firebaseapp.com",
+            databaseURL: "https://applamic-default-rtdb.firebaseio.com",
+            projectId: "applamic",
+            storageBucket: "applamic.firebasestorage.app",
+            messagingSenderId: "1038898074287",
+            appId: "1:1038898074287:web:ec9fa6ce997d415e48fa5a"
+        };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    // Banco unificado (applamic, nó /docs). Sessão do Dados LAMIC (mesma origem); sem login, manda entrar por lá.
+    const sessaoDados = new Promise((resolve) => {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) return resolve(user);
+            document.body.insertAdjacentHTML('afterbegin', '<div style="position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.75);display:flex;align-items:center;justify-content:center;padding:16px"><div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;text-align:center;font-family:sans-serif"><h3 style="margin:0 0 8px">Entre pelo Dados LAMIC</h3><p style="margin:0 0 16px;color:#475569;font-size:14px">Este acervo usa o login do Dados LAMIC.</p><a href="https://laboratoriolamic.github.io/Dados/" style="display:inline-block;background:#1d4ed8;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700">Ir para o Dados LAMIC</a></div></div>');
+        });
+    });
+
+    const FAVORITES_KEY = `favorites:${location.host}${location.pathname}`;
+    const TABS_KEY      = `openTabs:${location.host}${location.pathname}`;
+
+    let favorites       = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+    let selectedSector  = '';
+    let showFavorites   = false;
+    let openTabs        = [];
+    let draggedTab      = null;
+    let draggedTabIndex = -1;
+    let spreadsheets    = [];
+
+    const colorPalette = [
+        { from: '#1F2D4D', to: '#2E7DC7' },
+        { from: '#2AA7BE', to: '#a78bfa' },
+        { from: '#047857', to: '#10b981' },
+        { from: '#b45309', to: '#f59e0b' },
+        { from: '#be123c', to: '#f43f5e' },
+        { from: '#0e7490', to: '#06b6d4' },
+        { from: '#4338ca', to: '#8FD3E0' },
+        { from: '#15803d', to: '#4ade80' },
+    ];
+    const sectorColors = {};
+
+    /* ── FIREBASE ── */
+    async function fetchSpreadsheets() {
+        try {
+            await sessaoDados;   // regras do banco: só quem está logado no Dados LAMIC lê o acervo
+            const snapshot = await database.ref('docs/categories/Planilhas').once('value');
+            if (!snapshot.exists()) return [];
+            const data = snapshot.val();
+            const list = Array.isArray(data) ? data : Object.values(data);
+            list.forEach((s, i) => {
+                if (s.link && !isValidUrl(s.link)) console.warn(`Link inválido #${i}`);
+                (s.links || []).forEach((l, j) => { if (!isValidUrl(l.link)) console.warn(`links[${j}] inválido #${i}`); });
+                (s.forms || []).forEach((f, j) => { if (!isValidUrl(f.link)) console.warn(`forms[${j}] inválido #${i}`); });
+            });
+            return list;
+        } catch (e) {
+            console.error('Firebase error:', e);
+            alert('Erro ao carregar os dados. Verifique a conexão.');
+            return [];
+        }
+    }
+
+    function isValidUrl(url) {
+        try {
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            new URL(url); return true;
+        } catch { return false; }
+    }
+
+    /* ── TABS ── */
+    function openTab(url, index, type) {
+        if (!isValidUrl(url)) { alert('URL inválida.'); return; }
+        let title = spreadsheets[index].title;
+        const parts = title.split(' - ');
+        if (parts.length > 1) title = parts[1].trim();
+
+        if (!openTabs.find(t => t.url === url)) {
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.className = 'content-frame';
+            iframe.style.visibility = 'hidden';
+            iframe.style.pointerEvents = 'none';
+            iframe.setAttribute('title', `Conteúdo: ${title}`);
+            iframe.onerror = () => alert('Erro ao carregar o conteúdo.');
+            document.body.appendChild(iframe);
+            openTabs.push({ url, title, index, type, iframe });
+
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.dataset.url = url;
+            tab.draggable = true;
+            tab.setAttribute('tabindex', '0');
+            tab.innerHTML = `<span class="tab-title">${title}</span><span class="tab-close" onclick="closeTab('${url}')">✕</span>`;
+            tab.onclick = e => { if (!e.target.classList.contains('tab-close')) switchTab(url); };
+            tab.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.target.classList.contains('tab-close')) switchTab(url); });
+            tab.addEventListener('dragstart', handleDragStart);
+            tab.addEventListener('dragover',  handleDragOver);
+            tab.addEventListener('drop',      handleDrop);
+            tab.addEventListener('dragend',   handleDragEnd);
+            document.getElementById('tabs').appendChild(tab);
+            localStorage.setItem(TABS_KEY, JSON.stringify(openTabs.map(({iframe: _, ...r}) => r)));
+        }
+        switchTab(url);
+    }
+
+    function closeTab(url) {
+        const tabEl = document.querySelector(`.tab[data-url="${url}"]`);
+        const idx   = openTabs.findIndex(t => t.url === url);
+        if (!tabEl || idx === -1) return;
+        tabEl.classList.add('closing');
+        setTimeout(() => {
+            tabEl.remove();
+            openTabs[idx].iframe.remove();
+            openTabs.splice(idx, 1);
+            localStorage.setItem(TABS_KEY, JSON.stringify(openTabs.map(({iframe: _, ...r}) => r)));
+            if (openTabs.length === 0) {
+                document.getElementById('mainContent').style.display = 'flex';
+                document.querySelector('.sidebar').classList.remove('hidden');
+            } else {
+                switchTab(openTabs[openTabs.length - 1].url);
+            }
+        }, 220);
+    }
+
+    function switchTab(url) {
+        document.getElementById('mainContent').style.display = 'none';
+        document.querySelector('.sidebar').classList.add('hidden');
+        openTabs.forEach(t => {
+            const visible = t.url === url;
+            t.iframe.style.visibility = visible ? 'visible' : 'hidden';
+            t.iframe.style.pointerEvents = visible ? 'auto' : 'none';
+            t.iframe.style.display = visible ? 'block' : 'none';
+        });
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        const el = document.querySelector(`.tab[data-url="${url}"]`);
+        if (el) el.classList.add('active');
+        // Force Google Sheets to recalculate its layout after becoming visible
+        requestAnimationFrame(() => {
+            window.dispatchEvent(new Event('resize'));
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 400);
+        });
+    }
+
+    function goToHome() {
+        document.getElementById('mainContent').style.display = 'flex';
+        document.querySelector('.sidebar').classList.remove('hidden');
+        openTabs.forEach(t => {
+            if (t.iframe) {
+                t.iframe.style.visibility = 'hidden';
+                t.iframe.style.pointerEvents = 'none';
+            }
+        });
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    }
+
+    /* ── MOBILE SIDEBAR ── */
+    function toggleSidebar() {
+        const sidebar  = document.querySelector('.sidebar');
+        const overlay  = document.getElementById('sidebarOverlay');
+        const isOpen   = sidebar.classList.contains('mobile-open');
+        isOpen ? closeSidebar() : openSidebar();
+    }
+    function openSidebar() {
+        document.querySelector('.sidebar').classList.add('mobile-open');
+        document.getElementById('sidebarOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+        document.querySelector('.sidebar').classList.remove('mobile-open');
+        document.getElementById('sidebarOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    /* ── DRAG & DROP ── */
+    function handleDragStart(e) {
+        draggedTab = e.target;
+        draggedTabIndex = Array.from(draggedTab.parentNode.children).indexOf(draggedTab);
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+    function handleDragOver(e) {
+        e.preventDefault();
+        const target = e.target.closest('.tab');
+        if (target && target !== draggedTab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('drag-over'));
+            target.classList.add('drag-over');
+        }
+    }
+    function handleDrop(e) {
+        e.preventDefault();
+        if (!draggedTab) return;
+        document.querySelectorAll('.tab').forEach(t => { t.classList.remove('drag-over', 'dragging'); t.style.animation = ''; });
+        const target = e.target.closest('.tab');
+        if (!target || target === draggedTab) return;
+        const targetIdx = Array.from(target.parentNode.children).indexOf(target);
+        const [moved] = openTabs.splice(draggedTabIndex, 1);
+        openTabs.splice(targetIdx, 0, moved);
+        target.parentNode.insertBefore(draggedTab, draggedTabIndex < targetIdx ? target.nextSibling : target);
+        draggedTab.style.animation = 'dropConfirm .4s ease-out';
+        setTimeout(() => { if (draggedTab) draggedTab.style.animation = ''; }, 400);
+    }
+    function handleDragEnd() {
+        document.querySelectorAll('.tab').forEach(t => { t.classList.remove('drag-over', 'dragging'); t.style.animation = ''; t.style.zIndex = ''; });
+        draggedTab = null; draggedTabIndex = -1;
+    }
+
+    /* ── FAVORITES ── */
+    function toggleFavorite(index) {
+        index = parseInt(index);
+        const star = event.target;
+        if (favorites.includes(index)) {
+            favorites = favorites.filter(f => f !== index);
+            star.classList.remove('favorited');
+        } else {
+            favorites.push(index);
+            star.classList.add('favorited');
+        }
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+        updateStats();
+        if (showFavorites) updateCards();
+    }
+
+    /* ── SEARCH & FILTER ── */
+    function normalizeText(text) {
+        return text.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase().trim();
+    }
+
+    function updateCards() {
+        const term  = normalizeText(document.getElementById('searchInput').value);
+        const cards = document.getElementsByClassName('card');
+        let visible = 0;
+
+        Array.from(cards).forEach(card => {
+            const title  = normalizeText(card.querySelector('h2').textContent);
+            const sector = card.dataset.sector;
+            const idx    = parseInt(card.dataset.index);
+            const show   = title.includes(term)
+                && (selectedSector === '' || sector === selectedSector)
+                && (!showFavorites || favorites.includes(idx));
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        const countEl = document.getElementById('topbarCount');
+        if (countEl) countEl.textContent = `${visible} planilha${visible !== 1 ? 's' : ''}`;
+
+        const existing = document.querySelector('.empty-state');
+        if (existing) existing.remove();
+        if (visible === 0 && cards.length > 0) {
+            const div = document.createElement('div');
+            div.className = 'empty-state';
+            div.innerHTML = `
+                <div class="empty-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3>Nenhuma planilha encontrada</h3>
+                <p>Tente ajustar os filtros ou a busca</p>`;
+            document.getElementById('spreadsheetList').appendChild(div);
+        }
+    }
+
+    function setActiveNav(id) {
+        document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+    }
+
+    function filterBySector(sector) {
+        closeSidebar();
+        selectedSector = sector;
+        showFavorites  = false;
+        document.getElementById('favoriteFilter').classList.remove('active');
+        if (sector === '') {
+            setActiveNav('navAll');
+        } else {
+            document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#sectorNav .sidebar-nav-item').forEach(btn => {
+                if (btn.dataset.sector === sector) btn.classList.add('active');
+            });
+        }
+        updateCards();
+    }
+
+    function filterByFavorites() {
+        closeSidebar();
+        showFavorites  = !showFavorites;
+        selectedSector = '';
+        document.getElementById('favoriteFilter').classList.toggle('active', showFavorites);
+        setActiveNav(showFavorites ? 'navFavorites' : 'navAll');
+        updateCards();
+    }
+
+    function updateStats() {
+        const uniqueSectors = [...new Set(spreadsheets.map(s => s.sector))];
+        document.getElementById('statTotal').textContent      = spreadsheets.length;
+        document.getElementById('statCategories').textContent = uniqueSectors.length;
+        document.getElementById('statFavorites').textContent  = favorites.length;
+        document.getElementById('navAllBadge').textContent    = spreadsheets.length;
+        document.getElementById('navFavBadge').textContent    = favorites.length;
+    }
+
+    function populateSectorNav() {
+        const nav = document.getElementById('sectorNav');
+        nav.innerHTML = '';
+        const sectors = [...new Set(spreadsheets.map(s => s.sector))].sort();
+        sectors.forEach(sector => {
+            const count = spreadsheets.filter(s => s.sector === sector).length;
+            const btn = document.createElement('button');
+            btn.className = 'sidebar-nav-item';
+            btn.dataset.sector = sector;
+            btn.innerHTML = `
+                <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                </svg>
+                <span class="nav-label">${sector}</span>
+                <span class="nav-badge">${count}</span>`;
+            btn.addEventListener('click', () => filterBySector(sector));
+            nav.appendChild(btn);
+        });
+    }
+
+    /* ── DROP PANEL ── */
+    const dropPanel = document.createElement('div');
+    dropPanel.id = 'drop-panel';
+    document.body.appendChild(dropPanel);
+    let dropActiveBtn = null;
+
+    function placePanel(btn) {
+        const rect = btn.getBoundingClientRect();
+        dropPanel.style.left = rect.left + 'px';
+        dropPanel.style.top  = (rect.bottom + 4) + 'px';
+        // Measure after placing (panel is visible at this point)
+        const panelH    = dropPanel.offsetHeight;
+        const spaceBelow = window.innerHeight - rect.bottom - 8;
+        if (spaceBelow < panelH && rect.top > panelH + 8) {
+            dropPanel.style.top = (rect.top - panelH - 4) + 'px';
+        }
+    }
+
+    function openDropPanel(btn) {
+        const isSame = dropActiveBtn === btn && dropPanel.style.display !== 'none';
+        dropPanel.style.display = 'none';
+        dropActiveBtn = null;
+        if (isSame) return;
+
+        const items = JSON.parse(btn.dataset.dropdown);
+        const index = parseInt(btn.dataset.index);
+        const dtype = btn.dataset.dtype;
+
+        dropPanel.innerHTML = items.map(item => {
+            const isDrive    = item.link.includes('drive.google.com');
+            const isExternal = isDrive || dtype === 'form';
+            return isExternal
+                ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>`
+                : `<a href="#" data-link="${item.link}" data-index="${index}">${item.title}</a>`;
+        }).join('');
+
+        dropPanel.style.display = 'block';
+        dropActiveBtn = btn;
+        placePanel(btn);
+    }
+
+    dropPanel.addEventListener('click', function(e) {
+        const a = e.target.closest('a[data-link]');
+        if (a) {
+            e.preventDefault();
+            openTab(a.dataset.link, parseInt(a.dataset.index), 'spreadsheet');
+        }
+        // External links open on their own; close panel after brief delay
+        setTimeout(() => { dropPanel.style.display = 'none'; dropActiveBtn = null; }, 60);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-dropdown]') || dropPanel.contains(e.target)) return;
+        dropPanel.style.display = 'none';
+        dropActiveBtn = null;
+    });
+
+    window.addEventListener('scroll', function() {
+        if (dropPanel.style.display === 'none' || !dropActiveBtn) return;
+        placePanel(dropActiveBtn);
+    }, true);
+
+    window.addEventListener('resize', function() {
+        dropPanel.style.display = 'none';
+        dropActiveBtn = null;
+    });
+
+    function restoreTabs() {
+        const saved = JSON.parse(localStorage.getItem(TABS_KEY) || '[]');
+        saved.forEach(({ url, index, type }) => {
+            if (!spreadsheets[index]) return;
+            let title = spreadsheets[index].title;
+            const parts = title.split(' - ');
+            if (parts.length > 1) title = parts[1].trim();
+
+            const iframe = document.createElement('iframe');
+            iframe.src = url; iframe.className = 'content-frame';
+            iframe.style.visibility = 'hidden';
+            iframe.style.pointerEvents = 'none';
+            iframe.setAttribute('title', `Conteúdo: ${title}`);
+            iframe.onerror = () => alert('Erro ao recarregar aba.');
+            document.body.appendChild(iframe);
+            openTabs.push({ url, title, index, type, iframe });
+
+            const tab = document.createElement('div');
+            tab.className = 'tab'; tab.dataset.url = url;
+            tab.draggable = true; tab.setAttribute('tabindex', '0');
+            tab.innerHTML = `<span class="tab-title">${title}</span><span class="tab-close" onclick="closeTab('${url}')">✕</span>`;
+            tab.onclick = e => { if (!e.target.classList.contains('tab-close')) switchTab(url); };
+            tab.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.target.classList.contains('tab-close')) switchTab(url); });
+            tab.addEventListener('dragstart', handleDragStart);
+            tab.addEventListener('dragover',  handleDragOver);
+            tab.addEventListener('drop',      handleDrop);
+            tab.addEventListener('dragend',   handleDragEnd);
+            document.getElementById('tabs').appendChild(tab);
+        });
+        localStorage.setItem(TABS_KEY, JSON.stringify(openTabs.map(({iframe: _, ...r}) => r)));
+    }
+
+    // ?doc=<título>: aberto por um vínculo de aviso do portal → abre direto na planilha
+    function abrirPorLink() {
+        const alvo = new URLSearchParams(location.search).get('doc');
+        if (!alvo) return;
+        const n = (t) => String(t || '').trim().toLowerCase();
+        const i = spreadsheets.findIndex((s) => n(s.title) === n(alvo));
+        const sh = spreadsheets[i];
+        const url = sh && (sh.link || (sh.links && sh.links[0] && sh.links[0].link));
+        if (url) openTab(url, i, 'spreadsheet');
+        history.replaceState(null, '', location.pathname);
+    }
+
+    /* ── INIT ── */
+    async function init() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'flex';
+        spreadsheets = await fetchSpreadsheets();
+        overlay.style.display = 'none';
+
+        spreadsheets.sort((a, b) =>
+            a.sector < b.sector ? -1 : a.sector > b.sector ? 1 :
+            a.title  < b.title  ? -1 : a.title  > b.title  ? 1 : 0
+        );
+
+        const uniqueSectors = [...new Set(spreadsheets.map(s => s.sector))].sort();
+        uniqueSectors.forEach((sector, i) => { sectorColors[sector] = colorPalette[i % colorPalette.length]; });
+
+        populateSectorNav();
+        updateStats();
+
+        const list     = document.getElementById('spreadsheetList');
+        const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg>`;
+
+        spreadsheets.forEach((sheet, index) => {
+            const card       = document.createElement('div');
+            card.className   = 'card';
+            card.dataset.sector = sheet.sector;
+            card.dataset.index  = index;
+
+            const isFav   = favorites.includes(index);
+            const colors  = sectorColors[sheet.sector] || colorPalette[0];
+
+            let planilhaHtml = '';
+            if (sheet.link) {
+                planilhaHtml = `<a href="#" onclick="openTab('${sheet.link}',${index},'spreadsheet');event.preventDefault();" class="btn-primary">➜] Planilha</a>`;
+            } else if (sheet.links?.length) {
+                if (sheet.links.length === 1 && !sheet.links[0].title?.trim()) {
+                    const l = sheet.links[0].link;
+                    planilhaHtml = l.includes('drive.google.com')
+                        ? `<a href="${l}" target="_blank" class="btn-primary">➜] Planilha</a>`
+                        : `<a href="#" onclick="openTab('${l}',${index},'spreadsheet');event.preventDefault();" class="btn-primary">➜] Planilha</a>`;
+                } else {
+                    const linksData = JSON.stringify(sheet.links.map(l => ({
+                        title: l.title || 'Planilha', link: l.link
+                    })));
+                    planilhaHtml = `<button class="btn-primary" data-dropdown='${linksData.replace(/'/g,"&#39;")}' data-dtype="spreadsheet" data-index="${index}">➜] Planilhas ▾</button>`;
+                }
+            }
+
+            let formHtml = '';
+            if (sheet.forms?.length) {
+                if (sheet.forms.length === 1) {
+                    formHtml = `<a href="${sheet.forms[0].link}" target="_blank" rel="noopener noreferrer" class="btn-form">➜] Formulário</a>`;
+                } else {
+                    const formsData = JSON.stringify(sheet.forms.map(f => ({
+                        title: f.title || 'Formulário', link: f.link
+                    })));
+                    formHtml = `<button class="btn-form" data-dropdown='${formsData.replace(/'/g,"&#39;")}' data-dtype="form" data-index="${index}">➜] Formulários ▾</button>`;
+                }
+            }
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-icon" style="background:linear-gradient(135deg,${colors.from},${colors.to})">${ICON_SVG}</div>
+                    <span class="star ${isFav ? 'favorited' : ''}" onclick="toggleFavorite(${index})">&#9733;</span>
+                </div>
+                <div class="card-body">
+                    <h2 class="card-title">${sheet.title}</h2>
+                    <span class="sector-badge">${sheet.sector}</span>
+                </div>
+                <div class="card-footer">
+                    ${planilhaHtml}
+                    ${formHtml}
+                </div>`;
+            list.appendChild(card);
+        });
+
+        updateCards();
+        localStorage.removeItem(TABS_KEY);
+
+        document.getElementById('searchInput').addEventListener('input', updateCards);
+
+        document.getElementById('spreadsheetList').addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-dropdown]');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            openDropPanel(btn);
+        });
+
+        window.addEventListener('beforeunload', () => openTabs.forEach(t => { if (t.iframe) t.iframe.remove(); }));
+        abrirPorLink();
+    }
+
+    init();
+</script>
+</body>
+</html>

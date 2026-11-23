@@ -1,0 +1,627 @@
+/* Grade e células do calendário */
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .6rem; }
+@media (min-width: 1024px) { .calendar-grid { gap: .75rem; } }
+
+.calendar-day { transition: transform .18s var(--ease-drawer), box-shadow .22s ease, border-color .22s ease, background-color .22s ease; }
+.calendar-day.cursor-pointer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px -14px rgba(14,22,40,.45);
+    border-color: rgba(61,124,240,.55);
+}
+.calendar-day-today {
+    box-shadow: inset 0 0 0 2px var(--brand-accent), 0 8px 20px -12px rgba(61,124,240,.55);
+    position: relative;
+}
+.calendar-day-today::before {
+    content: 'HOJE';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--brand-accent);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    padding: 1px 7px;
+    border-radius: 999px;
+    box-shadow: 0 2px 6px -2px rgba(61,124,240,.6);
+}
+
+/* ---------- Resumo denso do dia (coleta domiciliar) ---------- */
+/* O dia pode ter 27 vagas: em vez de 27 bolinhas, a célula mostra ocupação,
+   distribuição por status e apenas os selos do que exige ação. */
+.calendar-day-dense {
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: .5rem .55rem .5rem;
+}
+.calendar-day-dense > span:first-of-type { text-align: left; font-size: 13px; line-height: 1.1; }
+.calendar-day-dense .day-vagas { align-self: center; }
+
+.day-dense {
+    display: flex;
+    flex-direction: column;
+    gap: .28rem;
+    width: 100%;
+    margin-top: auto;
+}
+.day-dense-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .3rem;
+    line-height: 1;
+}
+.day-dense-count { font-size: 15px; font-weight: 900; letter-spacing: -.02em; }
+.day-dense-limit { font-size: 10px; font-weight: 800; opacity: .5; }
+.day-dense-free {
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+.day-dense-full { color: #d97706; }
+.day-dense-late { color: #dc2626; }
+.day-dense-done { color: #16a34a; }
+/* Dia sem agendamentos ativos: só o selo, ancorado no rodapé da célula */
+.day-dense-vazio .day-chips { margin-top: auto; }
+
+/* Barra de ocupação segmentada — o trecho vazio são as vagas livres */
+.day-bar {
+    display: flex;
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, .09);
+    overflow: hidden;
+}
+.day-bar-seg { display: block; height: 100%; }
+.day-bar-seg + .day-bar-seg { box-shadow: inset 1px 0 0 rgba(255, 255, 255, .7); }
+
+/* Selos de exceção */
+.day-chips { display: flex; flex-wrap: wrap; gap: .2rem; min-height: 14px; }
+.day-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .15rem;
+    height: 14px;
+    padding: 0 .28rem;
+    border-radius: 999px;
+    font-size: 8px;
+    font-weight: 900;
+    line-height: 1;
+    background: rgba(255, 255, 255, .75);
+    border: 1px solid currentColor;
+}
+.day-chip i { font-size: 7px; }
+/* Composição do dia (modalidade, faixa etária): preenchido, pesa menos que as
+   exceções, que ficam com contorno. */
+.day-chip-tresp { color: #1d4ed8; background: #dbeafe; border-color: #bfdbfe; }
+.day-chip-tsbac { color: #047857; background: #d1fae5; border-color: #a7f3d0; }
+.day-chip-faixa { letter-spacing: .02em; }
+.day-chip-rn          { color: #a21caf; background: #fae8ff; border-color: #f5d0fe; }
+.day-chip-infantil    { color: #c2410c; background: #ffedd5; border-color: #fed7aa; }
+.day-chip-adolescente { color: #b45309; background: #fef3c7; border-color: #fde68a; }
+/* Mais de uma faixa no mesmo dia: um selo só, com o total de menores */
+.day-chip-menores     { color: #c2410c; background: #ffedd5; border-color: #fed7aa; }
+.day-chip-warn   { color: #b45309; }
+.day-chip-far    { color: #6d28d9; }
+.day-chip-cancel { color: #dc2626; }
+.day-chip-live   { color: #fff; background: #7c3aed; border-color: #7c3aed; }
+.day-chip-mais   { color: #64748b; background: rgba(148, 163, 184, .18); border-color: transparent; }
+.day-chip-live i { animation: day-chip-pulse 1.6s ease-in-out infinite; }
+@keyframes day-chip-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* Resumo compacto do dia — só entra em cena no celular */
+.day-compact { display: none; }
+.day-compact-count { font-size: 13px; font-weight: 900; line-height: 1; }
+.day-compact-limit { font-size: 9px; font-weight: 800; opacity: .55; }
+.day-compact-bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(15,23,42,.10);
+    overflow: hidden;
+}
+.day-compact-bar-fill { display: block; height: 100%; border-radius: 999px; }
+.day-compact-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+
+@media (max-width: 639px) {
+    .calendar-grid { gap: .35rem; }
+    /* Bolinha por agendamento não cabe em coluna de ~46px: some em favor
+       do contador + barra de ocupação, que lê melhor de relance. */
+    .calendar-day .day-dots,
+    .calendar-day .day-dense,
+    .calendar-day .day-vagas { display: none; }
+    .calendar-day {
+        height: 4.25rem;
+        padding: .4rem .3rem;
+        border-radius: 1rem;
+        justify-content: flex-start;
+    }
+    .calendar-day > span:first-of-type { font-size: 13px; line-height: 1.1; }
+    .day-compact {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .2rem;
+        width: 100%;
+        margin-top: auto;
+    }
+    .calendar-day-today::before { font-size: 7px; padding: 1px 5px; top: -6px; }
+    /* Ícones de canto encolhem para não colidir com o número do dia */
+    .calendar-day .absolute.top-1.right-1 { font-size: 8px; top: 2px; right: 3px; }
+}
+
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spin-slow 8s linear infinite; }
+
+/* ---------- Abas de visualização ---------- */
+.view-tab {
+    color: #64748b;
+    background: transparent;
+    transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.view-tab:hover { color: var(--brand-900); }
+.view-tab-active {
+    background: #fff;
+    color: var(--brand-900);
+    box-shadow: 0 2px 8px -3px rgba(14,22,40,.35);
+}
+
+/* ---------- Visão semanal ---------- */
+.week-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+.week-frame { min-width: 760px; }
+
+.week-row {
+    display: grid;
+    grid-template-columns: 58px repeat(7, minmax(96px, 1fr));
+    gap: 0;
+}
+
+.week-head {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: .5rem;
+    margin-bottom: .25rem;
+}
+
+.week-day-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .15rem;
+    padding: .5rem .25rem;
+    border-radius: .9rem;
+    transition: background-color .2s ease, box-shadow .2s ease;
+}
+.week-day-head-clickable { cursor: pointer; }
+.week-day-head-clickable:hover { background: #f1f5f9; }
+.week-day-name {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: #94a3b8;
+}
+.week-day-number {
+    font-size: 1.125rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--brand-900);
+}
+.week-day-tag {
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #94a3b8;
+}
+.week-day-tag-holiday { color: #f87171; }
+.week-day-tag-off { color: #fca5a5; }
+.week-day-head-sunday .week-day-name,
+.week-day-head-sunday .week-day-number { color: #fca5a5; }
+.week-day-head-holiday .week-day-number { color: #94a3b8; }
+.week-day-head-today { background: rgba(61,124,240,.08); box-shadow: inset 0 0 0 1.5px rgba(61,124,240,.45); }
+.week-day-head-today .week-day-number { color: var(--brand-accent); }
+.week-day-head-today .week-day-name { color: var(--brand-accent); }
+
+.week-canvas { position: relative; }
+
+.week-gutter { position: relative; }
+.week-gutter-label {
+    position: absolute;
+    right: .55rem;
+    transform: translateY(-50%);
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    color: #cbd5e1;
+    white-space: nowrap;
+}
+
+.week-col {
+    position: relative;
+    border-left: 1px solid #eef2f7;
+}
+.week-col:last-child { border-right: 1px solid #eef2f7; }
+.week-col-today { background: rgba(61,124,240,.035); }
+.week-col-off {
+    background-image: repeating-linear-gradient(45deg, rgba(148,163,184,.10) 0 6px, transparent 6px 12px);
+}
+
+.week-slot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed #f1f5f9;
+}
+.week-slot-hour { border-top: 1px solid #e8eef6; }
+.week-slot-closed { background: rgba(248,250,252,.55); }
+.week-slot-open { background: transparent; }
+
+/* Horário desabilitado pelo setor responsável — bloqueio pontual de um horário
+   naquele dia, diferente do feriado que fecha o dia inteiro. */
+.week-slot-blocked {
+    background: repeating-linear-gradient(45deg, rgba(239,68,68,.12) 0 5px, transparent 5px 10px);
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.week-slot-block-icon {
+    font-size: 9px;
+    color: #ef4444;
+    opacity: .7;
+    pointer-events: none;
+}
+
+.week-slot-selectable {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color .16s ease;
+}
+.week-slot-selectable:hover { background: rgba(61,124,240,.10); }
+.week-slot-plus {
+    opacity: 0;
+    height: 18px;
+    width: 18px;
+    border-radius: 999px;
+    background: var(--brand-accent);
+    color: #fff;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px -3px rgba(61,124,240,.7);
+    transition: opacity .16s ease;
+    pointer-events: none;
+}
+.week-slot-selectable:hover .week-slot-plus { opacity: 1; }
+
+/* Encaixe em horário já ocupado — fica acima dos cards, no canto superior
+   direito da faixa, já que os eventos cobrem a célula clicável do fundo. */
+.week-slot-add {
+    position: absolute;
+    right: 2px;
+    z-index: 20;
+    height: 18px;
+    width: 18px;
+    border: none;
+    border-radius: 999px;
+    background: var(--brand-accent);
+    color: #fff;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: .28;
+    box-shadow: 0 2px 6px -2px rgba(14, 22, 40, .5);
+    transition: opacity .16s ease, transform .16s ease;
+}
+.week-col:hover .week-slot-add { opacity: .85; }
+.week-slot-add:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+.week-event {
+    position: absolute;
+    z-index: 10;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: .6rem;
+    overflow: hidden;
+    cursor: pointer;
+    padding: .3rem .4rem .3rem .55rem;
+    box-shadow: 0 3px 10px -6px rgba(14,22,40,.5);
+    transition: transform .16s var(--ease-drawer), box-shadow .2s ease, filter .2s ease;
+}
+.week-event:hover {
+    transform: translateY(-1px);
+    z-index: 15;
+    box-shadow: 0 12px 24px -12px rgba(14,22,40,.6);
+    filter: saturate(1.15);
+}
+.week-event-canceled { opacity: .65; }
+.week-event-canceled .week-event-name { text-decoration: line-through; }
+
+/* Localidade distante — contorno violeta ao redor do card, preservando as cores
+   de status/faixa etária que já pintam o fundo e a borda. Usado tanto nos
+   eventos da semana quanto nos cards do modal de detalhes do dia. */
+.card-distante {
+    border-color: #6d28d9;
+    box-shadow: 0 0 0 2px #6d28d9, 0 3px 10px -6px rgba(14, 22, 40, .5);
+}
+.card-distante:hover {
+    box-shadow: 0 0 0 2px #5b21b6, 0 0 0 5px rgba(109, 40, 217, .3), 0 12px 24px -12px rgba(14, 22, 40, .6);
+}
+
+.week-event-accent {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+}
+.week-event-body { position: relative; min-width: 0; }
+.week-event-time {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .3rem;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    line-height: 1.1;
+}
+.week-event-time > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* Idade do paciente, encostada à direita do horário */
+.week-event-idade {
+    flex: none;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    opacity: .75;
+    white-space: nowrap;
+}
+/* O nome trunca, mas o "+n" fica sempre visível ao lado dele */
+.week-event-name {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--brand-900);
+    line-height: 1.2;
+    margin-top: 1px;
+    min-width: 0;
+}
+.week-event-nome-texto {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+/* "+n" — pacientes adicionais atendidos na mesma visita */
+.week-event-extras {
+    display: inline-block;
+    flex: none;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--brand-900);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    vertical-align: middle;
+}
+.week-event-meta {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    line-height: 1.2;
+    margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* Cards muito baixos (30 min ≈ 25px): duas linhas não cabem e o nome ficava
+   cortado ao meio pelo overflow. Aqui horário e nome dividem uma linha só,
+   verticalmente centrada, e a idade some quando não há largura para ela. */
+.week-event-tight {
+    padding: 0 .35rem 0 .5rem;
+    display: flex;
+    align-items: center;
+}
+.week-event-tight .week-event-body {
+    display: flex;
+    align-items: baseline;
+    gap: .3rem;
+    width: 100%;
+}
+.week-event-tight .week-event-time {
+    flex: none;
+    display: block;
+}
+.week-event-tight .week-event-idade { display: none; }
+.week-event-tight .week-event-name {
+    margin-top: 0;
+    flex: 1 1 auto;
+    font-size: 10px;
+}
+
+.week-event-badge {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-size: 8px;
+    color: #dc2626;
+}
+
+/* ── REMARCAR ARRASTANDO ────────────────────────────────────
+   Clicar e segurar suspende o card, que segue o cursor até ser solto em outro
+   horário/dia da grade. */
+.week-event-movivel {
+    cursor: grab;
+    /* O arrasto é por Pointer Events: sem isso o navegador rouba o gesto para
+       seleção de texto (mouse) ou scroll da grade (toque). */
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.week-event-movivel:active { cursor: grabbing; }
+
+/* Pressionado, ainda não levantado — afunda de leve para dar retorno imediato */
+.week-event-pressing {
+    transform: scale(.97);
+    filter: brightness(.97);
+}
+
+/* O card original fica no lugar, apagado, marcando a origem do movimento */
+.week-event-dragging {
+    opacity: .28;
+    transform: none;
+    filter: grayscale(.4);
+}
+
+/* Cópia suspensa que acompanha o cursor */
+.week-event-ghost {
+    position: fixed;
+    z-index: 1000;
+    margin: 0;
+    pointer-events: none;
+    cursor: grabbing;
+    opacity: .95;
+    transform: scale(1.03) rotate(-1deg);
+    box-shadow: 0 18px 34px -12px rgba(14, 22, 40, .65);
+    transition: none;
+}
+
+/* Durante o arrasto os cards param de capturar o mouse, senão cobririam os
+   slots e o alvo embaixo deles nunca seria encontrado. */
+.week-dragging .week-event,
+.week-dragging .week-slot-add,
+.week-dragging .week-now { pointer-events: none; }
+
+/* Enquanto o card está suspenso, nada de selecionar texto pela página */
+.week-dragging-body {
+    cursor: grabbing;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Horários que aceitam o card ganham destaque enquanto se arrasta */
+.week-dragging .week-slot-drop {
+    background: rgba(14, 165, 233, .07);
+    box-shadow: inset 0 0 0 1px rgba(14, 165, 233, .18);
+}
+
+.week-slot-dropover {
+    background: rgba(14, 165, 233, .22) !important;
+    box-shadow: inset 0 0 0 2px #0ea5e9 !important;
+}
+
+/* Mesmo listrado do card concluído, aplicado aos cards do modal do dia */
+.card-concluido {
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(22, 163, 74, .1) 0 6px,
+        transparent 6px 13px
+    );
+}
+
+/* CONCLUÍDO — o verde sozinho se confundia com os outros status em cards
+   pequenos, então o card ganha também uma forma: selo de check no canto e um
+   leve listrado diagonal ao fundo (visível mesmo em daltonismo/monocromia). */
+.week-event-done {
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(22, 163, 74, .11) 0 5px,
+        transparent 5px 11px
+    );
+}
+.week-event-done .week-event-body { padding-right: 14px; }
+.week-event-done .week-event-name { color: #15803d; }
+.week-event-badge-done {
+    top: 50%;
+    right: 3px;
+    transform: translateY(-50%);
+    width: 13px;
+    height: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #16a34a;
+    color: #fff;
+    font-size: 7px;
+    box-shadow: 0 1px 3px rgba(22, 101, 52, .45);
+}
+
+/* Concluído com checklist pendente — alerta amarelo no lugar do selo verde
+   de concluído, sinalizando a pendência sem o círculo de "concluído normal". */
+.week-event-badge-checklist-pendente {
+    top: 50%;
+    right: 3px;
+    transform: translateY(-50%);
+    font-size: 13px;
+    color: #eab308;
+    text-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+
+/* Ausente — mesmo selo circular do concluído, em âmbar de alerta. A cor de
+   fundo do card sozinha se confunde com a faixa etária infantil em cards
+   pequenos, então o ícone é o que realmente sinaliza a falta. */
+.week-event-absent .week-event-body { padding-right: 14px; }
+.week-event-absent .week-event-name { color: #92400e; }
+.week-event-badge-absent {
+    top: 50%;
+    right: 3px;
+    transform: translateY(-50%);
+    width: 13px;
+    height: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 7px;
+    box-shadow: 0 1px 3px rgba(146, 64, 14, .45);
+}
+
+.week-now {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    border-top: 2px solid #ef4444;
+    z-index: 18;
+    pointer-events: none;
+}
+.week-now::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -5px;
+    height: 8px;
+    width: 8px;
+    border-radius: 999px;
+    background: #ef4444;
+}

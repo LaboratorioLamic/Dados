@@ -1,0 +1,893 @@
+/* Extracted from index.html lines 19-45 and line 139 */
+
+/* ── Sidebar ─────────────────────────────────────────── */
+#app-sidebar {
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+}
+#app-sidebar.sidebar-collapsed {
+    transform: translateX(-100%);
+}
+#app-sidebar.sidebar-open {
+    transform: translateX(0);
+}
+
+/* Labels hidden when collapsed — shown only when open */
+#app-sidebar.sidebar-collapsed .sidebar-label { display: none; }
+#app-sidebar.sidebar-open .sidebar-label { display: block; }
+
+/* Active nav button */
+.sidebar-nav-btn.active {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    box-shadow: inset 3px 0 0 #3b82f6;
+}
+.sidebar-nav-btn.active i { color: #60a5fa; }
+
+/* Hamburger open state */
+#hamburger-btn.is-open .hamburger-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+#hamburger-btn.is-open .hamburger-line:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+#hamburger-btn.is-open .hamburger-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ── Tabs ─────────────────────────────────────────────── */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+#tab-vacinas.active { display: flex; padding: 0; margin: -1.5rem; height: calc(100vh - 3.5rem); overflow: hidden; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeInScale { from { opacity: 0; transform: scale(.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal { display: none; }
+.modal.active { display: flex; animation: fadeIn 0.2s ease-in-out; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.dark ::-webkit-scrollbar-thumb { background: #334155; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+.glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
+.notification { pointer-events: auto; transition: all 0.3s; animation: slideIn 0.4s forwards, slideOut 0.3s 4.7s forwards; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+@keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.chart-container { position: relative; height: 250px; width: 100%; }
+input[type="month"]::-webkit-calendar-picker-indicator { width: 100%; height: 100%; cursor: pointer; opacity: 0; }
+#filter-month-agenda::-webkit-calendar-picker-indicator,
+#dash-filter-mes::-webkit-calendar-picker-indicator { width: auto; height: auto; opacity: 1; cursor: pointer; }
+#filter-month-agenda::-webkit-datetime-edit,
+#dash-filter-mes::-webkit-datetime-edit { color: #1e3a8a; font-weight: 700; }
+#filter-month-agenda::-webkit-datetime-edit-month-field,
+#dash-filter-mes::-webkit-datetime-edit-month-field { color: #1e3a8a; }
+#filter-month-agenda::-webkit-datetime-edit-year-field,
+#dash-filter-mes::-webkit-datetime-edit-year-field { color: #1e3a8a; }
+#filter-month-agenda::-webkit-datetime-edit-text,
+#dash-filter-mes::-webkit-datetime-edit-text { color: #64748b; }
+
+/* From line 139 — loading bar animation */
+@keyframes ldbar{0%{width:0%}50%{width:100%}100%{width:0%}}
+
+/* ── FAB Novo Agendamento ────────────────────────────────── */
+.fab-agenda {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 400;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+    color: #fff;
+    font-size: 22px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(29,78,216,0.45), 0 2px 6px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s, opacity 0.15s;
+}
+.fab-agenda:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(29,78,216,0.55), 0 3px 10px rgba(0,0,0,0.3);
+}
+.fab-agenda:active { transform: scale(0.95); }
+.fab-agenda.hidden { display: none !important; }
+
+body.lite-mode .fab-agenda { transition: none !important; }
+
+/* ── Modo Leve ─────────────────────────────────────────── */
+/* Toggle button */
+.lite-mode-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: left;
+}
+.lite-mode-btn:hover { background: rgba(255,255,255,0.08); }
+
+/* Track */
+.lite-toggle-track {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    transition: background 0.3s, border-color 0.3s;
+    flex-shrink: 0;
+}
+.lite-mode-btn.active .lite-toggle-track {
+    background: #34d399;
+    border-color: #10b981;
+    box-shadow: 0 0 8px rgba(52,211,153,0.5);
+}
+
+/* Thumb */
+.lite-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.lite-mode-btn.active .lite-toggle-thumb { transform: translateX(16px); }
+
+/* Icon pulse on activate */
+.lite-mode-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+    color: #94a3b8;
+    transition: color 0.3s;
+}
+.lite-mode-btn.active .lite-mode-icon { color: #34d399; }
+
+/* Labels */
+.lite-mode-label-wrap {
+    flex: 1;
+    overflow: hidden;
+}
+.lite-mode-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    white-space: nowrap;
+    transition: color 0.3s;
+}
+.lite-mode-btn.active .lite-mode-label { color: #6ee7b7; }
+.lite-mode-sublabel {
+    display: block;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #475569;
+    white-space: nowrap;
+    margin-top: 1px;
+}
+
+/* ── Modo Leve: remove animações e efeitos pesados ── */
+body.lite-mode *,
+body.lite-mode *::before,
+body.lite-mode *::after {
+    animation: none !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition: none !important;
+    transition-duration: 0.01ms !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+}
+/* Mantém indicador de aba ativa na sidebar */
+body.lite-mode .sidebar-nav-btn.active {
+    box-shadow: inset 3px 0 0 #3b82f6 !important;
+}
+body.lite-mode .glass-card {
+    background: rgba(255,255,255,0.97) !important;
+}
+body.lite-mode #app-sidebar {
+    box-shadow: 2px 0 8px rgba(0,0,0,0.3) !important;
+    transition: none !important;
+}
+body.lite-mode .app-topbar {
+    box-shadow: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    background: #0f172a !important;
+}
+body.lite-mode .notification {
+    transform: none !important;
+}
+/* mantém toggle animado no modo leve */
+body.lite-mode .lite-toggle-thumb {
+    transition: transform 0.15s ease !important;
+}
+body.lite-mode .lite-toggle-track {
+    transition: background 0.15s ease !important;
+}
+
+/* ── Toggles de Permissão (Grupos & Permissões) ─────────── */
+.perm-label-row .perm-toggle {
+    position: relative;
+    width: 32px;
+    height: 16px;
+    border-radius: 9999px;
+    background: #e2e8f0;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.perm-label-row .perm-dot {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.perm-label-row.is-checked .perm-dot {
+    transform: translateX(16px);
+}
+
+/* Cores por categoria */
+.perm-cat-block[data-cat="blue"] .perm-label-row.is-checked .perm-toggle    { background: #3b82f6; }
+.perm-cat-block[data-cat="emerald"] .perm-label-row.is-checked .perm-toggle { background: #10b981; }
+.perm-cat-block[data-cat="violet"] .perm-label-row.is-checked .perm-toggle  { background: #8b5cf6; }
+.perm-cat-block[data-cat="orange"] .perm-label-row.is-checked .perm-toggle  { background: #f97316; }
+.perm-cat-block[data-cat="amber"] .perm-label-row.is-checked .perm-toggle   { background: #f59e0b; }
+.perm-cat-block[data-cat="red"] .perm-label-row.is-checked .perm-toggle     { background: #ef4444; }
+.perm-cat-block[data-cat="slate"] .perm-label-row.is-checked .perm-toggle   { background: #475569; }
+
+/* Sub-perm financeiro mantém cor própria */
+#sub-perm-dash-financeiro .perm-label-row.is-checked .perm-toggle { background: #10b981; }
+
+body.lite-mode .perm-dot,
+body.lite-mode .perm-toggle { transition: none !important; }
+
+/* Hover em labels de permissão */
+.perm-label-row:hover p { color: #1e3a8a; }
+.perm-label-row:hover .perm-toggle { box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+
+/* Kanban card: oculta nome da vacina em telas pequenas */
+@media (max-width: 900px) {
+    .kanban-vac-name { display: none; }
+}
+
+/* ── Botão Modo Escuro ──────────────────────────────────── */
+.dark-mode-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: left;
+}
+.dark-mode-btn:hover { background: rgba(255,255,255,0.08); }
+
+/* Ícone sol/lua com animação de rotação */
+.dark-mode-icon-wrap {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.dark-mode-icon-sun,
+.dark-mode-icon-moon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    width: 20px;
+    height: 20px;
+    transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1), color 0.3s;
+}
+.dark-mode-icon-sun  { color: #94a3b8; opacity: 1; transform: rotate(0deg) scale(1); }
+.dark-mode-icon-moon { color: #94a3b8; opacity: 0; transform: rotate(-90deg) scale(0.5); }
+
+.dark-mode-btn.active .dark-mode-icon-sun  { opacity: 0; transform: rotate(90deg) scale(0.5); color: #fbbf24; }
+.dark-mode-btn.active .dark-mode-icon-moon { opacity: 1; transform: rotate(0deg) scale(1);  color: #818cf8; }
+
+/* Labels */
+.dark-mode-label-wrap { flex: 1; overflow: hidden; }
+.dark-mode-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    white-space: nowrap;
+    transition: color 0.3s;
+}
+.dark-mode-btn.active .dark-mode-label { color: #a5b4fc; }
+.dark-mode-sublabel {
+    display: block;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #475569;
+    white-space: nowrap;
+    margin-top: 1px;
+}
+
+/* Track */
+.dark-toggle-track {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    transition: background 0.3s, border-color 0.3s;
+    flex-shrink: 0;
+}
+.dark-mode-btn.active .dark-toggle-track {
+    background: #6366f1;
+    border-color: #4f46e5;
+    box-shadow: 0 0 8px rgba(99,102,241,0.55);
+}
+
+/* Thumb com estrelinhas */
+.dark-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), background 0.3s;
+}
+.dark-mode-btn.active .dark-toggle-thumb {
+    transform: translateX(16px);
+    background: #e0e7ff;
+}
+
+/* Modo lite: mantém thumb animado */
+body.lite-mode .dark-toggle-thumb { transition: transform 0.15s ease !important; }
+body.lite-mode .dark-toggle-track { transition: background 0.15s ease !important; }
+
+/* ══════════════════════════════════════════════════════════
+   MODO ESCURO — todas as cores do app (login excluído)
+   Aplicado via body.dark-mode, mas NÃO afeta #login-screen
+   ══════════════════════════════════════════════════════════ */
+
+/* Variáveis base */
+body.dark-mode {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+/* ── Login: imune ao dark mode ── */
+body.dark-mode #login-screen { background: #0f172a !important; color: inherit !important; }
+body.dark-mode #login-screen input { background: #fff !important; color: #1e293b !important; border-color: #e2e8f0 !important; }
+body.dark-mode #login-screen .bg-white { background: #fff !important; color: #1e293b !important; }
+body.dark-mode #login-screen label { color: #94a3b8 !important; }
+body.dark-mode #login-screen h2 { color: #fff !important; }
+body.dark-mode #login-screen p { color: inherit !important; }
+body.dark-mode #login-screen select { background: #fff !important; color: #1e293b !important; }
+
+/* Scrollbar */
+body.dark-mode ::-webkit-scrollbar-track { background: #1e293b; }
+body.dark-mode ::-webkit-scrollbar-thumb { background: #3b82f6; }
+
+/* ── Topbar ── */
+body.dark-mode .app-topbar {
+    background: rgba(2,6,23,0.97) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+body.dark-mode #topbar-module-label { color: #cbd5e1 !important; }
+
+/* ── Main / área de conteúdo ── */
+body.dark-mode main { background: #0f172a !important; }
+
+/* ── Cards / glass-card ── */
+body.dark-mode .glass-card,
+body.dark-mode [class*="bg-white"],
+body.dark-mode .bg-white {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+/* Cards genéricos com bg branco inline */
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="background:#fff"],
+body.dark-mode [style*="background-color: white"],
+body.dark-mode [style*="background-color:#fff"] {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+/* ── Textos ── */
+body.dark-mode .text-slate-800,
+body.dark-mode .text-slate-700,
+body.dark-mode .text-slate-600 { color: #cbd5e1 !important; }
+body.dark-mode .text-slate-500,
+body.dark-mode .text-slate-400 { color: #94a3b8 !important; }
+body.dark-mode .text-gray-700,
+body.dark-mode .text-gray-800 { color: #cbd5e1 !important; }
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3 { color: #f1f5f9 !important; }
+
+/* ── Inputs / Selects / Textareas ── */
+body.dark-mode input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+body.dark-mode select,
+body.dark-mode textarea {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder { color: #64748b !important; }
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.2) !important;
+}
+body.dark-mode select option { background: #1e293b; color: #e2e8f0; }
+
+/* ── Borders ── */
+body.dark-mode .border-slate-200,
+body.dark-mode .border-slate-300 { border-color: #334155 !important; }
+body.dark-mode .border-slate-100 { border-color: #1e293b !important; }
+body.dark-mode [class*="divide-slate"] > * + * { border-color: #334155 !important; }
+
+/* ── Fundos claros genéricos ── */
+body.dark-mode .bg-slate-50,
+body.dark-mode .bg-slate-100,
+body.dark-mode .bg-gray-50,
+body.dark-mode .bg-gray-100 { background: #1e293b !important; }
+body.dark-mode .bg-slate-200 { background: #273449 !important; }
+
+/* ── Hover states ── */
+body.dark-mode .hover\:bg-slate-100:hover { background: #1e293b !important; }
+body.dark-mode .hover\:bg-slate-50:hover  { background: #273449 !important; }
+body.dark-mode .hover\:bg-white:hover     { background: #273449 !important; }
+
+/* ── Badges / pills de status ── */
+body.dark-mode .bg-blue-50   { background: rgba(59,130,246,0.12)  !important; }
+body.dark-mode .bg-green-50  { background: rgba(16,185,129,0.12)  !important; }
+body.dark-mode .bg-red-50    { background: rgba(239,68,68,0.12)   !important; }
+body.dark-mode .bg-amber-50  { background: rgba(245,158,11,0.12)  !important; }
+body.dark-mode .bg-yellow-50 { background: rgba(234,179,8,0.12)   !important; }
+body.dark-mode .bg-cyan-50   { background: rgba(6,182,212,0.12)   !important; }
+body.dark-mode .bg-purple-50 { background: rgba(139,92,246,0.12)  !important; }
+body.dark-mode .bg-violet-50 { background: rgba(139,92,246,0.12)  !important; }
+body.dark-mode .bg-indigo-50 { background: rgba(99,102,241,0.12)  !important; }
+body.dark-mode .bg-emerald-50 { background: rgba(16,185,129,0.12) !important; }
+body.dark-mode .text-indigo-600 { color: #a5b4fc !important; }
+
+/* Variantes com opacidade (ex: bg-blue-50/50) usadas nos cards do prontuário vacinal */
+body.dark-mode .bg-blue-50\/50   { background: rgba(59,130,246,0.10)  !important; }
+body.dark-mode .bg-green-50\/50  { background: rgba(16,185,129,0.10)  !important; }
+body.dark-mode .bg-red-50\/50    { background: rgba(239,68,68,0.10)   !important; }
+body.dark-mode .bg-yellow-50\/50 { background: rgba(234,179,8,0.10)   !important; }
+body.dark-mode .bg-cyan-50\/50   { background: rgba(6,182,212,0.10)   !important; }
+body.dark-mode .bg-violet-50\/50 { background: rgba(139,92,246,0.10)  !important; }
+
+/* borders de status */
+body.dark-mode .border-blue-200   { border-color: rgba(59,130,246,0.3)  !important; }
+body.dark-mode .border-green-200  { border-color: rgba(16,185,129,0.3)  !important; }
+body.dark-mode .border-red-200    { border-color: rgba(239,68,68,0.3)   !important; }
+body.dark-mode .border-amber-200  { border-color: rgba(245,158,11,0.3)  !important; }
+body.dark-mode .border-cyan-200   { border-color: rgba(6,182,212,0.3)   !important; }
+body.dark-mode .border-violet-200 { border-color: rgba(139,92,246,0.3)  !important; }
+body.dark-mode .border-yellow-300 { border-color: rgba(234,179,8,0.35)  !important; }
+body.dark-mode .border-indigo-200 { border-color: rgba(99,102,241,0.3)  !important; }
+body.dark-mode .border-emerald-200 { border-color: rgba(16,185,129,0.3) !important; }
+
+/* ── Modais ── */
+body.dark-mode [id^="modal-"] > div:last-child,
+body.dark-mode [id^="modal-"] .bg-white {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+/* ── Tabelas ── */
+body.dark-mode table { color: #e2e8f0 !important; }
+body.dark-mode thead,
+body.dark-mode .bg-slate-50.border-b { background: #0f172a !important; }
+body.dark-mode tbody tr:hover { background: #1e293b !important; }
+body.dark-mode th { color: #94a3b8 !important; border-color: #334155 !important; }
+body.dark-mode td { border-color: #1e293b !important; color: #cbd5e1 !important; }
+
+/* ── Dashboard ── */
+body.dark-mode #tab-dashboard > div,
+body.dark-mode .dash-card { background: #1e293b !important; }
+
+/* ── Agenda / Calendário ── */
+body.dark-mode .calendar-grid > div { color: #cbd5e1 !important; }
+body.dark-mode #filter-month-agenda::-webkit-datetime-edit,
+body.dark-mode #dash-filter-mes::-webkit-datetime-edit,
+body.dark-mode #filter-month-agenda::-webkit-datetime-edit-month-field,
+body.dark-mode #dash-filter-mes::-webkit-datetime-edit-month-field,
+body.dark-mode #filter-month-agenda::-webkit-datetime-edit-year-field,
+body.dark-mode #dash-filter-mes::-webkit-datetime-edit-year-field { color: #93c5fd !important; }
+
+/* ── Kanban ── */
+body.dark-mode #agendaview-tabela { background: #0f172a !important; }
+body.dark-mode #view-kanban { background: #0f172a !important; color: #e2e8f0 !important; }
+body.dark-mode .kanban-col-body { backdrop-filter: none !important; }
+body.dark-mode .kanban-col { border-color: #334155 !important; }
+body.dark-mode .kanban-card { background: #1e293b !important; border-color: #334155 !important; }
+body.dark-mode .kanban-group-card { background: #1e293b !important; border-color: #334155 !important; }
+
+/* ── Almoxarifado: barra de módulos ── */
+.alm-mod-btn {
+    background: transparent;
+    color: rgba(148,163,184,1);
+    box-shadow: none;
+}
+.alm-mod-btn .alm-btn-icon { background: rgba(255,255,255,0.08); }
+.alm-mod-btn.active-alm {
+    background: rgba(37,99,235,0.9);
+    color: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.alm-mod-btn.active-alm .alm-btn-icon { background: rgba(255,255,255,0.2); }
+
+/* ── Almoxarifado / Vacinas ── */
+body.dark-mode #tab-vacinas { background: #0f172a !important; }
+body.dark-mode #alm-sidebar { background: linear-gradient(180deg,#020617 0%,#0f172a 100%) !important; border-right-color: rgba(255,255,255,0.05) !important; }
+body.dark-mode #alm-sidebar .alm-mod-btn { color: #94a3b8 !important; }
+body.dark-mode #alm-sidebar .alm-mod-btn:hover { background: rgba(255,255,255,0.08) !important; color: #f1f5f9 !important; }
+body.dark-mode #alm-sidebar .alm-mod-btn.active-alm { background: rgba(37,99,235,0.7) !important; color: #fff !important; }
+body.dark-mode #alm-content-area { background: #0f172a !important; }
+
+/* ── Settings / Permissões ── */
+body.dark-mode .perm-label-row:hover p { color: #93c5fd !important; }
+body.dark-mode .perm-toggle { background: #334155 !important; }
+
+/* ── Expiry panel ── */
+body.dark-mode #expiry-panel { background: #1e293b !important; border-color: #334155 !important; }
+
+/* ── Notificações ── */
+body.dark-mode .notification { background: #1e293b !important; border-color: #334155 !important; }
+
+/* Transição suave ao ativar/desativar */
+body:not(.lite-mode) {
+    transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE — correções específicas de contraste
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Sidebar: fundo e textos ── */
+body.dark-mode #app-sidebar {
+    background: linear-gradient(180deg,#020617 0%,#0f172a 100%) !important;
+    box-shadow: 4px 0 32px rgba(0,0,0,0.7) !important;
+}
+body.dark-mode #app-sidebar * { color: inherit; }
+body.dark-mode .sidebar-nav-btn { color: #94a3b8 !important; }
+body.dark-mode .sidebar-nav-btn:hover { color: #f1f5f9 !important; background: rgba(255,255,255,0.08) !important; }
+body.dark-mode .sidebar-nav-btn.active { color: #fff !important; }
+
+/* ── Hamburger lines: cor clara ── */
+body.dark-mode .hamburger-line { background: #e2e8f0 !important; }
+
+/* ── Divisores de tabela: cor escura ── */
+body.dark-mode .divide-slate-100 > * + * { border-color: #1e293b !important; }
+body.dark-mode .divide-slate-200 > * + * { border-color: #273449 !important; }
+body.dark-mode tbody tr { border-color: #1e293b !important; }
+
+/* ── Calendário mensal: bordas e células ── */
+body.dark-mode #calendar-body > div {
+    border-color: #1e293b !important;
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+body.dark-mode #calendar-body > div.bg-white { background: #1e293b !important; }
+body.dark-mode #calendar-body > div span { color: #e2e8f0 !important; }
+/* Número do dia */
+body.dark-mode #calendar-body > div .font-black { color: #f1f5f9 !important; }
+
+/* ── Cabeçalho dos dias semanais do calendário mensal ── */
+body.dark-mode .calendar-grid.mb-2 > div { color: #64748b !important; }
+body.dark-mode .calendar-grid.mb-2 > div.text-red-500 { color: #f87171 !important; }
+
+/* ── Calendário semanal: cabeçalho do dia ── */
+body.dark-mode #weekly-board > div { border-color: #334155 !important; }
+body.dark-mode #weekly-board > div > div:first-child {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+body.dark-mode #weekly-board > div > div:first-child span { color: #94a3b8 !important; }
+body.dark-mode #weekly-board > div > div:first-child span.font-black { color: #e2e8f0 !important; }
+/* corpo do dia semanal */
+body.dark-mode #weekly-board > div > div:last-child { background: #0f172a !important; }
+
+/* ── Cards semanais: nome do paciente legível ── */
+body.dark-mode #weekly-board .rounded-xl.border.p-2\.5 {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+body.dark-mode #weekly-board .rounded-xl.border.p-2\.5 .font-black { color: #f1f5f9 !important; }
+body.dark-mode #weekly-board .rounded-xl.border.p-2\.5 .text-slate-400 { color: #94a3b8 !important; }
+body.dark-mode #weekly-board .rounded-xl.border.p-2\.5 .text-slate-500 { color: #94a3b8 !important; }
+
+/* ── CRM / Oportunidades: fundo, colunas, cards, agrupados ── */
+body.dark-mode #agendaview-oportunidades { background: #0f172a !important; }
+body.dark-mode #oport-cards-container { background: transparent !important; }
+
+/* card do paciente */
+body.dark-mode #oport-cards-container > div {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+/* cabeçalho do card (gradiente claro → escuro) */
+body.dark-mode #oport-cards-container > div > div:first-child {
+    background: #273449 !important;
+    border-color: #334155 !important;
+}
+/* nome do paciente no card de oportunidade */
+body.dark-mode #oport-cards-container .text-navy-900 { color: #f1f5f9 !important; }
+body.dark-mode #oport-cards-container .text-slate-500 { color: #94a3b8 !important; }
+body.dark-mode #oport-cards-container .text-slate-400 { color: #94a3b8 !important; }
+body.dark-mode #oport-cards-container .text-slate-600 { color: #cbd5e1 !important; }
+body.dark-mode #oport-cards-container .text-indigo-600 { color: #818cf8 !important; }
+
+/* mini-cards de vacina */
+body.dark-mode #oport-cards-container .bg-slate-50 {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+body.dark-mode #oport-cards-container .bg-emerald-50 {
+    background: #052e16 !important;
+    border-color: #166534 !important;
+}
+/* nome da vacina nos mini-cards */
+body.dark-mode #oport-cards-container .bg-slate-50 .text-navy-900,
+body.dark-mode #oport-cards-container .bg-emerald-50 .text-navy-900 { color: #e2e8f0 !important; }
+body.dark-mode #oport-cards-container .bg-slate-50 .text-slate-600,
+body.dark-mode #oport-cards-container .bg-emerald-50 .text-slate-600 { color: #94a3b8 !important; }
+body.dark-mode #oport-cards-container .bg-slate-50 .bg-slate-200 { background: #1e293b !important; }
+
+/* stats / badge oport */
+body.dark-mode #oport-stats { color: #cbd5e1 !important; }
+body.dark-mode #oport-stats .bg-white { background: #1e293b !important; }
+
+/* ── Planilha: contraste no nome do paciente ── */
+body.dark-mode #table-body tr { background: #0f172a !important; }
+body.dark-mode #table-body tr:hover { background: #1e293b !important; }
+body.dark-mode #table-body td { color: #e2e8f0 !important; border-color: #1e293b !important; }
+body.dark-mode #table-body .text-navy-900 { color: #f1f5f9 !important; }
+body.dark-mode #table-body .text-slate-500 { color: #94a3b8 !important; }
+body.dark-mode #table-body .text-slate-400 { color: #94a3b8 !important; }
+body.dark-mode #table-body .font-black { color: #f1f5f9 !important; }
+
+/* ── Ranking tables do dashboard ── */
+body.dark-mode .border-b-2.border-slate-100 { border-color: #334155 !important; }
+body.dark-mode tr.border-b.border-slate-50 { border-color: #1e293b !important; }
+body.dark-mode tr.border-b.border-slate-50:hover { background: #1e293b !important; }
+body.dark-mode .bg-slate-100.rounded-full { background: #334155 !important; }
+
+/* ── Textos com fundo escuro: garantir cor clara em todo app ── */
+body.dark-mode .text-navy-900  { color: #f1f5f9 !important; }
+body.dark-mode .text-navy-800  { color: #e2e8f0 !important; }
+body.dark-mode .text-slate-800 { color: #e2e8f0 !important; }
+body.dark-mode .text-slate-700 { color: #cbd5e1 !important; }
+body.dark-mode .text-slate-600 { color: #94a3b8 !important; }
+body.dark-mode .text-gray-900  { color: #f1f5f9 !important; }
+body.dark-mode .text-gray-800  { color: #e2e8f0 !important; }
+body.dark-mode .text-gray-700  { color: #cbd5e1 !important; }
+
+/* Excluir login dessas regras globais de texto */
+body.dark-mode #login-screen .text-navy-900,
+body.dark-mode #login-screen .text-slate-800,
+body.dark-mode #login-screen .text-slate-700 { color: inherit !important; }
+
+/* ══════════════════ FILTROS DO DASHBOARD: BOTÕES + POPOVER ══════════════════ */
+.dash-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 14px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: .01em;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .1s ease, background .15s ease;
+}
+.dash-filter-btn i:first-child { color: #93c5fd; font-size: 12px; }
+.dash-filter-btn .dash-filter-caret { color: #94a3b8; font-size: 9px; margin-left: 2px; transition: transform .18s ease; }
+.dash-filter-btn:hover { border-color: #93c5fd; box-shadow: 0 2px 8px rgba(59,130,246,.12); }
+.dash-filter-btn:active { transform: scale(.98); }
+.dash-filter-btn.active { border-color: #3b82f6; box-shadow: 0 4px 14px rgba(59,130,246,.18); background: #f0f7ff; }
+.dash-filter-btn.active .dash-filter-caret { transform: rotate(180deg); color: #2563eb; }
+.dash-filter-btn-accent { background: linear-gradient(180deg,#eff6ff,#dbeafe); border-color: #93c5fd; }
+.dash-filter-btn-accent i:first-child { color: #2563eb; }
+.dash-filter-btn-accent.active { background: #dbeafe; }
+
+.dash-filter-pop { display: inline-block; }
+
+.dash-pop {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 60;
+    min-width: 230px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 18px 45px rgba(15,23,42,.16), 0 4px 12px rgba(15,23,42,.08);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px) scale(.98);
+    transform-origin: top left;
+    transition: opacity .16s ease, transform .16s ease, visibility .16s;
+    overflow: hidden;
+}
+.dash-pop.active { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+.dash-pop-wide { min-width: 320px; right: 0; left: auto; transform-origin: top right; }
+
+.dash-pop-search {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.dash-pop-search i { color: #94a3b8; font-size: 11px; }
+.dash-pop-search input {
+    border: none; outline: none; font-size: 12.5px; font-weight: 600; color: #1e293b; width: 100%; background: transparent;
+}
+.dash-pop-list { max-height: 260px; overflow-y: auto; padding: 6px; }
+.dash-pop-item {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 8px 10px; border-radius: 9px; border: none; background: transparent;
+    font-size: 12.5px; font-weight: 700; color: #334155; text-align: left; cursor: pointer;
+    transition: background .12s ease;
+}
+.dash-pop-item:hover { background: #f1f5f9; }
+.dash-pop-item .dash-pop-item-check { opacity: 0; color: #2563eb; font-size: 10px; width: 10px; transition: opacity .12s ease; }
+.dash-pop-item.active { color: #1d4ed8; background: #eff6ff; }
+.dash-pop-item.active .dash-pop-item-check { opacity: 1; }
+.dash-pop-empty { padding: 14px 10px; font-size: 11.5px; font-weight: 700; color: #94a3b8; text-align: center; }
+
+/* Abas do popover de período */
+.dash-period-tabs { display: flex; gap: 4px; padding: 10px 10px 0; }
+.dash-period-tab {
+    flex: 1; padding: 7px 4px; border-radius: 8px; border: none; background: #f1f5f9;
+    font-size: 10.5px; font-weight: 900; text-transform: uppercase; letter-spacing: .03em;
+    color: #64748b; cursor: pointer; transition: background .15s ease, color .15s ease;
+}
+.dash-period-tab:hover { background: #e2e8f0; }
+.dash-period-tab.active { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.3); }
+
+.dash-period-panel { padding: 12px; }
+
+/* Ano inteiro: seletor de ano */
+.dash-year-picker { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 6px 0 10px; }
+.dash-year-value { font-size: 20px; font-weight: 900; color: #0f172a; min-width: 62px; text-align: center; letter-spacing: .02em; }
+.dash-year-arrow {
+    width: 30px; height: 30px; border-radius: 9px; border: 1.5px solid #e2e8f0; background: #fff;
+    color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.dash-year-arrow:hover { border-color: #93c5fd; color: #2563eb; background: #eff6ff; }
+.dash-year-arrow:active { transform: scale(.94); }
+
+/* Grade de meses (usada em Mês e Intervalo) */
+.dash-month-cal-header { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 10px; }
+.dash-month-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    user-select: none;
+}
+.dash-month-cell {
+    padding: 10px 0; border-radius: 9px; border: 1.5px solid #e2e8f0; background: #fff;
+    font-size: 11.5px; font-weight: 800; color: #334155; cursor: pointer;
+    transition: background .12s ease, border-color .12s ease, color .12s ease, transform .08s ease;
+}
+.dash-month-cell:hover { border-color: #93c5fd; background: #f0f7ff; }
+.dash-month-cell:active { transform: scale(.95); }
+.dash-month-cell.in-range { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; border-radius: 4px; }
+.dash-month-cell.active {
+    background: #2563eb !important; border-color: #2563eb !important; color: #fff !important;
+    border-radius: 9px; box-shadow: 0 3px 10px rgba(37,99,235,.35);
+}
+
+.dash-range-summary {
+    margin-top: 10px; padding: 8px 10px; border-radius: 9px; background: #f8fafc;
+    font-size: 11px; font-weight: 800; color: #475569; text-align: center;
+}
+
+.dash-month-cell.pending {
+    animation: dashPendingPulse 1.1s ease-in-out infinite;
+    border-color: #2563eb !important;
+}
+@keyframes dashPendingPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,.35); }
+    50% { box-shadow: 0 0 0 5px rgba(37,99,235,0); }
+}
+
+/* Dark mode */
+body.dark-mode .dash-filter-btn { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+body.dark-mode .dash-filter-btn:hover { border-color: #3b82f6; }
+body.dark-mode .dash-filter-btn.active { background: #1e3a5f; border-color: #3b82f6; }
+body.dark-mode .dash-filter-btn-accent { background: linear-gradient(180deg,#1e293b,#0f2744); border-color: #3b82f6; }
+body.dark-mode .dash-pop { background: #1e293b; border-color: #334155; }
+body.dark-mode .dash-pop-search { border-color: #334155; }
+body.dark-mode .dash-pop-search input { color: #e2e8f0; }
+body.dark-mode .dash-pop-item { color: #cbd5e1; }
+body.dark-mode .dash-pop-item:hover { background: #334155; }
+body.dark-mode .dash-pop-item.active { background: #1e3a5f; color: #93c5fd; }
+body.dark-mode .dash-period-tab { background: #0f172a; color: #94a3b8; }
+body.dark-mode .dash-period-tab:hover { background: #1e293b; }
+body.dark-mode .dash-year-value { color: #f1f5f9; }
+body.dark-mode .dash-year-arrow { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+body.dark-mode .dash-month-cell { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+body.dark-mode .dash-month-cell:hover { border-color: #3b82f6; background: #1e3a5f; }
+body.dark-mode .dash-month-cell.in-range { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
+body.dark-mode .dash-range-summary { background: #0f172a; color: #94a3b8; }
+
+/* ─── Agenda semanal (timeline estilo Google Agenda) ─────────────────────── */
+#weekly-board .wk-scroll { scrollbar-width: thin; }
+#weekly-board .wk-scroll::-webkit-scrollbar { width: 8px; }
+#weekly-board .wk-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+body.dark-mode #weekly-board .wk-scroll::-webkit-scrollbar-thumb { background: #334155; }
+#weekly-board .wk-event { transition: box-shadow .15s, transform .15s; z-index: 2; }
+#weekly-board .wk-event:hover { box-shadow: 0 4px 12px rgba(15,23,42,.18) !important; transform: translateY(-1px); z-index: 3; }
+#weekly-board .wk-event:active { cursor: grabbing; }
+#weekly-board .wk-slot { z-index: 1; transition: background .1s; }
+
+/* Arraste de agendamentos no calendário mensal */
+#calendar-body .month-drop-armed { box-shadow: inset 0 0 0 1px #93c5fd; background: #f8fbff; }
+body.dark-mode #calendar-body .month-drop-armed { background: #0f2744; }
+#month-drag-ghost { transition: none; }
+#modal-day-details { transition: opacity .12s ease; }
+
+/* Botão "+" nos horários da agenda semanal */
+#weekly-board .wk-add {
+    opacity: 0; transition: opacity .12s ease, transform .12s ease;
+    height: 20px; width: 20px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; background: #2563eb; color: #fff; border: none; cursor: pointer;
+    box-shadow: 0 1px 4px rgba(37,99,235,.35);
+}
+#weekly-board .wk-slot:hover .wk-add { opacity: 1; }
+#weekly-board .wk-add:hover { transform: scale(1.15); }
+#weekly-board .wk-add-on-event {
+    position: absolute; top: 2px; right: 2px; z-index: 4;
+    background: rgba(255,255,255,.75); box-shadow: 0 1px 3px rgba(15,23,42,.2);
+}
+#weekly-board .wk-event:hover .wk-add-on-event { opacity: .85; }
+#weekly-board .wk-add-on-event:hover { opacity: 1 !important; background: #fff; }
+body.dark-mode #weekly-board .wk-add-on-event { background: rgba(15,23,42,.85); }

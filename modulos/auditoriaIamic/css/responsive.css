@@ -1,0 +1,769 @@
+/* =========================================================================
+   RESPONSIVO — Sistema completo de breakpoints para mobile
+   ========================================================================= */
+
+/* ── 1200px — Laptop menor / tablet grande ─────────────────────────────── */
+@media (max-width: 1200px) {
+    .summary-cards { grid-template-columns: repeat(3, 1fr); }
+    .dash-main-layout { grid-template-columns: 1fr 220px; }
+}
+
+/* ── 1024px — Tablet landscape ─────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .summary-cards { grid-template-columns: repeat(3, 1fr); }
+    .dashboard-charts { grid-template-columns: 1fr; }
+    .chart-card { min-height: auto; }
+    .dash-row-top { grid-template-columns: 1fr; }
+    .dash-main-layout { grid-template-columns: 1fr; }
+    .dash-col-pies {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        flex-direction: unset;
+        gap: 12px;
+    }
+    .dash-activity-card { max-height: none; }
+}
+
+/* ── 900px — Tablet portrait ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .summary-cards { grid-template-columns: repeat(2, 1fr); }
+    .dash-row-inline { flex-direction: column; }
+
+    #kanbanBoard {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 20px;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+    }
+    .kanban-col {
+        flex: 0 0 240px;
+        min-width: 240px;
+        scroll-snap-align: start;
+    }
+    .view-module-tab { padding: 8px 16px; font-size: 13px; }
+}
+
+/* ── 768px — Mobile (breakpoint principal) ──────────────────────────────── */
+@media (max-width: 768px) {
+    :root { --sidebar-w: 285px; }
+
+    /* --- Sidebar: touch targets amplos --- */
+    .sidebar button { padding: 12px 14px; min-height: 44px; }
+    .sidebar-logo { padding: 22px 18px 18px; }
+
+    /* --- Header --- */
+    .header { padding: 0 14px; height: 60px; gap: 8px; }
+    .header-actions { gap: 6px; }
+    .btn-toggle-menu { width: 40px; height: 40px; }
+    .title-area h1 { font-size: 16px; }
+    .title-area small { display: none; }
+
+    /* --- Botões de filtro no header --- */
+    .btn-setor-filter span { display: none; }
+    .btn-setor-filter { padding: 0 12px; min-width: 40px; height: 40px; }
+    .setor-filter-grid { grid-template-columns: repeat(2, 1fr); }
+    .fbar-date-dropdown { left: auto; right: 0; width: 240px; }
+    .fbar-people-btn span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+
+    /* --- Layout principal --- */
+    .content { padding: 12px 14px 72px; gap: 12px; }
+
+    /* --- Barra de filtros --- */
+    .filters-bar { padding: 10px 12px; gap: 8px; }
+    .fbar-left { gap: 6px; }
+    .fbar-right { gap: 6px; }
+    .fbar-search-wrap.open .fbar-search-expand { max-width: 180px; }
+    .fbar-search-input { width: 160px; }
+    .filter-input { min-width: 120px; flex: 1; }
+
+    /* --- Dashboard KPIs --- */
+    .summary-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .summary-card { padding: 14px 14px 10px; }
+    .sc-value { font-size: 26px; }
+    .sc-label { font-size: 10px; }
+
+    /* --- Dashboard layout: tudo em coluna --- */
+    .dash-row-top { grid-template-columns: 1fr; }
+    .dash-main-layout { grid-template-columns: 1fr; }
+    .dash-col-pies {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        flex-direction: unset;
+        gap: 12px;
+    }
+    .dash-row-inline { flex-direction: column; }
+    .dash-activity-card { max-height: none; }
+
+    /* --- Grid de cards: coluna única --- */
+    .cards-grid { grid-template-columns: 1fr; }
+    .view-grid { grid-template-columns: 1fr; padding: 14px; }
+    .groups-folder.open .groups-folder-body { grid-template-columns: 1fr; }
+
+    /* --- Card: altura automática no mobile --- */
+    .card { height: auto; min-height: 172px; }
+
+    /* --- Sub-abas lista --- */
+    .list-subtabs-bar { flex-wrap: wrap; gap: 6px; }
+    .list-subtab { font-size: 12.5px; padding: 6px 12px; }
+
+    /* --- View module tabs: apenas ícones a partir de 768px --- */
+    .view-module-tab .vmt-label { display: none; }
+    .view-module-tab { padding: 9px 12px; gap: 0; font-size: 13px; }
+    .view-module-tab i { font-size: 15px; }
+    .fbar-addcol-btn span { display: none; }
+    .fbar-addcol-btn { padding: 0 10px; min-width: 36px; gap: 0; }
+
+    /* --- Tabela: scroll horizontal --- */
+    #tableView { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .list-table { font-size: 12.5px; min-width: 580px; }
+
+    /* --- Formulários --- */
+    .form-grid { grid-template-columns: 1fr; gap: 12px; }
+    .config-grid-2 { grid-template-columns: 1fr; }
+    .form-drawer { width: 100vw; border-radius: 0 !important; }
+
+    /* --- Modais --- */
+    .modal { padding: 10px; }
+    .modal-content { padding: 20px; border-radius: var(--r-xl); }
+
+    /* --- View modal tabs: apenas ícones --- */
+    .view-modal-tab .vmt-label { display: none; }
+    .view-modal-tab { padding: 9px 12px; gap: 0; }
+    .view-modal-tab i { font-size: 15px; }
+
+    /* --- View modal: header empilhado no mobile --- */
+    .view-modal-header-inner {
+        flex-direction: column;
+        gap: 8px;
+        padding: 14px 16px 10px;
+    }
+    .view-modal-header-actions {
+        width: 100%;
+        justify-content: flex-end;
+        order: -1;
+    }
+    .view-modal-title-block {
+        width: 100%;
+    }
+    .view-modal-title {
+        font-size: 15px;
+        max-width: 100%;
+    }
+
+    /* --- Dashboard: filtro de área só ícone --- */
+    .fbar-area-btn #fbarAreaLabel { display: none; }
+    .fbar-area-btn .fa-caret-down { display: none; }
+    .fbar-area-btn { padding: 0 10px; min-width: 36px; gap: 0; }
+
+    /* --- Configurações: página de usuários --- */
+    .usr-page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .usr-btn-new { width: 100%; justify-content: center; }
+    .usr-table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .usr-table { min-width: 600px; }
+    .usr-settings-card { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .usr-settings-right { width: 100%; justify-content: space-between; }
+    .usr-settings-group { align-items: flex-start; flex: 1; min-width: 0; }
+    .usr-settings-select { min-width: 0; width: 100%; }
+    .cfg-section-tab { flex: 1; justify-content: center; padding: 10px 8px; }
+
+    /* --- FAB --- */
+    .fab-add { bottom: 20px; right: 16px; width: 52px; height: 52px; font-size: 20px; }
+
+    /* --- Backup --- */
+    .backup-card { padding: 24px 20px; }
+    .backup-actions { flex-direction: column; }
+
+    /* --- Notificação: bottom sheet --- */
+    .notification-modal {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        max-height: 72vh;
+        border-radius: var(--r-xl) var(--r-xl) 0 0;
+        max-width: none;
+        animation: slideUpSheet 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+    .notification-modal-content {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(72vh - 56px);
+    }
+
+    /* --- Checkbox --- */
+    .checkbox-label { display: none; }
+    .checkbox-wrapper { padding: 7px; }
+
+    /* Legado */
+    .title-search-dropdown { position: fixed; left: 16px; right: 16px; top: 130px; width: auto; max-width: none; }
+
+    /* --- RNC: filtros apenas com ícone (sem texto) --- */
+    .rnc-filters-bar .oc-people-btn span,
+    .rnc-filters-bar .oc-people-btn .fa-caret-down { display: none; }
+    .rnc-filters-bar .oc-people-btn { padding: 0 10px; min-width: 36px; gap: 0; }
+
+    /* --- Ocorrências: filtros apenas com ícone, todos na mesma linha --- */
+    .oc-filters-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .oc-fbar-left, .oc-fbar-right {
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+    }
+    .oc-filters-bar .oc-people-btn span,
+    .oc-filters-bar .oc-people-btn .fa-caret-down { display: none; }
+    .oc-filters-bar .oc-people-btn { padding: 0 10px; min-width: 36px; gap: 0; }
+    .oc-filters-bar .oc-type-btn span,
+    .oc-filters-bar .oc-type-btn .fa-caret-down { display: none; }
+    .oc-filters-bar .oc-type-btn { padding: 0 10px; min-width: 36px; gap: 0; }
+}
+
+/* ── 600px — Smartphone médio ───────────────────────────────────────────── */
+@media (max-width: 600px) {
+    /* --- Layout --- */
+    .content { padding: 10px 12px 72px; gap: 10px; }
+    .header { padding: 0 12px; }
+
+    /* --- KPIs: 2 colunas compactas --- */
+    .summary-cards { gap: 8px; }
+    .sc-value { font-size: 22px; letter-spacing: -1px; }
+    .sc-icon { width: 28px; height: 28px; font-size: 12px; }
+
+    /* --- Filtros: ocultar labels dos botões --- */
+    .fbar-people-btn span { display: none; }
+    .fbar-people-btn { padding: 0 10px; min-width: 36px; }
+    .fbar-mytasks-btn span { display: none; }
+    .fbar-mytasks-btn { padding: 0 10px; min-width: 36px; }
+    .fbar-adv-dropdown { right: -60px; }
+    .fbar-search-wrap.open .fbar-search-expand { max-width: 150px; }
+    .fbar-search-input { width: 130px; }
+
+    /* --- Cards: 2 colunas em telas médias --- */
+    .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .card { height: auto; min-height: 160px; }
+    .card-title h4, .card h4 { font-size: 13px; }
+
+    /* --- Kanban --- */
+    .kanban-col { flex: 0 0 224px; min-width: 224px; }
+
+    /* --- Dashboard pies: coluna única em telas médias --- */
+    .dash-col-pies { grid-template-columns: 1fr; }
+
+    /* --- Config: filter tabs scrollável --- */
+    .usr-filter-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .usr-ftab { padding: 7px 16px; font-size: 13px; white-space: nowrap; }
+}
+
+/* ── 480px — Smartphone pequeno ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+    /* --- Layout --- */
+    .content { padding: 8px 10px 72px; gap: 8px; }
+    .header { height: 56px; padding: 0 10px; gap: 6px; }
+    .title-area h1 { font-size: 15px; }
+
+    /* --- KPIs: coluna única --- */
+    .summary-cards { grid-template-columns: 1fr; gap: 8px; }
+    .sc-bar { display: none; }
+
+    /* --- Cards: coluna única --- */
+    .cards-grid { grid-template-columns: 1fr; gap: 8px; }
+    .card { min-height: 150px; }
+
+    /* --- Modais: ações empilhadas --- */
+    .modal-actions { flex-direction: column-reverse; gap: 8px; }
+    .modal-actions button { width: 100%; justify-content: center; }
+    .btn-primary span { display: none; }
+
+    /* --- Drawers: tela cheia --- */
+    .history-drawer { width: 100vw; border-radius: 0; }
+    .setor-filter-modal {
+        width: 100vw !important;
+        max-height: 90vh;
+        border-radius: var(--r-xl) var(--r-xl) 0 0;
+        align-self: flex-end;
+    }
+    .setor-filter-grid { grid-template-columns: 1fr; }
+    .people-filter-modal {
+        width: 100vw !important;
+        border-radius: var(--r-xl) var(--r-xl) 0 0;
+        align-self: flex-end;
+        max-height: 85vh;
+    }
+
+    /* --- Kanban --- */
+    .kanban-col { flex: 0 0 200px; min-width: 200px; }
+
+    /* --- Dashboard pies: coluna única garantida --- */
+    .dash-col-pies { display: flex; flex-direction: column; grid-template-columns: unset; }
+
+    /* --- Grupos: coluna única --- */
+    .groups-folder.open .groups-folder-body { grid-template-columns: 1fr; }
+
+    /* --- Config --- */
+    .usr-page { padding: 0 0 40px; }
+    .usr-filter-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+}
+
+/* ── 360px — Smartphones muito pequenos ─────────────────────────────────── */
+@media (max-width: 360px) {
+    .content { padding: 8px 8px 72px; }
+    .header { padding: 0 8px; }
+    .filters-bar { padding: 8px 10px; }
+    .summary-card { padding: 10px 12px 8px; }
+    .sc-value { font-size: 20px; }
+    .cards-grid { gap: 6px; }
+    .sidebar-logo { padding: 18px 14px 16px; }
+    .sidebar button { padding: 10px 12px; }
+    .view-module-tab { padding: 8px 10px; }
+}
+
+/* ── Kanban mobile — long-press drag ────────────────────────────────────── */
+.kb-touch-holding {
+    opacity: 0.45;
+    transform: scale(0.97);
+    box-shadow: var(--shadow-lg);
+    transition: opacity 0.15s, transform 0.15s;
+}
+
+.kb-touch-ghost {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.88;
+    transform: scale(1.04) rotate(1.5deg);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.28);
+    border-radius: var(--r-lg, 12px);
+    background: #fff;
+    border: 2px solid var(--accent, #2563eb);
+    overflow: hidden;
+    /* Limita largura ao card original */
+    max-width: 90vw;
+}
+
+/* ── Kanban mobile — paginação por swipe ────────────────────────────────── */
+@media (max-width: 768px) {
+    #kanbanBoard.kanban-mobile-paged {
+        position: relative;
+        overflow-x: clip;
+        overflow-y: visible;
+        flex-wrap: nowrap;
+        min-height: 300px;
+        padding-bottom: 56px;
+    }
+
+    #kanbanBoard.kanban-mobile-paged .kanban-col {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        min-width: unset;
+        flex: unset;
+        transition: none;
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+        /* colunas inativas não ocupam espaço vertical */
+        visibility: hidden;
+    }
+
+    #kanbanBoard.kanban-mobile-paged .kanban-col.kb-col-anim {
+        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.32s ease;
+    }
+
+    #kanbanBoard.kanban-mobile-paged .kanban-col.kb-col-active {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+        /* sai do fluxo absoluto para que o board cresça com o conteúdo */
+        position: relative;
+        visibility: visible;
+    }
+
+    #kanbanBoard.kanban-mobile-paged .kanban-col.kb-col-left {
+        transform: translateX(-100%);
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    #kanbanBoard.kanban-mobile-paged .kanban-col.kb-col-right {
+        transform: translateX(100%);
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    /* ── RNC Kanban mobile — mesma paginação por swipe ── */
+    #rncKanbanBoard.rnc-kb-mobile-paged {
+        position: relative;
+        overflow-x: clip;
+        overflow-y: visible;
+        flex-wrap: nowrap;
+        min-height: 300px;
+        padding-bottom: 56px;
+    }
+
+    #rncKanbanBoard.rnc-kb-mobile-paged .rnc-kb-col {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        min-width: unset;
+        flex: unset;
+        transition: none;
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+        visibility: hidden;
+    }
+
+    #rncKanbanBoard.rnc-kb-mobile-paged .rnc-kb-col.kb-col-anim {
+        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.32s ease;
+    }
+
+    #rncKanbanBoard.rnc-kb-mobile-paged .rnc-kb-col.kb-col-active {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+        position: relative;
+        visibility: visible;
+    }
+
+    #rncKanbanBoard.rnc-kb-mobile-paged .rnc-kb-col.kb-col-left {
+        transform: translateX(-100%);
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    #rncKanbanBoard.rnc-kb-mobile-paged .rnc-kb-col.kb-col-right {
+        transform: translateX(100%);
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    /* Dots kanban — fixos na parte inferior da tela */
+    .kb-mobile-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 0;
+        position: fixed;
+        bottom: 16px;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        pointer-events: none;
+    }
+
+    .kb-mobile-dots .kb-mobile-dot {
+        pointer-events: auto;
+    }
+
+    /* Pills de dia — calendário semanal mobile */
+    .cal-day-pills {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 12px;
+        position: fixed;
+        bottom: 16px;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        pointer-events: none;
+    }
+
+    .cal-day-pill {
+        pointer-events: auto;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(255,255,255,0.35);
+        background: rgba(30,58,95,0.72);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        color: rgba(255,255,255,0.75);
+        font-size: 10px;
+        font-weight: 700;
+        font-family: inherit;
+        letter-spacing: 0.2px;
+        cursor: pointer;
+        transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.18s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .cal-day-pill--active {
+        background: var(--accent, #2563eb);
+        border-color: var(--accent, #2563eb);
+        color: #fff;
+        transform: scale(1.12);
+        box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+    }
+
+    .kb-mobile-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+        flex-shrink: 0;
+    }
+
+    .kb-mobile-dot.kb-dot-active {
+        background: var(--accent, #2563eb);
+        transform: scale(1.35);
+    }
+
+    /* Indicador de borda durante drag */
+    .kb-edge-indicator {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 48px;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        animation: kbEdgePulse 0.7s ease-in-out infinite alternate;
+    }
+    .kb-edge-indicator--left  { left: 0;  background: linear-gradient(to right,  rgba(37,99,235,0.22), transparent); border-radius: 12px 0 0 12px; }
+    .kb-edge-indicator--right { right: 0; background: linear-gradient(to left, rgba(37,99,235,0.22), transparent); border-radius: 0 12px 12px 0; }
+    .kb-edge-indicator::after {
+        content: '';
+        width: 10px;
+        height: 10px;
+        border-top: 3px solid rgba(37,99,235,0.7);
+        border-right: 3px solid rgba(37,99,235,0.7);
+        display: block;
+    }
+    .kb-edge-indicator--left::after  { transform: rotate(-135deg); margin-left: 10px; }
+    .kb-edge-indicator--right::after { transform: rotate(45deg);   margin-right: 10px; }
+
+    @keyframes kbEdgePulse {
+        from { opacity: 0.5; }
+        to   { opacity: 1; }
+    }
+}
+
+/* ── Calendário — scroll horizontal no mobile ───────────────────────────── */
+@media (max-width: 768px) {
+    #calendarBoard { padding: 0 0 60px; overflow-x: hidden; }
+    .cal-header { gap: 8px; flex-wrap: wrap; }
+    .cal-nav-title { font-size: 15px; min-width: 130px; }
+
+    .cal-monthly-grid {
+        min-width: 540px;
+    }
+    .cal-weekly-grid:not(.cal-weekly-mobile-paged) {
+        min-width: 540px;
+    }
+    .cal-scroll-wrap,
+    #calendarBoard > div:not(.cal-header):not(.kb-mobile-dots):not(.cal-weekly-mobile-paged) {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+    }
+    .cal-day-cell { min-height: 70px; padding: 4px 3px 6px; }
+    .cal-weekday-header { font-size: 10px; padding: 6px 2px; }
+    .cal-day-num { font-size: 12px; width: 22px; height: 22px; line-height: 22px; }
+    .cal-event-chip { font-size: 10px; padding: 2px 4px; }
+
+    /* Semana paginada — um dia por vez */
+    .cal-weekly-grid.cal-weekly-mobile-paged {
+        position: relative;
+        overflow: hidden;
+        display: block;
+        min-width: unset;
+        min-height: 280px;
+        padding-bottom: 0;
+    }
+
+    .cal-weekly-grid.cal-weekly-mobile-paged .cal-week-col {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: none;
+    }
+
+    .cal-weekly-grid.cal-weekly-mobile-paged .cal-week-col.cal-col-anim {
+        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.32s ease;
+    }
+
+    .cal-weekly-grid.cal-weekly-mobile-paged .cal-week-col.cal-col-active {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+        position: relative;
+    }
+
+    .cal-weekly-grid.cal-weekly-mobile-paged .cal-week-col.cal-col-left {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    .cal-weekly-grid.cal-weekly-mobile-paged .cal-week-col.cal-col-right {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+}
+
+/* ── RNC: Calendário — scroll horizontal e paginação semanal no mobile ──── */
+@media (max-width: 768px) {
+    #rncCalendarBoard { padding: 0 0 60px; overflow-x: hidden; }
+    .rnc-cal-header { gap: 8px; flex-wrap: wrap; }
+    .rnc-cal-nav-title { font-size: 15px; min-width: 130px; }
+
+    .rnc-cal-monthly-grid {
+        min-width: 540px;
+    }
+    .rnc-cal-weekly-grid:not(.rnc-cal-weekly-mobile-paged) {
+        min-width: 540px;
+    }
+    #rncCalGrade {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+    }
+    #rncCalGrade:has(.rnc-cal-weekly-mobile-paged) {
+        overflow-x: hidden;
+    }
+    .rnc-cal-day-cell { min-height: 70px; padding: 4px 3px 6px; }
+    .rnc-cal-wd-header { font-size: 10px; padding: 6px 2px; }
+    .rnc-cal-event-chip { font-size: 10px; padding: 2px 4px; }
+
+    /* Semana paginada — um dia por vez */
+    .rnc-cal-weekly-grid.rnc-cal-weekly-mobile-paged {
+        position: relative;
+        overflow: hidden;
+        display: block;
+        min-width: unset;
+        min-height: 280px;
+        padding-bottom: 0;
+    }
+
+    .rnc-cal-weekly-grid.rnc-cal-weekly-mobile-paged .rnc-cal-week-col {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: none;
+    }
+
+    .rnc-cal-weekly-grid.rnc-cal-weekly-mobile-paged .rnc-cal-week-col.cal-col-anim {
+        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.32s ease;
+    }
+
+    .rnc-cal-weekly-grid.rnc-cal-weekly-mobile-paged .rnc-cal-week-col.cal-col-active {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+        position: relative;
+    }
+
+    .rnc-cal-weekly-grid.rnc-cal-weekly-mobile-paged .rnc-cal-week-col.cal-col-left {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    .rnc-cal-weekly-grid.rnc-cal-weekly-mobile-paged .rnc-cal-week-col.cal-col-right {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .rnc-cal-nav-title { font-size: 14px; min-width: 110px; }
+    .rnc-cal-ctrl-area { gap: 6px; }
+    .rnc-cal-today-btn { padding: 5px 10px; font-size: 12px; }
+    .rnc-cal-nav-btn { width: 30px; height: 30px; }
+}
+
+/* Dropdown de filtro do calendário: abre à direita no mobile */
+@media (max-width: 768px) {
+    .cal-viewfilter-wrap .fbar-adv-dropdown {
+        left: 0;
+        right: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .cal-nav-title { font-size: 14px; min-width: 110px; }
+    .cal-ctrl-area { gap: 6px; }
+    .cal-today-btn { padding: 5px 10px; font-size: 12px; }
+    .cal-nav-btn { width: 30px; height: 30px; }
+}
+
+/* ── Safe area — dispositivos com notch e home indicator ─────────────────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    @media (max-width: 768px) {
+        .content {
+            padding-bottom: calc(72px + env(safe-area-inset-bottom));
+        }
+        .fab-add {
+            bottom: calc(20px + env(safe-area-inset-bottom));
+        }
+        .notification-modal {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .sidebar {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    }
+}
+
+/* ── Prevenção de zoom em inputs no iOS ──────────────────────────────────── */
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="search"],
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
+
+/* ── Touch: melhorar resposta tátil em elementos interativos ─────────────── */
+@media (max-width: 768px) {
+    .card,
+    .btn-primary,
+    .btn-secondary,
+    .btn-clear,
+    .sidebar button,
+    .view-module-tab,
+    .list-subtab,
+    .fbar-icon-btn,
+    .fbar-people-btn,
+    .btn-setor-filter,
+    .notification-container {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+}

@@ -1,0 +1,39 @@
+/* =========================================================================
+   RESET & BASE
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; font-size: 16px; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Scrollbars finas e elegantes */
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: var(--r-full);
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Utilitários */
+.notification-badge.hidden, .hidden { display: none !important; }
+
+/* Cores de fundo utilitárias */
+.bg-blue   { background-color: var(--c-blue); }
+.bg-green  { background-color: var(--c-green); }
+.bg-red    { background-color: var(--c-red); }
+.bg-orange { background-color: var(--c-orange); }
+.bg-yellow { background-color: var(--c-yellow); }
+.bg-purple { background-color: var(--c-purple); }
+.bg-default{ background-color: var(--c-default); }

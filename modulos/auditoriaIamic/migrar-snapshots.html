@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migração de Snapshots</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--bd:#334155;--tx:#e2e8f0;--mut:#94a3b8;
+      --ac:#2563eb;--ok:#16a34a;--wn:#ca8a04;--er:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 16px;background:var(--bg);color:var(--tx);
+     font-family:Inter,system-ui,sans-serif;line-height:1.55}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--mut);font-size:14px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:16px}
+.warn{border-color:var(--wn);background:rgba(202,138,4,.1)}
+.warn h3{margin:0 0 8px;color:#fbbf24;font-size:15px}
+.warn ul{margin:0;padding-left:20px;font-size:14px}
+button{font:inherit;font-weight:600;padding:11px 20px;border-radius:8px;border:none;
+       cursor:pointer;color:#fff;background:var(--ac);margin-right:8px;margin-bottom:6px}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.danger{background:var(--er)}
+label{display:flex;gap:9px;align-items:flex-start;font-size:14px;margin:14px 0;cursor:pointer}
+input[type=checkbox]{margin-top:3px;width:16px;height:16px;flex:none}
+pre{background:#020617;border:1px solid var(--bd);border-radius:8px;padding:14px;
+    font-size:12.5px;max-height:400px;overflow:auto;white-space:pre-wrap;margin:16px 0 0}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:12px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--bd)}
+th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase}
+td.n,th.n{text-align:right}
+td.n{font-variant-numeric:tabular-nums}
+.bar{height:8px;background:#0f172a;border-radius:99px;overflow:hidden;margin-top:14px}
+.bar > div{height:100%;width:0;background:var(--ac);transition:width .3s}
+.ok{color:#4ade80}.er{color:#f87171}.mut{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Migração de Snapshots do Histórico</h1>
+<div class="sub">Move <code>historico[].snapshot</code> dos cards para o nó isolado <code>/cardSnapshots</code>.</div>
+
+<div class="card warn">
+  <h3>Antes de executar</h3>
+  <ul>
+    <li><b>Ninguém pode estar usando o sistema.</b> A migração regrava coleções inteiras; uma edição simultânea seria perdida.</li>
+    <li><b>Tenha o backup em mãos.</b> Sem ele não há como desfazer.</li>
+    <li>A operação é <b>idempotente</b>: se for interrompida, rodar de novo resolve.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <button id="btnAnalisar">1. Analisar (não grava nada)</button>
+  <button id="btnMigrar" class="danger" disabled>2. Executar migração</button>
+  <button id="btnVerificar" disabled>3. Verificar resultado</button>
+  <label id="lblConfirm" style="display:none">
+    <input type="checkbox" id="chkConfirm">
+    <span>Confirmo que fiz o backup, que ninguém está usando o sistema agora, e entendo que esta operação reescreve dados de produção.</span>
+  </label>
+  <div class="bar"><div id="bar"></div></div>
+  <div id="resumo"></div>
+  <pre id="log">Pronto. Clique em "Analisar" para começar.</pre>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyBe8ILABfly2BHCCg27BmiXmb_3hZlhGls",
+  authDomain: "dados-lamic.firebaseapp.com",
+  databaseURL: "https://dados-lamic-default-rtdb.firebaseio.com",
+  projectId: "dados-lamic",
+  storageBucket: "dados-lamic.firebasestorage.app",
+  messagingSenderId: "949848302620",
+  appId: "1:949848302620:web:c17df5db50a4907b83abd9"
+});
+const db = getDatabase(app);
+
+const COLS = ['audits', 'activities', 'maintenances', 'documents'];
+const SNAP_PATH = 'cardSnapshots';
+const CHUNK_BYTES = 900 * 1024;   // teto por update(), para não mandar um frame gigante
+
+const $ = (id) => document.getElementById(id);
+const logEl = $('log');
+let analise = null;
+
+function log(msg, cls) {
+  const line = cls ? '<span class="' + cls + '">' + msg + '</span>' : msg;
+  logEl.innerHTML += '\n' + line;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+const bytes = (o) => new Blob([JSON.stringify(o)]).size;
+const fmtMB = (n) => (n / 1048576).toFixed(2) + ' MB';
+const setBar = (p) => { $('bar').style.width = p + '%'; };
+
+function newSnapId() {
+  return 's' + (Date.now() * 1000 + Math.floor(Math.random() * 1000)) +
+         Math.random().toString(36).slice(2, 6);
+}
+
+// Percorre o valor CRU do nó preservando a forma original (array, array esparso com
+// buracos, objeto, itens nulos). Nada é reconstruído: mexemos só no campo snapshot.
+function eachItem(raw, fn) {
+  if (!raw) return;
+  const list = Array.isArray(raw) ? raw : Object.values(raw);
+  list.forEach((it) => { if (it && typeof it === 'object') fn(it); });
+}
+function eachEntry(item, fn) {
+  const h = item.historico;
+  if (!h) return;
+  const list = Array.isArray(h) ? h : Object.values(h);
+  list.forEach((e) => { if (e && typeof e === 'object') fn(e); });
+}
+
+// ---------- 1. ANÁLISE (somente leitura) ----------
+$('btnAnalisar').onclick = async () => {
+  $('btnAnalisar').disabled = true;
+  logEl.textContent = 'Lendo coleções...';
+  try {
+    analise = { cols: {}, totalInline: 0, totalBytes: 0, jaMigrados: 0 };
+    let linhas = '';
+    for (const c of COLS) {
+      const snap = await get(ref(db, c));
+      const raw = snap.exists() ? snap.val() : null;
+      let inline = 0, b = 0, migrados = 0;
+      eachItem(raw, (item) => eachEntry(item, (e) => {
+        if (e.snapshot) { inline++; b += bytes(e.snapshot); }
+        else if (e.snapId) { migrados++; }
+      }));
+      analise.cols[c] = { raw, inline, bytes: b, migrados };
+      analise.totalInline += inline;
+      analise.totalBytes += b;
+      analise.jaMigrados += migrados;
+      linhas += '<tr><td>' + c + '</td><td class="n">' + inline + '</td><td class="n">' +
+                fmtMB(b) + '</td><td class="n">' + migrados + '</td></tr>';
+      log(c + ': ' + inline + ' snapshots inline (' + fmtMB(b) + '), ' + migrados + ' já migrados');
+    }
+    $('resumo').innerHTML =
+      '<table><tr><th>Coleção</th><th class="n">A migrar</th><th class="n">Bytes</th>' +
+      '<th class="n">Já migrados</th></tr>' + linhas +
+      '<tr><td><b>Total</b></td><td class="n"><b>' + analise.totalInline + '</b></td>' +
+      '<td class="n"><b>' + fmtMB(analise.totalBytes) + '</b></td>' +
+      '<td class="n"><b>' + analise.jaMigrados + '</b></td></tr></table>';
+    log('\nTotal a migrar: ' + analise.totalInline + ' snapshots, ' + fmtMB(analise.totalBytes), 'ok');
+    if (analise.totalInline === 0) {
+      log('Nada a fazer — já está tudo migrado.', 'ok');
+      $('btnVerificar').disabled = false;
+    } else {
+      $('lblConfirm').style.display = 'flex';
+    }
+  } catch (e) {
+    log('ERRO na análise: ' + e.message, 'er');
+    $('btnAnalisar').disabled = false;
+  }
+};
+
+$('chkConfirm').onchange = (e) => { $('btnMigrar').disabled = !e.target.checked; };
+
+// ---------- 2. MIGRAÇÃO ----------
+// Por coleção: grava os snapshots em /cardSnapshots (em blocos) e SÓ DEPOIS regrava a
+// coleção com as referências. Se cair no meio, os cards seguem intactos com o snapshot
+// inline e o que sobrou em /cardSnapshots é órfão inofensivo — rodar de novo resolve.
+// A ordem inversa (desanexar antes de confirmar a gravação) perderia histórico.
+$('btnMigrar').onclick = async () => {
+  $('btnMigrar').disabled = true;
+  $('chkConfirm').disabled = true;
+  log('\n=== INICIANDO MIGRAÇÃO ===', 'ok');
+  let feitos = 0;
+  try {
+    for (const c of COLS) {
+      const info = analise.cols[c];
+      if (!info.inline) { log(c + ': nada a migrar, pulando.', 'mut'); continue; }
+
+      const pend = [];
+      eachItem(info.raw, (item) => eachEntry(item, (e) => {
+        if (e.snapshot && !e.snapId) pend.push({ e: e, id: newSnapId() });
+      }));
+
+      log('\n' + c + ': enviando ' + pend.length + ' snapshots para /' + SNAP_PATH + '...');
+      let payload = {}, acc = 0, enviados = 0;
+      const flush = async () => {
+        if (!acc) return;
+        await update(ref(db, SNAP_PATH), payload);
+        enviados += Object.keys(payload).length;
+        log('  ' + enviados + '/' + pend.length + ' enviados', 'mut');
+        payload = {}; acc = 0;
+      };
+      for (const p of pend) {
+        const b = bytes(p.e.snapshot);
+        if (acc + b > CHUNK_BYTES) await flush();
+        payload[p.id] = p.e.snapshot;
+        acc += b;
+        feitos++;
+        setBar(Math.round(100 * feitos / analise.totalInline));
+      }
+      await flush();
+
+      // Confirmado no servidor: agora troca conteúdo por referência e regrava a coleção.
+      pend.forEach((p) => { delete p.e.snapshot; p.e.snapId = p.id; });
+      log(c + ': regravando a coleção (' + fmtMB(bytes(info.raw)) + ')...');
+      await set(ref(db, c), info.raw);
+      log(c + ': OK — ' + pend.length + ' snapshots externalizados.', 'ok');
+    }
+    setBar(100);
+    log('\n=== MIGRAÇÃO CONCLUÍDA ===', 'ok');
+    log('Clique em "Verificar resultado" para conferir.');
+    $('btnVerificar').disabled = false;
+  } catch (e) {
+    log('\nERRO NA MIGRAÇÃO: ' + e.message, 'er');
+    log('Os cards NÃO foram alterados nesta coleção — o snapshot só é removido depois da gravação confirmada.', 'er');
+    log('Rode "Analisar" de novo e repita: a operação é idempotente.', 'er');
+  }
+};
+
+// ---------- 3. VERIFICAÇÃO ----------
+$('btnVerificar').onclick = async () => {
+  $('btnVerificar').disabled = true;
+  log('\n=== VERIFICAÇÃO ===');
+  try {
+    let inline = 0, refs = 0, faltando = 0, totalBytes = 0;
+    const ids = [];
+    for (const c of COLS) {
+      const snap = await get(ref(db, c));
+      const raw = snap.exists() ? snap.val() : null;
+      totalBytes += bytes(raw);
+      eachItem(raw, (item) => eachEntry(item, (e) => {
+        if (e.snapshot) inline++;
+        if (e.snapId) { refs++; ids.push(e.snapId); }
+      }));
+    }
+    log('Snapshots inline restantes: ' + inline, inline ? 'er' : 'ok');
+    log('Referências snapId encontradas: ' + refs);
+
+    // Amostra aleatória: confirma que as referências apontam para algo que existe.
+    const amostra = ids.sort(() => Math.random() - 0.5).slice(0, 25);
+    for (const id of amostra) {
+      const s = await get(ref(db, SNAP_PATH + '/' + id));
+      if (!s.exists()) { faltando++; log('  referência órfã: ' + id, 'er'); }
+    }
+    log('Amostra de ' + amostra.length + ' referências: ' + (amostra.length - faltando) + ' íntegras',
+        faltando ? 'er' : 'ok');
+    log('\nTamanho das 4 coleções agora: ' + fmtMB(totalBytes), 'ok');
+
+    const tudoCerto = (inline === 0 && faltando === 0);
+    log(tudoCerto
+        ? '\nTUDO CERTO. Pode voltar a usar o sistema.'
+        : '\nATENÇÃO: há pendências acima — NÃO considere a migração concluída.',
+        tudoCerto ? 'ok' : 'er');
+  } catch (e) {
+    log('ERRO na verificação: ' + e.message, 'er');
+    $('btnVerificar').disabled = false;
+  }
+};
+</script>
+</body>
+</html>

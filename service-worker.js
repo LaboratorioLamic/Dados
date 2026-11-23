@@ -1,5 +1,5 @@
 // Rede primeiro (dados e login sempre atualizados); cache só como reserva offline do "casco" do app.
-const CACHE = 'lamic-portal-v90';
+const CACHE = 'lamic-portal-v91';
 const CASCO = ['./', 'index.html', 'css/portal.css', 'js/app.js', 'js/chat-flutuante.js', 'js/config.js', 'assents/circulo.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {

@@ -1,0 +1,48 @@
+{
+  "users": [
+    {
+      "user": "Laboratório LAMIC",
+      "password": "Lamic6530@"
+    },
+    {
+      "user": "CLIMED",
+      "password": "4440Cm@"
+    },
+    {
+      "user": "Clinica AMA",
+      "password": "1539Am@"
+    },
+    {
+      "user": "Lab. Bom Jesus",
+      "password": "13805Bj@"
+    },
+    {
+      "user": "Lab. Clementino Fraga",
+      "password": "1520Cf@"
+    },
+    {
+      "user": "Lab. Osvaldo Cruz",
+      "password": "1592oC@"
+    },
+    {
+      "user": "Lab. Santa Maria",
+      "password": "15125sM@"
+    },
+    {
+      "user": "Lab. São Matheus",
+      "password": "4441sM@"
+    },
+    {
+      "user": "LABCLINIC",
+      "password": "1553Lc@"
+    },
+    {
+      "user": "LACC",
+      "password": "1523Lc@"
+    },
+    {
+      "user": "Vidanalise",
+      "password": "5060Vn@"
+    }
+  ]
+}

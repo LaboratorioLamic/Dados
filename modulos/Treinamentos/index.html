@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Sem cache do documento: uma versão guardada do HTML traria também a
+         versão antiga das referências de script/estilo, e o painel voltaria a
+         rodar código anterior sem ninguém perceber. -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Universidade LAMIC - Selecione a plataforma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/home.css?v=202611231200">
+    <link rel="stylesheet" href="css/auth.css?v=202611231200">
+    <link rel="stylesheet" href="css/mobile.css?v=202611231200">
+</head>
+<body>
+<script src="lamic-carregando.js" data-nome="UniLAMIC"></script>
+
+    <button type="button" id="student-account-btn" class="home-account" title="Minha conta" aria-label="Minha conta">
+        <i class="fas fa-user"></i><span id="student-account-label">Entrar</span>
+    </button>
+
+    <div class="home-head">
+        <div class="home-logo"><i class="fas fa-graduation-cap"></i></div>
+        <h1>Selecione uma plataforma</h1>
+        <p class="home-sub">Escolha o ambiente para acessar cursos, módulos e avaliações</p>
+    </div>
+
+    <main class="platform-grid" id="platform-grid"></main>
+
+    <div class="home-foot">
+        <span>Universidade LAMIC</span>
+        <button type="button" id="home-settings-btn">
+            <i class="fas fa-cog"></i> Configurações
+        </button>
+    </div>
+
+    <!-- ─── MODAL DE PERFIL DO ALUNO ─── -->
+    <div class="auth-modal" id="student-profile-modal" role="dialog" aria-modal="true" aria-labelledby="student-profile-title">
+        <div class="auth-card student-profile-card" id="student-profile-card">
+            <div class="auth-header">
+                <h2 id="student-profile-title"><i class="fas fa-user-circle"></i> <span id="student-profile-name">Meu Perfil</span></h2>
+                <button class="auth-close" id="student-profile-close" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="auth-body">
+                <!-- Abas de categoria: Treinamento / Educação Continuada. Cada
+                     uma tem sua própria subaba Visão geral / Histórico,
+                     filtrada pelo slug correspondente (estagios fica fora). -->
+                <div class="student-profile-tabs" id="student-profile-category-tabs">
+                    <button type="button" class="student-auth-tab active" id="student-profile-cat-treinamentos" data-category="treinamentos">Treinamento</button>
+                    <button type="button" class="student-auth-tab" id="student-profile-cat-educacao_continuada" data-category="educacao_continuada">Educação Continuada</button>
+                </div>
+
+                <div class="student-profile-tabs student-profile-subtabs">
+                    <button type="button" class="student-auth-tab active" id="student-profile-tab-overview" data-tab="overview">Visão geral</button>
+                    <button type="button" class="student-auth-tab" id="student-profile-tab-history" data-tab="history">Histórico</button>
+                </div>
+
+                <!-- Aba: Visão geral -->
+                <div id="student-profile-overview-panel">
+                    <!-- Dados principais do usuário: nome/criação vêm da conta,
+                         setor/função da planilha (Colaboradores). -->
+                    <div class="student-profile-info" id="student-profile-info">
+                        <div class="student-profile-info-item">
+                            <span class="label"><i class="fas fa-user"></i> Nome completo</span>
+                            <span class="value" id="student-profile-info-name">—</span>
+                        </div>
+                        <div class="student-profile-info-item">
+                            <span class="label"><i class="fas fa-calendar-plus"></i> Criado em</span>
+                            <span class="value" id="student-profile-info-created">—</span>
+                        </div>
+                        <div class="student-profile-info-item">
+                            <span class="label"><i class="fas fa-building"></i> Setor</span>
+                            <span class="value" id="student-profile-info-unit">—</span>
+                        </div>
+                        <div class="student-profile-info-item">
+                            <span class="label"><i class="fas fa-id-badge"></i> Função</span>
+                            <span class="value" id="student-profile-info-role">—</span>
+                        </div>
+                    </div>
+
+                    <div class="student-profile-summary">
+                        <div class="student-profile-stat">
+                            <strong id="student-profile-approved-count">0</strong>
+                            <span>Cursos concluídos</span>
+                        </div>
+                        <div class="student-profile-stat">
+                            <strong id="student-profile-avg-score">—</strong>
+                            <span>Média geral</span>
+                        </div>
+                    </div>
+
+                    <!-- % de módulos assistidos por curso em andamento (não conta
+                         a avaliação final, só a progressão de vídeos/PDFs). -->
+                    <div class="student-profile-progress-block">
+                        <span class="student-profile-block-title"><i class="fas fa-spinner"></i> Progresso dos cursos</span>
+                        <div id="student-profile-progress-list" class="student-profile-progress-list">
+                            <p class="form-hint">Carregando progressão...</p>
+                        </div>
+                    </div>
+
+                    <button type="button" class="student-profile-toggle" id="student-profile-password-toggle">
+                        <i class="fas fa-key"></i> Alterar senha
+                    </button>
+                    <div id="student-profile-password-panel" style="display:none;">
+                        <div class="auth-error" id="student-profile-password-error"></div>
+                        <label for="student-profile-current-password">Senha atual</label>
+                        <input type="password" id="student-profile-current-password" placeholder="Digite sua senha atual" autocomplete="current-password">
+                        <label for="student-profile-new-password">Nova senha</label>
+                        <input type="password" id="student-profile-new-password" placeholder="Mínimo de 6 caracteres" autocomplete="new-password">
+                        <label for="student-profile-confirm-password">Confirmar nova senha</label>
+                        <input type="password" id="student-profile-confirm-password" placeholder="Repita a nova senha" autocomplete="new-password">
+                        <button class="auth-submit" id="student-profile-password-submit">
+                            <i class="fas fa-check"></i> Salvar nova senha
+                        </button>
+                    </div>
+
+                    <button class="auth-submit student-profile-logout" id="student-profile-logout">
+                        <i class="fas fa-right-from-bracket"></i> Sair da Conta
+                    </button>
+                </div>
+
+                <!-- Aba: Histórico -->
+                <div id="student-profile-history-panel" style="display:none;">
+                    <div id="student-profile-list" class="student-profile-list">
+                        <p class="form-hint">Carregando histórico...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <!-- Carrega xlsx/jspdf/html2canvas sob demanda (js/vendor-loader.js). -->
+    <script defer src="js/vendor-loader.js?v=202611231200"></script>
+    <script defer src="js/firebase-config.js?v=202611231200"></script>
+    <script defer src="js/connection-guard.js?v=202611231200"></script>
+    <script defer src="js/db-sync.js?v=202611231200"></script>
+    <script defer src="js/crypto-utils.js?v=202611231200"></script>
+    <script defer src="js/course-image.js?v=202611231200"></script>
+    <script defer src="js/deadlines.js?v=202611231200"></script>
+    <script defer src="js/certificate.js?v=202611231200"></script>
+    <script defer src="js/colaboradores-dados.js?v=202611231200"></script>
+    <script defer src="js/ui.js?v=202611231200"></script>
+    <script defer src="js/dados-session.js?v=202611231400"></script>
+    <script defer src="js/admin-history.js?v=202611231200"></script>
+    <script defer src="js/student-profile.js?v=202611231200"></script>
+    <script defer src="js/student-header.js?v=202611231200"></script>
+    <script defer src="js/home.js?v=202611231200"></script>
+</body>
+</html>

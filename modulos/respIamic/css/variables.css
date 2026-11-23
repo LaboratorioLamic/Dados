@@ -1,0 +1,10 @@
+/* Tokens de design — cores de marca, ring de foco e curvas de animação */
+
+:root {
+    --brand-900: #0e1628;
+    --brand-800: #111a2e;
+    --brand-700: #16203a;
+    --brand-accent: #3d7cf0;
+    --ring: rgba(61,124,240,.25);
+    --ease-drawer: cubic-bezier(.22,.61,.24,1);
+}

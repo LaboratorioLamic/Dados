@@ -1,0 +1,77 @@
+/* =========================================================================
+   BACKUP
+   ========================================================================= */
+#backupContent {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    padding: 8px 4px 32px;
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Card principal — ocupa linha inteira */
+.backup-card-hero {
+    background: #fff;
+    padding: 36px 40px;
+    border-radius: var(--r-2xl);
+    box-shadow: var(--shadow-md);
+    border: 1.5px solid var(--border);
+    width: 100%;
+    text-align: center;
+}
+
+/* Grid de cards de utilidades — 2 colunas */
+.backup-utils-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+/* Card de utilidade individual */
+.backup-card-util {
+    background: #fff;
+    padding: 28px 28px 24px;
+    border-radius: var(--r-2xl);
+    box-shadow: var(--shadow-md);
+    border: 1.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.backup-card-util .backup-util-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.backup-card-util .backup-report {
+    margin-top: auto;
+}
+
+/* Ações do card principal */
+.backup-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+/* Responsivo: em tela pequena, empilha */
+@media (max-width: 640px) {
+    .backup-utils-grid {
+        grid-template-columns: 1fr;
+    }
+    .backup-card-hero {
+        padding: 28px 20px;
+    }
+    .backup-card-util {
+        padding: 24px 20px;
+    }
+}

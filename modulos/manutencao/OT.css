@@ -1,0 +1,1060 @@
+/* ═══════════════════════════════════════════════════════════
+   OT.css — Módulo Ordem de Trabalho — Manutenção LAMIC
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Layout da aba OS ── */
+#tab-os.active {
+  padding: 0;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+
+.ot-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+}
+
+/* ── Toolbar ── */
+.ot-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+.ot-toolbar-sep {
+  width: 1px; height: 24px;
+  background: var(--border); flex-shrink: 0;
+}
+.ot-toolbar-spacer { flex: 1; }
+.ot-search {
+  position: relative; display: flex; align-items: center;
+}
+.ot-search svg {
+  position: absolute; left: 10px;
+  width: 14px; height: 14px; color: var(--text-muted);
+  pointer-events: none;
+}
+.ot-search input {
+  padding: 8px 12px 8px 32px;
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  font-size: 13px; font-family: inherit; color: var(--text-primary);
+  background: var(--bg); outline: none; width: 200px;
+  transition: var(--transition);
+}
+.ot-search input:focus { border-color: var(--cyan); background: #fff; }
+.ot-filter-select {
+  padding: 8px 30px 8px 10px;
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  font-size: 12.5px; font-family: inherit; color: var(--text-secondary);
+  background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 8px center;
+  appearance: none; outline: none; cursor: pointer;
+  transition: var(--transition);
+}
+.ot-filter-select:focus { border-color: var(--cyan); }
+
+/* ── Kanban board ── */
+.ot-board {
+  display: flex;
+  gap: 16px;
+  padding: 20px 24px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  align-items: stretch;
+  min-height: 0;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+.ot-board::-webkit-scrollbar { height: 6px; }
+.ot-board::-webkit-scrollbar-track { background: transparent; }
+.ot-board::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Coluna Kanban ── */
+.ot-column {
+  flex: 1 1 0;
+  min-width: 180px;
+  width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.ot-col-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+}
+.ot-col-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.ot-col-title {
+  font-size: 13px; font-weight: 700; color: var(--text-primary);
+  flex: 1;
+}
+.ot-col-count {
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+  min-width: 24px; text-align: center;
+}
+.ot-col-body {
+  flex: 1; overflow-y: auto;
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 8px;
+  min-height: 120px;
+  max-height: 100%;
+  transition: background 0.18s ease;
+}
+.ot-col-body::-webkit-scrollbar { width: 4px; }
+.ot-col-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.ot-col-body.drag-over {
+  background: rgba(0,168,204,0.06);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  outline: 2px dashed rgba(0,168,204,0.4);
+  outline-offset: -4px;
+}
+.ot-col-empty {
+  text-align: center; padding: 24px 12px;
+  color: var(--text-muted); font-size: 12px;
+  border: 1.5px dashed var(--border); border-radius: var(--radius);
+}
+.ot-col-empty svg { width: 28px; height: 28px; opacity: 0.3; margin-bottom: 8px; display: block; margin-inline: auto; }
+
+/* ── Card OT ── */
+.ot-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  cursor: grab;
+  transition: box-shadow 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+  position: relative;
+  user-select: none;
+}
+.ot-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.ot-card.dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+  box-shadow: none;
+  transform: none;
+}
+.ot-card-ghost {
+  background: var(--cyan-light);
+  border: 2px dashed var(--cyan);
+  border-radius: var(--radius-lg);
+  height: 80px;
+  opacity: 0.6;
+}
+
+/* Barra lateral de severidade */
+.ot-card::before {
+  content: '';
+  position: absolute; left: 0; top: 8px; bottom: 8px;
+  width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--sev-color, var(--border));
+}
+.ot-card[data-sev="baixa"]   { --sev-color: var(--green); }
+.ot-card[data-sev="media"]   { --sev-color: var(--cyan); }
+.ot-card[data-sev="alta"]    { --sev-color: var(--amber); }
+.ot-card[data-sev="critica"] { --sev-color: var(--red); }
+
+.ot-card-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.ot-card-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 600; color: var(--text-muted);
+}
+.ot-card-menu-btn {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: transparent; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: var(--transition);
+}
+.ot-card-menu-btn:hover { background: var(--bg); color: var(--text-primary); }
+.ot-card-menu-btn svg { width: 13px; height: 13px; }
+
+.ot-card-title {
+  font-size: 13.5px; font-weight: 600; color: var(--text-primary);
+  margin-bottom: 8px; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.ot-card-badges {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;
+}
+.ot-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 20px;
+  font-size: 10px; font-weight: 700; white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.ot-badge-tipo-corretiva   { background: rgba(230,57,70,0.1);   color: var(--red);   border: 1px solid rgba(230,57,70,0.25); }
+.ot-badge-tipo-implantacao { background: rgba(42,157,143,0.1);  color: var(--green); border: 1px solid rgba(42,157,143,0.25); }
+.ot-badge-tipo-melhoria    { background: rgba(244,162,97,0.12); color: #b45309;      border: 1px solid rgba(244,162,97,0.3); }
+.ot-badge-tipo-alteracao   { background: rgba(139,92,246,0.1);  color: #7c3aed;      border: 1px solid rgba(139,92,246,0.25); }
+.ot-badge-sev-baixa   { background: rgba(42,157,143,0.1);  color: var(--green); border: 1px solid rgba(42,157,143,0.25); }
+.ot-badge-sev-media   { background: rgba(0,168,204,0.1);   color: var(--cyan);  border: 1px solid rgba(0,168,204,0.25); }
+.ot-badge-sev-alta    { background: rgba(244,162,97,0.12); color: #b45309;      border: 1px solid rgba(244,162,97,0.3); }
+.ot-badge-sev-critica { background: rgba(230,57,70,0.1);   color: var(--red);   border: 1px solid rgba(230,57,70,0.25); }
+.ot-badge-terceiro    { background: rgba(139,92,246,0.1);  color: #7c3aed;      border: 1px solid rgba(139,92,246,0.25); }
+
+.ot-card-meta {
+  font-size: 11.5px; color: var(--text-muted);
+  display: flex; flex-direction: column; gap: 3px;
+  margin-bottom: 8px;
+}
+.ot-card-meta-row {
+  display: flex; align-items: center; gap: 5px;
+}
+.ot-card-meta-row svg { width: 11px; height: 11px; flex-shrink: 0; opacity: 0.6; }
+.ot-card-meta-val { color: var(--text-secondary); font-weight: 500; }
+.ot-card-overdue { color: var(--red) !important; font-weight: 700; }
+.ot-card-warning { color: #b45309 !important; font-weight: 700; }
+
+.ot-card-footer {
+  border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px;
+}
+.ot-card-progress-label {
+  display: flex; justify-content: space-between;
+  font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;
+}
+.ot-progress-bar-wrap {
+  height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+}
+.ot-progress-bar-fill {
+  height: 100%; border-radius: 2px;
+  background: var(--green);
+  transition: width 0.35s ease;
+}
+
+/* ── Modais OT ── */
+#modal-ot-form  { z-index: 700; }
+/* OT form as right drawer */
+.ot-form-drawer {
+  position: fixed; top: 0; right: -580px; bottom: 0;
+  width: 560px; max-width: 100vw;
+  background: var(--bg-card);
+  box-shadow: -2px 0 20px rgba(14,22,40,0.15);
+  z-index: 700;
+  display: flex; flex-direction: column;
+  transition: right 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+.ot-form-drawer.open { right: 0; }
+#modal-ot-view  { z-index: 700; }
+#modal-ot-pub   { z-index: 720; }
+#modal-ot-cat   { z-index: 730; }
+#modal-ot-cancel { z-index: 730; }
+#modal-ot-devolve { z-index: 730; }
+
+/* .modal-ot-form now uses .ot-form-drawer (right drawer) */
+.modal-ot-view  .modal { width: min(720px, 96vw); max-height: 94vh; }
+.modal-ot-pub   .modal { width: min(580px, 96vw); }
+.modal-ot-cat   .modal { width: min(460px, 96vw); }
+.modal-ot-sm    .modal { width: min(420px, 96vw); }
+
+/* Tabs internas do modal OT */
+.ot-modal-tabs {
+  display: flex; flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg); padding: 0 24px;
+}
+.ot-modal-tab-btn {
+  padding: 12px 18px; font-size: 13px; font-weight: 600;
+  color: var(--text-muted); background: transparent;
+  border: none; border-bottom: 2.5px solid transparent;
+  cursor: pointer; transition: var(--transition);
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: -1px; font-family: inherit;
+}
+.ot-modal-tab-btn:hover { color: var(--text-primary); }
+.ot-modal-tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.ot-modal-tab-btn svg { width: 14px; height: 14px; }
+.ot-modal-tab-badge {
+  background: var(--cyan-light); color: var(--cyan);
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
+  border-radius: 20px; border: 1px solid rgba(0,168,204,0.25);
+  min-width: 18px; text-align: center;
+}
+.ot-modal-tab-panel { display: none; }
+.ot-modal-tab-panel.active { display: block; }
+
+/* Seção de falha (toggle visibilidade) */
+.ot-falha-section {
+  background: rgba(230,57,70,0.04);
+  border: 1.5px solid rgba(230,57,70,0.18);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-top: 4px;
+  display: none;
+}
+.ot-falha-section.show { display: block; }
+
+/* Toggle com label inline */
+.ot-toggle-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: var(--radius); cursor: pointer;
+  transition: var(--transition); user-select: none;
+}
+.ot-toggle-row:hover { border-color: #c4cfe0; }
+.ot-toggle-row.active {
+  background: rgba(230,57,70,0.06);
+  border-color: rgba(230,57,70,0.3);
+}
+.ot-toggle-switch {
+  width: 38px; height: 22px; border-radius: 11px;
+  background: var(--border); position: relative; flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+.ot-toggle-switch::after {
+  content: ''; position: absolute;
+  left: 3px; top: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 4px rgba(14,22,40,0.2);
+  transition: transform 0.2s ease;
+}
+.ot-toggle-row.active .ot-toggle-switch { background: var(--red); }
+.ot-toggle-row.active .ot-toggle-switch::after { transform: translateX(16px); }
+.ot-toggle-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); flex: 1; }
+.ot-toggle-row.active .ot-toggle-label { color: var(--red); font-weight: 600; }
+
+/* Alerta de parada na view */
+.ot-parada-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(244, 162, 97, 0.1);
+  border: 1px solid rgba(244, 162, 97, 0.35);
+  border-radius: 8px;
+  color: #b45309;
+}
+
+/* Terceirizado section */
+.ot-terceiro-section {
+  background: rgba(139,92,246,0.04);
+  border: 1.5px solid rgba(139,92,246,0.18);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-top: 4px;
+  display: none;
+}
+.ot-terceiro-section.show { display: block; }
+
+/* Catálogo inline (botão + ao lado do select) */
+.ot-catalog-field {
+  display: flex; gap: 6px; align-items: flex-end;
+}
+.ot-catalog-field .field-select { flex: 1; }
+.ot-catalog-add-btn {
+  flex-shrink: 0; width: 38px; height: 40px;
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); cursor: pointer; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition); font-size: 18px; font-weight: 300;
+}
+.ot-catalog-add-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-light); }
+
+/* Subtarefas */
+.ot-sub-list { display: flex; flex-direction: column; gap: 8px; }
+.ot-sub-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 12px 14px;
+  transition: var(--transition);
+}
+.ot-sub-item.done { opacity: 0.65; }
+.ot-sub-item.done .ot-sub-desc { text-decoration: line-through; color: var(--text-muted); }
+.ot-sub-check {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid var(--border); background: var(--bg-card);
+  cursor: pointer; flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.ot-sub-check:hover { border-color: var(--green); }
+.ot-sub-check.checked { background: var(--green); border-color: var(--green); }
+.ot-sub-check.checked svg { display: block; }
+.ot-sub-check svg { display: none; width: 11px; height: 11px; color: #fff; }
+.ot-sub-body { flex: 1; min-width: 0; }
+.ot-sub-desc { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+.ot-sub-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; display: flex; gap: 10px; flex-wrap: wrap; }
+.ot-sub-ev-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 600; color: var(--amber);
+  background: rgba(244,162,97,0.1); border: 1px solid rgba(244,162,97,0.25);
+  padding: 1px 6px; border-radius: 10px;
+}
+.ot-sub-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.ot-sub-del-btn {
+  width: 26px; height: 26px; border: none; background: transparent;
+  color: var(--text-muted); cursor: pointer; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.ot-sub-del-btn:hover { background: rgba(230,57,70,0.1); color: var(--red); }
+.ot-sub-del-btn svg { width: 13px; height: 13px; }
+.ot-sub-ev-btn {
+  width: 26px; height: 26px; border: none; flex-shrink: 0;
+  background: rgba(244,162,97,0.1); color: #b45309; cursor: pointer;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.ot-sub-ev-btn:hover { background: rgba(244,162,97,0.22); }
+.ot-sub-ev-btn.has-evidence { background: rgba(42,157,143,0.12); color: #2a9d8f; }
+.ot-sub-ev-btn.has-evidence:hover { background: rgba(42,157,143,0.22); }
+
+/* Badge de comentário obrigatório */
+.ot-sub-comt-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 600; color: #f4a261;
+  background: rgba(244,162,97,0.1); border: 1px solid rgba(244,162,97,0.25);
+  padding: 1px 6px; border-radius: 10px;
+}
+
+/* Botão de balão no builder do form */
+.ot-sub-comt-toggle { color: var(--text-muted) !important; }
+.ot-sub-comt-toggle:hover { background: rgba(0,168,204,0.1) !important; color: var(--cyan) !important; }
+.ot-sub-comt-toggle.active { color: #f4a261 !important; background: rgba(244,162,97,0.12) !important; }
+.ot-sub-comt-toggle.active:hover { background: rgba(244,162,97,0.2) !important; }
+
+/* Wrap e campo de comentário na view */
+.ot-sub-item-wrap { display: flex; flex-direction: column; }
+.ot-sub-comt-field { padding: 5px 0 2px 44px; }
+.ot-sub-comt-input {
+  width: 100%; box-sizing: border-box;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  padding: 7px 10px; font-size: 12.5px; color: var(--text-primary);
+  background: var(--bg); resize: none; outline: none;
+  transition: border-color .15s; font-family: inherit;
+}
+.ot-sub-comt-input:focus { border-color: var(--cyan); }
+
+/* Botão de balão na view */
+.ot-sub-view-comt-btn { color: var(--text-muted) !important; }
+.ot-sub-view-comt-btn:hover { background: rgba(0,168,204,0.1) !important; color: var(--cyan) !important; }
+.ot-sub-view-comt-btn.obrig { color: #f4a261 !important; }
+.ot-sub-view-comt-btn.obrig:hover { background: rgba(244,162,97,0.12) !important; }
+
+/* Comentário salvo exibido na meta da subtarefa concluída */
+.ot-sub-comt-display {
+  display: inline-flex; align-items: flex-start; gap: 3px;
+  font-size: 11px; color: var(--text-secondary); font-style: italic;
+}
+
+.ot-sub-add-row {
+  display: flex; gap: 8px; margin-top: 4px;
+}
+.ot-sub-add-options {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.ot-sub-add-options label { font-size: 12px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 5px; }
+
+/* Log de publicações na view */
+.ot-pub-log { display: flex; flex-direction: column; gap: 0; }
+.ot-pub-entry {
+  display: flex; gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.ot-pub-entry:last-child { border-bottom: none; }
+.ot-pub-timeline {
+  display: flex; flex-direction: column; align-items: center;
+  flex-shrink: 0; padding-top: 3px;
+}
+.ot-pub-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--bg-card);
+}
+.ot-pub-dot-atualizacao  { background: var(--cyan); }
+.ot-pub-dot-evidencia    { background: var(--amber); }
+.ot-pub-dot-transferencia { background: #8b5cf6; }
+.ot-pub-dot-conclusao    { background: var(--green); }
+.ot-pub-dot-cancelamento { background: var(--red); }
+.ot-pub-dot-devolucao    { background: var(--amber); }
+.ot-pub-body { flex: 1; min-width: 0; }
+.ot-pub-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.ot-pub-tipo-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 20px; white-space: nowrap;
+}
+.ot-pub-autor { font-size: 12px; color: var(--text-muted); }
+.ot-pub-data  { font-size: 11px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; }
+.ot-pub-subtarefa-ref {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; color: #b45309;
+  background: rgba(244,162,97,0.1); border: 1px solid rgba(244,162,97,0.22);
+  padding: 2px 7px; border-radius: 10px; margin-top: 4px;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ot-pub-texto { font-size: 13px; color: var(--text-primary); line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; word-break: break-word; }
+.ot-pub-anexos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ot-pub-anexo-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 9px;
+  font-size: 11.5px; color: var(--cyan); font-weight: 500;
+  text-decoration: none; transition: var(--transition);
+}
+.ot-pub-anexo-chip:hover { background: var(--cyan-light); border-color: rgba(0,168,204,0.3); }
+.ot-pub-anexo-chip svg { width: 11px; height: 11px; }
+
+/* Hero da OT no modal de view */
+.ot-view-hero {
+  background: linear-gradient(135deg, var(--night) 0%, var(--night-mid) 100%);
+  border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.ot-view-hero::before {
+  content: ''; position: absolute; right: -20px; top: -20px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: rgba(0,168,204,0.08); border: 1px solid rgba(0,168,204,0.15);
+}
+.ot-view-hero-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; color: rgba(255,255,255,0.45);
+  margin-bottom: 4px;
+}
+.ot-view-hero-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 10px; line-height: 1.35; }
+.ot-view-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.ot-view-hero-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 4px 10px;
+  border-radius: 20px; background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.85);
+}
+
+/* Status badge na view */
+.ot-status-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.ot-status-pendente    { background: rgba(113,128,150,0.12); color: #718096; border: 1px solid rgba(113,128,150,0.25); }
+.ot-status-em_processo { background: rgba(0,168,204,0.12);   color: var(--cyan); border: 1px solid rgba(0,168,204,0.3); }
+.ot-status-em_revisao  { background: rgba(244,162,97,0.12);  color: #b45309;     border: 1px solid rgba(244,162,97,0.3); }
+.ot-status-concluida   { background: rgba(42,157,143,0.12);  color: var(--green); border: 1px solid rgba(42,157,143,0.3); }
+.ot-status-cancelada   { background: rgba(230,57,70,0.1);    color: var(--red);   border: 1px solid rgba(230,57,70,0.25); }
+
+/* Upload zone OT (reutiliza estilos do upload.js) */
+.upload-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px; text-align: center;
+  cursor: pointer; transition: var(--transition);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--text-muted); background: var(--bg);
+}
+.upload-drop-zone:hover, .upload-drop-zone.dragover {
+  border-color: var(--cyan); background: var(--cyan-light); color: var(--cyan);
+}
+.upload-drop-text strong { font-size: 13px; font-weight: 600; display: block; }
+.upload-drop-text span { font-size: 11px; }
+
+/* Anexo item */
+.anexo-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 10px;
+  margin-bottom: 5px;
+}
+.anexo-del {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: var(--transition);
+}
+.anexo-del:hover { background: rgba(230,57,70,0.1); color: var(--red); border-color: rgba(230,57,70,0.3); }
+.upload-file-info { display: flex; align-items: center; gap: 8px; width: 100%; }
+.upload-file-name { flex: 1; font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Catalog list no modal */
+.ot-cat-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; margin-top: 10px; }
+.ot-cat-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 12px;
+}
+.ot-cat-item-text { flex: 1; font-size: 13px; color: var(--text-primary); }
+.ot-cat-item-del {
+  width: 24px; height: 24px; border-radius: 5px;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-muted); display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.ot-cat-item-del:hover { background: rgba(230,57,70,0.1); color: var(--red); }
+.ot-cat-item-del svg { width: 12px; height: 12px; }
+
+/* ── FAB Nova OT ── */
+.ot-fab {
+  position: absolute;
+  bottom: 28px;
+  right: 28px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--cyan);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,168,204,0.45);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  z-index: 10;
+  flex-shrink: 0;
+}
+.ot-fab svg {
+  width: 22px;
+  height: 22px;
+  color: #fff;
+  stroke: #fff;
+}
+.ot-fab:hover {
+  background: var(--cyan-hover);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0,168,204,0.55);
+}
+.ot-fab:active {
+  transform: scale(0.95);
+}
+
+/* Barra lateral de prazo (sobrescreve severidade quando há alerta) */
+.ot-card-side-overdue::before  { background: var(--red) !important; }
+.ot-card-side-warning::before  { background: var(--amber) !important; }
+.ot-card-side-overdue { border-color: rgba(230,57,70,0.25); }
+.ot-card-side-warning { border-color: rgba(244,162,97,0.25); }
+
+/* Checkbox bloqueado por falta de evidência */
+.ot-sub-check.blocked {
+  border-color: var(--amber); background: rgba(244,162,97,0.1);
+  cursor: not-allowed;
+}
+
+/* ── Abas de modo de visualização ── */
+.ot-view-tabs {
+  display: flex; align-items: center; gap: 4px;
+  padding: 10px 24px 0;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.ot-view-tab-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 16px; font-size: 13px; font-weight: 600;
+  color: var(--text-muted); background: transparent;
+  border: none; border-bottom: 2.5px solid transparent;
+  cursor: pointer; transition: var(--transition);
+  margin-bottom: -1px; font-family: inherit;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.ot-view-tab-btn svg { width: 14px; height: 14px; }
+.ot-view-tab-btn:hover { color: var(--text-primary); background: var(--bg); }
+.ot-view-tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); background: transparent; }
+
+/* Botão inline de nova OT nas abas */
+.ot-fab-inline {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; font-size: 12.5px; font-weight: 600;
+  background: var(--cyan); color: #fff; border: none;
+  border-radius: var(--radius); cursor: pointer;
+  transition: var(--transition); font-family: inherit;
+  margin-bottom: 4px;
+}
+.ot-fab-inline svg { width: 14px; height: 14px; }
+.ot-fab-inline:hover { background: var(--cyan-hover); }
+
+/* ── Filtro de ativo na toolbar ── */
+.ot-filter-ativo-wrap {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 10px; border: none;
+  border-radius: var(--radius); font-size: 12.5px;
+  color: #fff; background: var(--night);
+  cursor: pointer; max-width: 160px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+  transition: var(--transition); font-weight: 600;
+}
+.ot-filter-ativo-wrap:hover { background: var(--night-mid); box-shadow: 0 3px 10px rgba(14,22,40,0.25); }
+.ot-filter-ativo-wrap.active { background: var(--night-mid); border: 1.5px solid var(--cyan); color: #fff; }
+.ot-filter-ativo-wrap svg { width: 13px; height: 13px; flex-shrink: 0; }
+.ot-filter-ativo-btn {
+  width: 28px; height: 34px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); background: var(--bg);
+  cursor: pointer; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition); font-size: 14px;
+}
+.ot-filter-ativo-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-light); }
+.ot-filter-ativo-btn svg { width: 13px; height: 13px; }
+
+/* ── Botão Minhas OTs ── */
+.ot-my-ots-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-size: 12.5px; font-weight: 600;
+  color: var(--text-muted); background: var(--bg);
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; transition: var(--transition); font-family: inherit;
+}
+.ot-my-ots-btn svg { width: 14px; height: 14px; }
+.ot-my-ots-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.ot-my-ots-btn.active { background: var(--cyan); color: #fff; border-color: var(--cyan); }
+
+/* ── Filtro de data ── */
+.ot-date-filter-wrap { position: relative; }
+.ot-date-filter-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-size: 12.5px; font-weight: 600;
+  color: var(--text-muted); background: var(--bg);
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; transition: var(--transition); font-family: inherit;
+}
+.ot-date-filter-btn svg { width: 14px; height: 14px; }
+.ot-date-filter-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.ot-date-filter-btn.active { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-light); }
+.ot-date-picker-popup {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: 0 8px 24px rgba(11,22,30,0.12);
+  z-index: 1000; min-width: 280px; padding: 14px;
+}
+.ot-date-picker-tabs {
+  display: flex; gap: 4px; margin-bottom: 12px;
+  background: var(--bg); border-radius: var(--radius);
+  padding: 3px;
+}
+.ot-dp-tab {
+  flex: 1; padding: 5px 8px; font-size: 12px; font-weight: 600;
+  border: none; border-radius: calc(var(--radius) - 2px);
+  cursor: pointer; color: var(--text-muted); background: transparent;
+  transition: var(--transition); font-family: inherit;
+}
+.ot-dp-tab.active { background: var(--bg-card); color: var(--cyan); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.ot-dp-panel { margin-bottom: 8px; }
+.ot-dp-row { display: flex; gap: 8px; }
+.ot-dp-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+/* ── Status dropdown melhorado ── */
+.ot-status-dropdown-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; font-size: 12.5px; font-weight: 700;
+  border-radius: var(--radius); border: 1.5px solid; cursor: pointer;
+  transition: var(--transition); font-family: inherit;
+}
+.ot-status-btn-pendente    { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.35); color: #e2e8f0; }
+.ot-status-btn-em_processo { background: rgba(0,168,204,0.25);   border-color: rgba(0,168,204,0.6);    color: #7ee8ff; }
+.ot-status-btn-em_revisao  { background: rgba(244,162,97,0.25);  border-color: rgba(244,162,97,0.6);   color: #fdd5a0; }
+.ot-status-btn-concluida   { background: rgba(42,157,143,0.25);  border-color: rgba(42,157,143,0.6);   color: #7edad0; }
+.ot-status-btn-cancelada   { background: rgba(230,57,70,0.25);   border-color: rgba(230,57,70,0.6);    color: #ffb3ba; }
+.ot-status-dropdown-btn:hover { filter: brightness(0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+
+.ot-status-menu-dropdown {
+  display: none; position: fixed;
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  box-shadow: 0 8px 24px rgba(11,22,30,0.12); z-index: 20002;
+  border-radius: var(--radius-lg); padding: 6px;
+  min-width: 180px;
+}
+.ot-status-menu-dropdown.open { display: block; animation: ot-fade-in 0.15s ease; }
+.ot-status-menu-header {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--text-muted);
+  padding: 4px 8px 8px;
+}
+.ot-status-menu-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; cursor: pointer; border-radius: var(--radius);
+  font-size: 13px; font-weight: 600; transition: var(--transition);
+}
+.ot-status-menu-item:hover { background: var(--bg); }
+.ot-status-item-pendente    { color: #718096; }
+.ot-status-item-em_processo { color: var(--cyan); }
+.ot-status-item-em_revisao  { color: #b45309; }
+.ot-status-item-concluida   { color: var(--green); }
+.ot-status-item-cancelada   { color: var(--red); }
+
+/* ── Publicações sub-abas ── */
+.ot-pub-subtabs {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin-bottom: 14px; padding: 4px;
+  background: var(--bg); border-radius: var(--radius-lg);
+}
+.ot-pub-subtab-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 11px; font-size: 11.5px; font-weight: 600;
+  border: none; border-radius: var(--radius);
+  cursor: pointer; color: var(--text-muted);
+  background: transparent; transition: var(--transition);
+  font-family: inherit; white-space: nowrap;
+}
+.ot-pub-subtab-btn svg { width: 12px; height: 12px; }
+.ot-pub-subtab-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+.ot-pub-subtab-btn.active { background: var(--bg-card); color: var(--cyan); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.ot-pub-subtab-count {
+  background: var(--cyan-light); color: var(--cyan);
+  font-size: 10px; font-weight: 700; padding: 1px 5px;
+  border-radius: 10px; border: 1px solid rgba(0,168,204,0.2);
+}
+.ot-pub-subtab-panel { display: none; }
+.ot-pub-subtab-panel.active { display: block; }
+
+/* Publicação clicável */
+.ot-pub-entry-clickable { cursor: pointer; border-radius: var(--radius); transition: var(--transition); }
+.ot-pub-entry-clickable:hover { background: var(--bg); }
+
+/* ── Calendário OT ── */
+.ot-cal-wrapper {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 16px 24px; overflow: auto;
+}
+.ot-cal-header {
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px; position: relative;
+}
+.ot-cal-nav-group { display: flex; align-items: center; gap: 4px; }
+.ot-cal-title {
+  font-size: 16px; font-weight: 700; color: var(--text-primary);
+  display: flex; align-items: center; padding: 4px 10px;
+  border-radius: var(--radius); cursor: pointer; border: none;
+  background: transparent; font-family: inherit; transition: var(--transition);
+}
+.ot-cal-title:hover { background: var(--bg); color: var(--cyan); }
+.ot-cal-picker {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 12px; z-index: 200; min-width: 220px;
+}
+.ot-cal-picker-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.ot-cal-picker-year { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.ot-cal-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.ot-cal-picker-month {
+  padding: 7px 4px; border-radius: var(--radius); border: 1.5px solid transparent;
+  background: transparent; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  color: var(--text-secondary); font-family: inherit; transition: var(--transition);
+}
+.ot-cal-picker-month:hover { background: var(--bg); border-color: var(--border); color: var(--text-primary); }
+.ot-cal-picker-month.active { background: var(--cyan-light); border-color: var(--cyan); color: var(--cyan); }
+.ot-cal-nav-btn {
+  width: 32px; height: 32px; border-radius: var(--radius);
+  border: 1.5px solid var(--border); background: var(--bg);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: var(--transition);
+}
+.ot-cal-nav-btn svg { width: 16px; height: 16px; }
+.ot-cal-nav-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.ot-cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 4px; flex: 1;
+}
+.ot-cal-dow {
+  text-align: center; font-size: 11px; font-weight: 700;
+  color: var(--text-muted); text-transform: uppercase;
+  padding: 6px 0; letter-spacing: .4px;
+}
+.ot-cal-cell {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 6px 7px;
+  min-height: 80px; position: relative;
+  transition: var(--transition);
+}
+.ot-cal-cell:hover { border-color: var(--cyan); }
+.ot-cal-blank { background: transparent; border-color: transparent; }
+.ot-cal-today { border-color: var(--cyan); background: rgba(0,168,204,0.04); }
+.ot-cal-day-num {
+  font-size: 12px; font-weight: 700; color: var(--text-muted);
+  display: block; margin-bottom: 4px;
+}
+.ot-cal-today .ot-cal-day-num {
+  color: var(--cyan); background: var(--cyan); color: #fff;
+  border-radius: 50%; width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center; font-size: 11px;
+}
+.ot-cal-ots { display: flex; flex-direction: column; gap: 2px; }
+.ot-cal-ot-pill {
+  font-size: 10.5px; font-weight: 600; padding: 3px 5px;
+  border-radius: 4px; cursor: pointer;
+  overflow: hidden;
+  background: rgba(0,168,204,0.1); color: var(--cyan);
+  border: 1px solid rgba(0,168,204,0.2);
+  transition: var(--transition); display: flex; align-items: flex-start; gap: 4px;
+}
+.ot-cal-pill-body { display: flex; flex-direction: column; gap: 1px; overflow: hidden; min-width: 0; }
+.ot-cal-pill-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ot-cal-pill-ativo { font-size: 9.5px; font-weight: 400; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ot-cal-ot-pill:hover { filter: brightness(0.9); }
+.ot-cal-pill-overdue { background: rgba(230,57,70,0.1); color: var(--red); border-color: rgba(230,57,70,0.2); }
+.ot-cal-pill-warning { background: rgba(244,162,97,0.12); color: #b45309; border-color: rgba(244,162,97,0.25); }
+.ot-cal-pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.ot-cal-dot-corretiva   { background: var(--red); }
+.ot-cal-dot-implantacao { background: var(--green); }
+.ot-cal-dot-melhoria    { background: #b45309; }
+.ot-cal-dot-alteracao   { background: #7c3aed; }
+.ot-cal-more { font-size: 10px; color: var(--text-muted); font-weight: 600; padding: 1px 4px; }
+
+/* ── Botões Mensal/Semanal no calendário OT ── */
+.ot-cal-view-toggle {
+  display: flex; align-items: center; gap: 3px;
+  margin-left: 12px; background: var(--border);
+  border-radius: 7px; padding: 3px;
+}
+.ot-cal-view-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 5px;
+  font-size: 12px; font-weight: 600;
+  background: transparent; border: none;
+  color: var(--text-muted); cursor: pointer;
+  transition: all 0.15s; font-family: inherit; white-space: nowrap;
+}
+.ot-cal-view-btn:hover { color: var(--text-primary); background: rgba(0,0,0,0.07); }
+.ot-cal-view-btn.active { background: var(--cyan); color: #fff; }
+body.dark-mode .ot-cal-view-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* ── View semanal OT ── */
+.ot-sem-grid { display: flex; flex-direction: column; overflow: hidden; }
+.ot-sem-header {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  background: var(--bg); border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.ot-sem-col-header {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 4px; border-right: 1px solid var(--border);
+}
+.ot-sem-col-header:last-child { border-right: none; }
+.ot-sem-dow {
+  font-size: 10px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.ot-sem-num {
+  font-size: 14px; font-weight: 700; color: var(--text-secondary);
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+}
+.ot-sem-num-hoje { background: var(--cyan); color: #fff; }
+.ot-sem-hoje .ot-sem-dow { color: var(--cyan); }
+.ot-sem-body {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  min-height: 320px; overflow-y: auto;
+}
+.ot-sem-col {
+  border-right: 1px solid var(--border);
+  padding: 6px 5px; display: flex; flex-direction: column; gap: 5px;
+  min-height: 320px;
+}
+.ot-sem-col:last-child { border-right: none; }
+.ot-sem-col-hoje { background: rgba(0,168,204,0.04); border-top: 2px solid var(--cyan); }
+.ot-sem-vazio { flex: 1; }
+.ot-sem-pill {
+  border-radius: 7px; padding: 6px 7px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  cursor: pointer; transition: transform 0.12s, box-shadow 0.12s;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.ot-sem-pill:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
+.ot-sem-pill.ot-cal-pill-overdue { background: rgba(230,57,70,0.07); border-color: rgba(230,57,70,0.2); }
+.ot-sem-pill.ot-cal-pill-warning { background: rgba(244,162,97,0.08); border-color: rgba(244,162,97,0.22); }
+.ot-sem-pill-top {
+  display: flex; align-items: center; gap: 5px;
+}
+.ot-sem-pill-titulo {
+  font-size: 11px; font-weight: 700; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+}
+.ot-sem-pill-ativo {
+  font-size: 10px; color: var(--text-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ot-sem-pill-status {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 4px; margin-top: 1px;
+}
+.ot-sem-pill-tipo {
+  font-size: 9px; font-weight: 600; color: var(--text-muted);
+  text-transform: capitalize;
+}
+.ot-sem-pill-sev { font-size: 9px; font-weight: 700; }
+
+/* ── Lista OT ── */
+.ot-list-wrapper { flex: 1; overflow: auto; padding: 16px 24px; }
+.ot-list-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ot-list-count {
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+}
+.ot-list-finais-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 999px;
+  border: 1.5px solid var(--border); background: #fff;
+  font-size: 11.5px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.ot-list-finais-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.ot-list-finais-btn.active {
+  border-color: #2a9d8f; background: rgba(42,157,143,0.07);
+  color: #2a9d8f; box-shadow: 0 0 0 3px rgba(42,157,143,0.1);
+}
+.ot-list-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.ot-list-th {
+  padding: 10px 12px; text-align: left; font-size: 11.5px;
+  font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: .4px; border-bottom: 2px solid var(--border);
+  cursor: pointer; user-select: none; white-space: nowrap;
+  background: var(--bg-card); position: sticky; top: 0; z-index: 1;
+  transition: var(--transition);
+}
+.ot-list-th:hover { color: var(--cyan); }
+.ot-list-th.sorted { color: var(--cyan); }
+.ot-list-row { border-bottom: 1px solid var(--border); cursor: pointer; transition: var(--transition); }
+.ot-list-row:hover { background: var(--bg); }
+.ot-list-row td { padding: 11px 12px; vertical-align: middle; }
+
+/* Animações */
+@keyframes ot-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ot-card { animation: ot-fade-in 0.2s ease; }
+
+/* Responsividade */
+@media (max-width: 900px) {
+  .ot-column { min-width: 200px; }
+}
+@media (max-width: 600px) {
+  .ot-board { padding: 10px 12px; gap: 10px; }
+  .ot-column { min-width: 170px; flex: 0 0 170px; }
+  .ot-toolbar { padding: 10px 12px; gap: 7px; }
+  .ot-search input { width: 140px; }
+}

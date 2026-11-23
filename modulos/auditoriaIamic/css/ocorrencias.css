@@ -1,0 +1,1931 @@
+/* =========================================================================
+   GESTÃO DE N/C — OCORRÊNCIAS
+   Tabela paginada + filtros + modais de gestão (tipos, setores, categorias,
+   motivos) + drawer de formulário. Reutiliza tokens do design system.
+   ========================================================================= */
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ocConfirmIn {
+    from { opacity: 0; transform: scale(0.88) translateY(16px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Modal de confirmação moderno ── */
+.oc-confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.oc-confirm-box {
+    background: var(--card-bg, #1e2330);
+    border: 1px solid var(--border, #2d3348);
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    animation: ocConfirmIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+}
+.oc-confirm-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(239,68,68,0.08) 100%);
+    border: 2px solid rgba(239,68,68,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+.oc-confirm-icon {
+    font-size: 26px;
+    color: #ef4444;
+}
+.oc-confirm-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text, #e2e8f0);
+    margin-bottom: 10px;
+    letter-spacing: -0.2px;
+}
+.oc-confirm-msg {
+    font-size: 14px;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+.oc-confirm-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    margin-bottom: 20px;
+    border-radius: 9px;
+    border: 1.5px solid #ef4444;
+    background: rgba(239,68,68,0.06);
+    color: var(--text, #e2e8f0);
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    outline: none;
+}
+.oc-confirm-input:focus {
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.18);
+}
+.oc-confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+.oc-confirm-btn-cancel {
+    flex: 1;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border, #2d3348);
+    background: transparent;
+    color: var(--text-muted, #94a3b8);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.oc-confirm-btn-cancel:hover {
+    background: var(--border, #2d3348);
+    color: var(--text, #e2e8f0);
+}
+.oc-confirm-btn-danger {
+    flex: 1;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(239,68,68,0.35);
+    transition: opacity 0.15s, transform 0.12s;
+}
+.oc-confirm-btn-danger:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+.oc-confirm-btn-primary {
+    flex: 1;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+    transition: opacity 0.15s, transform 0.12s;
+}
+.oc-confirm-btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+#ocorrenciasContent {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.3s var(--ease);
+}
+
+/* ── Abas do Dashboard: Tarefas / Ocorrências ────────────────────────── */
+.dash-subtabs-bar {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    margin-bottom: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xs);
+    width: fit-content;
+}
+.dash-subtab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 22px;
+    border: none;
+    border-radius: var(--r-md);
+    background: transparent;
+    color: var(--text-light);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
+}
+.dash-subtab i { font-size: 14px; }
+.dash-subtab:hover { color: var(--text); background: var(--surface-hover); }
+.dash-subtab.active {
+    background: var(--grad-accent);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.28);
+}
+
+/* ── Linha de filtros ─────────────────────────────────────────────────── */
+.oc-filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 10px 14px;
+    box-shadow: var(--shadow-xs);
+}
+.oc-fbar-left,
+.oc-fbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.oc-fbar-right { margin-left: auto; }
+
+/* Botão "Tipo" com seta */
+.oc-type-wrap { position: relative; }
+.oc-type-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    background: var(--grad-accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-md);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+    transition: filter var(--t-fast), transform var(--t-fast);
+}
+.oc-type-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.oc-type-btn i.fa-caret-down { font-size: 11px; opacity: 0.85; }
+
+/* Botão de gerenciar tipos (ao lado do Tipo) */
+.oc-type-manage {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg);
+    border: 1px solid var(--border-strong);
+    color: var(--accent);
+    border-radius: var(--r-md);
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+.oc-type-manage:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+/* Dropdown de tipos */
+.oc-type-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 230px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    z-index: 80;
+    display: none;
+    animation: fadeInUp 0.18s var(--ease);
+}
+.oc-type-dropdown.open { display: block; }
+.oc-type-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    background: none;
+    border: none;
+    border-radius: var(--r-sm);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background var(--t-fast);
+}
+.oc-type-option:hover { background: var(--surface-hover); }
+.oc-type-option.active { background: var(--accent-soft); color: var(--accent-vivid); font-weight: 600; }
+.oc-type-option i { width: 16px; text-align: center; color: var(--accent); }
+.oc-type-empty { padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+/* Botão de pessoas (Minhas Ocorrências) */
+.oc-people-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-strong);
+    color: var(--text-light);
+    border-radius: var(--r-md);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+.oc-people-btn:hover { background: var(--surface-hover); }
+.oc-people-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-vivid); }
+.oc-people-btn i.fa-caret-down { font-size: 11px; opacity: 0.7; }
+
+.oc-mytasks-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    z-index: 80;
+    display: none;
+}
+.oc-mytasks-dropdown.open { display: block; }
+.oc-mytasks-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    background: none;
+    border: none;
+    border-radius: var(--r-sm);
+    font-size: 13.5px;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background var(--t-fast);
+}
+.oc-mytasks-dropdown button:hover { background: var(--surface-hover); }
+.oc-mytasks-dropdown button.active { background: var(--accent-soft); color: var(--accent-vivid); font-weight: 600; }
+
+/* Pesquisa */
+.oc-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 12px;
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    min-width: 220px;
+}
+.oc-search i { color: var(--text-muted); font-size: 13px; }
+.oc-search input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--text);
+    width: 100%;
+}
+
+.oc-icon-btn {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg);
+    border: 1px solid var(--border-strong);
+    color: var(--text-light);
+    border-radius: var(--r-md);
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+.oc-icon-btn:hover { background: var(--surface-hover); color: var(--accent); border-color: var(--accent); }
+.oc-icon-btn.active { background: var(--accent-soft); color: var(--accent-vivid); border-color: var(--accent); }
+.oc-icon-btn--danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; border-color: #ef4444; }
+
+/* Dropdown alinhado à direita (filtro de categoria) */
+.oc-type-dropdown--right { left: auto; right: 0; }
+
+/* No mobile, a barra de filtros tem scroll horizontal — dropdowns absolutos
+   ficariam presos dentro desse scroll. O JS promove esta classe (position:fixed,
+   posição calculada via getBoundingClientRect) para flutuar sobre a página. */
+.oc-dd-fixed {
+    position: fixed !important;
+    z-index: 9000 !important;
+}
+
+/* Dropdowns dos filtros do header (setor / data da aba Ocorrências) */
+.oc-head-filter { display: none; }
+.oc-head-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 240px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md);
+    z-index: 1200;
+    display: none;
+}
+.oc-head-dd-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    padding: 4px 8px 8px;
+}
+.oc-head-dd-opt {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 8px 10px;
+    background: none;
+    border: none;
+    border-radius: var(--r-sm);
+    font-size: 13.5px;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background var(--t-fast);
+}
+.oc-head-dd-opt:hover { background: var(--surface-hover); }
+.oc-head-dd-opt.active { background: var(--accent-soft); color: var(--accent-vivid); font-weight: 600; }
+.oc-head-dd-opt .oc-chk {
+    width: 16px; height: 16px; flex-shrink: 0;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #fff;
+}
+.oc-head-dd-opt.active .oc-chk { background: var(--accent); border-color: var(--accent); }
+.oc-head-dd-custom { display: flex; gap: 6px; padding: 8px; }
+.oc-head-dd-custom input {
+    flex: 1; min-width: 0;
+    height: 34px; padding: 0 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-sm);
+    font-size: 12.5px; font-family: inherit;
+}
+.oc-head-dd-actions { display: flex; gap: 6px; padding: 6px 8px 2px; }
+.oc-head-dd-actions button {
+    flex: 1; height: 32px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    font-size: 12.5px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: all var(--t-fast);
+}
+.oc-head-dd-actions .oc-dd-apply { background: var(--grad-accent); color: #fff; border: none; }
+.oc-head-dd-actions button:hover { filter: brightness(1.05); }
+
+/* ── Filtro de Data — picker moderno ────────────────────────────────── */
+.oc-date-dd {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 300px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+    z-index: 1200;
+    overflow: hidden;
+    animation: fadeInUp 0.18s var(--ease);
+}
+.oc-date-dd-modes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+}
+.oc-date-dd-mode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 4px;
+    background: none;
+    border: none;
+    border-right: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background var(--t-fast), color var(--t-fast);
+}
+.oc-date-dd-mode:last-child { border-right: none; }
+.oc-date-dd-mode i { font-size: 15px; }
+.oc-date-dd-mode:hover { background: var(--surface-hover); color: var(--text); }
+.oc-date-dd-mode.active { background: var(--accent-soft); color: var(--accent-vivid); }
+
+/* Calendário de meses */
+.oc-month-picker { padding: 16px; }
+.oc-month-picker-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.oc-month-picker-nav button {
+    width: 30px; height: 30px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--t-fast);
+}
+.oc-month-picker-nav button:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-vivid); }
+.oc-month-picker-nav span {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+.oc-month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+.oc-month-cell {
+    padding: 9px 4px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    transition: all var(--t-fast);
+}
+.oc-month-cell:hover { background: var(--surface-hover); border-color: var(--accent); color: var(--accent-vivid); }
+.oc-month-cell.active {
+    background: var(--grad-accent);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(37,99,235,0.28);
+}
+
+/* Grade de anos */
+.oc-year-picker { padding: 16px; }
+.oc-year-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+.oc-year-cell {
+    padding: 10px 4px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    transition: all var(--t-fast);
+}
+.oc-year-cell:hover { background: var(--surface-hover); border-color: var(--accent); color: var(--accent-vivid); }
+.oc-year-cell.active {
+    background: var(--grad-accent);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(37,99,235,0.28);
+}
+
+/* Periodo customizado */
+.oc-custom-picker { padding: 14px 16px; }
+.oc-custom-picker label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+.oc-custom-picker input[type=date] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface-muted);
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+.oc-custom-picker input[type=date]:focus { outline: none; border-color: var(--accent); }
+.oc-custom-apply {
+    width: 100%;
+    padding: 9px;
+    border: none;
+    border-radius: 8px;
+    background: var(--grad-accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: filter var(--t-fast);
+}
+.oc-custom-apply:hover { filter: brightness(1.07); }
+
+/* ── Modal de Setores ────────────────────────────────────────────────── */
+.oc-setor-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.45);
+    backdrop-filter: blur(3px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s var(--ease);
+}
+.oc-setor-backdrop.open { opacity: 1; pointer-events: all; }
+.oc-setor-modal {
+    background: var(--card-bg);
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(255,255,255,0.06);
+    width: 440px;
+    max-width: 95vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(16px) scale(0.97);
+    transition: transform 0.22s var(--ease);
+}
+.oc-setor-backdrop.open .oc-setor-modal { transform: translateY(0) scale(1); }
+.oc-setor-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+}
+.oc-setor-modal-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.oc-setor-modal-header h3 i {
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+.oc-setor-modal-close {
+    width: 32px; height: 32px;
+    border: none;
+    border-radius: 9px;
+    background: rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--t-fast);
+}
+.oc-setor-modal-close:hover { background: rgba(255,255,255,0.24); color: #fff; }
+.oc-setor-modal-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+}
+.oc-setor-toggle-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-full, 999px);
+    background: var(--card-bg);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+    transition: all var(--t-fast);
+}
+.oc-setor-toggle-all:hover { background: var(--surface-hover); border-color: var(--accent); color: var(--accent-vivid); }
+.oc-setor-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.oc-setor-count span { color: var(--accent-vivid); font-weight: 700; }
+.oc-setor-modal-body {
+    overflow-y: auto;
+    padding: 12px 16px;
+    flex: 1;
+}
+.oc-setor-modal-body::-webkit-scrollbar { width: 8px; }
+.oc-setor-modal-body::-webkit-scrollbar-track { background: transparent; }
+.oc-setor-modal-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+.oc-setor-modal-body::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.oc-setor-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    margin-bottom: 6px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+    user-select: none;
+}
+.oc-setor-item:last-child { margin-bottom: 0; }
+.oc-setor-item:hover { border-color: #93c5fd; background: #f0f7ff; }
+.oc-setor-item.selected {
+    border-color: #2563eb;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    box-shadow: 0 2px 8px rgba(37,99,235,0.12);
+}
+.oc-setor-checkbox {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+    border: 2px solid var(--border-strong);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: transparent;
+    transition: all var(--t-fast);
+    background: var(--card-bg);
+}
+.oc-setor-item.selected .oc-setor-checkbox {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+    transform: scale(1.05);
+}
+.oc-setor-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+}
+.oc-setor-item.selected .oc-setor-name { color: #1e3a8a; font-weight: 600; }
+.oc-setor-modal-footer {
+    padding: 16px 22px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    background: #f8fafc;
+}
+.oc-setor-btn-cancel {
+    flex: 1;
+    padding: 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    color: var(--text-light);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all var(--t-fast);
+}
+.oc-setor-btn-cancel:hover { background: var(--surface-hover); color: var(--text); }
+.oc-setor-btn-apply {
+    flex: 2;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+    transition: filter var(--t-fast), box-shadow var(--t-fast);
+}
+.oc-setor-btn-apply:hover { filter: brightness(1.07); box-shadow: 0 6px 18px rgba(37,99,235,0.35); }
+
+.oc-dash-empty-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+/* ── Tabela ──────────────────────────────────────────────────────────── */
+.oc-table-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.oc-table-scroll { overflow-x: auto; }
+.oc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+.oc-table thead th {
+    background: var(--surface-muted);
+    color: var(--text-light);
+    font-weight: 700;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--t-fast), color var(--t-fast);
+}
+.oc-table thead th.no-sort { cursor: default; }
+.oc-table thead th:hover:not(.no-sort) { background: var(--surface-hover); color: var(--accent); }
+.oc-table thead th .oc-sort-ico {
+    margin-left: 6px;
+    font-size: 10px;
+    opacity: 0.35;
+    transition: opacity var(--t-fast);
+}
+.oc-table thead th.sorted .oc-sort-ico { opacity: 1; color: var(--accent); }
+
+.oc-table tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+}
+.oc-table tbody tr { transition: background var(--t-fast); cursor: pointer; }
+.oc-table tbody tr:hover { background: var(--surface-hover); }
+.oc-table tbody tr:last-child td { border-bottom: none; }
+
+.oc-cell-date { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-light); font-weight: 600; }
+.oc-cell-colab { font-weight: 600; color: var(--text-strong); }
+.oc-cell-pub {
+    font-weight: 500;
+    color: var(--text-strong);
+    white-space: nowrap;
+}
+.oc-cell-pub-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+.oc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: var(--r-full);
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--accent-vivid);
+    white-space: nowrap;
+}
+.oc-chip--setor { background: #f1f5f9; color: #475569; }
+.oc-chip--motivo { background: #fef3c7; color: #92400e; }
+
+.oc-row-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+.oc-row-actions button {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border-radius: var(--r-sm);
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all var(--t-fast);
+}
+.oc-row-actions button:hover { background: var(--surface-hover); color: var(--accent); border-color: var(--accent); }
+.oc-row-actions button.oc-del:hover { background: #fef2f2; color: var(--c-red); border-color: var(--c-red); }
+
+.oc-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+}
+.oc-empty i { font-size: 40px; margin-bottom: 14px; color: var(--text-xmuted); }
+.oc-empty p { font-size: 14px; margin: 0; }
+
+/* ── Paginação ───────────────────────────────────────────────────────── */
+.oc-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-muted);
+    flex-wrap: wrap;
+}
+.oc-pag-info { font-size: 13px; color: var(--text-light); }
+.oc-pag-controls { display: flex; align-items: center; gap: 6px; }
+.oc-pag-controls button {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+.oc-pag-controls button:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-vivid); }
+.oc-pag-controls button.active { background: var(--grad-accent); border-color: transparent; color: #fff; }
+.oc-pag-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Modal genérico de gestão de listas ──────────────────────────────── */
+.oc-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,6,23,0.55);
+    backdrop-filter: blur(3px);
+    z-index: 4000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s var(--ease);
+}
+.oc-modal-backdrop.open { display: flex; }
+.oc-modal {
+    width: 100%;
+    max-width: 460px;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    animation: fadeInUp 0.22s var(--ease-spring);
+}
+.oc-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+}
+.oc-modal-header .oc-modal-ico {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--grad-accent);
+    color: #fff;
+    border-radius: var(--r-md);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.oc-modal-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-strong); }
+.oc-modal-header small { display: block; font-size: 12px; color: var(--text-light); font-weight: 400; }
+.oc-modal-header .oc-modal-close {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--surface-muted);
+    border-radius: var(--r-sm);
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+.oc-modal-header .oc-modal-close:hover { background: #fef2f2; color: var(--c-red); }
+
+.oc-modal-body { padding: 18px 22px; overflow-y: auto; }
+.oc-add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.oc-add-row input {
+    flex: 1;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.oc-add-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.oc-add-row button {
+    height: 42px;
+    padding: 0 18px;
+    background: var(--grad-accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-md);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: filter var(--t-fast);
+}
+.oc-add-row button:hover { filter: brightness(1.06); }
+
+.oc-list { display: flex; flex-direction: column; gap: 6px; }
+.oc-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    transition: background var(--t-fast);
+}
+.oc-list-item:hover { background: var(--surface-hover); }
+.oc-list-item .oc-li-name { flex: 1; font-size: 14px; color: var(--text); font-weight: 500; }
+.oc-list-item input.oc-li-edit {
+    flex: 1;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--accent);
+    border-radius: var(--r-sm);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+}
+.oc-li-btns { display: flex; gap: 6px; }
+.oc-li-btns button {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border-radius: var(--r-sm);
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all var(--t-fast);
+}
+.oc-li-btns button:hover { color: var(--accent); border-color: var(--accent); }
+.oc-li-btns button.oc-li-del:hover { background: #fef2f2; color: var(--c-red); border-color: var(--c-red); }
+.oc-li-btns button.oc-li-save:hover { background: #f0fdf4; color: var(--c-green); border-color: var(--c-green); }
+.oc-list-empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+/* ── Autocomplete (colaborador / setor / categoria / motivo) ─────────── */
+.oc-ac-wrap { position: relative; }
+.oc-ac-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 90;
+    display: none;
+}
+.oc-ac-dropdown.open { display: block; }
+.oc-ac-opt {
+    padding: 10px 14px;
+    font-size: 13.5px;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: background var(--t-fast);
+}
+.oc-ac-opt:hover, .oc-ac-opt.active { background: var(--accent-soft); }
+.oc-ac-opt small { font-size: 11.5px; color: var(--text-muted); }
+.oc-ac-empty { padding: 12px 14px; font-size: 13px; color: var(--text-muted); }
+
+/* Input com botão "+" ao lado (setor / categoria / motivo) */
+.oc-field-inline { display: flex; gap: 8px; align-items: stretch; }
+.oc-field-inline .oc-ac-wrap, .oc-field-inline .sms-field { flex: 1; }
+.oc-field-plus {
+    width: 42px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--grad-accent);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 13px;
+    box-shadow: 0 3px 10px rgba(37,99,235,0.22);
+    transition: filter var(--t-fast), transform var(--t-fast);
+}
+.oc-field-plus:hover { filter: brightness(1.1); transform: scale(1.04); }
+.oc-field-plus:active { transform: scale(0.98); }
+
+/* Loading do colaborador */
+.oc-colab-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--accent);
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* =========================================================================
+   DRAWER DE OCORRÊNCIA — refinamentos de layout
+   ========================================================================= */
+#modalOcorrencia .form-drawer-body { padding: 0; }
+.oc-drawer-panel { padding: 22px 22px 20px; background: #fff; }
+.oc-drawer-panel .form-grid { gap: 16px 18px; }
+
+/* Garante que o input do autocomplete herde o visual elegante dos campos */
+.oc-ac-wrap > input {
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: 1.5px solid #e2e8f0;
+    font-family: inherit;
+    font-size: 13.5px;
+    background: #fafbfc;
+    color: var(--text);
+    width: 100%;
+    transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+}
+.oc-ac-wrap > input:hover { border-color: #cbd5e1; background: #fff; }
+.oc-ac-wrap > input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
+    background: #fff;
+}
+
+/* Dropdown de autocomplete mais refinado */
+.oc-ac-dropdown {
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    box-shadow: var(--shadow-md);
+    padding: 4px;
+    margin-top: 6px;
+}
+.oc-ac-opt { border-radius: 7px; }
+
+/* Cabeçalho de seção dentro do drawer (reaproveita o divisor do form) */
+.oc-drawer-panel .form-section-divider { margin: 10px 0 4px; }
+
+/* Caret indicando campo selecionável (autocomplete) */
+.oc-ac-wrap--icon { position: relative; }
+.oc-ac-wrap--icon > input { padding-right: 34px; }
+.oc-ac-caret {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: transform var(--t-fast), color var(--t-fast);
+}
+.oc-ac-wrap--icon > input:focus ~ .oc-ac-caret { color: var(--accent); transform: translateY(-50%) rotate(180deg); }
+
+/* Campo responsável: ícone + input bloqueado, visual de "somente leitura" */
+.oc-resp-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    background: var(--surface-muted);
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9px;
+}
+.oc-resp-field i { color: var(--accent); font-size: 14px; flex-shrink: 0; }
+.oc-resp-field input {
+    flex: 1;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 9px 0 !important;
+    font-weight: 600;
+    color: var(--text) !important;
+    cursor: default;
+}
+.oc-resp-field input:not(:disabled) {
+    cursor: text;
+}
+.oc-resp-field:has(input:not(:disabled)) {
+    background: #fff;
+    border-color: var(--border);
+}
+
+/* =========================================================================
+   ANEXOS — coluna da tabela
+   ========================================================================= */
+.oc-th-attach { width: 48px; text-align: center; color: var(--text-muted); }
+.oc-cell-attach { width: 48px; text-align: center; }
+.oc-attach-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(37,99,235,0.08);
+    padding: 2px 7px;
+    border-radius: 20px;
+}
+.oc-attach-none { color: #b0b8c9; font-size: 13px; }
+
+/* =========================================================================
+   MODAL DE VISUALIZAÇÃO DE OCORRÊNCIA
+   ========================================================================= */
+.oc-view-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1080;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.oc-view-backdrop.open { display: flex; }
+.oc-view-modal {
+    background: var(--card-bg);
+    border-radius: 22px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.06);
+    width: 100%;
+    max-width: 660px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeInUp 0.22s var(--ease);
+}
+
+/* ── Hero header ── */
+.oc-view-hero {
+    background: linear-gradient(135deg, #1e40af 0%, #4f46e5 60%, #7c3aed 100%);
+    padding: 28px 26px 22px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.oc-view-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+    pointer-events: none;
+}
+.oc-view-hero-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+}
+.oc-view-hero-icon {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.18);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 20px;
+    flex-shrink: 0;
+}
+.oc-view-hero-meta { flex: 1; min-width: 0; }
+.oc-view-title {
+    font-size: 17px; font-weight: 800;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 5px;
+}
+.oc-view-sub {
+    font-size: 13px; color: rgba(255,255,255,0.72);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.oc-view-sub-dot {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    flex-shrink: 0;
+}
+.oc-view-hero-actions {
+    display: flex; gap: 8px; align-items: center;
+    position: relative;
+}
+.oc-view-edit {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 16px; border-radius: 10px;
+    background: rgba(255,255,255,0.18);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    color: #fff; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
+    backdrop-filter: blur(4px);
+}
+.oc-view-edit:hover { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.5); }
+.oc-view-close {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: rgba(255,255,255,0.14);
+    border: 1.5px solid rgba(255,255,255,0.22);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.85); font-size: 14px;
+    transition: background 0.15s;
+}
+.oc-view-close:hover { background: rgba(255,255,255,0.26); color: #fff; }
+
+/* Chips de categoria/motivo no hero */
+.oc-view-hero-chips {
+    display: flex; gap: 7px; flex-wrap: wrap;
+    margin-top: 14px;
+    position: relative;
+}
+.oc-view-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.22);
+    color: #fff;
+}
+.oc-view-chip i { font-size: 10px; opacity: 0.8; }
+
+/* ── Tabs ── */
+.oc-view-tabs {
+    display: flex; gap: 2px;
+    padding: 0 22px;
+    background: var(--card-bg);
+    border-bottom: 1.5px solid var(--border);
+    flex-shrink: 0;
+}
+.oc-view-tab {
+    padding: 13px 16px;
+    border: none; background: none;
+    cursor: pointer;
+    font-size: 13.5px; font-weight: 500;
+    color: var(--text-muted);
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -1.5px;
+    display: flex; align-items: center; gap: 7px;
+    transition: color 0.15s;
+    font-family: inherit;
+}
+.oc-view-tab:hover { color: var(--text); }
+.oc-view-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+.oc-view-tab-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: #fff; font-size: 10px; font-weight: 700;
+}
+
+/* ── Body ── */
+.oc-view-body { flex: 1; overflow-y: auto; padding: 24px 26px; }
+.oc-view-panel { display: none; }
+.oc-view-panel.active { display: block; }
+
+/* ── Info grid ── */
+.oc-view-section-label {
+    font-size: 10.5px; font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.7px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+}
+.oc-view-section-label::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: var(--border);
+}
+.oc-view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 22px;
+}
+.oc-view-card {
+    background: var(--surface-muted);
+    border-radius: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.oc-view-card:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(37,99,235,0.08); }
+.oc-view-card label {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 6px;
+}
+.oc-view-card label i { font-size: 9px; color: var(--accent); opacity: 0.7; }
+.oc-view-card div { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+
+/* ── Comentário ── */
+.oc-view-desc-block {
+    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+    border: 1px solid rgba(37,99,235,0.15);
+    border-left: 3px solid var(--accent);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+.oc-view-desc-block-label {
+    font-size: 10px; font-weight: 800; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 5px;
+}
+.oc-view-desc-text {
+    font-size: 13.5px; color: var(--text); line-height: 1.7;
+}
+
+/* ── Aba de Anexos ── */
+.oc-view-anexos-empty {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 56px 24px; gap: 10px;
+    color: var(--text-muted);
+}
+.oc-view-anexos-empty-icon {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: var(--surface-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--text-muted); opacity: 0.5;
+    margin-bottom: 4px;
+}
+.oc-view-anexos-empty p { font-size: 13.5px; font-weight: 500; }
+.oc-view-anexos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+.oc-view-anexo-card {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 10px; padding: 20px 14px;
+    border-radius: 14px;
+    background: var(--surface-muted);
+    border: 1.5px solid var(--border);
+    text-decoration: none;
+    transition: all 0.18s;
+    cursor: pointer;
+}
+.oc-view-anexo-card:hover {
+    background: #fff5f5;
+    border-color: #ef4444;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239,68,68,0.15);
+}
+.oc-view-anexo-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #fff;
+    box-shadow: 0 4px 14px rgba(239,68,68,0.35);
+    flex-shrink: 0;
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+.oc-view-anexo-card:hover .oc-view-anexo-icon {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(239,68,68,0.45);
+}
+.oc-view-anexo-name {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    word-break: break-word;
+    line-height: 1.4;
+    transition: color 0.18s;
+}
+.oc-view-anexo-card:hover .oc-view-anexo-name { color: #dc2626; }
+.oc-view-anexo-type {
+    font-size: 10.5px; font-weight: 600;
+    color: #ef4444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 2px 8px; border-radius: 6px;
+}
+
+/* =========================================================================
+   XLSX EXPORT / IMPORT
+   ========================================================================= */
+
+/* Button in filter bar */
+.oc-xlsx-btn {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: #22c55e;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+    flex-shrink: 0;
+}
+.oc-xlsx-btn:hover {
+    background: #dcfce7;
+    border-color: #22c55e;
+    color: #16a34a;
+}
+
+/* Wider modal */
+.oc-xlsx-modal {
+    max-width: 680px;
+    width: 100%;
+}
+
+/* Sections inside modal body */
+.oc-xlsx-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.oc-xlsx-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.oc-xlsx-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Export button */
+.oc-xlsx-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: var(--r-md);
+    border: 1px solid #22c55e;
+    background: #22c55e;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast);
+    align-self: flex-start;
+}
+.oc-xlsx-export-btn:hover { background: #16a34a; border-color: #16a34a; }
+
+/* Upload / drag-and-drop area */
+.oc-xlsx-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 28px 20px;
+    border: 2px dashed var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface-muted);
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    transition: border-color var(--t-fast), background var(--t-fast);
+}
+.oc-xlsx-upload-area:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.oc-xlsx-upload-area i { font-size: 28px; opacity: 0.6; }
+
+/* Preview section */
+.oc-xlsx-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 8px 0 4px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.oc-xlsx-confirm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: var(--r-md);
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity var(--t-fast);
+}
+.oc-xlsx-confirm-btn:hover { opacity: 0.85; }
+.oc-xlsx-confirm-btn:disabled,
+.oc-xlsx-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.oc-xlsx-preview-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    max-height: 240px;
+    overflow-y: auto;
+}
+.oc-xlsx-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.oc-xlsx-preview-table th {
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.oc-xlsx-preview-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.oc-xlsx-preview-table tbody tr:last-child td { border-bottom: none; }
+.oc-xlsx-preview-table tbody tr:hover td { background: var(--surface-hover); }
+.oc-xlsx-row-num { color: var(--text-muted); font-size: 11px; }
+
+/* Loading state */
+.oc-xlsx-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--r-md);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+}
+.oc-xlsx-loading i { color: var(--accent); font-size: 16px; }
+
+/* Result banner */
+.oc-xlsx-result {
+    padding: 12px 16px;
+    border-radius: var(--r-md);
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+}
+
+/* Disable close button when loading */
+#ocXlsxCloseBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* =========================================================================
+   DASHBOARD DE OCORRÊNCIAS — KPIs, gráficos e filtros
+   ========================================================================= */
+
+/* ── KPI Row ─────────────────────────────────────────────────────────── */
+.oc-dash-kpi-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.oc-dash-kpi {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xs);
+    transition: box-shadow var(--t-fast), transform var(--t-fast);
+}
+.oc-dash-kpi:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+
+.oc-dash-kpi-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-md);
+    font-size: 17px;
+}
+
+.oc-dash-kpi-body { flex: 1; min-width: 0; }
+
+.oc-dash-kpi-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.oc-dash-kpi-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-strong);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.oc-dash-kpi-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ── Charts grid row ─────────────────────────────────────────────────── */
+.oc-dash-charts-row {
+    display: grid;
+    gap: 14px;
+}
+
+/* ── Chart card ──────────────────────────────────────────────────────── */
+.oc-dash-chart-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xs);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow var(--t-fast);
+}
+.oc-dash-chart-card:hover { box-shadow: var(--shadow-sm); }
+
+.oc-dash-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.oc-dash-chart-header h3 {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-strong);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.oc-dash-chart-header h3 i { color: var(--accent); font-size: 13px; }
+
+.oc-dash-canvas-wrap {
+    padding: 14px 14px 10px;
+    flex: 1;
+    position: relative;
+}
+.oc-dash-canvas-wrap canvas { display: block; }
+
+/* ── Line chart sub-tabs ─────────────────────────────────────────────── */
+.oc-dash-line-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface-muted);
+    border-radius: var(--r-md);
+    padding: 3px;
+}
+.oc-dash-line-tab {
+    padding: 5px 14px;
+    border: none;
+    background: transparent;
+    border-radius: calc(var(--r-md) - 2px);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all var(--t-fast);
+}
+.oc-dash-line-tab:hover { color: var(--text); background: var(--surface-hover); }
+.oc-dash-line-tab.active {
+    background: var(--card-bg);
+    color: var(--accent-vivid);
+    box-shadow: var(--shadow-xs);
+}
+
+/* ── Empty state within chart card ──────────────────────────────────── */
+.oc-dash-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 180px;
+    color: var(--text-muted);
+    gap: 10px;
+}
+.oc-dash-empty i { font-size: 32px; opacity: 0.35; }
+.oc-dash-empty p { font-size: 13px; margin: 0; }
+
+/* ── Ranking table ───────────────────────────────────────────────────── */
+.oc-dash-ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.oc-dash-ranking-table thead th {
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+.oc-dash-ranking-table tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    color: var(--text);
+}
+.oc-dash-ranking-table tbody tr:last-child td { border-bottom: none; }
+.oc-dash-ranking-table tbody tr { transition: background var(--t-fast); }
+.oc-dash-ranking-table tbody tr:hover { background: var(--surface-hover); }
+
+/* ── Filter bar additions (collab dropdown) ──────────────────────────── */
+.oc-dash-colab-search:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-soft) !important; }
+
+/* ── Popover pesquisável de Área (formulário de ocorrência) ── */
+.oc-area-wrap .oc-area-lead {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--accent, #2563eb); font-size: 13px; pointer-events: none;
+}
+.oc-area-wrap input#ocFTipoText { padding-left: 36px; font-weight: 600; }
+.oc-area-wrap input#ocFTipoText::placeholder { font-weight: 400; }
+.oc-area-opt {
+    flex-direction: row !important; align-items: center; gap: 10px;
+}
+.oc-area-opt > .fa-tag { color: var(--accent, #2563eb); font-size: 12px; opacity: .85; }
+.oc-area-opt > span { flex: 1; }
+.oc-area-opt.selected { color: var(--accent, #2563eb); font-weight: 600; }
+.oc-area-check { font-size: 12px; color: var(--accent, #2563eb); }
+#ocAreaDropdown .oc-ac-empty { display: flex; align-items: center; gap: 8px; }
+body.dark-mode .oc-area-opt.selected,
+body.dark-mode .oc-area-check { color: #93c5fd !important; }

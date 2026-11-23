@@ -1,0 +1,933 @@
+/* ============================================================
+   Shell responsivo
+   Mobile : header em cima, conteúdo no meio, nav embaixo
+   Desktop: nav vira sidebar à esquerda, ocupando a altura toda
+   Mesmo markup nos dois — só muda o grid e a direção do nav.
+   ============================================================ */
+
+body {
+    display: grid;
+    grid-template-areas:
+        "header"
+        "main"
+        "nav";
+    grid-template-rows: auto 1fr auto;
+    /* dvh, não vh: senão a barra do Chrome mobile corta a nav.
+       O fallback em vh atende navegadores sem suporte a dvh. */
+    height: 100vh;
+    height: 100dvh;
+    /* minmax(0,…) nas colunas impede que conteúdo largo estoure a viewport */
+    grid-template-columns: minmax(0, 1fr);
+    overflow: hidden;
+}
+
+/* ---------- Faixa de conexão ----------
+   Só existe no grid quando o app está sem servidor: a linha "aviso" é
+   acrescentada por `body.sem-conexao`, então nada se desloca no uso normal. */
+body.sem-conexao {
+    grid-template-areas:
+        "aviso"
+        "header"
+        "main"
+        "nav";
+    grid-template-rows: auto auto 1fr auto;
+}
+
+.faixa-offline {
+    grid-area: aviso;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--warning-light);
+    border-bottom: 1px solid var(--warning-border);
+    color: var(--warning-dark);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+}
+
+.faixa-offline[hidden] {
+    display: none;
+}
+
+.faixa-offline svg {
+    flex-shrink: 0;
+}
+
+/* ---------- Header ---------- */
+.app-header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: var(--z-header);
+}
+
+.app-header__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+}
+
+.app-header__logo {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--primary), #1e40af);
+    color: #fff;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    letter-spacing: .5px;
+}
+
+.app-header__titulo {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.app-header__titulo strong {
+    font-size: var(--fs-md);
+}
+
+.app-header__usuario {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-header__acoes {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-shrink: 0;
+}
+
+/* ---------- Navegação ---------- */
+.app-nav {
+    grid-area: nav;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: stretch;
+    gap: var(--sp-1);
+    min-width: 0;
+    padding: var(--sp-2) var(--sp-1);
+    padding-bottom: calc(var(--sp-2) + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: var(--z-nav);
+}
+
+.nav-item {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: var(--sp-2) var(--sp-1);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    transition: color var(--transicao), background var(--transicao);
+}
+
+.nav-item:hover {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nav-item--ativo {
+    color: var(--primary);
+}
+
+.nav-item svg {
+    width: 20px;
+    height: 20px;
+}
+
+.nav-item__label {
+    line-height: 1;
+}
+
+/* ---------- Conteúdo ---------- */
+.app-main {
+    grid-area: main;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding: var(--sp-4);
+    scroll-padding-top: var(--sp-4);
+}
+
+.app-main:focus {
+    outline: none;
+}
+
+/* Cabeçalho interno de cada tela */
+.view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-4);
+}
+
+.view-header__titulo {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+/* No mobile o botão ocupa a linha inteira em vez de espremer o título. */
+.view-header > .btn {
+    flex: 1 1 100%;
+}
+
+.view-header__titulo h1 {
+    font-size: var(--fs-xl);
+    line-height: 1.2;
+}
+
+.view-header__titulo p {
+    margin-top: 2px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+/* Grade de cards */
+.grid-cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
+    /* stretch: cards da mesma linha terminam alinhados */
+    align-items: stretch;
+}
+
+.grid-cards[hidden] {
+    display: none;
+}
+
+/* Barra de filtros / busca */
+.barra-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+}
+
+/*
+ * Na Agenda a barra tem três controles: segmentado (Cards/Semana/Mês),
+ * filtro de grupo e filtro de marcadores. Os três só cabem lado a lado a
+ * partir de 720px; abaixo disso a barra quebra e os dois filtros dividem
+ * a segunda linha, em vez de espremer os rótulos até virarem reticências.
+ *
+ * Todo o dimensionamento dos filtros da Agenda mora aqui — `.popover-filtro-wrap`
+ * tem uma regra genérica em components.css, e concentrar as exceções num
+ * lugar só evita as duas se anularem conforme a ordem dos arquivos.
+ */
+.barra-filtros--agenda {
+    flex-wrap: wrap;
+}
+
+.barra-filtros--agenda .segmentado {
+    flex-shrink: 0;
+}
+
+/* O filtro de grupo tem texto variável: é ele que cede espaço. */
+.barra-filtros--agenda .popover-filtro-wrap {
+    flex: 1 1 130px;
+}
+
+/* O de marcadores tem rótulo fixo e curto: larga o que o conteúdo pedir. */
+.barra-filtros--agenda .popover-filtro-wrap--marcadores {
+    flex: 0 0 auto;
+}
+
+@media (min-width: 720px) {
+    .barra-filtros--agenda {
+        flex-wrap: nowrap;
+    }
+
+    .barra-filtros--agenda .popover-filtro-wrap:not(.popover-filtro-wrap--marcadores) {
+        flex: 0 1 200px;
+    }
+}
+
+.barra-filtros__busca {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+/* Seções da Agenda (Hoje, Amanhã…) */
+.secao {
+    margin-bottom: var(--sp-5);
+}
+
+.secao__titulo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    margin-bottom: var(--sp-3);
+    padding: var(--sp-1) 0;
+    border: none;
+    background: transparent;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-muted);
+    text-align: left;
+    cursor: pointer;
+}
+
+.secao__titulo:hover {
+    color: var(--text);
+}
+
+.secao__seta {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    transition: transform var(--transicao);
+}
+
+.secao__titulo[aria-expanded="false"] .secao__seta {
+    transform: rotate(-90deg);
+}
+
+.secao__contador {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--border);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+}
+
+.secao__rodape {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+    flex-wrap: wrap;
+}
+
+.secao__paginacao-info {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.secao--concluidas .secao__titulo {
+    color: var(--success-dark);
+}
+
+.secao--concluidas .secao__contador {
+    background: var(--success-light);
+    color: var(--success-dark);
+}
+
+.secao--atrasadas .secao__titulo {
+    color: var(--danger-dark);
+}
+
+.secao--atrasadas .secao__contador {
+    background: var(--danger-light);
+    color: var(--danger-dark);
+}
+
+/* ============================================================
+   Desktop
+   ============================================================ */
+@media (min-width: 768px) {
+    body {
+        grid-template-areas:
+            "nav header"
+            "nav main";
+        grid-template-columns: var(--nav-largura) 1fr;
+        grid-template-rows: auto 1fr;
+    }
+
+    body.sem-conexao {
+        grid-template-areas:
+            "nav aviso"
+            "nav header"
+            "nav main";
+        grid-template-rows: auto auto 1fr;
+    }
+
+
+    .app-nav {
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: var(--sp-1);
+        padding: var(--sp-4) var(--sp-3);
+        border-top: none;
+        border-right: 1px solid var(--border);
+    }
+
+    .nav-item {
+        flex: 0 0 auto;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: var(--sp-3);
+        padding: var(--sp-3);
+        font-size: var(--fs-base);
+    }
+
+    .nav-item:hover {
+        background: var(--bg);
+    }
+
+    .nav-item--ativo {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .app-main {
+        padding: var(--sp-5);
+    }
+
+    /* No desktop o botão volta para a mesma linha do título. */
+    .view-header > .btn {
+        flex: 0 0 auto;
+    }
+
+    .grid-cards {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+        gap: var(--sp-4);
+    }
+}
+
+@media (min-width: 1200px) {
+    .app-main {
+        padding: var(--sp-5) var(--sp-6);
+    }
+
+    /* Limita a medida de leitura e centraliza em telas largas. */
+    .app-main > * {
+        max-width: 1280px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .grid-cards {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+    }
+}
+
+/* ============================================================
+   Agenda — visões Semana e Mês
+   ============================================================ */
+
+.calendario-nav {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+}
+
+.calendario-nav__periodo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    grid-column: 2;
+}
+
+.calendario-nav__rotulo {
+    font-size: var(--fs-md);
+    font-weight: 700;
+    text-align: center;
+    min-width: 12ch;
+}
+
+.calendario-nav__hoje {
+    justify-self: start;
+}
+
+/* ---------- Semana ---------- */
+.semana {
+    --semana-col-hora: 56px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: auto;
+}
+
+.semana__cabecalho {
+    display: grid;
+    grid-template-columns: var(--semana-col-hora) repeat(7, minmax(120px, 1fr));
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.semana__dia-cab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--sp-2) var(--sp-1);
+    border-left: 1px solid var(--border);
+}
+
+.semana__dia-nome {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-muted);
+}
+
+.semana__dia-numero {
+    font-size: var(--fs-md);
+    font-weight: 700;
+}
+
+.semana__dia-cab--hoje .semana__dia-numero {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    border-radius: var(--radius-pill);
+    background: var(--primary);
+    color: #fff;
+}
+
+.semana__sem-horario {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+    margin-top: 2px;
+    min-height: 6px;
+}
+
+.semana__corpo {
+    display: grid;
+    grid-template-columns: var(--semana-col-hora) repeat(7, minmax(120px, 1fr));
+    position: relative;
+}
+
+.semana__hora-rotulo {
+    padding-top: 2px;
+    padding-right: var(--sp-2);
+    border-top: 1px solid var(--border);
+    font-size: var(--fs-xs);
+    color: var(--text-soft);
+    text-align: right;
+}
+
+.semana__hora-rotulo--vazio {
+    border-bottom: 1px solid transparent;
+}
+
+.semana__celula {
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    transition: background var(--transicao);
+}
+
+/* Linha do horário atual — só aparece na coluna do dia de hoje. */
+.semana__linha-agora {
+    position: absolute;
+    z-index: 2;
+    height: 2px;
+    background: var(--danger);
+    pointer-events: none;
+}
+
+.semana__linha-agora__bolinha {
+    position: absolute;
+    left: -4px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    transform: translateY(-50%);
+}
+
+/* ---------- Mês ---------- */
+.mes {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.mes__cabecalho {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.mes__cab-dia {
+    padding: var(--sp-2);
+    text-align: center;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-muted);
+}
+
+.mes__grade {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-auto-rows: minmax(84px, auto);
+}
+
+.mes__dia {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: var(--sp-1);
+    border-left: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    min-width: 0;
+    transition: background var(--transicao);
+}
+
+.mes__dia:nth-child(7n+1) {
+    border-left: none;
+}
+
+.mes__dia--fora {
+    background: var(--bg);
+}
+
+.mes__dia--fora .mes__dia-numero {
+    color: var(--text-soft);
+}
+
+.mes__dia-numero {
+    align-self: flex-start;
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    padding: 2px 6px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: background var(--transicao), color var(--transicao);
+}
+
+.mes__dia-numero:hover,
+.mes__dia-numero:focus-visible {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.mes__dia--hoje .mes__dia-numero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    background: var(--primary);
+    color: #fff;
+}
+
+.mes__dia--hoje .mes__dia-numero:hover,
+.mes__dia--hoje .mes__dia-numero:focus-visible {
+    background: var(--primary-dark);
+    color: #fff;
+}
+
+.mes__eventos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 8px;
+}
+
+.mes__mais {
+    align-self: flex-start;
+    padding: 1px 5px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+}
+
+.mes__mais:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+/* ---------- Evento (compartilhado entre Semana e Mês) ---------- */
+.evento {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    line-height: 1.3;
+    cursor: grab;
+    overflow: hidden;
+    text-align: left;
+}
+
+.evento:active {
+    cursor: grabbing;
+}
+
+.evento__hora {
+    flex-shrink: 0;
+    opacity: .75;
+    font-variant-numeric: tabular-nums;
+}
+
+.evento__nome {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Símbolos dos marcadores: encostados à direita, o nome é que cede espaço. */
+.evento__marcadores {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.evento__marcador {
+    display: inline-flex;
+}
+
+/* Preenchido: em 11px o contorno some sobre o fundo colorido do evento. */
+.evento__marcador svg {
+    width: 11px;
+    height: 11px;
+    fill: currentColor;
+}
+
+.evento--info    { background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary-border); }
+.evento--sucesso { background: var(--success-light); color: var(--success-dark); border-color: var(--success-border); }
+.evento--alerta  { background: var(--warning-light); color: var(--warning-dark); border-color: var(--warning-border); }
+.evento--perigo  { background: var(--danger-light);  color: var(--danger-dark);  border-color: var(--danger-border); }
+.evento--roxa    { background: var(--purple-light);  color: var(--purple-dark);  border-color: var(--purple-border); }
+.evento--neutra  { background: var(--bg);            color: var(--text-muted);   border-color: var(--border); }
+
+.evento--arrastando {
+    opacity: .4;
+}
+
+/* Célula/dia recebendo um drag válido por cima */
+.slot-alvo {
+    background: var(--primary-light) !important;
+    outline: 2px dashed var(--primary-border);
+    outline-offset: -2px;
+}
+
+/* ---------- Rotina (DOM–SÁB, médicos empilhados por dia) ---------- */
+
+/* No celular as 7 colunas rolam na horizontal, encaixando coluna a coluna. */
+.rotina {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(150px, 1fr);
+    gap: var(--sp-2);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: var(--sp-1);
+}
+
+.rotina__dia {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    scroll-snap-align: start;
+}
+
+.rotina__dia--hoje {
+    border-color: var(--primary-border);
+    box-shadow: inset 0 3px 0 var(--primary);
+}
+
+.rotina__cab {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-bottom: 1px solid var(--border);
+}
+
+.rotina__cab-nome {
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.rotina__dia--hoje .rotina__cab-nome {
+    color: var(--primary);
+}
+
+.rotina__cab-data {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.rotina__cab-contador {
+    margin-left: auto;
+    min-width: 20px;
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-align: center;
+}
+
+.rotina__lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+}
+
+.rotina__vazio {
+    padding: var(--sp-2) 0;
+    color: var(--text-soft);
+    text-align: center;
+}
+
+.rotina__card {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transicao), border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.rotina__card:hover,
+.rotina__card:focus-visible {
+    background: var(--primary-light);
+    border-color: var(--primary-border);
+    border-left-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.rotina__card--agendado {
+    border-left-color: var(--success);
+}
+
+.rotina__nome {
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rotina__info {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rotina__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 2px;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--success-dark);
+}
+
+.rotina__status svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Com 4 opções (Cards/Semana/Mês/Rotina) o segmentado ocupa a linha toda no celular. */
+@media (max-width: 479px) {
+    .barra-filtros--agenda .segmentado {
+        width: 100%;
+    }
+
+    .barra-filtros--agenda .segmentado__opcao {
+        flex: 1;
+        justify-content: center;
+        gap: var(--sp-1);
+        padding: 7px var(--sp-1);
+    }
+}
+
+/* ============================================================
+   Desktop — calendário ganha mais respiro
+   ============================================================ */
+@media (min-width: 768px) {
+    .rotina {
+        grid-auto-flow: row;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        overflow-x: visible;
+    }
+
+    .semana {
+        --semana-col-hora: 64px;
+    }
+
+    .semana__cabecalho,
+    .semana__corpo {
+        grid-template-columns: var(--semana-col-hora) repeat(7, minmax(0, 1fr));
+    }
+
+    .mes__grade {
+        grid-auto-rows: minmax(110px, auto);
+    }
+}

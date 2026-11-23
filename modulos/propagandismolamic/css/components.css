@@ -1,0 +1,2291 @@
+/* ============================================================
+   Botões
+   ============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    padding: 10px var(--sp-4);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.btn--primario {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn--primario:not(:disabled):hover {
+    background: var(--primary-dark);
+}
+
+.btn--outline {
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.btn--outline:not(:disabled):hover {
+    background: var(--bg);
+    border-color: var(--text-soft);
+}
+
+.btn--sutil {
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.btn--sutil:not(:disabled):hover {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.btn--perigo {
+    background: var(--danger-light);
+    border-color: var(--danger-border);
+    color: var(--danger-dark);
+}
+
+.btn--perigo:not(:disabled):hover {
+    background: #fee2e2;
+}
+
+.btn--sucesso {
+    background: var(--success-light);
+    border-color: var(--success-border);
+    color: var(--success-dark);
+}
+
+.btn--sucesso:not(:disabled):hover {
+    background: #d1fae5;
+}
+
+.btn--bloco {
+    width: 100%;
+}
+
+/* ---------- Split action (botão principal + popover de opções) ---------- */
+.split-acao {
+    position: relative;
+    display: inline-flex;
+}
+
+.split-acao .btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.split-acao__toggle {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 1px solid rgba(255, 255, 255, .35);
+    padding: 10px var(--sp-2);
+}
+
+.split-acao__toggle svg {
+    transition: transform var(--transicao);
+}
+
+.split-acao__toggle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+
+.popover-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    min-width: 220px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg, 0 12px 28px rgba(0, 0, 0, .18));
+    padding: var(--sp-1);
+    z-index: 10;
+}
+
+.popover-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    padding: var(--sp-2) var(--sp-3);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    color: var(--text);
+    text-align: left;
+}
+
+.popover-menu__item:hover {
+    background: var(--bg);
+}
+
+.popover-menu__item svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.btn--sm {
+    padding: 6px 10px;
+    font-size: var(--fs-xs);
+}
+
+.btn--sm svg {
+    width: 14px;
+    height: 14px;
+}
+
+.btn--icone {
+    padding: 8px;
+    border-radius: var(--radius-sm);
+}
+
+.btn--icone svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Botão do WhatsApp */
+.btn--whatsapp {
+    background: var(--whatsapp);
+    color: #fff;
+}
+
+.btn--whatsapp:not(:disabled):hover {
+    background: var(--whatsapp-dark);
+    text-decoration: none;
+}
+
+.link-whatsapp {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    color: var(--whatsapp-dark);
+    background: rgba(37, 211, 102, .12);
+    transition: background var(--transicao);
+}
+
+.link-whatsapp:hover {
+    background: rgba(37, 211, 102, .22);
+    text-decoration: none;
+}
+
+.link-whatsapp svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* ============================================================
+   Cards
+   ============================================================ */
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    min-width: 0;
+    padding: var(--sp-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+/* Faixa colorida à esquerda indicando status */
+.card--faixa::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--border-strong);
+}
+
+.card--agendada::before  { background: var(--primary); }
+.card--realizada::before { background: var(--success); }
+.card--ausente::before   { background: var(--warning); }
+.card--cancelada::before { background: var(--text-soft); }
+.card--reagendada::before{ background: var(--purple); }
+.card--atrasada::before  { background: var(--danger); }
+
+.card--faixa {
+    padding-left: calc(var(--sp-4) + 4px);
+}
+
+.card__topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    min-width: 0;
+}
+
+.card__identidade {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.card__identidade > div {
+    min-width: 0;
+}
+
+/* Bloco de status/WhatsApp à direita: nunca encolhe nem quebra. */
+.card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-shrink: 0;
+}
+
+.card__nome {
+    font-size: var(--fs-md);
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.card__sub {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.card__linha {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.card__linha svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: var(--text-soft);
+}
+
+.card__linha span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.card__bloco {
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+}
+
+.card__nota {
+    padding: var(--sp-2) var(--sp-3);
+    border-left: 3px solid var(--primary-border);
+    background: var(--primary-light);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: var(--fs-sm);
+    color: #1e3a8a;
+    overflow-wrap: anywhere;
+}
+
+.card__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-top: auto;
+    padding-top: var(--sp-1);
+}
+
+.card__acoes .btn--cresce {
+    flex: 1 1 auto;
+}
+
+/* Avatar com iniciais */
+.avatar {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #1e40af);
+    color: #fff;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+}
+
+.avatar--sm {
+    width: 32px;
+    height: 32px;
+    font-size: var(--fs-xs);
+}
+
+/* ============================================================
+   Tags / badges
+   ============================================================ */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: 3px 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.tag svg {
+    width: 12px;
+    height: 12px;
+}
+
+.tag--neutra  { background: var(--bg);            color: var(--text-muted);   border-color: var(--border); }
+.tag--info    { background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary-border); }
+.tag--sucesso { background: var(--success-light); color: var(--success-dark); border-color: var(--success-border); }
+.tag--alerta  { background: var(--warning-light); color: var(--warning-dark); border-color: var(--warning-border); }
+.tag--perigo  { background: var(--danger-light);  color: var(--danger-dark);  border-color: var(--danger-border); }
+.tag--roxa    { background: var(--purple-light);  color: var(--purple-dark);  border-color: var(--purple-border); }
+
+/* ============================================================
+   Formulários
+   ============================================================ */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.campo {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    min-width: 0;
+}
+
+.campo__label-linha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+
+.campo__label {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--text-muted);
+}
+
+.campo__obrigatorio {
+    color: var(--danger);
+    font-weight: 700;
+}
+
+.campo__controle {
+    width: 100%;
+    padding: 10px var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-base);
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.campo__controle:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-border);
+}
+
+.campo__controle::placeholder {
+    color: var(--text-soft);
+}
+
+.campo__controle:disabled,
+.campo__controle[aria-busy="true"] {
+    background: var(--bg);
+    opacity: .6;
+}
+
+select.campo__controle {
+    cursor: pointer;
+}
+
+.campo__ajuda {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.campo__erro {
+    display: none;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--danger-dark);
+}
+
+.campo__erro:not(:empty) {
+    display: block;
+}
+
+.campo--invalido .campo__controle {
+    border-color: var(--danger);
+}
+
+.toggle-reagendar {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color var(--transicao), background var(--transicao), box-shadow var(--transicao);
+}
+
+.toggle-reagendar:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.toggle-reagendar__icone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--primary-light);
+    color: var(--primary);
+    transition: background var(--transicao), color var(--transicao);
+}
+
+.toggle-reagendar__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.toggle-reagendar__texto strong {
+    font-size: var(--fs-base);
+    color: var(--text);
+}
+
+.toggle-reagendar__texto small {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.toggle-reagendar__check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    color: transparent;
+    transition: border-color var(--transicao), background var(--transicao), color var(--transicao);
+}
+
+.toggle-reagendar__check svg {
+    width: 13px;
+    height: 13px;
+}
+
+.toggle-reagendar--ativo {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 3px var(--primary-border);
+}
+
+.toggle-reagendar--ativo .toggle-reagendar__icone {
+    background: var(--primary);
+    color: #fff;
+}
+
+.toggle-reagendar--ativo .toggle-reagendar__check {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+}
+
+.toggle-reagendar__campos {
+    overflow: hidden;
+    animation: toggle-reagendar-abrir .18s ease;
+}
+
+@keyframes toggle-reagendar-abrir {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.campo__aviso {
+    display: none;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--warning-dark);
+}
+
+.campo__aviso:not(:empty) {
+    display: block;
+}
+
+/* Linhas com múltiplos campos */
+.form-linha {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-3);
+}
+
+.form-secao {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--border);
+}
+
+.form-secao__titulo {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-soft);
+}
+
+.form__acoes {
+    display: flex;
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+}
+
+.form__acoes .btn {
+    flex: 1;
+}
+
+@media (min-width: 520px) {
+    .form-linha--2 { grid-template-columns: 1fr 1fr; }
+    .form-linha--3 { grid-template-columns: 1fr 1fr 1fr; }
+    /* CEP tem largura fixa; a rua fica com o resto. */
+    .form-linha--cep { grid-template-columns: 150px 1fr; }
+    /* Número é curto, bairro é longo. */
+    .form-linha--num-bairro { grid-template-columns: 110px 1fr; }
+    /* UF são 2 letras. */
+    .form-linha--cidade-uf { grid-template-columns: 1fr 90px; }
+    /* Médico ocupa mais espaço; especialidade é só leitura. */
+    .form-linha--medico { grid-template-columns: 1.6fr 1fr; }
+    /* Objetivo é obrigatório e mais largo; marcadores acompanham ao lado. */
+    .form-linha--objetivo { grid-template-columns: 1.15fr 1fr; align-items: start; }
+}
+
+/* ---------- Seletor de médico (gatilho + popover pesquisável) ---------- */
+.seletor-medico {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    padding: 6px var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.seletor-medico:hover {
+    border-color: var(--primary);
+}
+
+.seletor-medico[aria-expanded="true"] {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-border);
+}
+
+.seletor-medico .avatar--sm {
+    flex-shrink: 0;
+}
+
+.seletor-medico__texto {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.seletor-medico__texto strong {
+    font-size: var(--fs-sm);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seletor-medico__texto small {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.seletor-medico__texto--vazio {
+    color: var(--text-soft);
+    font-size: var(--fs-base);
+}
+
+.seletor-medico > svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.campo__controle--somente-leitura {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    color: var(--text-muted);
+    background: var(--bg);
+    cursor: default;
+}
+
+.popover-medico {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    width: min(320px, 100%);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg, 0 12px 28px rgba(0, 0, 0, .18));
+    overflow: hidden;
+    animation: popover-medico-abrir .15s ease;
+}
+
+.popover-medico[hidden] {
+    display: none;
+}
+
+@keyframes popover-medico-abrir {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.popover-medico__busca {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-3);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-soft);
+}
+
+.popover-medico__busca svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.popover-medico__busca input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    font-size: var(--fs-sm);
+    color: var(--text);
+    background: transparent;
+}
+
+.popover-medico__lista {
+    max-height: 260px;
+    overflow-y: auto;
+    padding: var(--sp-1);
+}
+
+.popover-medico__item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    padding: var(--sp-2);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    cursor: pointer;
+}
+
+.popover-medico__item:hover {
+    background: var(--bg);
+}
+
+.popover-medico__item-texto {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.popover-medico__item-texto strong {
+    font-size: var(--fs-sm);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.popover-medico__item-texto small {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.popover-medico__vazio {
+    padding: var(--sp-4) var(--sp-3);
+    text-align: center;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+/* ---------- Popover do filtro "Filtrar por grupo" (Agenda) ---------- */
+.popover-filtro-wrap {
+    position: relative;
+    flex: 1 1 120px;
+    min-width: 0;
+}
+
+/* O filtro de marcadores tem largura de conteúdo (ver layout.css) e fica
+   de fora desta largura fixa. */
+@media (min-width: 520px) {
+    .popover-filtro-wrap:not(.popover-filtro-wrap--marcadores) {
+        flex: 0 1 200px;
+    }
+}
+
+.seletor-filtro {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    padding: 9px var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.seletor-filtro:hover {
+    border-color: var(--primary);
+}
+
+.seletor-filtro[aria-expanded="true"] {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-border);
+}
+
+.seletor-filtro__ponto {
+    flex-shrink: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.seletor-filtro__ponto--neutra { background: var(--text-soft); }
+.seletor-filtro__ponto--info   { background: var(--primary); }
+.seletor-filtro__ponto--sucesso{ background: var(--success); }
+.seletor-filtro__ponto--alerta { background: var(--warning); }
+.seletor-filtro__ponto--perigo { background: var(--danger); }
+.seletor-filtro__ponto--roxa   { background: var(--purple); }
+
+.seletor-filtro__texto {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.seletor-filtro > svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    transition: transform var(--transicao);
+}
+
+.seletor-filtro[aria-expanded="true"] > svg {
+    transform: rotate(180deg);
+}
+
+.popover-filtro {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    width: min(280px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg, 0 12px 28px rgba(0, 0, 0, .18));
+    padding: var(--sp-2);
+    animation: popover-medico-abrir .15s ease;
+}
+
+.popover-filtro[hidden] {
+    display: none;
+}
+
+.popover-filtro__titulo {
+    padding: var(--sp-1) var(--sp-2) var(--sp-2);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-soft);
+}
+
+.popover-filtro__item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-2);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transicao);
+}
+
+.popover-filtro__item:hover {
+    background: var(--bg);
+}
+
+.popover-filtro__item--ativo {
+    background: var(--primary-light);
+}
+
+.popover-filtro__item--ativo:hover {
+    background: var(--primary-light);
+}
+
+.popover-filtro__icone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+}
+
+.popover-filtro__icone svg {
+    width: 15px;
+    height: 15px;
+}
+
+.popover-filtro__icone--neutra  { background: var(--bg);            color: var(--text-muted); }
+.popover-filtro__icone--info    { background: var(--primary-light); color: var(--primary-dark); }
+.popover-filtro__icone--sucesso { background: var(--success-light); color: var(--success-dark); }
+.popover-filtro__icone--alerta  { background: var(--warning-light); color: var(--warning-dark); }
+.popover-filtro__icone--perigo  { background: var(--danger-light);  color: var(--danger-dark); }
+.popover-filtro__icone--roxa    { background: var(--purple-light);  color: var(--purple-dark); }
+
+.popover-filtro__nome {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text);
+}
+
+.popover-filtro__check {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+}
+
+/* ---------- Campo com botão de ação ao lado (ex.: gerenciar catálogo) ---------- */
+.campo-com-botao {
+    display: flex;
+    gap: var(--sp-2);
+}
+
+/* ---------- Autocompletar de campo (rua/bairro/cidade) ---------- */
+.campo-autocomplete {
+    position: relative;
+}
+
+.campo-autocomplete__lista {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: var(--sp-1);
+    animation: popover-medico-abrir .15s ease;
+}
+
+.campo-autocomplete__lista[hidden] {
+    display: none;
+}
+
+.campo-autocomplete__opcao {
+    display: block;
+    width: 100%;
+    padding: var(--sp-2) var(--sp-3);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: var(--fs-base);
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.campo-autocomplete__opcao:hover,
+.campo-autocomplete__opcao--ativa {
+    background: var(--bg);
+}
+
+.campo-autocomplete__opcao mark {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 3px;
+}
+
+.campo-com-botao .campo__controle {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ---------- Gerenciador de catálogo (especialidades, objetivos) ---------- */
+.catalogo-lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.catalogo-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.catalogo-item__campo {
+    flex: 1;
+    min-width: 0;
+    padding: 8px var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.catalogo-item__campo:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-border);
+}
+
+.catalogo-novo {
+    display: flex;
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+}
+
+.catalogo-novo input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+}
+
+.catalogo-novo input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-border);
+}
+
+.catalogo-vazio {
+    padding: var(--sp-4) var(--sp-3);
+    text-align: center;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   Marcadores (etiquetas coloridas de visita)
+   ============================================================ */
+
+/*
+ * A cor de cada marcador entra por variável (--marcador-cor e as duas
+ * derivadas, calculadas em JS com alfa), então a forma do chip é definida
+ * uma vez só aqui e cada etiqueta só troca o valor.
+ */
+.marcador-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 4px 10px;
+    background: var(--marcador-fundo, var(--bg));
+    border: 1px solid var(--marcador-borda, var(--border));
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--marcador-cor, var(--text));
+}
+
+.marcador-chip > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.marcador-chip svg {
+    flex-shrink: 0;
+    width: 13px;
+    height: 13px;
+    color: var(--marcador-cor, var(--text-muted));
+}
+
+.marcador-chip--sm {
+    padding: 3px 9px;
+    font-size: var(--fs-xs);
+}
+
+.marcador-chip--sm svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* O "x" de remover, dentro do chip no formulário de visita. */
+.marcador-chip__x {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    margin-right: -3px;
+    border-radius: 50%;
+    color: var(--marcador-cor, var(--text-muted));
+    opacity: .65;
+    cursor: pointer;
+    transition: opacity var(--transicao), background var(--transicao);
+}
+
+.marcador-chip__x:hover {
+    opacity: 1;
+    background: var(--marcador-borda, var(--border));
+}
+
+.marcador-chip__x svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* Fita de marcadores no card de visita. */
+.card__marcadores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: var(--sp-1);
+}
+
+/* ---------- Campo de marcadores no formulário de visita ---------- */
+.popover-marcadores-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.seletor-marcadores {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    min-height: 42px;
+    padding: 6px var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.seletor-marcadores:hover {
+    border-color: var(--primary);
+}
+
+.seletor-marcadores[aria-expanded="true"] {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-border);
+}
+
+.seletor-marcadores__chips {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+}
+
+.seletor-marcadores__vazio {
+    font-size: var(--fs-sm);
+    color: var(--text-soft);
+}
+
+.seletor-marcadores > svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    transition: transform var(--transicao);
+}
+
+.seletor-marcadores[aria-expanded="true"] > svg {
+    transform: rotate(180deg);
+}
+
+/* ---------- Popover de marcadores (formulário e filtro) ---------- */
+/*
+ * Alinhado pela direita e limitado à largura do próprio campo: dentro do
+ * modal (que rola em Y e portanto recorta em X) um popover mais largo que
+ * o campo empurraria o corpo para os lados e faria nascer uma barra de
+ * rolagem horizontal.
+ */
+.popover-marcadores {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    left: auto;
+    z-index: 25;
+    min-width: 100%;
+    max-width: 100%;
+    padding: var(--sp-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    animation: popover-medico-abrir .15s ease;
+}
+
+.popover-marcadores[hidden] {
+    display: none;
+}
+
+/*
+ * No filtro da Agenda o popover alinha pela direita — encostado na borda
+ * direita da barra, ele não vaza da tela. Abaixo de 520px o gatilho é
+ * estreito demais para servir de âncora: aí o popover passa a `fixed`,
+ * centrado e com a largura útil da tela, em vez de escorrer para fora.
+ */
+.popover-marcadores--filtro {
+    left: auto;
+    right: 0;
+    /* Fora do modal não há recorte: o popover do filtro pode ser mais
+       largo que o gatilho, que é estreito. */
+    min-width: 240px;
+    max-width: calc(100vw - 2 * var(--sp-4));
+}
+
+.popover-marcadores__cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+
+.popover-marcadores__limpar {
+    padding: var(--sp-1) var(--sp-2);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.popover-marcadores__limpar:hover {
+    background: var(--primary-light);
+}
+
+.popover-marcadores__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.popover-marcadores__item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-2);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transicao);
+}
+
+.popover-marcadores__item:hover {
+    background: var(--bg);
+}
+
+.popover-marcadores__item--ativo {
+    background: var(--primary-light);
+}
+
+.popover-marcadores__ponto {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .12);
+}
+
+.popover-marcadores__nome {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text);
+}
+
+.popover-marcadores__vazio {
+    padding: var(--sp-4) var(--sp-3);
+    text-align: center;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.popover-marcadores__gerenciar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    width: 100%;
+    margin-top: var(--sp-2);
+    padding: var(--sp-2);
+    border: none;
+    border-top: 1px solid var(--border);
+    background: transparent;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color var(--transicao);
+}
+
+.popover-marcadores__gerenciar:hover {
+    color: var(--primary);
+}
+
+.popover-marcadores__gerenciar svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* ---------- Gatilho do filtro de marcadores (barra da Agenda) ---------- */
+/* O rótulo "Marcadores" é fixo e curto: não vira reticências. */
+.popover-filtro-wrap--marcadores .seletor-filtro__texto {
+    flex: 0 0 auto;
+    overflow: visible;
+}
+
+.seletor-filtro__icone {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    color: var(--text-muted);
+}
+
+.popover-filtro-wrap--ativo .seletor-filtro {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.popover-filtro-wrap--ativo .seletor-filtro__icone,
+.popover-filtro-wrap--ativo .seletor-filtro__texto {
+    color: var(--primary-dark);
+}
+
+.seletor-filtro__contador {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--primary);
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    color: #fff;
+}
+
+.seletor-filtro__contador[hidden] {
+    display: none;
+}
+
+/* ---------- Gerenciador de marcadores ---------- */
+.marcador-gerenciar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.marcador-linha {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.marcador-linha .marcador-chip {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.marcador-linha__usos {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+    font-size: var(--fs-xs);
+    color: var(--text-soft);
+}
+
+.marcador-previa {
+    display: flex;
+    align-items: center;
+    padding: var(--sp-3);
+    background: var(--bg);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   Seletor de cores (matriz saturação/valor + trilho de matiz)
+   ============================================================ */
+.seletor-cor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.seletor-cor__topo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+.seletor-cor__amostra {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .12);
+}
+
+.seletor-cor__hex-wrap {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+}
+
+.seletor-cor__hex-rotulo {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--text-soft);
+}
+
+.seletor-cor__hex {
+    flex: 1;
+    min-width: 0;
+    padding: 8px var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--fs-sm);
+    text-transform: lowercase;
+    color: var(--text);
+}
+
+.seletor-cor__hex:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-border);
+}
+
+/*
+ * A matriz é a cor pura (--matiz, trocada em JS) com dois gradientes por
+ * cima: branco no eixo X e preto no eixo Y — o mesmo empilhamento que os
+ * seletores nativos usam, sem canvas nem redesenho por pixel.
+ */
+.seletor-cor__area {
+    position: relative;
+    height: 150px;
+    border-radius: var(--radius-sm);
+    background:
+        linear-gradient(to top, #000, rgba(0, 0, 0, 0)),
+        linear-gradient(to right, #fff, rgba(255, 255, 255, 0)),
+        var(--matiz, #f00);
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .12);
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.seletor-cor__area:focus-visible,
+.seletor-cor__matiz:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.seletor-cor__matiz {
+    position: relative;
+    height: 14px;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(to right,
+        #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .12);
+    cursor: pointer;
+    touch-action: none;
+}
+
+.seletor-cor__alca {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 16px;
+    height: 16px;
+    /* A alça acompanha o ponto exato: o translate tira o próprio tamanho
+       da conta, então ela fica centrada na coordenada, não ao lado dela. */
+    transform: translate(-50%, -50%);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, .45);
+    pointer-events: none;
+}
+
+.seletor-cor__alca--matiz {
+    top: 50%;
+    width: 18px;
+    height: 18px;
+}
+
+.seletor-cor__paleta {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+}
+
+.seletor-cor__atalho {
+    aspect-ratio: 1;
+    border: none;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .12);
+    cursor: pointer;
+    transition: transform var(--transicao), box-shadow var(--transicao);
+}
+
+.seletor-cor__atalho:hover {
+    transform: scale(1.12);
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .12), 0 2px 8px rgba(15, 23, 42, .22);
+}
+
+.seletor-cor__atalho:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* ============================================================
+   Modal
+   ============================================================ */
+/* ============================================================
+   Overlay de carregamento — bloqueia a tela enquanto o banco
+   não confirma a gravação. Acima do modal (o formulário que
+   disparou a ação continua aberto por baixo) e abaixo do toast.
+   ============================================================ */
+.carregando-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-carregando);
+    display: grid;
+    place-items: center;
+    padding: var(--sp-4);
+    background: rgba(15, 23, 42, .55);
+    opacity: 0;
+    transition: opacity var(--transicao);
+}
+
+.carregando-overlay--visivel {
+    opacity: 1;
+}
+
+.carregando-overlay[hidden] {
+    display: none;
+}
+
+.carregando__caixa {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-5);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.carregando__caixa--erro {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-3);
+    max-width: 380px;
+    text-align: center;
+}
+
+.carregando__titulo {
+    font-size: var(--fs-lg);
+    font-weight: 700;
+}
+
+.carregando__texto {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.carregando__spinner {
+    flex-shrink: 0;
+    color: var(--primary);
+    animation: girar .9s linear infinite;
+}
+
+.carregando__msg {
+    font-size: var(--fs-md);
+    color: var(--text);
+}
+
+@keyframes girar {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .carregando__spinner { animation-duration: 2.4s; }
+}
+
+body.carregando {
+    overflow: hidden;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(15, 23, 42, .55);
+    z-index: var(--z-modal);
+    opacity: 0;
+    transition: opacity var(--transicao);
+}
+
+.modal-overlay--visivel {
+    opacity: 1;
+}
+
+.modal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 92dvh;
+    background: var(--surface);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(100%);
+    transition: transform .25s cubic-bezier(.16, 1, .3, 1);
+}
+
+.modal-overlay--visivel .modal {
+    transform: translateY(0);
+}
+
+.modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.modal__titulo {
+    font-size: var(--fs-lg);
+    line-height: 1.25;
+}
+
+.modal__sub {
+    margin-top: 2px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.modal__corpo {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--sp-4);
+}
+
+.modal__fechar {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: background var(--transicao);
+}
+
+.modal__fechar:hover {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.modal__fechar svg {
+    width: 20px;
+    height: 20px;
+}
+
+@media (min-width: 768px) {
+    .modal-overlay {
+        align-items: center;
+        padding: var(--sp-4);
+    }
+
+    .modal {
+        max-width: 560px;
+        max-height: 86dvh;
+        border-radius: var(--radius-lg);
+        transform: translateY(12px) scale(.98);
+        opacity: 0;
+        transition: transform .2s ease, opacity .2s ease;
+    }
+
+    .modal-overlay--visivel .modal {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+
+    .modal--largo {
+        max-width: 720px;
+    }
+}
+
+/* ============================================================
+   Toast
+   ============================================================ */
+.toast-root {
+    position: fixed;
+    top: var(--sp-4);
+    left: var(--sp-4);
+    right: var(--sp-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    align-items: center;
+    pointer-events: none;
+    z-index: var(--z-toast);
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    max-width: 420px;
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--bg-deep);
+    border: 1px solid #334155;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    color: #fff;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: opacity var(--transicao), transform var(--transicao);
+    pointer-events: auto;
+}
+
+.toast--visivel {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.toast--sucesso svg { color: var(--success); }
+.toast--erro svg    { color: var(--danger); }
+.toast--alerta svg  { color: var(--warning); }
+.toast--info svg    { color: #38bdf8; }
+
+.toast__msg {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+    .toast-root {
+        left: auto;
+        right: var(--sp-5);
+        top: var(--sp-5);
+        align-items: flex-end;
+    }
+}
+
+/* ============================================================
+   Mapa
+   ============================================================ */
+.mapa {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--bg);
+}
+
+.mapa__placeholder {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-3);
+    text-align: left;
+    transition: background var(--transicao);
+}
+
+button.mapa__placeholder:hover {
+    background: var(--primary-light);
+}
+
+.mapa__icone {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.mapa__icone svg {
+    width: 18px;
+    height: 18px;
+}
+
+.mapa__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.mapa__endereco {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.mapa__acao {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.mapa__frame {
+    display: block;
+    width: 100%;
+    height: 220px;
+    border: 0;
+}
+
+.mapa__rodape {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    font-size: var(--fs-xs);
+}
+
+.mapa--indisponivel .mapa__icone {
+    background: var(--warning-light);
+    color: var(--warning-dark);
+}
+
+/* ============================================================
+   Estado vazio
+   ============================================================ */
+.vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-6) var(--sp-4);
+    text-align: center;
+    background: var(--surface);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    grid-column: 1 / -1;
+}
+
+.vazio__icone {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--text-soft);
+}
+
+.vazio__icone svg {
+    width: 24px;
+    height: 24px;
+}
+
+.vazio__titulo {
+    font-size: var(--fs-md);
+    font-weight: 700;
+}
+
+.vazio__texto {
+    max-width: 38ch;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   Lista de definições (detalhe)
+   ============================================================ */
+.detalhe {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.detalhe__grupo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+.detalhe__rotulo {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-soft);
+}
+
+.detalhe__valor {
+    font-size: var(--fs-base);
+    overflow-wrap: anywhere;
+}
+
+.detalhe__contato {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.historico {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+.historico__paginacao:not(:empty) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+    flex-wrap: wrap;
+}
+
+.historico__paginacao-info {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+/* Ações do detalhe grudam no fim do modal: com histórico longo, "Editar",
+   "Agendar visita" e "Excluir cadastro" ficam sempre à mão. */
+.detalhe__rodape {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: var(--sp-2) calc(var(--sp-4) * -1) calc(var(--sp-4) * -1);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+}
+
+.historico__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    transition: background var(--transicao), border-color var(--transicao), transform var(--transicao);
+}
+
+/* Itens de histórico clicáveis (abrem a visualização da visita) */
+.historico__item--clicavel {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+}
+
+.historico__item--clicavel:hover,
+.historico__item--clicavel:focus-visible {
+    background: var(--primary-light);
+    border-color: var(--primary-border);
+    transform: translateX(2px);
+}
+
+/* ============================================================
+   Janela de visualização da visita (calendário semanal/mensal
+   e histórico do médico abrem o mesmo preview)
+   ============================================================ */
+.visita-preview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.visita-preview__faixa {
+    height: 4px;
+    margin: calc(var(--sp-1) * -1) calc(var(--sp-1) * -1) 0;
+    border-radius: var(--radius-sm);
+    background: var(--border-strong);
+}
+
+.visita-preview__faixa--agendada  { background: var(--primary); }
+.visita-preview__faixa--realizada { background: var(--success); }
+.visita-preview__faixa--ausente   { background: var(--warning); }
+.visita-preview__faixa--cancelada { background: var(--text-soft); }
+.visita-preview__faixa--reagendada{ background: var(--purple); }
+.visita-preview__faixa--atrasada  { background: var(--danger); }
+
+.visita-preview__topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+}
+
+.visita-preview__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+}
+
+.visita-preview__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+}
+
+.visita-preview__acoes .btn {
+    flex: 1 1 auto;
+    white-space: nowrap;
+}
+
+/* Confirmação dentro de modal */
+.confirmacao {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.confirmacao__aviso {
+    padding: var(--sp-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    background: var(--warning-light);
+    border: 1px solid var(--warning-border);
+    color: var(--warning-dark);
+}
+
+.confirmacao__aviso--perigo {
+    background: var(--danger-light);
+    border-color: var(--danger-border);
+    color: var(--danger-dark);
+}
+
+.confirmacao__lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    max-height: 180px;
+    overflow-y: auto;
+    padding: var(--sp-3);
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+}
+
+/* Opções clicáveis (motivo de ausência) */
+.opcao {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-base);
+    text-align: left;
+    transition: border-color var(--transicao), background var(--transicao);
+}
+
+.opcao:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.opcao--ativa {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    font-weight: 600;
+}
+
+.opcao svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.opcao--ativa svg {
+    color: var(--primary);
+}
+
+/* ============================================================
+   Controle segmentado (alternador de visualização Cards/Semana/Mês)
+   ============================================================ */
+.segmentado {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.segmentado__opcao {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 7px var(--sp-3);
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background var(--transicao), color var(--transicao), box-shadow var(--transicao);
+}
+
+.segmentado__opcao svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.segmentado__opcao:hover {
+    color: var(--text);
+}
+
+.segmentado__opcao--ativa,
+.segmentado__opcao--ativa:hover {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ============================================================
+   Campo "Rotina de visita" (cadastro de médico): DOM–SÁB
+   ============================================================ */
+.campo-rotina {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.campo-rotina > legend {
+    padding: 0;
+    margin-bottom: var(--sp-1);
+}
+
+.campo-rotina__dias {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--sp-1);
+}
+
+.campo-rotina__dia {
+    position: relative;
+    cursor: pointer;
+}
+
+/* O checkbox fica invisível mas focável; o <span> é o botão visível. */
+.campo-rotina__dia input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.campo-rotina__dia span {
+    display: block;
+    padding: 8px 0;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-align: center;
+    transition: background var(--transicao), color var(--transicao), border-color var(--transicao);
+}
+
+.campo-rotina__dia:hover span {
+    border-color: var(--primary-border);
+    color: var(--text);
+}
+
+.campo-rotina__dia input:checked + span {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.campo-rotina__dia input:focus-visible + span {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}

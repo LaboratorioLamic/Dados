@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2563eb">
+    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+    <!-- Abre por duplo-clique, sem servidor: CSS via <link> (css/) e JS
+         via <script src> (js/), na ordem de dependencia (core ->
+         domain/services -> ui -> main). Scripts sao globais, sem
+         import/export; cada arquivo se publica em NS.<pasta>.<arquivo>.
+
+         Os dados vivem no Firebase Realtime Database (js/core/firebase.js);
+         o SDK compat mora em js/vendor/ com a versao no nome do arquivo.
+
+         O ?v= de cada tag evita que o navegador sirva JS/CSS antigos depois
+         de uma atualizacao. Para publicar uma versao nova, veja as
+         instrucoes no topo de js/core/versao.js. -->
+
+    <title>Propagandismo LAMIC</title>
+    <!-- ── Base ──────────────────────────────────── -->
+    <link rel="stylesheet" href="css/tokens.css?v=2026-09-10-01">
+    <link rel="stylesheet" href="css/base.css?v=2026-09-10-01">
+
+    <!-- ── Layout e componentes ──────────────────── -->
+    <link rel="stylesheet" href="css/layout.css?v=2026-09-10-01">
+    <link rel="stylesheet" href="css/components.css?v=2026-09-10-01">
+    <link rel="stylesheet" href="css/auth.css?v=2026-09-10-01">
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="app-header__brand">
+            <span class="app-header__logo" aria-hidden="true">LR</span>
+            <div class="app-header__titulo">
+                <strong>Propagandismo LAMIC</strong>
+                <span id="header-usuario" class="app-header__usuario"></span>
+            </div>
+        </div>
+        <div class="app-header__acoes" id="header-acoes"></div>
+    </header>
+
+    <nav class="app-nav" id="app-nav" aria-label="Navegação principal"></nav>
+
+    <main class="app-main" id="app" tabindex="-1"></main>
+
+    <div id="modal-root"></div>
+    <div id="toast-root" class="toast-root" role="status" aria-live="polite"></div>
+
+    <!-- Visivel desde o primeiro frame: some so quando o app esta montado. -->
+    <div id="carregando-root" class="carregando-overlay carregando-overlay--visivel" role="status" aria-live="polite">
+        <div class="carregando__caixa">
+            <svg class="carregando__spinner" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            <span class="carregando__msg" data-carregando-msg>Carregando…</span>
+        </div>
+    </div>
+    <script>
+    // Rede de seguranca do boot: qualquer erro de carga vira mensagem na
+    // tela. Sem isto, um script quebrado deixa o spinner girando para sempre
+    // e so o console do navegador conta o que aconteceu.
+    (function () {
+        var mostrado = false;
+        // `prioritario` deixa o diagnostico de carga sobrescrever o
+        // "Script error." generico que o file:// dispara primeiro.
+        window.__erroBoot = function (texto, prioritario) {
+            if (mostrado && !prioritario) return;
+            mostrado = true;
+            var raiz = document.getElementById('carregando-root');
+            if (!raiz) return;
+            raiz.hidden = false;
+            raiz.classList.add('carregando-overlay--visivel');
+            raiz.innerHTML = '<div class="carregando__caixa carregando__caixa--erro" role="alert">'
+                + '<h2 class="carregando__titulo">Falha ao iniciar o sistema</h2>'
+                + '<p class="carregando__texto" data-erro-detalhe></p>'
+                + '<button type="button" class="btn btn--primario" onclick="location.reload()">Tentar novamente</button>'
+                + '</div>';
+            raiz.querySelector('[data-erro-detalhe]').textContent = texto;
+        };
+
+        window.addEventListener('error', function (e) {
+            var arquivo = (e.filename || '').split('/').pop().split('?')[0];
+            window.__erroBoot((e.message || 'Erro') + (arquivo ? ' — ' + arquivo + ':' + e.lineno : ''));
+        });
+
+        window.addEventListener('unhandledrejection', function (e) {
+            var motivo = e.reason;
+            window.__erroBoot(String((motivo && (motivo.stack || motivo.message)) || motivo));
+        });
+
+        // Marcado pelo main.js quando o app termina de subir: depois disso o
+        // overlay pertence as acoes do usuario, e o watchdog nao opina.
+        window.__bootConcluido = function () { concluido = true; };
+        var concluido = false;
+
+        // O app nunca deve ficar mais de 30 s no spinner do boot.
+        setTimeout(function () {
+            if (concluido) return;
+            var raiz = document.getElementById('carregando-root');
+            if (raiz && !raiz.hidden && raiz.querySelector('[data-carregando-msg]')) {
+                window.__erroBoot('O carregamento travou. Verifique a conexão e as regras do banco de dados.');
+            }
+        }, 30000);
+    })();
+    var NS = window.NS || {};
+    </script>
+
+    <!-- ── Firebase (SDK compat, versao no nome do arquivo) ── -->
+    <script src="js/vendor/firebase-app-compat-11.6.0.js"></script>
+    <script src="js/vendor/firebase-database-compat-11.6.0.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
+
+    <!-- ── Infraestrutura ────────────────────────── -->
+    <script src="js/core/versao.js?v=2026-09-10-01"></script>
+    <script src="js/core/id.js?v=2026-09-10-01"></script>
+    <script src="js/core/events.js?v=2026-09-10-01"></script>
+    <script src="js/core/firebase.js?v=2026-11-23-01"></script>
+    <script src="js/core/storage.js?v=2026-09-10-01"></script>
+    <script src="js/core/sessao.js?v=2026-09-10-01"></script>
+    <script src="js/core/dom.js?v=2026-09-10-01"></script>
+    <script src="js/core/db.js?v=2026-11-23-01"></script>
+    <script src="js/core/navegacao.js?v=2026-09-10-01"></script>
+    <script src="js/core/migracaoLocal.js?v=2026-09-10-01"></script>
+
+    <!-- ── Domínio ───────────────────────────────── -->
+    <script src="js/domain/telefone.js?v=2026-09-10-01"></script>
+    <script src="js/domain/enderecoUtils.js?v=2026-09-10-01"></script>
+    <script src="js/domain/config.js?v=2026-09-10-01"></script>
+    <script src="js/domain/permissoes.js?v=2026-09-10-01"></script>
+    <script src="js/domain/usuario.js?v=2026-11-23-01"></script>
+    <script src="js/core/dadosSessao.js?v=2026-11-23-01"></script>
+    <script src="js/domain/especialidade.js?v=2026-09-10-01"></script>
+    <script src="js/domain/objetivo.js?v=2026-09-10-01"></script>
+    <script src="js/domain/motivoAusencia.js?v=2026-09-10-01"></script>
+    <script src="js/domain/marcador.js?v=2026-09-10-01"></script>
+    <script src="js/domain/medico.js?v=2026-09-10-01"></script>
+    <script src="js/domain/visita.js?v=2026-09-10-01"></script>
+    <script src="js/services/viacep.js?v=2026-09-10-01"></script>
+    <script src="js/services/enderecoAutocomplete.js?v=2026-09-10-01"></script>
+    <script src="js/services/backup.js?v=2026-11-23-01"></script>
+    <script src="js/services/dadosTeste.js?v=2026-09-10-01"></script>
+
+    <!-- ── Interface ─────────────────────────────── -->
+    <script src="js/ui/icons.js?v=2026-09-10-01"></script>
+    <script src="js/ui/toast.js?v=2026-09-10-01"></script>
+    <script src="js/ui/carregando.js?v=2026-11-23-02"></script>
+    <script src="js/ui/conexaoBanner.js?v=2026-09-10-01"></script>
+    <script src="js/ui/modal.js?v=2026-09-10-01"></script>
+    <script src="js/ui/components/formField.js?v=2026-09-10-01"></script>
+    <script src="js/ui/components/card.js?v=2026-09-10-01"></script>
+    <script src="js/ui/components/calendario.js?v=2026-09-10-01"></script>
+    <script src="js/ui/components/mapa.js?v=2026-09-10-01"></script>
+    <script src="js/ui/forms/catalogoForm.js?v=2026-09-10-01"></script>
+    <script src="js/ui/forms/marcadorForm.js?v=2026-09-10-01"></script>
+    <script src="js/ui/forms/usuarioForm.js?v=2026-11-23-01"></script>
+    <script src="js/ui/forms/grupoForm.js?v=2026-09-10-01"></script>
+    <script src="js/ui/forms/medicoForm.js?v=2026-09-10-01"></script>
+    <script src="js/ui/forms/visitaForm.js?v=2026-09-10-01"></script>
+    <script src="js/ui/forms/visitaAcoes.js?v=2026-09-10-01"></script>
+    <script src="js/ui/views/medicoDetalhe.js?v=2026-09-10-01"></script>
+    <script src="js/ui/views/medicos.js?v=2026-09-10-01"></script>
+    <script src="js/ui/views/agenda.js?v=2026-09-10-01"></script>
+    <script src="js/ui/views/login.js?v=2026-09-10-01"></script>
+    <script src="js/ui/views/config.js?v=2026-11-23-01"></script>
+    <script src="js/ui/shell.js?v=2026-09-10-01"></script>
+
+    <!-- ── Bootstrap ─────────────────────────────── -->
+    <script src="js/main.js?v=2026-11-23-01"></script>
+
+    <script>
+    // Diagnostico de carga: cada arquivo publica um namespace no fim. Se um
+    // deles estourou, o namespace fica faltando e o culpado aparece na tela
+    // com nome — em file:// o navegador so diz "Script error.".
+    // Roda DEPOIS do main.js: antes dele, NS.main ainda nao existe e a
+    // conferencia acusaria um erro que nao houve.
+    (function () {
+        var esperado = [
+            ['js/core/versao.js', 'NS.APP_VERSION'],
+            ['js/core/id.js', 'NS.core.id'],
+            ['js/core/events.js', 'NS.core.events'],
+            ['js/core/firebase.js', 'NS.core.firebase'],
+            ['js/core/storage.js', 'NS.core.storage'],
+            ['js/core/sessao.js', 'NS.core.sessao'],
+            ['js/core/dom.js', 'NS.core.dom'],
+            ['js/core/db.js', 'NS.core.db'],
+            ['js/core/navegacao.js', 'NS.core.navegacao'],
+            ['js/core/migracaoLocal.js', 'NS.core.migracaoLocal'],
+            ['js/domain/telefone.js', 'NS.domain.telefone'],
+            ['js/domain/enderecoUtils.js', 'NS.domain.enderecoUtils'],
+            ['js/domain/config.js', 'NS.domain.config'],
+            ['js/domain/permissoes.js', 'NS.domain.permissoes'],
+            ['js/domain/usuario.js', 'NS.domain.usuario'],
+            ['js/domain/especialidade.js', 'NS.domain.especialidade'],
+            ['js/domain/objetivo.js', 'NS.domain.objetivo'],
+            ['js/domain/motivoAusencia.js', 'NS.domain.motivoAusencia'],
+            ['js/domain/marcador.js', 'NS.domain.marcador'],
+            ['js/domain/medico.js', 'NS.domain.medico'],
+            ['js/domain/visita.js', 'NS.domain.visita'],
+            ['js/services/viacep.js', 'NS.services.viacep'],
+            ['js/services/enderecoAutocomplete.js', 'NS.services.enderecoAutocomplete'],
+            ['js/services/backup.js', 'NS.services.backup'],
+            ['js/services/dadosTeste.js', 'NS.services.dadosTeste'],
+            ['js/ui/icons.js', 'NS.ui.icons'],
+            ['js/ui/toast.js', 'NS.ui.toast'],
+            ['js/ui/carregando.js', 'NS.ui.carregando'],
+            ['js/ui/conexaoBanner.js', 'NS.ui.conexaoBanner'],
+            ['js/ui/modal.js', 'NS.ui.modal'],
+            ['js/ui/components/formField.js', 'NS.ui.components.formField'],
+            ['js/ui/components/card.js', 'NS.ui.components.card'],
+            ['js/ui/components/calendario.js', 'NS.ui.components.calendario'],
+            ['js/ui/components/mapa.js', 'NS.ui.components.mapa'],
+            ['js/ui/forms/catalogoForm.js', 'NS.ui.forms.catalogoForm'],
+            ['js/ui/forms/marcadorForm.js', 'NS.ui.forms.marcadorForm'],
+            ['js/ui/forms/usuarioForm.js', 'NS.ui.forms.usuarioForm'],
+            ['js/ui/forms/grupoForm.js', 'NS.ui.forms.grupoForm'],
+            ['js/ui/forms/medicoForm.js', 'NS.ui.forms.medicoForm'],
+            ['js/ui/forms/visitaForm.js', 'NS.ui.forms.visitaForm'],
+            ['js/ui/forms/visitaAcoes.js', 'NS.ui.forms.visitaAcoes'],
+            ['js/ui/views/medicoDetalhe.js', 'NS.ui.views.medicoDetalhe'],
+            ['js/ui/views/medicos.js', 'NS.ui.views.medicos'],
+            ['js/ui/views/agenda.js', 'NS.ui.views.agenda'],
+            ['js/ui/views/login.js', 'NS.ui.views.login'],
+            ['js/ui/views/config.js', 'NS.ui.views.config'],
+            ['js/ui/shell.js', 'NS.ui.shell'],
+            ['js/main.js', 'NS.main']
+        ];
+
+        var faltando = esperado.filter(function (par) {
+            return par[1].split('.').slice(1).reduce(function (obj, chave) {
+                return obj && obj[chave];
+            }, NS) === undefined;
+        });
+
+        if (!faltando.length) return;
+
+        window.__erroBoot('Estes arquivos nao carregaram: '
+            + faltando.map(function (p) { return p[0]; }).join(', ')
+            + '. O primeiro da lista e a causa.', true);
+    })();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+/* ═══════════════════════════════════════════════════════════════
+   auth.css — Tela de acesso (login, cadastro, primeiro admin)
+   ═══════════════════════════════════════════════════════════════ */
+
+.auth { position: fixed; inset: 0; background: var(--night); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; overflow-y: auto; }
+.auth.hide { display: none; }
+.auth-card {
+  width: 100%; max-width: 360px; background: var(--night-light); border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 14px; padding: 32px; box-shadow: var(--shadow-lg); color: #fff; margin: auto;
+}
+.auth h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.auth p { font-size: 12.5px; color: #8fa1bf; margin-bottom: 18px; line-height: 1.5; }
+.auth label { display: block; font-size: 11.5px; font-weight: 600; color: #a9b6cc; margin: 14px 0 6px; }
+.inp-auth { position: relative; }
+.inp-auth i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #5f7090; font-size: 13px; }
+.inp-auth input {
+  width: 100%; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); border-radius: var(--radius);
+  padding: 10px 12px 10px 36px; color: #fff; outline: none; transition: var(--t);
+}
+.inp-auth input::placeholder { color: #5f7090; }
+.inp-auth input:focus { border-color: var(--cyan); background: rgba(0, 168, 204, .08); }
+.btn-primary {
+  width: 100%; margin-top: 22px; background: var(--cyan); color: #fff; border: 0; border-radius: var(--radius); padding: 11px;
+  font-weight: 600; display: flex; gap: 9px; align-items: center; justify-content: center; transition: var(--t);
+}
+.btn-primary:hover { background: var(--cyan-hover); }
+.btn-ghost-dark {
+  width: 100%; margin-top: 10px; background: transparent; color: #a9b6cc; border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: var(--radius); padding: 10px; font-weight: 500; display: flex; gap: 9px; align-items: center; justify-content: center; transition: var(--t);
+}
+.btn-ghost-dark:hover { border-color: rgba(255, 255, 255, .3); color: #fff; }
+.auth-erro { background: rgba(230, 57, 70, .15); color: #ff8a93; border-radius: var(--radius); padding: 9px 12px; font-size: 12.5px; display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.auth-load { display: flex; flex-direction: column; align-items: center; gap: 14px; color: #8fa1bf; font-size: 13px; padding: 20px 0 6px; }
+.auth-load i { font-size: 26px; color: var(--cyan); }
+.auth-teste { margin-top: 18px; font-size: 11.5px; color: var(--amber); display: flex; gap: 6px; align-items: center; justify-content: center; }

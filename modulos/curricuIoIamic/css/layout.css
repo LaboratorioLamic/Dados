@@ -1,0 +1,314 @@
+/* ===== Layout: login, sidebar, topbar, páginas ===== */
+
+/* ---- Login ---- */
+.login-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(1000px 500px at 80% -10%, rgba(91, 91, 214, .18), transparent 60%),
+        radial-gradient(800px 400px at -10% 110%, rgba(91, 91, 214, .12), transparent 60%),
+        var(--bg);
+    z-index: 100;
+}
+
+.login-card {
+    width: 412px;
+    max-width: calc(100vw - 32px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow: var(--shadow-lg);
+    padding: 44px 40px 34px;
+    animation: popIn .35s ease;
+}
+
+.login-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 17px;
+    background: linear-gradient(135deg, var(--accent), #8a8aec);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 24px rgba(91, 91, 214, .4);
+}
+.login-logo svg.icon { width: 28px; height: 28px; color: #fff; }
+
+.login-card h1 { font-size: 24px; margin-bottom: 5px; letter-spacing: -.02em; }
+.login-card .login-sub { color: var(--muted); margin-bottom: 30px; }
+
+.login-error {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+}
+.login-error.show { display: block; animation: fadeUp .25s ease; }
+
+.login-hint {
+    margin-top: 20px;
+    padding: 12px;
+    background: var(--info-soft);
+    color: var(--info);
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    display: none;
+}
+.login-hint.show { display: block; }
+
+/* ---- App shell ---- */
+.app { display: none; min-height: 100vh; }
+.app.show { display: block; }
+
+/* ---- Sidebar suspensa ----
+   Fica fora da tela e desliza sobre o conteúdo. O .main não reserva espaço para ela,
+   então a página usa a largura toda — é o ganho de espaço que motiva o padrão. */
+.sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    z-index: 60;
+    transform: translateX(-100%);
+    box-shadow: none;
+    /* Sai um pouco mais rápido do que entra: fechar deve parecer imediato, abrir convidativo */
+    transition: transform .22s cubic-bezier(.4, 0, 1, 1), box-shadow .22s linear;
+    will-change: transform;
+}
+.sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-lg);
+    /* Ease-out com leve desaceleração — o painel "assenta" em vez de bater */
+    transition: transform .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s linear;
+}
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(16, 16, 38, .42);
+    backdrop-filter: blur(2px);
+    z-index: 50;
+    opacity: 0;
+    /* pointer-events (e não visibility) evita o engasgo da transição discreta */
+    pointer-events: none;
+    transition: opacity .22s ease;
+}
+.sidebar-overlay.show { opacity: 1; pointer-events: auto; transition: opacity .3s ease; }
+
+/* Respeita quem pediu menos movimento no sistema */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar, .sidebar.open, .sidebar-overlay, .sidebar-overlay.show { transition-duration: .01ms; }
+}
+
+/* Hambúrguer na topbar */
+.hamburger {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-2);
+    cursor: pointer;
+    padding: 7px;
+    margin-left: -6px;
+    border-radius: 10px;
+    display: flex;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.hamburger:hover { background: var(--accent-soft); color: var(--accent-strong); }
+.hamburger:focus-visible { outline: none; border-color: var(--accent); box-shadow: var(--ring); }
+
+.sidebar-close {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--sidebar-text);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    transition: background .15s, color .15s;
+}
+.sidebar-close:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.sidebar-close svg.icon { width: 18px; height: 18px; }
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 20px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+.sidebar-brand .brand-icon {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, var(--accent), #7c7ce8);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(91, 91, 214, .4);
+}
+.sidebar-brand .brand-icon svg.icon { color: #fff; width: 20px; height: 20px; }
+.sidebar-brand .brand-name { color: #fff; font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+.sidebar-brand .brand-sub { color: var(--sidebar-text); font-size: 11.5px; }
+
+.sidebar-nav { flex: 1; padding: 14px 12px; overflow-y: auto; }
+.sidebar-nav::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,.15); }
+
+.nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 11px;
+    color: var(--sidebar-text);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 3px;
+    transition: background .16s ease, color .16s ease;
+    user-select: none;
+}
+.nav-item svg.icon { width: 18px; height: 18px; opacity: .85; transition: opacity .16s; }
+.nav-item:hover { background: rgba(255, 255, 255, .06); color: #dcdcef; }
+.nav-item:hover svg.icon { opacity: 1; }
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(124, 124, 232, .32), rgba(124, 124, 232, .08));
+    color: var(--sidebar-active);
+    font-weight: 600;
+}
+.nav-item.active svg.icon { opacity: 1; color: #b9b9f6; }
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -12px; top: 50%; transform: translateY(-50%);
+    width: 4px; height: 20px;
+    background: linear-gradient(180deg, #a5a5f2, var(--accent));
+    border-radius: 0 4px 4px 0;
+}
+
+.sidebar-footer {
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255, 255, 255, .07);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sidebar-footer .avatar { flex-shrink: 0; }
+.sidebar-footer .user-name { color: #fff; font-size: 13px; font-weight: 600; line-height: 1.2; }
+.sidebar-footer .user-role { color: var(--sidebar-text); font-size: 11.5px; }
+.btn-logout {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--sidebar-text);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    transition: background .15s, color .15s;
+}
+.btn-logout:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+
+/* Main — sem margem: a sidebar é suspensa e não ocupa espaço no fluxo */
+.main { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+    height: var(--topbar-h);
+    background: rgba(255, 255, 255, .78);
+    backdrop-filter: blur(12px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+.topbar .page-title { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+/* Sino de notificações (equipe incompleta / cobertura reduzida) */
+.bell-btn {
+    position: relative;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-2);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 10px;
+    display: flex;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.bell-btn:hover { background: var(--accent-soft); color: var(--accent-strong); }
+.bell-btn.has-alert { color: var(--warning); }
+.bell-btn.has-alert:hover { background: var(--warning-soft); }
+.bell-btn svg.icon { width: 20px; height: 20px; }
+.bell-badge {
+    position: absolute;
+    top: 2px; right: 2px;
+    min-width: 16px; height: 16px;
+    padding: 0 3px;
+    border-radius: 999px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* Largura da página. O limite existe para legibilidade — sem ele, numa ultrawide a linha da
+   tabela fica tão longa que o olho perde o vínculo entre o nome e o valor. 1440px, porém,
+   era apertado para monitor moderno e forçava scroll horizontal em tabelas largas (folha).
+   1760px cobre 1080p/1440p/ultrawide comum sem esticar indefinidamente. */
+.page {
+    flex: 1;
+    padding: 28px;
+    max-width: var(--page-max);
+    width: 100%;
+    margin: 0 auto;
+    animation: fadeUp .3s ease;
+}
+
+/* Páginas com tabelas largas (folha, resultados) usam a tela inteira: aqui o scroll
+   horizontal custa mais que a linha longa. A classe é aplicada pelo módulo. */
+.page.page-wide { max-width: none; }
+
+/* Empty state / em construção */
+.empty-state {
+    background: var(--surface);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 64px 32px;
+    text-align: center;
+    color: var(--muted);
+}
+.empty-state .empty-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+.empty-state .empty-icon svg.icon { width: 26px; height: 26px; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 16px; }
+
+/* Responsivo — a sidebar já é overlay em qualquer largura; aqui só o respiro da página */
+@media (max-width: 900px) {
+    .topbar { padding: 0 16px; gap: 10px; }
+    .page { padding: 18px; }
+}
+@media (max-width: 420px) {
+    .sidebar { width: min(var(--sidebar-w), 82vw); }
+}

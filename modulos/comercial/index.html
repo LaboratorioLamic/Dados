@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>COMERCIAL LAMIC</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2300a8cc'/><text x='16' y='22' font-size='17' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>$</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0e1628">
+  <link rel="apple-touch-icon" href="img/icone-apple-180.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/popover.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/telas.css">
+  <link rel="stylesheet" href="css/tutorial.css">
+</head>
+<body>
+<script src="lamic-carregando.js" data-nome="Comercial LAMIC" data-espera="#auth .auth-load"></script>
+
+  <!-- Tela de acesso (login, cadastro, primeiro admin) -->
+  <div class="auth" id="auth"></div>
+
+  <!-- Menu lateral -->
+  <div class="sidebar-fundo" id="sidebar-fundo" onclick="fecharMenu()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-ico"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+      <div><div class="brand-name">COMERCIAL LAMIC</div><div class="brand-sub">Precificação &amp; Comercial</div></div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-sec">Principal</div>
+      <a data-s="inicio"><i class="fa-solid fa-house"></i>Início</a>
+      <a data-s="exames"><i class="fa-solid fa-flask-vial"></i>Exames</a>
+      <a data-s="custos"><i class="fa-solid fa-boxes-stacked"></i>Custos</a>
+      <a data-s="tabelas"><i class="fa-solid fa-table-list"></i>Tabelas de Preço</a>
+      <a data-s="simulador"><i class="fa-solid fa-chart-line"></i>Simulador</a>
+      <a data-s="pendencias"><i class="fa-solid fa-triangle-exclamation"></i>Pendências</a>
+      <a data-s="instrucoes"><i class="fa-solid fa-book-medical"></i>Instruções</a>
+      <div class="nav-sec">Sistema</div>
+      <a data-s="importar"><i class="fa-solid fa-file-import"></i>Importar / Exportar</a>
+      <a data-s="config"><i class="fa-solid fa-gear"></i>Configurações</a>
+    </nav>
+    <div class="side-foot">
+      <div class="toggle-row escuro"><i class="fa-solid fa-moon"></i>Modo noturno <button class="switch" id="sw-dark" onclick="alternarTema()"></button></div>
+      <div class="user" id="user-box" onclick="abrirPerfil()" title="Meu perfil"></div>
+    </div>
+  </aside>
+
+  <!-- Área principal -->
+  <div class="app">
+    <header class="topbar">
+      <button class="hamb" onclick="abrirMenu()" title="Menu"><i class="fa-solid fa-bars"></i></button>
+      <div class="tb-dot"></div>
+      <div><div class="tb-title" id="tb-title">Início</div><div class="tb-crumb" id="tb-crumb">Principal / Início</div></div>
+      <div class="tb-right">
+        <div id="tb-tutorial"></div>
+        <div id="tb-sino"></div>
+        <button class="icon-btn" title="Sair" onclick="sair()"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="screen" id="s-inicio"></section>
+      <section class="screen" id="s-exames"></section>
+      <section class="screen" id="s-custos"></section>
+      <section class="screen" id="s-tabelas"></section>
+      <section class="screen" id="s-simulador"></section>
+      <section class="screen" id="s-pendencias"></section>
+      <section class="screen" id="s-instrucoes"></section>
+      <section class="screen" id="s-importar"></section>
+      <section class="screen" id="s-config"></section>
+    </main>
+  </div>
+
+  <!-- Gaveta lateral -->
+  <div class="backdrop" id="gaveta-fundo" onclick="clicarForaGaveta()"></div>
+  <aside class="drawer" id="gaveta" aria-label="Detalhes">
+    <div class="dr-h">
+      <div style="flex:1;min-width:0"><span class="mn" id="g-sobre"></span><h3 id="g-titulo"></h3><div class="meta" id="g-meta"></div></div>
+      <button class="icon-btn" onclick="clicarForaGaveta()" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="dr-b" id="g-corpo"></div>
+    <div class="dr-f" id="g-rodape"></div>
+  </aside>
+
+  <div class="pop-fundo" id="pop-fundo" onclick="fecharPop()"></div>
+  <div class="modal" id="modal"></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <!-- Base -->
+  <script src="script/constantes.js"></script>
+  <script src="script/firebase.js"></script>
+  <script src="script/simulacao.js"></script>
+  <script src="script/util.js"></script>
+  <script src="script/ui.js"></script>
+  <script src="script/popover.js"></script>
+  <script src="script/estado.js"></script>
+  <script src="script/auth.js"></script>
+  <script src="script/nav.js"></script>
+  <script src="script/calc.js"></script>
+
+  <!-- Telas -->
+  <script src="script/inicio.js"></script>
+  <script src="script/exames.js"></script>
+  <script src="script/ficha.js"></script>
+  <script src="script/examesimp.js"></script>
+  <script src="script/pendencias.js"></script>
+  <script src="script/migracao.js"></script>
+  <script src="script/importar.js"></script>
+  <script src="script/custos.js"></script>
+  <script src="script/reagentes.js"></script>
+  <script src="script/apoio.js"></script>
+  <script src="script/instrucoes.js"></script>
+  <script src="script/secoes.js"></script>
+  <script src="script/tabelas.js"></script>
+  <script src="script/propostas.js"></script>
+  <script src="script/rascexames.js"></script>
+  <script src="script/laboratorios.js"></script>
+  <script src="script/conveniados.js"></script>
+  <script src="script/tabconfig.js"></script>
+  <script src="script/tabexames.js"></script>
+  <script src="script/faixas.js"></script>
+  <script src="script/tabunilab.js"></script>
+  <script src="script/simulador.js"></script>
+  <script src="script/hierarquia.js"></script>
+  <script src="script/logo.js"></script>
+  <script src="script/propostapdf.js"></script>
+  <script src="script/tabelapdf.js"></script>
+  <script src="script/sincronizar.js"></script>
+  <script src="script/config.js"></script>
+  <script src="script/usuarios.js"></script>
+  <script src="script/grupos.js"></script>
+  <script src="script/apoiados.js"></script>
+  <script src="script/parametros.js"></script>
+  <script src="script/setores.js"></script>
+
+  <!-- Treinamento (tutoriais em modo simulação) -->
+  <script src="script/tutorial.js"></script>
+  <script src="script/tutoriais.js"></script>
+
+  <script src="script/app.js"></script>
+  <script>
+    // Instalação como aplicativo (só funciona em https ou localhost)
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(e => console.warn('Service worker não registrado:', e)));
+    }
+  </script>
+</body>
+</html>

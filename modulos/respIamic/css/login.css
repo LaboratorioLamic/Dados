@@ -1,0 +1,10 @@
+/* Overlay de login */
+
+/* Login Overlay */
+#login-overlay { z-index: 10000; }
+.login-eye-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+}

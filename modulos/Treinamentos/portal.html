@@ -1,0 +1,2829 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Sem cache do documento: uma versão guardada do HTML traria também a
+         versão antiga das referências de script/estilo, e o painel voltaria a
+         rodar código anterior sem ninguém perceber. -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Universidade LAMIC - Treinamentos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css?v=202611231200">
+    <link rel="stylesheet" href="css/admin.css?v=202611231200">
+    <link rel="stylesheet" href="css/admin-courses.css?v=202611231200">
+    <link rel="stylesheet" href="css/auth.css?v=202611231200">
+    <link rel="stylesheet" href="css/certificate.css?v=202611231200">
+    <link rel="stylesheet" href="css/admin-report.css?v=202611231200">
+    <!-- Camada de override mobile: precisa ser SEMPRE a ultima folha. -->
+    <link rel="stylesheet" href="css/mobile.css?v=202611231200">
+</head>
+<body>
+<script src="lamic-carregando.js" data-nome="UniLAMIC"></script>
+
+    <!-- ─── HEADER ─── -->
+    <header>
+        <div class="header-inner">
+            <div class="header-logo">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="header-text">
+                <h1>Universidade LAMIC</h1>
+                <p id="header-category-label">Plataforma de Treinamentos</p>
+            </div>
+            <div class="header-divider"></div>
+            <span class="header-badge" id="header-category-badge">LMS</span>
+            <a class="header-home" href="index.html" title="Trocar de plataforma" aria-label="Trocar de plataforma">
+                <i class="fas fa-grip"></i><span>Plataformas</span>
+            </a>
+            <button id="student-account-btn" class="header-account" title="Minha conta" aria-label="Minha conta">
+                <i class="fas fa-user"></i><span id="student-account-label">Entrar</span>
+            </button>
+            <button id="settings-btn" class="header-settings" title="Configurações" aria-label="Abrir configurações">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+    </header>
+    <!-- ─── LOADING ─── -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner-container">
+            <div class="modern-spinner"></div>
+            <p>Carregando conteúdo...</p>
+        </div>
+    </div>
+
+    <!-- ─── TOAST ─── -->
+    <div class="warning-message" id="warning-message" style="display:none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="warning-text">Por favor, responda todas as questões antes de enviar.</span>
+    </div>
+
+    <!-- ─── MODAL: AVALIAÇÃO BAIXA SEM COMENTÁRIO ─── -->
+    <div class="low-rating-modal" id="low-rating-modal">
+        <div class="low-rating-card">
+            <div class="low-rating-emoji">😔</div>
+            <h2>Sentimos muito por não atender suas expectativas</h2>
+            <p>
+                Percebemos que sua avaliação foi baixa, mas o campo de comentário ficou em branco.
+                Seu feedback é muito importante para nós — sem um motivo, fica difícil entender o
+                que aconteceu e trabalhar para melhorar. Conta pra gente o que faltou?
+            </p>
+            <div class="low-rating-actions">
+                <button type="button" id="low-rating-back-btn" class="low-rating-btn low-rating-btn-primary">
+                    <i class="fas fa-comment-dots"></i> Voltar para comentar
+                </button>
+                <button type="button" id="low-rating-confirm-btn" class="low-rating-btn low-rating-btn-ghost">
+                    Publicar mesmo assim
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODAL: INTRO DA AVALIAÇÃO ─── -->
+    <div class="quiz-intro-modal" id="quiz-intro-modal">
+        <div class="quiz-intro-card">
+            <div class="quiz-intro-icon"><i class="fas fa-clipboard-list"></i></div>
+            <h2>Pronto para a Avaliação Final?</h2>
+            <div class="quiz-intro-facts">
+                <div class="quiz-intro-fact"><i class="fas fa-list-ol"></i><span id="quiz-intro-count">— questões</span></div>
+                <div class="quiz-intro-fact"><i class="fas fa-hourglass-half"></i><span id="quiz-intro-time">— minutos</span></div>
+                <div class="quiz-intro-fact" id="quiz-intro-attempts-fact" style="display:none;"><i class="fas fa-rotate-right"></i><span id="quiz-intro-attempts">— tentativas</span></div>
+            </div>
+            <p class="quiz-intro-note" id="quiz-intro-attempts-note" style="display:none;">
+                <i class="fas fa-triangle-exclamation"></i>
+                Esta é sua última tentativa. Se reprovar novamente, será necessário falar com um
+                administrador para liberar novas tentativas.
+            </p>
+            <p class="quiz-intro-note">
+                <i class="fas fa-triangle-exclamation"></i>
+                Ao esgotar o tempo, a avaliação será enviada automaticamente apenas com as
+                alternativas já selecionadas. Questões sem resposta serão consideradas incorretas.
+            </p>
+            <div class="quiz-intro-actions">
+                <button type="button" id="quiz-intro-start-btn" class="low-rating-btn low-rating-btn-primary">
+                    <i class="fas fa-play"></i> Realizar Avaliação
+                </button>
+                <button type="button" id="quiz-intro-cancel-btn" class="low-rating-btn low-rating-btn-ghost">
+                    Agora não
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODAL: CONFIRMAÇÃO DE INÍCIO ─── -->
+    <div class="quiz-intro-modal" id="quiz-confirm-modal">
+        <div class="quiz-intro-card quiz-confirm-card">
+            <div class="quiz-intro-icon"><i class="fas fa-circle-question"></i></div>
+            <h2>Tem certeza que deseja iniciar?</h2>
+            <p class="quiz-intro-note">
+                <i class="fas fa-clock"></i>
+                Assim que iniciar, o tempo começa a contar e não é possível pausar. Se sair ou
+                recarregar a página, a contagem continua normalmente.
+            </p>
+            <div class="quiz-intro-actions">
+                <button type="button" id="quiz-confirm-start-btn" class="low-rating-btn low-rating-btn-primary">
+                    <i class="fas fa-check"></i> Sim, iniciar avaliação
+                </button>
+                <button type="button" id="quiz-confirm-back-btn" class="low-rating-btn low-rating-btn-ghost">
+                    Voltar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODAL: RANKING ─── -->
+    <div class="modal ranking-modal" id="ranking-modal" role="dialog" aria-modal="true" aria-label="Ranking de colaboradores">
+        <div class="modal-content ranking-modal-content">
+            <button type="button" class="ranking-modal-close" id="ranking-modal-close" aria-label="Fechar ranking">&times;</button>
+            <div class="ranking-modal-body" id="ranking-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- ─── SELECTION BAR ─── -->
+    <div class="selection-bar">
+        <div class="selection-inner">
+            <div class="select-group">
+                <div class="selection-label">Tema</div>
+                <div class="dropdown">
+                    <button id="dropdownBtn" aria-haspopup="listbox" aria-expanded="false">
+                        <span class="dropdown-btn-icon"><i class="fas fa-bookmark"></i></span>
+                        <span class="dropdown-btn-label">Escolha um Tema</span>
+                        <i class="fas fa-chevron-down dropdown-btn-caret"></i>
+                    </button>
+                    <div id="dropdownContent" class="dropdown-content" role="listbox">
+                        <div class="dropdown-head">
+                            <i class="fas fa-layer-group"></i> Temas disponíveis
+                        </div>
+                        <ul id="dropdownList"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="selection-divider" id="selection-divider" style="display:none;">
+                <i class="fas fa-chevron-right"></i>
+            </div>
+
+            <div class="select-group course-crumb" id="themeDropdown">
+                <!-- Guarda o nome do curso em aberto; o envio da avaliação lê daqui. -->
+                <span id="themeBtn" hidden>Escolha um Assunto</span>
+                <div class="crumb-row">
+                    <button type="button" id="back-to-courses" class="back-to-courses" style="display:none;">
+                        <i class="fas fa-th-large"></i> Ver todos os cursos
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reabre o ranking sem perder o curso aberto (js/ranking.js). -->
+            <button type="button" id="ranking-btn" class="ranking-btn" title="Ver ranking" aria-label="Ver ranking">
+                <i class="fas fa-trophy"></i><span>Ranking</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ─── PAGE BODY ─── -->
+    <div class="page-body">
+
+        <!-- Course gallery (após escolher o Tema) -->
+        <div class="course-gallery" id="course-gallery" style="display:none;">
+            <div class="gallery-header">
+                <div>
+                    <h2 id="gallery-title">Cursos disponíveis</h2>
+                    <p id="gallery-sub">Escolha um curso para começar</p>
+                </div>
+                <div class="gallery-search">
+                    <i class="fas fa-search"></i>
+                    <input type="search" id="gallery-filter" placeholder="Buscar curso...">
+                </div>
+            </div>
+            <div class="course-grid" id="course-grid"></div>
+            <div class="gallery-empty" id="gallery-empty" style="display:none;">
+                <i class="fas fa-folder-open"></i>
+                <p>Nenhum curso encontrado neste tema.</p>
+            </div>
+        </div>
+
+        <!-- Welcome state (before course selection). Em Treinamentos e Educação
+             Continuada o ranking toma esse espaço (js/ranking.js preenche
+             #welcome-ranking e esconde o fallback); Estágios e falha de rede
+             continuam vendo o texto original. -->
+        <div class="welcome-screen" id="welcome-screen">
+            <div id="welcome-fallback" class="welcome-fallback">
+                <div class="welcome-icon"><i class="fas fa-play-circle"></i></div>
+                <h2>Selecione um tema para começar</h2>
+                <p>Escolha o Tema no menu acima e os cursos disponíveis aparecerão aqui em cards.</p>
+            </div>
+            <div id="welcome-ranking"></div>
+        </div>
+
+        <!-- Course content -->
+        <div class="content" id="content">
+            <div class="lms-layout">
+
+                <!-- Main content column -->
+                <div class="main-content">
+                    <div class="player-card">
+                        <div class="video-player" id="player-container">
+                            <iframe id="video" src="" allowfullscreen style="display:none; width:100%; aspect-ratio:16/9; border:none;"></iframe>
+
+                            <div id="custom-player" class="custom-player">
+                                <div id="yt-frame"></div>
+                                <div class="player-controls">
+                                    <button id="play-pause-btn" aria-label="Reproduzir ou Pausar"><i class="fas fa-play"></i></button>
+                                    <span class="time-labels" id="time-labels">00:00 / 00:00</span>
+                                    <input id="progress-range" type="range" min="0" max="100" value="0">
+                                    <button id="mute-btn" aria-label="Ativar/Desativar Áudio"><i class="fas fa-volume-high"></i></button>
+                                    <input id="volume-range" type="range" min="0" max="100" value="100">
+                                    <select id="speed-select" title="Velocidade">
+                                        <option value="0.75">0.75x</option>
+                                        <option value="1" selected>1x</option>
+                                        <option value="1.25">1.25x</option>
+                                        <option value="1.5">1.5x</option>
+                                    </select>
+                                    <button id="fullscreen-btn" aria-label="Tela cheia">
+                                        <i class="fas fa-expand"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="pdf-container" class="pdf-container">
+                                <canvas id="pdf-canvas"></canvas>
+                                <div class="pdf-navigation" id="pdf-navigation"></div>
+                            </div>
+
+                            <!-- Carrossel vertical de vídeos curtos (módulos type:'shorts').
+                                 Os slides são gerados por renderShorts() em js/main.js; o
+                                 avanço usa scroll-snap nativo, então arrastar para cima já
+                                 passa para o próximo vídeo no celular. -->
+                            <div id="shorts-stage" class="shorts-stage" style="display:none;">
+                                <div class="shorts-segments" id="shorts-segments"></div>
+                                <div class="shorts-counter" id="shorts-counter">1 / 1</div>
+                                <div class="shorts-viewport" id="shorts-viewport" tabindex="0"
+                                     role="group" aria-label="Vídeos curtos do módulo"></div>
+                                <button type="button" class="shorts-nav shorts-nav-prev" id="shorts-prev" aria-label="Vídeo anterior">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                <button type="button" class="shorts-nav shorts-nav-next" id="shorts-next" aria-label="Próximo vídeo">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="shorts-hint" id="shorts-hint" hidden aria-hidden="true">
+                                    <i class="fas fa-chevron-up"></i>
+                                    <span>Deslize para cima para o próximo vídeo</span>
+                                </div>
+                                <button type="button" class="shorts-autonext" id="shorts-autonext" hidden>
+                                    <span class="shorts-autonext-ring"><span class="shorts-autonext-fill"></span></span>
+                                    <span class="shorts-autonext-text">Próximo vídeo<small>Toque para ficar neste</small></span>
+                                </button>
+                            </div>
+                            <!-- Cards de perguntas rápidas (módulos type:'quiz').
+                                 Um card por vez, montado por renderModuleQuiz()
+                                 em js/main.js; responder revela na hora a correta. -->
+                            <div id="mquiz-stage" class="mquiz-stage" style="display:none;">
+                                <div class="mquiz-progress">
+                                    <div class="mquiz-progress-track"><div class="mquiz-progress-fill" id="mquiz-progress-fill"></div></div>
+                                    <span class="mquiz-progress-count" id="mquiz-progress-count">1 / 1</span>
+                                </div>
+                                <div class="mquiz-card-area" id="mquiz-card-area"></div>
+                                <div class="mquiz-nav">
+                                    <button type="button" class="mquiz-nav-btn" id="mquiz-prev">
+                                        <i class="fas fa-chevron-left"></i> Anterior
+                                    </button>
+                                    <div class="mquiz-dots" id="mquiz-dots"></div>
+                                    <button type="button" class="mquiz-nav-btn" id="mquiz-next">
+                                        Próximo <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="module-info">
+                            <!-- Progresso do módulo de vídeos curtos: quantos já foram
+                                 assistidos do total. Só aparece em módulos type:'shorts'. -->
+                            <div class="shorts-total" id="shorts-total" style="display:none;">
+                                <div class="shorts-total-head">
+                                    <span class="shorts-total-label">
+                                        <i class="fas fa-mobile-screen"></i>
+                                        <strong id="shorts-total-count">0 de 0</strong> vídeos assistidos
+                                    </span>
+                                    <span class="shorts-total-pct" id="shorts-total-pct">0%</span>
+                                </div>
+                                <div class="shorts-total-track"><div class="shorts-total-fill" id="shorts-total-fill"></div></div>
+                            </div>
+                            <h2 id="title"></h2>
+                            <p id="caption"></p>
+                            <div id="attachment-container" class="attachment-container"></div>
+                        </div>
+                    </div>
+
+                    <!-- Quiz, Result, Form rendered here -->
+                    <div id="quiz-container" class="quiz-container" style="margin-top:20px;"></div>
+                    <div id="result-container" class="result-container"></div>
+                    <div id="form-container" class="form-container">
+                        <div class="form-title"><i class="fas fa-certificate" style="color:var(--accent);margin-right:8px;"></i>Registrar Conclusão</div>
+
+                        <div class="form-fields">
+                            <!-- Estágios: nome digitado livremente, sem exigir conta
+                                 e sem lista de colaboradores cadastrados. -->
+                            <div id="form-name-free-group">
+                                <label for="name">Nome completo do estagiário</label>
+                                <input type="text" id="name" placeholder="Digite seu nome completo" autocomplete="off" style="text-transform:uppercase;">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" placeholder="seu@email.com">
+                            </div>
+
+                            <!-- Treinamentos/Educação Continuada: identidade vem da sessão logada -->
+                            <div id="form-name-logged-group" style="display:none;">
+                                <label>Concluindo como</label>
+                                <div class="form-logged-user">
+                                    <i class="fas fa-user-circle"></i>
+                                    <span id="form-logged-user-name">—</span>
+                                </div>
+                            </div>
+
+                            <div class="rating-container" id="rating-container" style="display:none;">
+                                <label>Avalie o Curso</label>
+                                <div class="emoji-rating" id="emoji-rating">
+                                    <input type="radio" id="star1" name="rating" value="1">
+                                    <label for="star1" title="Péssimo" data-label="Péssimo"><span class="emoji-face">😡</span></label>
+                                    <input type="radio" id="star2" name="rating" value="2">
+                                    <label for="star2" title="Ruim" data-label="Ruim"><span class="emoji-face">🙁</span></label>
+                                    <input type="radio" id="star3" name="rating" value="3">
+                                    <label for="star3" title="Regular" data-label="Regular"><span class="emoji-face">😐</span></label>
+                                    <input type="radio" id="star4" name="rating" value="4">
+                                    <label for="star4" title="Bom" data-label="Bom"><span class="emoji-face">😊</span></label>
+                                    <input type="radio" id="star5" name="rating" value="5">
+                                    <label for="star5" title="Ótimo" data-label="Ótimo"><span class="emoji-face">🤩</span></label>
+                                </div>
+                                <div class="emoji-rating-caption" id="emoji-rating-caption">Toque em um emoji para avaliar</div>
+                            </div>
+
+                            <button type="button" class="comment-toggle-btn" id="comment-toggle-btn" style="display:none;">
+                                <i class="fas fa-comment-alt" style="margin-right:6px;"></i>Deixe um Comentário
+                            </button>
+
+                            <div class="comment-section" id="comment-section" style="display:none;">
+                                <label for="comment">Comentário</label>
+                                <textarea id="comment" placeholder="Críticas, elogios ou sugestões..."></textarea>
+                                <small class="comment-instruction">Sua opinião nos ajuda a melhorar o conteúdo.</small>
+                            </div>
+
+                            <button id="submit-form">Enviar</button>
+                            <div id="loading-spinner" class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar column -->
+                <div class="sidebar-column">
+                <!-- Tempo mínimo projetado: só aparece em cursos com
+                     expectedCompletionMs configurado (Config > Cursos). O
+                     cronômetro reflete o mesmo contador de tempo ativo gravado
+                     em progress/byUser (ver activeCourseTimer em js/main.js) e
+                     continua correndo depois dos 100%. -->
+                <div class="expected-time-card is-paused" id="expected-time-card" style="display:none;">
+                    <div class="expected-time-head">
+                        <span class="expected-time-title">
+                            <i class="fas fa-gauge-high"></i> Tempo mínimo projetado
+                        </span>
+                        <span class="expected-time-target" id="expected-time-target">—</span>
+                    </div>
+                    <div class="expected-time-clock">
+                        <span class="expected-time-elapsed" id="expected-time-elapsed">00:00:00</span>
+                        <span class="expected-time-pct" id="expected-time-pct">0%</span>
+                    </div>
+                    <div class="expected-time-track">
+                        <div class="expected-time-fill" id="expected-time-fill"></div>
+                    </div>
+                    <p class="expected-time-note" id="expected-time-note"><i class="fas fa-circle-pause"></i> Pausado — dê play no vídeo para contar o tempo.</p>
+                </div>
+
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h3>Conteúdo do Curso</h3>
+                        <p id="sidebar-course-name">—</p>
+                    </div>
+                    <div class="sidebar-scroll">
+                        <div id="modules">
+                            <div class="sidebar-empty">
+                                <i class="fas fa-list-ul"></i>
+                                Selecione um curso para ver os módulos
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="cinema-overlay"></div>
+
+    <!-- ─── MODAL DE PERFIL DO ALUNO ─── -->
+    <div class="auth-modal" id="student-profile-modal" role="dialog" aria-modal="true" aria-labelledby="student-profile-title">
+        <div class="auth-card student-profile-card" id="student-profile-card">
+            <div class="auth-header">
+                <h2 id="student-profile-title"><i class="fas fa-user-circle"></i> <span id="student-profile-name">Meu Perfil</span></h2>
+                <button class="auth-close" id="student-profile-close" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="auth-body">
+                <div class="student-profile-tabs">
+                    <button type="button" class="student-auth-tab active" id="student-profile-tab-overview">Visão geral</button>
+                    <button type="button" class="student-auth-tab" id="student-profile-tab-history">Histórico</button>
+                </div>
+
+                <!-- Aba: Visão geral -->
+                <div id="student-profile-overview-panel">
+                    <!-- Dados principais do usuário: nome/criação vêm da conta,
+                         setor/função da planilha (Colaboradores). -->
+                    <div class="student-profile-info" id="student-profile-info">
+                        <div class="student-profile-info-item">
+                            <span class="label"><i class="fas fa-user"></i> Nome completo</span>
+                            <span class="value" id="student-profile-info-name">—</span>
+                        </div>
+                        <div class="student-profile-info-item">
+                            <span class="label"><i class="fas fa-calendar-plus"></i> Criado em</span>
+                            <span class="value" id="student-profile-info-created">—</span>
+                        </div>
+                        <div class="student-profile-info-item">
+                            <span class="label"><i class="fas fa-building"></i> Setor</span>
+                            <span class="value" id="student-profile-info-unit">—</span>
+                        </div>
+                        <div class="student-profile-info-item">
+                            <span class="label"><i class="fas fa-id-badge"></i> Função</span>
+                            <span class="value" id="student-profile-info-role">—</span>
+                        </div>
+                    </div>
+
+                    <div class="student-profile-summary">
+                        <div class="student-profile-stat">
+                            <strong id="student-profile-approved-count">0</strong>
+                            <span>Cursos concluídos</span>
+                        </div>
+                        <div class="student-profile-stat">
+                            <strong id="student-profile-avg-score">—</strong>
+                            <span>Média geral</span>
+                        </div>
+                    </div>
+
+                    <!-- % de módulos assistidos por curso em andamento (não conta
+                         a avaliação final, só a progressão de vídeos/PDFs). -->
+                    <div class="student-profile-progress-block">
+                        <span class="student-profile-block-title"><i class="fas fa-spinner"></i> Progresso dos cursos</span>
+                        <div id="student-profile-progress-list" class="student-profile-progress-list">
+                            <p class="form-hint">Carregando progressão...</p>
+                        </div>
+                    </div>
+
+                    <button type="button" class="student-profile-toggle" id="student-profile-password-toggle">
+                        <i class="fas fa-key"></i> Alterar senha
+                    </button>
+                    <div id="student-profile-password-panel" style="display:none;">
+                        <div class="auth-error" id="student-profile-password-error"></div>
+                        <label for="student-profile-current-password">Senha atual</label>
+                        <input type="password" id="student-profile-current-password" placeholder="Digite sua senha atual" autocomplete="current-password">
+                        <label for="student-profile-new-password">Nova senha</label>
+                        <input type="password" id="student-profile-new-password" placeholder="Mínimo de 6 caracteres" autocomplete="new-password">
+                        <label for="student-profile-confirm-password">Confirmar nova senha</label>
+                        <input type="password" id="student-profile-confirm-password" placeholder="Repita a nova senha" autocomplete="new-password">
+                        <button class="auth-submit" id="student-profile-password-submit">
+                            <i class="fas fa-check"></i> Salvar nova senha
+                        </button>
+                    </div>
+
+                    <button class="auth-submit student-profile-logout" id="student-profile-logout">
+                        <i class="fas fa-right-from-bracket"></i> Sair da Conta
+                    </button>
+                </div>
+
+                <!-- Aba: Histórico -->
+                <div id="student-profile-history-panel" style="display:none;">
+                    <div id="student-profile-list" class="student-profile-list">
+                        <p class="form-hint">Carregando histórico...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── PAINEL DE CONFIGURAÇÕES (admin) ─── -->
+
+    <!-- Loading Overlay -->
+    <div id="cfg-loading-overlay" class="cfg-loading-overlay" aria-hidden="true">
+        <div class="cfg-loading-panel">
+            <div class="cfg-loading-message">Carregando dados...</div>
+            <div id="cfg-loading-bar-container" class="cfg-loading-bar-container">
+                <div id="cfg-loading-bar" class="cfg-loading-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div class="modal" id="cfg-category-modal">
+        <div class="modal-content" id="cfg-modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-tag" style="color:var(--primary);margin-right:7px;"></i>Selecionar Categoria</h2>
+            </div>
+            <div class="modal-body">
+                <div class="lockout-message" id="cfg-lockout-message">
+                    <i class="fas fa-clock"></i> Aguarde para tentar novamente
+                </div>
+                <div class="progress-bar-container" id="cfg-progress-bar-container" style="display:none">
+                    <div class="progress-bar" id="cfg-progress-bar"></div>
+                </div>
+                <label for="cfg-category-select">Categoria</label>
+                <select id="cfg-category-select">
+                    <option value="">Selecione uma categoria</option>
+                    <option value="Treinamentos">Treinamentos</option>
+                    <option value="Educação Continuada">Educação Continuada</option>
+                    <option value="Estágios">Estágios</option>
+                </select>
+                <button id="cfg-category-submit">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Modal -->
+    <div class="modal" id="cfg-backup-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-database" style="color:var(--purple);margin-right:7px;"></i>Backup de Dados</h2>
+                <span class="close" id="cfg-backup-close">&times;</span>
+            </div>
+            <div class="modal-body backup-body">
+                <div class="backup-row">
+                    <div class="backup-row-text">
+                        <div class="backup-row-title">Exportar</div>
+                        <div class="backup-row-hint">Baixa um arquivo .json da categoria</div>
+                    </div>
+                    <button id="cfg-download-btn"><i class="fas fa-download"></i> Baixar</button>
+                </div>
+
+                <div class="backup-row">
+                    <div class="backup-row-text">
+                        <div class="backup-row-title">Restaurar</div>
+                        <div class="backup-row-hint" id="cfg-upload-filename">Nenhum arquivo escolhido</div>
+                    </div>
+                    <label class="file-pick" for="cfg-upload-file"><i class="fas fa-folder-open"></i> Arquivo</label>
+                    <input type="file" id="cfg-upload-file" accept=".json">
+                    <button id="cfg-upload-btn"><i class="fas fa-upload"></i> Carregar</button>
+                </div>
+
+                <div class="backup-row">
+                    <div class="backup-row-text">
+                        <div class="backup-row-title">Exportar Excel</div>
+                        <div class="backup-row-hint">Colaboradores, usuários e resultados em .xlsx</div>
+                    </div>
+                    <button id="cfg-excel-download-btn"><i class="fas fa-file-excel"></i> Baixar</button>
+                </div>
+
+                <details class="danger-details">
+                    <summary><i class="fas fa-triangle-exclamation"></i> Zona de perigo</summary>
+                    <p class="danger-note">
+                        Apaga todo o conteúdo de <strong id="cfg-wipe-category">—</strong>.
+                        Irreversível — baixe um backup antes.
+                    </p>
+                    <p class="danger-shared" id="cfg-wipe-shared" style="display:none;">
+                        <span id="cfg-wipe-shared-text"></span>
+                    </p>
+                    <button id="cfg-wipe-btn"><i class="fas fa-trash-can"></i> Apagar dados da categoria</button>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação (substitui o prompt do navegador) -->
+    <div class="modal" id="cfg-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-confirm-title">
+        <div class="modal-content confirm-content" id="cfg-confirm-content">
+            <div class="confirm-head">
+                <div class="confirm-icon" id="cfg-confirm-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                <h2 id="cfg-confirm-title">Confirmar ação</h2>
+                <p id="cfg-confirm-message">Esta ação não pode ser desfeita.</p>
+            </div>
+            <ul class="confirm-details" id="cfg-confirm-details"></ul>
+            <div class="confirm-field">
+                <label for="cfg-confirm-input">Digite <strong>SIM</strong> para confirmar</label>
+                <input type="text" id="cfg-confirm-input" placeholder="SIM" autocomplete="off" spellcheck="false">
+                <span class="confirm-error" id="cfg-confirm-error">Digite SIM para continuar.</span>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel" id="cfg-confirm-cancel">Cancelar</button>
+                <button type="button" class="confirm-ok" id="cfg-confirm-ok">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de redefinir senha (painel de Usuários) -->
+    <div class="modal" id="cfg-reset-password-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-reset-password-title">
+        <div class="modal-content confirm-content" id="cfg-reset-password-content">
+            <div class="confirm-head">
+                <div class="confirm-icon"><i class="fas fa-key"></i></div>
+                <h2 id="cfg-reset-password-title">Redefinir senha</h2>
+                <p id="cfg-reset-password-message">Defina uma nova senha para este usuário.</p>
+            </div>
+            <div class="confirm-field">
+                <label for="cfg-reset-password-input">Nova senha</label>
+                <input type="password" id="cfg-reset-password-input" placeholder="Mínimo de 6 caracteres" autocomplete="new-password">
+                <span class="confirm-error" id="cfg-reset-password-error"></span>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel" id="cfg-reset-password-cancel">Cancelar</button>
+                <button type="button" class="confirm-ok" id="cfg-reset-password-ok">Redefinir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de criar/editar conta de aluno (aba Usuários) -->
+    <div class="modal" id="cfg-user-form-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-user-form-title">
+        <div class="modal-content confirm-content user-form-content">
+            <div class="confirm-head">
+                <div class="confirm-icon"><i class="fas fa-user-plus" id="cfg-user-form-icon"></i></div>
+                <h2 id="cfg-user-form-title">Novo usuário</h2>
+                <p id="cfg-user-form-message">Crie uma conta de aluno a partir de um colaborador da planilha.</p>
+            </div>
+
+            <div class="confirm-field" id="cfg-user-form-colab-field">
+                <label for="cfg-user-form-colab">Colaborador</label>
+                <div class="user-combobox">
+                    <input type="text" id="cfg-user-form-colab" placeholder="Digite para buscar o colaborador" autocomplete="off" role="combobox" aria-expanded="false">
+                    <i class="fas fa-chevron-down user-combobox-caret"></i>
+                    <div class="user-combobox-popover" id="cfg-user-form-colab-popover"></div>
+                </div>
+                <small class="form-hint">Só aparecem colaboradores ainda sem conta.</small>
+            </div>
+
+            <div class="confirm-field" id="cfg-user-form-name-field">
+                <label for="cfg-user-form-name">Nome completo</label>
+                <div class="user-combobox">
+                    <input type="text" id="cfg-user-form-name" placeholder="Digite para buscar o nome" autocomplete="off" role="combobox" aria-expanded="false">
+                    <i class="fas fa-chevron-down user-combobox-caret"></i>
+                    <div class="user-combobox-popover" id="cfg-user-form-name-popover"></div>
+                </div>
+            </div>
+
+            <div class="confirm-field">
+                <label for="cfg-user-form-username">Login</label>
+                <input type="text" id="cfg-user-form-username" placeholder="apenas letras minúsculas e números" autocomplete="off">
+            </div>
+
+            <div id="cfg-user-form-password-field">
+                <div class="user-form-row">
+                    <div class="confirm-field">
+                        <label for="cfg-user-form-password">Senha</label>
+                        <input type="password" id="cfg-user-form-password" placeholder="Mínimo de 6 caracteres" autocomplete="new-password">
+                    </div>
+                    <div class="confirm-field">
+                        <label for="cfg-user-form-password2">Confirmar senha</label>
+                        <input type="password" id="cfg-user-form-password2" placeholder="Repita a senha" autocomplete="new-password">
+                    </div>
+                </div>
+                <div class="user-password-hint" id="cfg-user-form-password-hint"></div>
+            </div>
+
+            <div class="user-form-row">
+                <div class="confirm-field">
+                    <label for="cfg-user-form-unit">Setor</label>
+                    <div class="user-combobox">
+                        <input type="text" id="cfg-user-form-unit" placeholder="Buscar setor" autocomplete="off" role="combobox" aria-expanded="false">
+                        <i class="fas fa-chevron-down user-combobox-caret"></i>
+                        <div class="user-combobox-popover" id="cfg-user-form-unit-popover"></div>
+                    </div>
+                </div>
+                <div class="confirm-field">
+                    <label for="cfg-user-form-role">Função</label>
+                    <div class="user-combobox">
+                        <input type="text" id="cfg-user-form-role" placeholder="Buscar função" autocomplete="off" role="combobox" aria-expanded="false">
+                        <i class="fas fa-chevron-down user-combobox-caret"></i>
+                        <div class="user-combobox-popover" id="cfg-user-form-role-popover"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-manager-field">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="cfg-user-form-manager">
+                    <span class="toggle-slider"></span>
+                </label>
+                <div class="user-manager-text">
+                    <strong>Gestor</strong>
+                    <small>Enxerga todos os cursos, mesmo os restritos a outra função.</small>
+                </div>
+            </div>
+
+            <span class="confirm-error" id="cfg-user-form-error"></span>
+
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel" id="cfg-user-form-cancel">Cancelar</button>
+                <button type="button" class="confirm-ok" id="cfg-user-form-ok">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de edição manual de colaborador (corrige linha inválida da planilha) -->
+    <div class="modal" id="cfg-colab-form-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-colab-form-title">
+        <div class="modal-content confirm-content user-form-content">
+            <div class="confirm-head">
+                <div class="confirm-icon"><i class="fas fa-user-pen"></i></div>
+                <h2 id="cfg-colab-form-title">Editar colaborador</h2>
+                <p id="cfg-colab-form-message">Corrija os dados que vieram errados da planilha.</p>
+            </div>
+
+            <div class="confirm-field">
+                <label for="cfg-colab-form-name">Nome completo</label>
+                <input type="text" id="cfg-colab-form-name" placeholder="Nome completo" autocomplete="off">
+            </div>
+
+            <!-- Setor e Função sugerem os valores já existentes na lista
+                 sincronizada de colaboradores (e nas contas), mas continuam
+                 aceitando texto livre para corrigir o que veio errado. -->
+            <div class="user-form-row">
+                <div class="confirm-field">
+                    <label for="cfg-colab-form-unit">Setor</label>
+                    <div class="user-combobox">
+                        <input type="text" id="cfg-colab-form-unit" placeholder="Buscar setor" autocomplete="off" role="combobox" aria-expanded="false">
+                        <i class="fas fa-chevron-down user-combobox-caret"></i>
+                        <div class="user-combobox-popover" id="cfg-colab-form-unit-popover"></div>
+                    </div>
+                </div>
+                <div class="confirm-field">
+                    <label for="cfg-colab-form-role">Função</label>
+                    <div class="user-combobox">
+                        <input type="text" id="cfg-colab-form-role" placeholder="Buscar função" autocomplete="off" role="combobox" aria-expanded="false">
+                        <i class="fas fa-chevron-down user-combobox-caret"></i>
+                        <div class="user-combobox-popover" id="cfg-colab-form-role-popover"></div>
+                    </div>
+                </div>
+            </div>
+
+            <small class="form-hint">Os campos alterados aqui deixam de ser sobrescritos pela sincronização.</small>
+            <span class="confirm-error" id="cfg-colab-form-error"></span>
+
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel" id="cfg-colab-form-cancel">Cancelar</button>
+                <button type="button" class="confirm-ok" id="cfg-colab-form-ok">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de substituição/unificação de colaborador duplicado -->
+    <div class="modal" id="cfg-colab-merge-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-colab-merge-title">
+        <div class="modal-content confirm-content user-form-content">
+            <div class="confirm-head">
+                <div class="confirm-icon"><i class="fas fa-code-merge"></i></div>
+                <h2 id="cfg-colab-merge-title">Substituir colaborador</h2>
+                <p>Une este registro desvinculado a outro colaborador, transferindo todos os dados e apagando o duplicado.</p>
+            </div>
+
+            <div class="colab-merge-source" id="cfg-colab-merge-source">
+                <span class="colab-merge-source-name" id="cfg-colab-merge-source-name"></span>
+                <div class="colab-merge-source-meta" id="cfg-colab-merge-source-meta"></div>
+            </div>
+
+            <div class="confirm-field">
+                <label for="cfg-colab-merge-target">Unificar com</label>
+                <div class="user-combobox">
+                    <input type="text" id="cfg-colab-merge-target" placeholder="Buscar colaborador da mesma unidade e função" autocomplete="off" role="combobox" aria-expanded="false">
+                    <i class="fas fa-chevron-down user-combobox-caret"></i>
+                    <div class="user-combobox-popover" id="cfg-colab-merge-target-popover"></div>
+                </div>
+            </div>
+
+            <small class="form-hint">Só aparecem colaboradores da mesma unidade e função. O registro desvinculado é excluído após a unificação — ação não pode ser desfeita.</small>
+            <span class="confirm-error" id="cfg-colab-merge-error"></span>
+
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel" id="cfg-colab-merge-cancel">Cancelar</button>
+                <button type="button" class="confirm-ok" id="cfg-colab-merge-ok">Substituir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de configuração do certificado do assunto -->
+    <div class="modal cert-modal" id="cfg-cert-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-cert-modal-title">
+        <div class="cert-modal-card">
+            <div class="cert-modal-head">
+                <div class="cert-modal-icon"><i class="fas fa-award"></i></div>
+                <div class="cert-modal-titles">
+                    <h2 id="cfg-cert-modal-title">Certificado do assunto</h2>
+                    <p>Defina como o certificado deste curso será emitido.</p>
+                </div>
+                <button type="button" class="cert-modal-close" id="cfg-cert-close" aria-label="Fechar">&times;</button>
+            </div>
+
+            <div class="cert-modal-body">
+                <label class="cert-switch-row">
+                    <span class="cert-switch-text">
+                        <strong>Emitir certificado</strong>
+                        <small>O aluno aprovado poderá baixar o certificado em PDF.</small>
+                    </span>
+                    <input type="checkbox" id="cfg-theme-cert-enabled">
+                    <span class="cert-switch"></span>
+                </label>
+
+                <div id="cfg-theme-cert-fields" class="cert-fields">
+                    <div class="cert-field-row">
+                        <div class="cert-field">
+                            <label for="cfg-theme-cert-title">Título do certificado</label>
+                            <input type="text" id="cfg-theme-cert-title" placeholder="Nome do assunto">
+                            <small>Deixe em branco para usar o nome do assunto.</small>
+                        </div>
+                        <div class="cert-field cert-field-hours">
+                            <label for="cfg-theme-cert-hours">Carga horária</label>
+                            <div class="cert-input-suffix">
+                                <input type="number" min="1" id="cfg-theme-cert-hours" placeholder="10">
+                                <span>horas</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cert-field">
+                        <label for="cfg-theme-cert-topic-input">
+                            Temas abordados
+                            <span class="cert-topic-counter" id="cfg-theme-cert-topics-count">0</span>
+                        </label>
+                        <div class="cert-topic-add">
+                            <input type="text" id="cfg-theme-cert-topic-input" placeholder="Ex.: Procedimento de coleta" autocomplete="off">
+                            <button type="button" id="cfg-theme-cert-topic-add" title="Adicionar tema">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="cert-topic-list" id="cfg-theme-cert-topic-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cert-modal-foot">
+                <button type="button" class="cert-btn-ghost" id="cfg-cert-cancel">Cancelar</button>
+                <button type="button" class="cert-btn-primary" id="cfg-cert-apply">
+                    <i class="fas fa-check"></i> Aplicar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de histórico de cursos de um usuário (clique no card em Usuários) -->
+    <div class="modal" id="cfg-user-history-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-user-history-title">
+        <div class="modal-content history-detail-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-clock" style="color:var(--cfg-primary);margin-right:7px;"></i><span id="cfg-user-history-title">Histórico do usuário</span></h2>
+                <span class="close" id="cfg-user-history-close">&times;</span>
+            </div>
+            <div class="modal-body history-detail-body">
+                <div id="cfg-user-history-summary" class="history-detail-summary"></div>
+                <div id="cfg-user-history-progress" class="student-profile-progress-block" style="display:none;">
+                    <span class="student-profile-block-title"><i class="fas fa-spinner"></i> Progresso dos cursos</span>
+                    <div id="cfg-user-history-progress-list" class="student-profile-progress-list"></div>
+                </div>
+                <div id="cfg-user-history-table-wrap" class="dashboard-table-wrap history-table-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de detalhe do Histórico (feedback do quiz + avaliação) -->
+    <div class="modal" id="cfg-history-detail-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-history-detail-title">
+        <div class="modal-content history-detail-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-clipboard-list" style="color:var(--cfg-primary);margin-right:7px;"></i><span id="cfg-history-detail-title">Detalhe da avaliação</span></h2>
+                <span class="close" id="cfg-history-detail-close">&times;</span>
+            </div>
+            <div class="modal-body history-detail-body">
+                <div id="cfg-history-detail-attempts" class="history-detail-attempts" style="display:none;"></div>
+                <div id="cfg-history-detail-summary" class="history-detail-summary"></div>
+                <div id="cfg-history-detail-cert"></div>
+
+                <div id="cfg-history-detail-satisfaction" class="history-detail-satisfaction" style="display:none;">
+                    <h3><i class="fas fa-star"></i> Avaliação do Curso</h3>
+                    <div id="cfg-history-detail-satisfaction-body"></div>
+                </div>
+
+                <div class="history-detail-questions-header">
+                    <h3><i class="fas fa-list-check"></i> Questões</h3>
+                    <label class="history-only-wrong-toggle">
+                        <input type="checkbox" id="cfg-history-detail-only-wrong">
+                        Mostrar apenas erradas
+                    </label>
+                </div>
+                <div id="cfg-history-detail-questions" class="history-detail-questions"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do curso (Dashboard > Por curso): Informações + Gráficos, com opção de resetar -->
+    <div class="modal" id="cfg-dash-course-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-dash-course-modal-title">
+        <div class="modal-content dash-course-modal-content">
+            <div class="dash-course-hero">
+                <div class="dash-course-hero-thumb" id="cfg-dash-course-hero-thumb">?</div>
+                <div class="dash-course-hero-info">
+                    <h2 id="cfg-dash-course-modal-title">Curso</h2>
+                    <div class="dash-course-hero-stats" id="cfg-dash-course-hero-stats"></div>
+                </div>
+                <span class="close" id="cfg-dash-course-modal-close">&times;</span>
+            </div>
+            <div class="dash-course-modal-tabs">
+                <button type="button" class="tab-btn active" data-dash-course-tab="conclusions">Conclusões <span class="tab-count" id="cfg-dash-course-tabcount-conclusions">0</span></button>
+                <button type="button" class="tab-btn" data-dash-course-tab="info">Informações <span class="tab-count" id="cfg-dash-course-tabcount-info">0</span></button>
+                <button type="button" class="tab-btn" data-dash-course-tab="charts">Gráficos</button>
+            </div>
+            <div class="modal-body dash-course-modal-body">
+                <div class="tab-content active" id="cfg-dash-course-tab-conclusions">
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-circle-check" style="color:var(--cfg-success);margin-right:6px;"></i>Aprovados</h2>
+                            <div class="panel-header-actions">
+                                <div class="panel-search"><i class="fas fa-search"></i><input type="text" id="cfg-dash-course-completed-search" placeholder="Buscar nome..."></div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-course-completed" class="dashboard-table-wrap"></div>
+                        </div>
+                    </div>
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-circle-xmark" style="color:var(--cfg-danger);margin-right:6px;"></i>Reprovados</h2>
+                            <div class="panel-header-actions">
+                                <button type="button" class="dash-critical-toggle" id="cfg-dash-course-reproved-critical"><i class="fas fa-triangle-exclamation"></i> Críticos</button>
+                                <div class="panel-search"><i class="fas fa-search"></i><input type="text" id="cfg-dash-course-reproved-search" placeholder="Buscar nome..."></div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-course-reproved" class="dashboard-table-wrap"></div>
+                        </div>
+                    </div>
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-hourglass-half" style="color:var(--cfg-warning);margin-right:6px;"></i>Faltam concluir a avaliação</h2>
+                            <div class="panel-header-actions">
+                                <div class="panel-search"><i class="fas fa-search"></i><input type="text" id="cfg-dash-course-missing-search" placeholder="Buscar nome..."></div>
+                                <button type="button" class="dash-copy-missing-btn" id="cfg-dash-course-copy-missing" title="Copiar lista de quem falta, por unidade">
+                                    <i class="fas fa-copy"></i> Copiar lista
+                                </button>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-course-missing" class="dashboard-table-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="cfg-dash-course-tab-info">
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2>Comentários da Pesquisa de Satisfação</h2>
+                            <div class="panel-header-actions">
+                                <div class="hfilter-chip dash-unit-chip" id="cfg-dash-course-comments-unit-chip">
+                                    <button type="button" class="hfilter-chip-btn" title="Filtrar por unidade">
+                                        <i class="fas fa-building"></i>
+                                        <span class="hfilter-chip-label" data-default="Unidade">Unidade</span>
+                                    </button>
+                                    <div class="hfilter-chip-popover">
+                                        <button type="button" class="hfilter-chip-clear" id="cfg-dash-course-comments-unit-clear" hidden><i class="fas fa-eraser"></i> Limpar filtro</button>
+                                        <div class="hfilter-chip-list" id="cfg-dash-course-comments-unit-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-course-comments" class="dashboard-table-wrap"></div>
+                            <div class="dash-comments-pagination" id="cfg-dash-course-comments-pagination"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="cfg-dash-course-tab-charts">
+                    <div class="dashboard-chart-filters">
+                        <div class="hfilter-chip dash-year-chip" id="cfg-dash-course-year-chip">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar por ano">
+                                <i class="fas fa-calendar-days"></i>
+                                <span class="hfilter-chip-label" data-default="Ano">Ano</span>
+                            </button>
+                            <div class="hfilter-chip-popover">
+                                <div class="hfilter-chip-list" id="cfg-dash-course-year-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header">
+                                <h2>Satisfação com o Curso</h2>
+                                <div class="panel-header-actions">
+                                    <div class="dash-mode-switch" id="cfg-dash-course-satisfaction-mode">
+                                        <button type="button" class="dash-mode-btn is-active" data-mode="geral">Geral</button>
+                                        <button type="button" class="dash-mode-btn" data-mode="unidade">Unidade</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-satisfaction-chart"></canvas></div>
+                            <div class="dash-comments-pagination" id="cfg-dash-course-satisfaction-pagination"></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Realização do Curso</h2></div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-completion-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Prazo de Realização</h2></div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-deadline-chart"></canvas></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Realização por Unidade</h2></div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-byunit-chart"></canvas></div>
+                            <div class="dash-comments-pagination" id="cfg-dash-course-byunit-pagination"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Retentativas</h2></div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-retries-chart"></canvas></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Principais Erros</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-mistakes-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Notas</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-scores-chart"></canvas></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Notas por Unidade</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-scores-byunit-chart"></canvas></div>
+                            <div class="dash-comments-pagination" id="cfg-dash-course-scores-byunit-pagination"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                            <div class="panel-header">
+                                <h2>Tempo para Conclusão da Avaliação (Minutos)</h2>
+                                <div class="panel-header-actions">
+                                    <div class="hfilter-chip dash-unit-chip" id="cfg-dash-course-evaltime-unit-chip">
+                                        <button type="button" class="hfilter-chip-btn" title="Filtrar por unidade">
+                                            <i class="fas fa-building"></i>
+                                            <span class="hfilter-chip-label" data-default="Unidade">Unidade</span>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <div class="hfilter-chip-list" id="cfg-dash-course-evaltime-unit-list"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-course-evaltime-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-course-evaltime-empty" style="display:none;">Ainda não há dados suficientes (é preciso concluir o curso após esta atualização).</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-course-evaltime-pagination"></div>
+                            </div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                            <div class="panel-header">
+                                <h2>Tempo para Conclusão (Horas)</h2>
+                                <div class="panel-header-actions">
+                                    <div class="hfilter-chip dash-unit-chip dash-unit-users-chip" id="cfg-dash-course-completiontime-unit-chip">
+                                        <button type="button" class="hfilter-chip-btn" title="Filtrar por unidade">
+                                            <i class="fas fa-building"></i>
+                                            <span class="hfilter-chip-label" data-default="Unidade">Unidade</span>
+                                        </button>
+                                        <div class="hfilter-chip-popover hfilter-chip-popover-unitusers">
+                                            <div class="hfilter-chip-list" id="cfg-dash-course-completiontime-unit-list"></div>
+                                            <div class="hfilter-chip-unit-users" id="cfg-dash-course-completiontime-unit-users"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-course-completiontime-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-course-completiontime-empty" style="display:none;">Ainda não há dados suficientes (é preciso concluir o curso após esta atualização).</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-course-completiontime-pagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header">
+                                <h2>Taxa de Conclusão do Curso</h2>
+                                <span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span>
+                                <div class="panel-header-actions">
+                                    <div class="hfilter-chip dash-unit-chip" id="cfg-dash-course-unit-chip">
+                                        <button type="button" class="hfilter-chip-btn" title="Filtrar por unidade">
+                                            <i class="fas fa-building"></i>
+                                            <span class="hfilter-chip-label" data-default="Unidade">Unidade</span>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <div class="hfilter-chip-list" id="cfg-dash-course-unit-list"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-completion-trend-chart"></canvas></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Taxa de Conclusão por Unidade</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-course-unit-completion-chart"></canvas></div>
+                            <div class="dash-comments-pagination" id="cfg-dash-course-unit-completion-pagination"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dash-course-modal-footer">
+                <button type="button" class="dash-course-reset-btn" id="cfg-dash-course-reset-btn">
+                    <i class="fas fa-rotate-left"></i> Resetar curso
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal "quem errou" (Dashboard > Por curso > Gráficos > Principais Erros): lista de colaboradores por unidade que erraram a questão clicada -->
+    <div class="modal" id="cfg-dash-mistake-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-dash-mistake-modal-title">
+        <div class="modal-content dash-mistake-modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 id="cfg-dash-mistake-modal-title">Questão</h2>
+                    <p class="dash-mistake-modal-subtitle" id="cfg-dash-mistake-modal-subtitle"></p>
+                </div>
+                <span class="close" id="cfg-dash-mistake-modal-close">&times;</span>
+            </div>
+            <div class="modal-body" id="cfg-dash-mistake-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Modal do colaborador (Dashboard > Por colaborador): Informações + Gráficos -->
+    <div class="modal" id="cfg-dash-user-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-dash-user-modal-title">
+        <div class="modal-content dash-course-modal-content">
+            <div class="dash-course-hero">
+                <div class="dash-course-hero-thumb" id="cfg-dash-user-hero-thumb">?</div>
+                <div class="dash-course-hero-info">
+                    <h2 id="cfg-dash-user-modal-title">Colaborador</h2>
+                    <div class="dash-course-hero-tags" id="cfg-dash-user-hero-tags"></div>
+                    <div class="dash-course-hero-stats" id="cfg-dash-user-hero-stats"></div>
+                </div>
+                <span class="close" id="cfg-dash-user-modal-close">&times;</span>
+            </div>
+            <div class="dash-course-modal-tabs">
+                <button type="button" class="tab-btn active" data-dash-user-tab="history">Histórico <span class="tab-count" id="cfg-dash-user-tabcount-history">0</span></button>
+                <button type="button" class="tab-btn" data-dash-user-tab="info">Informações <span class="tab-count" id="cfg-dash-user-tabcount-info">0</span></button>
+                <button type="button" class="tab-btn" data-dash-user-tab="charts">Gráficos</button>
+            </div>
+            <div class="modal-body dash-course-modal-body">
+                <div class="tab-content active" id="cfg-dash-user-tab-history">
+                    <div class="panel-card">
+                        <div class="panel-header"><h2><i class="fas fa-clock-rotate-left" style="color:var(--cfg-primary);margin-right:6px;"></i>Cursos realizados</h2></div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-user-history" class="dashboard-table-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="cfg-dash-user-tab-info">
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2>Comentários da Pesquisa de Satisfação</h2>
+                            <div class="panel-header-actions">
+                                <div class="hfilter-chip dash-unit-chip" id="cfg-dash-user-comments-course-chip" data-plural-label="cursos" data-empty-label="Nenhum curso com comentário.">
+                                    <button type="button" class="hfilter-chip-btn" title="Filtrar por curso">
+                                        <i class="fas fa-book"></i>
+                                        <span class="hfilter-chip-label" data-default="Curso">Curso</span>
+                                    </button>
+                                    <div class="hfilter-chip-popover">
+                                        <button type="button" class="hfilter-chip-clear" id="cfg-dash-user-comments-course-clear" hidden><i class="fas fa-eraser"></i> Limpar filtro</button>
+                                        <div class="hfilter-chip-list" id="cfg-dash-user-comments-course-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-user-comments" class="dashboard-table-wrap"></div>
+                            <div class="dash-comments-pagination" id="cfg-dash-user-comments-pagination"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="cfg-dash-user-tab-charts">
+                    <div class="dashboard-chart-filters">
+                        <div class="hfilter-chip dash-range-chip" id="cfg-dash-user-range-chip">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar por período (mês inicial e final)">
+                                <i class="fas fa-calendar-week"></i>
+                                <span class="hfilter-chip-label" data-default="Período">Período</span>
+                            </button>
+                            <div class="hfilter-chip-popover hfilter-chip-popover-range">
+                                <div class="dash-range-fields">
+                                    <label class="dash-range-field">
+                                        <span>Mês inicial</span>
+                                        <input type="month" id="cfg-dash-user-range-start">
+                                    </label>
+                                    <label class="dash-range-field">
+                                        <span>Mês final</span>
+                                        <input type="month" id="cfg-dash-user-range-end">
+                                    </label>
+                                </div>
+                                <div class="dash-range-actions">
+                                    <button type="button" class="dash-range-btn is-ghost" id="cfg-dash-user-range-clear"><i class="fas fa-eraser"></i> Limpar</button>
+                                    <button type="button" class="dash-range-btn is-primary" id="cfg-dash-user-range-apply"><i class="fas fa-check"></i> Aplicar</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hfilter-chip dash-year-chip" id="cfg-dash-user-year-chip">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar por ano">
+                                <i class="fas fa-calendar-days"></i>
+                                <span class="hfilter-chip-label" data-default="Ano">Ano</span>
+                            </button>
+                            <div class="hfilter-chip-popover">
+                                <div class="hfilter-chip-list" id="cfg-dash-user-year-list"></div>
+                            </div>
+                        </div>
+                        <div class="hfilter-chip dash-role-chip" id="cfg-dash-user-role-chip" data-plural-label="funções" data-empty-label="Nenhum curso com função definida.">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar pelos cursos destinados a uma função">
+                                <i class="fas fa-briefcase"></i>
+                                <span class="hfilter-chip-label" data-default="Função">Função</span>
+                            </button>
+                            <div class="hfilter-chip-popover">
+                                <input type="text" class="hfilter-chip-search" id="cfg-dash-user-role-search" placeholder="Buscar função..." autocomplete="off" spellcheck="false">
+                                <div class="hfilter-chip-list" id="cfg-dash-user-role-list"></div>
+                            </div>
+                        </div>
+                        <div class="hfilter-chip dash-role-chip" id="cfg-dash-user-course-chip" data-plural-label="cursos" data-empty-label="Nenhum curso neste recorte.">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar por curso, dentro do recorte de data e função">
+                                <i class="fas fa-graduation-cap"></i>
+                                <span class="hfilter-chip-label" data-default="Curso">Curso</span>
+                            </button>
+                            <div class="hfilter-chip-popover">
+                                <input type="text" class="hfilter-chip-search" id="cfg-dash-user-course-search" placeholder="Buscar curso..." autocomplete="off" spellcheck="false">
+                                <div class="hfilter-chip-list" id="cfg-dash-user-course-list"></div>
+                            </div>
+                        </div>
+                        <button type="button" class="dash-export-btn" id="cfg-dash-user-export-btn" title="Baixar relatório deste colaborador em Excel, respeitando os filtros de data">
+                            <i class="fas fa-file-excel"></i> Baixar em planilha
+                        </button>
+                        <button type="button" class="dash-export-btn is-pdf" id="cfg-dash-user-pdf-btn" title="Baixar relatório deste colaborador em PDF, respeitando os filtros de data">
+                            <i class="fas fa-file-pdf"></i> Baixar relatório
+                        </button>
+                    </div>
+                    <div class="panel-card dashboard-chart-card">
+                        <div class="panel-header">
+                            <h2>Histórico de Notas</h2>
+                            <span class="panel-header-stat" id="cfg-dash-user-scores-avg"></span>
+                        </div>
+                        <div class="panel-body"><canvas id="cfg-dash-user-scores-chart"></canvas></div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header">
+                                <h2>Satisfação com os Cursos</h2>
+                                <div class="panel-header-actions">
+                                    <div class="dash-mode-switch" id="cfg-dash-user-satisfaction-mode">
+                                        <button type="button" class="dash-mode-btn is-active" data-mode="geral">Geral</button>
+                                        <button type="button" class="dash-mode-btn" data-mode="curso">Curso</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-user-satisfaction-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-user-satisfaction-empty" style="display:none;">Este colaborador ainda não respondeu nenhuma pesquisa de satisfação.</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-user-satisfaction-pagination"></div>
+                            </div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Realização dos Cursos</h2></div>
+                            <div class="panel-body"><canvas id="cfg-dash-user-deadline-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Tentativas das Avaliações</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-user-approval-chart"></canvas></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Retentativas</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-user-retries-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Notas</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-user-scoresdist-chart"></canvas></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Prazo por Mês</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-user-deadlinetrend-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                            <div class="panel-header">
+                                <h2>Tempo para Conclusão da Avaliação (Minutos)</h2>
+                                <span class="panel-header-hint"><i class="fas fa-scale-balanced"></i> vs. média do curso</span>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-user-evaltime-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-user-evaltime-empty" style="display:none;">Ainda não há dados suficientes (é preciso concluir o curso após esta atualização).</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-user-evaltime-pagination"></div>
+                            </div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                            <div class="panel-header">
+                                <h2>Tempo para Conclusão (Horas)</h2>
+                                <span class="panel-header-hint"><i class="fas fa-scale-balanced"></i> vs. média do curso</span>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-user-completiontime-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-user-completiontime-empty" style="display:none;">Ainda não há dados suficientes (é preciso concluir o curso após esta atualização).</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-user-completiontime-pagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                        <div class="panel-header">
+                            <h2>Progresso em Cursos Pendentes</h2>
+                            <span class="panel-header-hint"><i class="fas fa-circle-info"></i> Cursos do público-alvo ainda não aprovados</span>
+                        </div>
+                        <div class="panel-body">
+                            <canvas id="cfg-dash-user-pending-chart"></canvas>
+                            <p class="dashboard-table-empty" id="cfg-dash-user-pending-empty" style="display:none;">Nenhum curso pendente: este colaborador já concluiu tudo que o cargo exige.</p>
+                            <div class="dash-comments-pagination" id="cfg-dash-user-pending-pagination"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal da unidade (Dashboard > Por unidade): mesmo desenho do modal do
+         colaborador, com os números somados de todos os colaboradores da unidade -->
+    <div class="modal" id="cfg-dash-unit-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-dash-unit-modal-title">
+        <div class="modal-content dash-course-modal-content">
+            <div class="dash-course-hero">
+                <div class="dash-course-hero-thumb" id="cfg-dash-unit-hero-thumb">?</div>
+                <div class="dash-course-hero-info">
+                    <h2 id="cfg-dash-unit-modal-title">Unidade</h2>
+                    <div class="dash-course-hero-tags" id="cfg-dash-unit-hero-tags"></div>
+                    <div class="dash-course-hero-stats" id="cfg-dash-unit-hero-stats"></div>
+                </div>
+                <span class="close" id="cfg-dash-unit-modal-close">&times;</span>
+            </div>
+            <div class="dash-course-modal-tabs">
+                <button type="button" class="tab-btn active" data-dash-unit-tab="people">Colaboradores <span class="tab-count" id="cfg-dash-unit-tabcount-people">0</span></button>
+                <button type="button" class="tab-btn" data-dash-unit-tab="history">Histórico <span class="tab-count" id="cfg-dash-unit-tabcount-history">0</span></button>
+                <button type="button" class="tab-btn" data-dash-unit-tab="info">Informações <span class="tab-count" id="cfg-dash-unit-tabcount-info">0</span></button>
+                <button type="button" class="tab-btn" data-dash-unit-tab="charts">Gráficos</button>
+            </div>
+            <div class="modal-body dash-course-modal-body">
+                <div class="tab-content active" id="cfg-dash-unit-tab-people">
+                    <div class="panel-card">
+                        <div class="panel-header"><h2><i class="fas fa-users" style="color:var(--cfg-primary);margin-right:6px;"></i>Colaboradores da unidade</h2></div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-unit-people" class="dashboard-table-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="cfg-dash-unit-tab-history">
+                    <div class="panel-card">
+                        <div class="panel-header"><h2><i class="fas fa-clock-rotate-left" style="color:var(--cfg-primary);margin-right:6px;"></i>Cursos realizados</h2></div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-unit-history" class="dashboard-table-wrap"></div>
+                            <div class="dash-comments-pagination" id="cfg-dash-unit-history-pagination"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="cfg-dash-unit-tab-info">
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2>Comentários da Pesquisa de Satisfação</h2>
+                            <div class="panel-header-actions">
+                                <div class="hfilter-chip dash-unit-chip" id="cfg-dash-unit-comments-course-chip" data-plural-label="cursos" data-empty-label="Nenhum curso com comentário.">
+                                    <button type="button" class="hfilter-chip-btn" title="Filtrar por curso">
+                                        <i class="fas fa-book"></i>
+                                        <span class="hfilter-chip-label" data-default="Curso">Curso</span>
+                                    </button>
+                                    <div class="hfilter-chip-popover">
+                                        <button type="button" class="hfilter-chip-clear" id="cfg-dash-unit-comments-course-clear" hidden><i class="fas fa-eraser"></i> Limpar filtro</button>
+                                        <div class="hfilter-chip-list" id="cfg-dash-unit-comments-course-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div id="cfg-dash-unit-comments" class="dashboard-table-wrap"></div>
+                            <div class="dash-comments-pagination" id="cfg-dash-unit-comments-pagination"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="cfg-dash-unit-tab-charts">
+                    <div class="dashboard-chart-filters">
+                        <div class="hfilter-chip dash-range-chip" id="cfg-dash-unit-range-chip">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar por período (mês inicial e final)">
+                                <i class="fas fa-calendar-week"></i>
+                                <span class="hfilter-chip-label" data-default="Período">Período</span>
+                            </button>
+                            <div class="hfilter-chip-popover hfilter-chip-popover-range">
+                                <div class="dash-range-fields">
+                                    <label class="dash-range-field">
+                                        <span>Mês inicial</span>
+                                        <input type="month" id="cfg-dash-unit-range-start">
+                                    </label>
+                                    <label class="dash-range-field">
+                                        <span>Mês final</span>
+                                        <input type="month" id="cfg-dash-unit-range-end">
+                                    </label>
+                                </div>
+                                <div class="dash-range-actions">
+                                    <button type="button" class="dash-range-btn is-ghost" id="cfg-dash-unit-range-clear"><i class="fas fa-eraser"></i> Limpar</button>
+                                    <button type="button" class="dash-range-btn is-primary" id="cfg-dash-unit-range-apply"><i class="fas fa-check"></i> Aplicar</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hfilter-chip dash-year-chip" id="cfg-dash-unit-year-chip">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar por ano">
+                                <i class="fas fa-calendar-days"></i>
+                                <span class="hfilter-chip-label" data-default="Ano">Ano</span>
+                            </button>
+                            <div class="hfilter-chip-popover">
+                                <div class="hfilter-chip-list" id="cfg-dash-unit-year-list"></div>
+                            </div>
+                        </div>
+                        <div class="hfilter-chip dash-role-chip" id="cfg-dash-unit-role-chip" data-plural-label="funções" data-empty-label="Nenhuma função nesta unidade.">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar por função dos colaboradores">
+                                <i class="fas fa-briefcase"></i>
+                                <span class="hfilter-chip-label" data-default="Função">Função</span>
+                            </button>
+                            <div class="hfilter-chip-popover">
+                                <input type="text" class="hfilter-chip-search" id="cfg-dash-unit-role-search" placeholder="Buscar função..." autocomplete="off" spellcheck="false">
+                                <div class="hfilter-chip-list" id="cfg-dash-unit-role-list"></div>
+                            </div>
+                        </div>
+                        <div class="hfilter-chip dash-role-chip" id="cfg-dash-unit-course-chip" data-plural-label="cursos" data-empty-label="Nenhum curso neste recorte.">
+                            <button type="button" class="hfilter-chip-btn dash-year-btn" title="Filtrar por curso, dentro do recorte de data e função">
+                                <i class="fas fa-graduation-cap"></i>
+                                <span class="hfilter-chip-label" data-default="Curso">Curso</span>
+                            </button>
+                            <div class="hfilter-chip-popover">
+                                <input type="text" class="hfilter-chip-search" id="cfg-dash-unit-course-search" placeholder="Buscar curso..." autocomplete="off" spellcheck="false">
+                                <div class="hfilter-chip-list" id="cfg-dash-unit-course-list"></div>
+                            </div>
+                        </div>
+                        <button type="button" class="dash-export-btn" id="cfg-dash-unit-export-btn" title="Baixar relatório desta unidade em Excel, respeitando os filtros de data">
+                            <i class="fas fa-file-excel"></i> Baixar em planilha
+                        </button>
+                        <button type="button" class="dash-export-btn is-pdf" id="cfg-dash-unit-pdf-btn" title="Baixar relatório desta unidade em PDF, respeitando os filtros de data">
+                            <i class="fas fa-file-pdf"></i> Baixar relatório
+                        </button>
+                    </div>
+                    <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                        <div class="panel-header">
+                            <h2>Notas por Colaborador</h2>
+                            <span class="panel-header-stat" id="cfg-dash-unit-scores-avg"></span>
+                        </div>
+                        <div class="panel-body">
+                            <canvas id="cfg-dash-unit-scores-chart"></canvas>
+                            <p class="dashboard-table-empty" id="cfg-dash-unit-scores-empty" style="display:none;">Nenhuma prova enviada por esta unidade no período.</p>
+                            <div class="dash-comments-pagination" id="cfg-dash-unit-scores-pagination"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header">
+                                <h2>Satisfação com os Cursos</h2>
+                                <div class="panel-header-actions">
+                                    <div class="dash-mode-switch" id="cfg-dash-unit-satisfaction-mode">
+                                        <button type="button" class="dash-mode-btn is-active" data-mode="geral">Geral</button>
+                                        <button type="button" class="dash-mode-btn" data-mode="curso">Curso</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-unit-satisfaction-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-unit-satisfaction-empty" style="display:none;">Esta unidade ainda não respondeu nenhuma pesquisa de satisfação.</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-unit-satisfaction-pagination"></div>
+                            </div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Realização dos Cursos</h2></div>
+                            <div class="panel-body"><canvas id="cfg-dash-unit-deadline-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Tentativas das Avaliações</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-unit-approval-chart"></canvas></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                            <div class="panel-header"><h2>Retentativas por Colaborador</h2></div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-unit-retries-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-unit-retries-empty" style="display:none;">Nenhuma retentativa nesta unidade no período.</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-unit-retries-pagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Notas</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-unit-scoresdist-chart"></canvas></div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card">
+                            <div class="panel-header"><h2>Prazo por Mês</h2><span class="panel-header-hint"><i class="fas fa-hand-pointer"></i> Clique p/ detalhes</span></div>
+                            <div class="panel-body"><canvas id="cfg-dash-unit-deadlinetrend-chart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                        <div class="panel-header">
+                            <h2>Curva de Conclusão por Curso</h2>
+                            <span class="panel-header-hint"><i class="fas fa-circle-info"></i> % da unidade que concluiu até cada dia</span>
+                        </div>
+                        <div class="panel-body">
+                            <canvas id="cfg-dash-unit-curve-chart"></canvas>
+                            <p class="dashboard-table-empty" id="cfg-dash-unit-curve-empty" style="display:none;">Nenhum curso com conclusões suficientes para desenhar a curva.</p>
+                            <div class="dash-comments-pagination" id="cfg-dash-unit-curve-pagination"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-chart-row">
+                        <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                            <div class="panel-header">
+                                <h2>Tempo para Conclusão da Avaliação (Minutos)</h2>
+                                <span class="panel-header-hint"><i class="fas fa-scale-balanced"></i> vs. média do curso</span>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-unit-evaltime-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-unit-evaltime-empty" style="display:none;">Ainda não há dados suficientes (é preciso concluir o curso após esta atualização).</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-unit-evaltime-pagination"></div>
+                            </div>
+                        </div>
+                        <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                            <div class="panel-header">
+                                <h2>Tempo para Conclusão (Horas)</h2>
+                                <span class="panel-header-hint"><i class="fas fa-scale-balanced"></i> vs. média do curso</span>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="cfg-dash-unit-completiontime-chart"></canvas>
+                                <p class="dashboard-table-empty" id="cfg-dash-unit-completiontime-empty" style="display:none;">Ainda não há dados suficientes (é preciso concluir o curso após esta atualização).</p>
+                                <div class="dash-comments-pagination" id="cfg-dash-unit-completiontime-pagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-card dashboard-chart-card dashboard-chart-card-tall">
+                        <div class="panel-header">
+                            <h2>Cursos Pendentes na Unidade</h2>
+                            <span class="panel-header-hint"><i class="fas fa-circle-info"></i> % do público-alvo da unidade que ainda não concluiu</span>
+                        </div>
+                        <div class="panel-body">
+                            <canvas id="cfg-dash-unit-pending-chart"></canvas>
+                            <p class="dashboard-table-empty" id="cfg-dash-unit-pending-empty" style="display:none;">Nenhum curso pendente: a unidade concluiu tudo que os cargos exigem.</p>
+                            <div class="dash-comments-pagination" id="cfg-dash-unit-pending-pagination"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal "de onde vêm os dados" (Dashboard > Por colaborador > Gráficos): clicar numa fatia/barra lista os cursos que formaram aquele número -->
+    <div class="modal" id="cfg-dash-drill-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-dash-drill-modal-title">
+        <div class="modal-content dash-drill-modal-content">
+            <div class="dash-drill-hero">
+                <span class="dash-drill-hero-icon" id="cfg-dash-drill-icon"><i class="fas fa-chart-simple"></i></span>
+                <div class="dash-drill-hero-info">
+                    <h2 id="cfg-dash-drill-modal-title">Origem dos dados</h2>
+                    <p class="dash-drill-subtitle" id="cfg-dash-drill-subtitle"></p>
+                </div>
+                <span class="close" id="cfg-dash-drill-modal-close">&times;</span>
+            </div>
+            <div class="dash-drill-stats" id="cfg-dash-drill-stats"></div>
+            <div class="modal-body dash-drill-body" id="cfg-dash-drill-body"></div>
+        </div>
+    </div>
+
+    <!-- Modal de detalhe da avaliação (clique num comentário da Pesquisa de Satisfação) -->
+    <div class="modal" id="cfg-dash-review-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-dash-review-modal-title">
+        <div class="modal-content dash-review-modal-content">
+            <span class="close" id="cfg-dash-review-modal-close">&times;</span>
+            <div class="dash-review-student">
+                <div class="dash-review-avatar" id="cfg-dash-review-avatar">?</div>
+                <div class="dash-review-student-info">
+                    <h2 id="cfg-dash-review-modal-title">Colaborador</h2>
+                    <div class="dash-review-student-tags" id="cfg-dash-review-student-tags"></div>
+                </div>
+            </div>
+            <div class="dash-review-stats" id="cfg-dash-review-stats"></div>
+            <div class="dash-review-body">
+                <div class="dash-review-section dash-review-summary">
+                    <div class="dash-review-summary-head">
+                        <h3><i class="fas fa-clipboard-check"></i> Avaliação deste curso</h3>
+                        <span class="dash-review-course-name" id="cfg-dash-review-course-name"></span>
+                    </div>
+                    <div class="dash-review-summary-grid" id="cfg-dash-review-summary-grid"></div>
+                    <div class="dash-review-comment" id="cfg-dash-review-comment"></div>
+                    <div class="dash-review-cert" id="cfg-dash-review-cert"></div>
+                </div>
+                <div class="dash-review-section" id="cfg-dash-review-questions-section">
+                    <h3><i class="fas fa-circle-question"></i> Questões incorretas</h3>
+                    <div class="history-detail-questions" id="cfg-dash-review-questions"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de importação do Histórico (escolha de categoria) -->
+    <div class="modal" id="cfg-history-import-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-history-import-title">
+        <div class="modal-content confirm-content" id="cfg-history-import-content">
+            <div class="confirm-head">
+                <div class="confirm-icon"><i class="fas fa-file-import"></i></div>
+                <h2 id="cfg-history-import-title">Importar histórico</h2>
+                <p id="cfg-history-import-message">Selecione a categoria dos registros deste arquivo.</p>
+            </div>
+            <div class="confirm-field">
+                <label for="cfg-history-import-category">Categoria</label>
+                <select id="cfg-history-import-category" class="form-control">
+                    <option value="treinamentos">Treinamentos</option>
+                    <option value="educacao_continuada">Educação Continuada</option>
+                    <option value="estagios">Estágios</option>
+                </select>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel" id="cfg-history-import-cancel">Cancelar</button>
+                <button type="button" class="confirm-ok" id="cfg-history-import-ok">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de mapeamento de Assunto/Tema não cadastrados no import -->
+    <div class="modal" id="cfg-history-mapping-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-history-mapping-title">
+        <div class="modal-content confirm-content" id="cfg-history-mapping-content">
+            <div class="confirm-head">
+                <div class="confirm-icon"><i class="fas fa-random"></i></div>
+                <h2 id="cfg-history-mapping-title">Assunto/Tema não reconhecidos</h2>
+                <p>Estes pares da planilha não batem com nenhum curso cadastrado. Selecione a qual curso cada um corresponde (ou deixe em branco para ignorar essas linhas).</p>
+            </div>
+            <div class="confirm-field" id="cfg-history-mapping-list"></div>
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel" id="cfg-history-mapping-cancel">Cancelar</button>
+                <button type="button" class="confirm-ok" id="cfg-history-mapping-ok">Aplicar e continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comentário de uma linha do Histórico -->
+    <div class="modal" id="cfg-history-comment-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-history-comment-title">
+        <div class="modal-content history-comment-content">
+            <div class="modal-header">
+                <h2 id="cfg-history-comment-title"><i class="fas fa-comment-dots" style="color:var(--cfg-primary);margin-right:7px;"></i>Comentário</h2>
+                <span class="close" id="cfg-history-comment-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="history-comment-meta" id="cfg-history-comment-meta"></div>
+                <div class="history-comment-text" id="cfg-history-comment-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adicionar/editar registro do Histórico -->
+    <div class="modal" id="cfg-history-form-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-history-form-title">
+        <div class="modal-content history-form-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-pen-to-square" style="color:var(--cfg-primary);margin-right:7px;"></i><span id="cfg-history-form-title">Adicionar registro</span></h2>
+                <span class="close" id="cfg-history-form-close">&times;</span>
+            </div>
+            <div class="modal-body history-form-body">
+                <p class="history-form-hint" id="cfg-history-form-hint"></p>
+                <div class="history-form-grid">
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-category">Categoria</label>
+                        <select id="cfg-history-form-category">
+                            <option value="treinamentos">Treinamentos</option>
+                            <option value="educacao_continuada">Educação Continuada</option>
+                            <option value="estagios">Estágios</option>
+                        </select>
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field is-wide">
+                        <label for="cfg-history-form-course">Assunto (Tema)</label>
+                        <select id="cfg-history-form-course"></select>
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field is-wide">
+                        <label for="cfg-history-form-name">Nome</label>
+                        <input type="text" id="cfg-history-form-name" placeholder="Nome completo do aluno">
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-unit">Unidade</label>
+                        <input type="text" id="cfg-history-form-unit" placeholder="Ex.: 06 - Unidade Milagres">
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-role">Cargo</label>
+                        <input type="text" id="cfg-history-form-role" placeholder="Ex.: Atendente/Coletador">
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-date">Data/Hora</label>
+                        <input type="datetime-local" id="cfg-history-form-date">
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-score">Nota (0 a 10)</label>
+                        <input type="number" id="cfg-history-form-score" min="0" max="10" step="0.1">
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-approved">Situação</label>
+                        <select id="cfg-history-form-approved">
+                            <option value="auto">Automática (nota ≥ 8)</option>
+                            <option value="1">Aprovado</option>
+                            <option value="0">Reprovado</option>
+                        </select>
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-rating">Avaliação do curso</label>
+                        <select id="cfg-history-form-rating">
+                            <option value="">Sem avaliação</option>
+                            <option value="1">★ 1</option>
+                            <option value="2">★ 2</option>
+                            <option value="3">★ 3</option>
+                            <option value="4">★ 4</option>
+                            <option value="5">★ 5</option>
+                        </select>
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-deadline">Prazo</label>
+                        <select id="cfg-history-form-deadline">
+                            <option value="livre">Sem prazo</option>
+                            <option value="not_started">Ainda não iniciado</option>
+                            <option value="on_time">No prazo</option>
+                            <option value="late">Em atraso</option>
+                            <option value="closed">Encerrado</option>
+                            <option value="forgiven">Atraso desconsiderado</option>
+                        </select>
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-duration">Tempo (MM:SS)</label>
+                        <input type="text" id="cfg-history-form-duration" placeholder="Ex.: 04:56" pattern="\d{1,3}:\d{2}">
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field">
+                        <label for="cfg-history-form-conclusion">Conclusão (HH:MM:SS)</label>
+                        <input type="text" id="cfg-history-form-conclusion" placeholder="Ex.: 01:40:49" pattern="\d{1,3}:\d{2}:\d{2}">
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field is-wide">
+                        <label for="cfg-history-form-comment">Comentário</label>
+                        <textarea id="cfg-history-form-comment" rows="2" placeholder="Opcional"></textarea>
+                        <small class="history-form-lock"></small>
+                    </div>
+                    <div class="history-form-field is-wide" id="cfg-history-form-errors-wrap">
+                        <label for="cfg-history-form-errors">Erros (opcional)</label>
+                        <textarea id="cfg-history-form-errors" rows="4" placeholder="1) Pergunta&#10;Resposta: o que o aluno marcou&#10;Gabarito: resposta correta"></textarea>
+                        <small class="history-form-help">Mesmo formato da planilha: um bloco por questão errada. As questões não citadas contam como acertadas.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="history-form-actions">
+                <button type="button" class="confirm-cancel" id="cfg-history-form-cancel">Cancelar</button>
+                <button type="button" class="confirm-ok" id="cfg-history-form-save">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="cfg-warning-message" id="cfg-warning-message"><span id="cfg-warning-text"></span></div>
+
+
+    <section id="cfg-root" hidden>
+    <!-- Admin Shell -->
+    <div class="admin-shell">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="cfg-sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+                <div>
+                    <div class="brand-name">UniAdmin</div>
+                    <div class="brand-sub">Universidade LAMIC</div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Navegação</div>
+                <nav class="sidebar-nav">
+                    <button class="tab-btn active" data-tab="dashboard">
+                        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>Dashboard
+                    </button>
+                    <button class="tab-btn" data-tab="courses">
+                        <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>Cursos
+                    </button>
+                    <button class="tab-btn" data-tab="users">
+                        <span class="nav-icon"><i class="fas fa-users"></i></span>Usuários
+                    </button>
+                    <button class="tab-btn" data-tab="history">
+                        <span class="nav-icon"><i class="fas fa-table-list"></i></span>Histórico
+                    </button>
+                </nav>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="sidebar-action-btn change-category-btn" id="cfg-change-category-btn">
+                    <i class="fas fa-exchange-alt"></i><span>Trocar Categoria</span>
+                </button>
+                <button class="sidebar-action-btn backup-act" id="cfg-backup-btn">
+                    <i class="fas fa-database"></i><span>Backup</span>
+                </button>
+                <button class="sidebar-action-btn" id="cfg-back-to-portal">
+                    <i class="fas fa-arrow-left"></i><span>Voltar ao Portal</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Fundo escuro do drawer da sidebar no mobile (css/mobile.css secao 6).
+             So fica clicavel com #cfg-root.sidebar-open. -->
+        <div class="cfg-sidebar-overlay" id="cfg-sidebar-overlay"></div>
+
+        <!-- Main -->
+        <div class="main-area">
+            <header class="topbar">
+                <button type="button" id="cfg-sidebar-toggle" class="cfg-sidebar-toggle"
+                        aria-label="Abrir menu" aria-controls="cfg-sidebar" aria-expanded="false">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="topbar-title">Gerenciador de Aulas</span>
+                    <span class="topbar-sub">Universidade LAMIC</span>
+                </div>
+                <div class="category-badge inactive" id="cfg-category-badge-display">
+                    <i class="fas fa-tag"></i>
+                    <span id="cfg-current-category-label">Nenhuma categoria</span>
+                </div>
+            </header>
+
+            <main class="content-area">
+
+                <!-- Cursos Tab (unifica Temas/Assuntos/Módulos/Avaliações) -->
+                <div class="tab-content" id="cfg-courses-tab">
+                    <div class="courses-toolbar">
+                        <div class="filter-popover-wrap">
+                            <button type="button" class="filter-picker-btn" id="cfg-courses-filter-btn"
+                                    aria-haspopup="true" aria-expanded="false">
+                                <span class="filter-picker-icon"><i class="fas fa-bookmark"></i></span>
+                                <span class="filter-picker-text">
+                                    <strong id="cfg-courses-filter-summary">Todos os temas</strong>
+                                    <small>Filtrar por tema</small>
+                                </span>
+                                <i class="fas fa-chevron-down filter-picker-arrow"></i>
+                            </button>
+                            <div class="filter-popover" id="cfg-courses-filter-popover" hidden>
+                                <div class="filter-popover-head">
+                                    <input type="text" class="filter-popover-search" id="cfg-courses-filter-search" placeholder="Buscar tema..." autocomplete="off">
+                                    <button type="button" class="filter-popover-clear" id="cfg-courses-filter-clear">Limpar</button>
+                                </div>
+                                <div class="filter-popover-list" id="cfg-courses-filter-list"></div>
+                                <p class="filter-popover-hint">Sem seleção, mostra cursos de todos os temas.</p>
+                            </div>
+                        </div>
+                        <button type="button" class="manage-themes-btn" id="cfg-courses-manage-themes-btn">
+                            <i class="fas fa-bookmark"></i> Gerenciar Temas
+                        </button>
+                        <div class="status-segment" id="cfg-courses-status-segment" role="group" aria-label="Filtrar por status">
+                            <button type="button" class="status-segment-btn is-active" data-status="active">Ativos</button>
+                            <button type="button" class="status-segment-btn" data-status="inactive">Inativos</button>
+                            <button type="button" class="status-segment-btn" data-status="all">Ambos</button>
+                        </div>
+                        <div class="courses-toolbar-spacer"></div>
+                        <button type="button" class="add-course-btn" id="cfg-courses-add-btn">
+                            <i class="fas fa-plus"></i> Adicionar curso
+                        </button>
+                    </div>
+                    <div id="cfg-courses-grid" class="courses-grid"></div>
+                </div>
+
+                <!-- Container técnico: js/admin.js (populateThemes) precisa deste
+                     elemento para funcionar sem alterações, mas a UI nova não o
+                     exibe (o grid de cursos e o modal "Editar curso" já cobrem
+                     essa função). Fica fora de qualquer modal, sempre display:none,
+                     para nunca aparecer visualmente por engano dentro de um modal. -->
+                <div id="cfg-themes-container" class="themes-container" style="display:none !important;"></div>
+
+                <!-- Modais da aba "Cursos" (dentro de #cfg-root para herdar o CSS #cfg-root .form-group/.form-control/.image-picker/.roles-picker/etc.) -->
+
+    <!-- Modal "Gerenciar Temas" -->
+    <div class="modal" id="cfg-subject-manage-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-subject-manage-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cfg-subject-manage-title"><i class="fas fa-bookmark"></i> Gerenciar Temas</h2>
+                <span class="close" id="cfg-subject-manage-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="cfg-subject-name">Nome do Tema</label>
+                    <input class="form-control" type="text" id="cfg-subject-name" placeholder="Digite o nome do tema">
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-full" id="cfg-subject-save">
+                        <i class="fas fa-save"></i> Salvar Tema
+                    </button>
+                    <button class="btn btn-danger btn-icon" id="cfg-subject-delete" style="display:none;" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div id="cfg-subject-loading" class="cfg-loading-spinner"></div>
+                <div id="cfg-subjects-container" class="subject-manage-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de formulário de Assunto (curso) -->
+    <div class="modal" id="cfg-theme-form-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-theme-form-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cfg-theme-form-title"><i class="fas fa-layer-group"></i> Gerenciar Curso</h2>
+                <span class="close" id="cfg-theme-form-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="cfg-theme-subject">Tema</label>
+                    <select class="form-control" id="cfg-theme-subject">
+                        <option value="">Selecione um tema</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-theme-name">Nome do Assunto</label>
+                    <input class="form-control" type="text" id="cfg-theme-name" placeholder="Digite o nome do assunto">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-theme-description">
+                        Descrição <span style="color:var(--text-3);font-weight:400;">(breve, aparece no card)</span>
+                    </label>
+                    <textarea class="form-control" id="cfg-theme-description" maxlength="220" placeholder="Resumo do curso em uma ou duas frases"></textarea>
+                    <small class="form-hint"><span id="cfg-theme-desc-count">0</span>/220 caracteres</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <div class="deadline-mode-toggle">
+                        <button type="button" class="deadline-mode-btn active" id="cfg-theme-status-active" data-status="active">
+                            <i class="fas fa-check-circle"></i> Ativo
+                        </button>
+                        <button type="button" class="deadline-mode-btn" id="cfg-theme-status-inactive" data-status="inactive">
+                            <i class="fas fa-ban"></i> Inativo
+                        </button>
+                    </div>
+                    <small class="form-hint">Assuntos inativos ficam ocultos para os colaboradores no portal.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Imagem do curso <span style="color:var(--text-3);font-weight:400;">(128×128, comprimida)</span></label>
+                    <div class="image-picker">
+                        <div class="image-preview" id="cfg-theme-image-preview">
+                            <span class="image-initials" id="cfg-theme-image-initials">?</span>
+                        </div>
+                        <div class="image-picker-actions">
+                            <label class="btn btn-ghost btn-sm" for="cfg-theme-image-file">
+                                <i class="fas fa-image"></i> Escolher imagem
+                            </label>
+                            <input type="file" id="cfg-theme-image-file" accept="image/*" hidden>
+                            <button type="button" class="btn btn-ghost btn-sm" id="cfg-theme-image-clear">
+                                <i class="fas fa-times"></i> Remover
+                            </button>
+                            <small class="form-hint" id="cfg-theme-image-info">Sem imagem — o card mostra as iniciais.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prazo</label>
+                    <div class="deadline-mode-toggle">
+                        <button type="button" class="deadline-mode-btn active" id="cfg-theme-deadline-livre" data-mode="livre">
+                            <i class="fas fa-infinity"></i> Livre
+                        </button>
+                        <button type="button" class="deadline-mode-btn" id="cfg-theme-deadline-prazo" data-mode="prazo">
+                            <i class="fas fa-calendar-days"></i> Prazo
+                        </button>
+                    </div>
+                    <div id="cfg-theme-deadline-fields" class="deadline-fields" style="display:none;">
+                        <div class="form-group">
+                            <label class="form-label" for="cfg-theme-deadline-start">Início <span style="color:var(--text-3);font-weight:400;">(curso fica disponível a partir daqui)</span></label>
+                            <input class="form-control" type="datetime-local" id="cfg-theme-deadline-start">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cfg-theme-deadline-end">Prazo final <span style="color:var(--text-3);font-weight:400;">(data esperada de término)</span></label>
+                            <input class="form-control" type="datetime-local" id="cfg-theme-deadline-end">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cfg-theme-deadline-close">Encerramento <span style="color:var(--text-3);font-weight:400;">(bloqueia a avaliação após esta data)</span></label>
+                            <input class="form-control" type="datetime-local" id="cfg-theme-deadline-close">
+                        </div>
+                        <small class="form-hint" id="cfg-theme-deadline-error" style="display:none;color:var(--danger);"></small>
+                    </div>
+                </div>
+                <!-- Tempo de conclusão esperado: quanto tempo ATIVO no curso se
+                     espera até a aprovação. Vira chip no resumo do dashboard e
+                     linha de referência no gráfico "Tempo para Conclusão". -->
+                <div class="form-group">
+                    <label class="form-label" id="cfg-theme-expected-time-label">Tempo de conclusão esperado <span style="color:var(--text-3);font-weight:400;">(opcional)</span></label>
+                    <!-- Campo de duração em partes (h/min/s) em vez de um
+                         type="time": o nativo trava em 23:59 e um curso pode
+                         esperar mais de 24h de dedicação. -->
+                    <div class="duration-input" role="group" aria-labelledby="cfg-theme-expected-time-label">
+                        <div class="duration-input-part">
+                            <input class="form-control" type="number" id="cfg-theme-expected-hours"
+                                   min="0" max="999" step="1" placeholder="00" inputmode="numeric"
+                                   autocomplete="off" aria-label="Horas">
+                            <span class="duration-input-unit">h</span>
+                        </div>
+                        <span class="duration-input-sep">:</span>
+                        <div class="duration-input-part">
+                            <input class="form-control" type="number" id="cfg-theme-expected-minutes"
+                                   min="0" max="59" step="1" placeholder="00" inputmode="numeric"
+                                   autocomplete="off" aria-label="Minutos">
+                            <span class="duration-input-unit">min</span>
+                        </div>
+                        <span class="duration-input-sep">:</span>
+                        <div class="duration-input-part">
+                            <input class="form-control" type="number" id="cfg-theme-expected-seconds"
+                                   min="0" max="59" step="1" placeholder="00" inputmode="numeric"
+                                   autocomplete="off" aria-label="Segundos">
+                            <span class="duration-input-unit">s</span>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-sm" id="cfg-theme-expected-clear">
+                            <i class="fas fa-times"></i> Limpar
+                        </button>
+                    </div>
+                    <small class="form-hint" id="cfg-theme-expected-time-hint">Tempo esperado de dedicação ao curso até a aprovação. Deixe vazio para não definir.</small>
+                    <small class="form-hint" id="cfg-theme-expected-time-error" style="display:none;color:var(--danger);"></small>
+                </div>
+                <!-- Funções (cargos) que enxergam o curso. Vazio = todas.
+                     A lista vem dos cargos das contas cadastradas. -->
+                <div class="form-group" id="cfg-theme-roles-group">
+                    <label class="form-label">Funções que veem este curso</label>
+                    <div class="roles-picker" id="cfg-theme-roles-picker">
+                        <button type="button" class="roles-picker-btn" id="cfg-theme-roles-btn"
+                                aria-haspopup="true" aria-expanded="false">
+                            <span class="roles-picker-icon"><i class="fas fa-user-tag"></i></span>
+                            <span class="roles-picker-text">
+                                <strong id="cfg-theme-roles-summary">Todas as funções</strong>
+                                <small>Clique para selecionar</small>
+                            </span>
+                            <i class="fas fa-chevron-down roles-picker-arrow"></i>
+                        </button>
+                        <div class="roles-popover" id="cfg-theme-roles-popover" hidden>
+                            <div class="roles-popover-head">
+                                <input type="text" class="roles-popover-search" id="cfg-theme-roles-search" placeholder="Buscar função..." autocomplete="off">
+                                <button type="button" class="roles-popover-clear" id="cfg-theme-roles-clear">Limpar</button>
+                            </div>
+                            <div class="roles-popover-list" id="cfg-theme-roles-list"></div>
+                            <p class="roles-popover-hint">Sem seleção, o curso aparece para todos.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Certificado</label>
+                    <button type="button" class="cert-config-btn" id="cfg-theme-cert-open">
+                        <span class="cert-config-btn-icon"><i class="fas fa-award"></i></span>
+                        <span class="cert-config-btn-text">
+                            <strong>Configurar certificado</strong>
+                            <small id="cfg-theme-cert-summary">Emissão desativada</small>
+                        </span>
+                        <i class="fas fa-chevron-right cert-config-btn-arrow"></i>
+                    </button>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-full" id="cfg-theme-save">
+                        <i class="fas fa-save"></i> Salvar Assunto
+                    </button>
+                    <button class="btn btn-danger btn-icon" id="cfg-theme-delete" style="display:none;" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div id="cfg-theme-migrate-container" class="migrate-container">
+                    <div class="migrate-header">
+                        <i class="fas fa-exchange-alt"></i>
+                        <h3>Migrar Assunto</h3>
+                    </div>
+                    <div class="migrate-content">
+                        <div class="migrate-select-wrapper">
+                            <label for="cfg-theme-new-subject">Novo tema de destino</label>
+                            <select id="cfg-theme-new-subject">
+                                <option value="">Selecione o novo tema</option>
+                            </select>
+                        </div>
+                        <button id="cfg-theme-migrate" class="migrate-btn">
+                            <i class="fas fa-arrow-right"></i> Migrar (com Módulos e Avaliações)
+                        </button>
+                    </div>
+                </div>
+                <!-- Duplicar: copia o assunto (módulos + avaliações) para qualquer
+                     categoria/tema, inclusive a própria. Diferente de Migrar, o
+                     original continua onde está. -->
+                <div id="cfg-theme-duplicate-container" class="duplicate-container">
+                    <div class="duplicate-header">
+                        <i class="fas fa-copy"></i>
+                        <h3>Duplicar Assunto</h3>
+                    </div>
+                    <div class="duplicate-content">
+                        <div class="duplicate-select-wrapper">
+                            <label for="cfg-theme-dup-category">Categoria de destino</label>
+                            <select id="cfg-theme-dup-category"></select>
+                        </div>
+                        <div class="duplicate-select-wrapper">
+                            <label for="cfg-theme-dup-subject">Tema de destino</label>
+                            <select id="cfg-theme-dup-subject">
+                                <option value="">Selecione o tema</option>
+                            </select>
+                        </div>
+                        <div class="duplicate-select-wrapper">
+                            <label for="cfg-theme-dup-name">Nome da cópia</label>
+                            <input type="text" id="cfg-theme-dup-name" maxlength="120" placeholder="Nome do novo assunto">
+                        </div>
+                        <button id="cfg-theme-duplicate" class="duplicate-btn">
+                            <i class="fas fa-copy"></i> Duplicar (com Módulos e Avaliações)
+                        </button>
+                    </div>
+                </div>
+                <div id="cfg-theme-loading" class="cfg-loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de detalhe do curso (Assunto): hero + abas internas Módulos/Avaliação -->
+    <div class="modal" id="cfg-course-detail-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-course-detail-title">
+        <div class="modal-content course-drawer-content">
+            <div class="course-drawer-hero">
+                <div class="course-drawer-hero-thumb" id="cfg-course-detail-thumb">?</div>
+                <div class="course-drawer-hero-info">
+                    <h2 id="cfg-course-detail-title">Curso</h2>
+                    <div class="course-drawer-hero-tags" id="cfg-course-detail-tags"></div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" id="cfg-course-detail-edit">
+                    <i class="fas fa-pencil-alt"></i> Editar curso
+                </button>
+                <span class="close" id="cfg-course-detail-close">&times;</span>
+            </div>
+            <div class="course-drawer-tabs">
+                <button type="button" class="tab-btn active" data-course-detail-tab="info">
+                    <i class="fas fa-circle-info"></i> Informações
+                </button>
+                <button type="button" class="tab-btn" data-course-detail-tab="modules">
+                    Módulos <span class="tab-count" id="cfg-course-detail-tabcount-modules">0</span>
+                </button>
+                <button type="button" class="tab-btn" data-course-detail-tab="quiz">
+                    Avaliação <span class="tab-count" id="cfg-course-detail-tabcount-quiz">0</span>
+                </button>
+            </div>
+            <div class="course-drawer-body">
+                <div class="tab-content active" id="cfg-course-detail-tab-info">
+                    <div id="cfg-course-detail-info" class="course-info-grid"></div>
+                </div>
+                <div class="tab-content" id="cfg-course-detail-tab-modules">
+                    <div class="course-drawer-section-head">
+                        <h3>Módulos do curso</h3>
+                        <button type="button" class="btn btn-primary btn-sm" id="cfg-course-detail-add-module">
+                            <i class="fas fa-plus"></i> Adicionar módulo
+                        </button>
+                    </div>
+                    <div id="cfg-modules-container" class="course-drawer-list modules-container"></div>
+                </div>
+                <div class="tab-content" id="cfg-course-detail-tab-quiz">
+                    <div id="cfg-quiz-toggle-wrapper" class="quiz-toggle-wrapper" style="display:none;">
+                        <div class="quiz-toggle-container">
+                            <label class="quiz-toggle-label">
+                                <i class="fas fa-power-off"></i>
+                                <span>Status da Avaliação</span>
+                            </label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="cfg-quiz-status-toggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <div class="toggle-status enabled" id="cfg-quiz-status-text">Habilitada</div>
+                        </div>
+                    </div>
+                    <div class="course-drawer-section-head">
+                        <h3>Questões da avaliação</h3>
+                        <div class="course-drawer-section-actions">
+                            <!-- Planilha: js/quiz-sheet.js. Importar só acrescenta ao fim da lista. -->
+                            <label class="btn btn-ghost btn-sm" for="cfg-quiz-sheet-file" title="Importar questões de planilha (.xlsx)">
+                                <i class="fas fa-file-import"></i> Importar
+                            </label>
+                            <input type="file" id="cfg-quiz-sheet-file" accept=".xlsx,.xls,.csv" hidden>
+                            <button type="button" class="btn btn-ghost btn-sm" id="cfg-quiz-sheet-export" title="Exportar todas as questões para planilha (.xlsx)">
+                                <i class="fas fa-file-export"></i> Exportar
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" id="cfg-course-detail-add-quiz">
+                                <i class="fas fa-plus"></i> Adicionar questão
+                            </button>
+                        </div>
+                    </div>
+                    <div id="cfg-quizzes-container" class="course-drawer-list quizzes-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de formulário de Módulo (empilhado sobre o detalhe do curso) -->
+    <div class="modal" id="cfg-module-form-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-module-form-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cfg-module-form-title"><i class="fas fa-play-circle"></i> Gerenciar Módulo</h2>
+                <span class="close" id="cfg-module-form-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <select class="form-control" id="cfg-module-subject" hidden></select>
+                <select class="form-control" id="cfg-module-theme" hidden></select>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-module-title">Título do Módulo</label>
+                    <input class="form-control" type="text" id="cfg-module-title" placeholder="Título do módulo">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-module-caption">Subtítulo</label>
+                    <textarea class="form-control" id="cfg-module-caption" placeholder="Descrição do módulo"></textarea>
+                </div>
+                <!-- Tipo de conteúdo: um módulo é Vídeo OU PDF OU Vídeos curtos.
+                     O hidden abaixo é a fonte da verdade lida por js/admin.js;
+                     quem o mantém em dia é o popover de js/admin-courses.js. -->
+                <input type="hidden" id="cfg-module-type" value="video">
+                <div class="form-group">
+                    <label class="form-label">Tipo de conteúdo</label>
+                    <div class="ctype-picker" id="cfg-module-ctype-picker">
+                        <button type="button" class="ctype-picker-btn" id="cfg-module-ctype-btn"
+                                aria-haspopup="true" aria-expanded="false">
+                            <span class="ctype-picker-icon is-video" id="cfg-module-ctype-badge"><i class="fas fa-play" id="cfg-module-ctype-icon"></i></span>
+                            <span class="ctype-picker-text">
+                                <strong id="cfg-module-ctype-summary">Vídeo (YouTube)</strong>
+                                <small id="cfg-module-ctype-desc">Aula em vídeo horizontal</small>
+                            </span>
+                            <i class="fas fa-chevron-down ctype-picker-arrow"></i>
+                        </button>
+                        <!-- .modal-content tem overflow:hidden e cortaria a lista: o
+                             popover é movido para o fim de #cfg-root e posicionado em
+                             coordenadas de viewport (position:fixed) por admin-courses.js. -->
+                        <div class="ctype-popover" id="cfg-module-ctype-popover" role="radiogroup" aria-label="Tipo de conteúdo" hidden>
+                            <button type="button" class="ctype-popover-option" data-ctype="video" role="radio" aria-checked="true">
+                                <span class="ctype-popover-option-mark is-video"><i class="fas fa-play"></i></span>
+                                <span class="ctype-popover-option-text">
+                                    <strong>Vídeo (YouTube)</strong>
+                                    <small>Aula em vídeo horizontal</small>
+                                </span>
+                                <i class="fas fa-check ctype-popover-option-check"></i>
+                            </button>
+                            <button type="button" class="ctype-popover-option" data-ctype="shorts" role="radio" aria-checked="false">
+                                <span class="ctype-popover-option-mark is-shorts"><i class="fas fa-mobile-screen"></i></span>
+                                <span class="ctype-popover-option-text">
+                                    <strong>Vídeos curtos</strong>
+                                    <small>Vários vídeos verticais em carrossel</small>
+                                </span>
+                                <i class="fas fa-check ctype-popover-option-check"></i>
+                            </button>
+                            <button type="button" class="ctype-popover-option" data-ctype="pdf" role="radio" aria-checked="false">
+                                <span class="ctype-popover-option-mark is-pdf"><i class="fas fa-file-pdf"></i></span>
+                                <span class="ctype-popover-option-text">
+                                    <strong>PDF / Slides</strong>
+                                    <small>Documento hospedado no Dropbox</small>
+                                </span>
+                                <i class="fas fa-check ctype-popover-option-check"></i>
+                            </button>
+                            <button type="button" class="ctype-popover-option" data-ctype="quiz" role="radio" aria-checked="false">
+                                <span class="ctype-popover-option-mark is-quiz"><i class="fas fa-bolt"></i></span>
+                                <span class="ctype-popover-option-text">
+                                    <strong>Quiz</strong>
+                                    <small>Cards de perguntas rápidas com resposta na hora</small>
+                                </span>
+                                <i class="fas fa-check ctype-popover-option-check"></i>
+                            </button>
+                            <p class="ctype-popover-hint">Cada módulo tem um tipo só — trocar limpa o campo do tipo anterior.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ctype-panel form-group" data-ctype="video">
+                    <label class="form-label" for="cfg-module-video">ID do Vídeo (YouTube)</label>
+                    <input class="form-control" type="text" id="cfg-module-video" placeholder="Ex.: https://youtu.be/dQw4w9WgXcQ ou dQw4w9WgXcQ">
+                </div>
+                <div class="ctype-panel form-group" data-ctype="shorts" hidden>
+                    <label class="form-label">Vídeos curtos</label>
+                    <!-- Lista construída por js/admin-courses.js — cada item vem de
+                         #cfg-module-shorts-link + #cfg-module-shorts-title, adicionado
+                         (ou salvo, se em edição) pelo botão abaixo. #cfg-module-shorts-data
+                         é o hidden com o JSON efetivamente salvo (fonte de verdade lida
+                         por admin.js). O clique no lápis de um item recarrega os campos
+                         para edição em vez de remover + adicionar de novo. -->
+                    <input type="hidden" id="cfg-module-shorts-data" value="[]">
+                    <div class="shorts-list" id="cfg-module-shorts-list"></div>
+                    <div class="shorts-add-row">
+                        <input class="form-control" type="text" id="cfg-module-shorts-link"
+                               placeholder="Link do vídeo (shorts, youtu.be ou ID)">
+                        <input class="form-control" type="text" id="cfg-module-shorts-title"
+                               placeholder="Título (opcional)">
+                        <button type="button" class="btn btn-ghost shorts-add-btn" id="cfg-module-shorts-add">
+                            <i class="fas fa-plus"></i> Adicionar
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-icon shorts-cancel-edit-btn" id="cfg-module-shorts-cancel-edit"
+                                title="Cancelar edição" style="display:none;">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                    </div>
+                    <small class="form-hint" id="cfg-module-shorts-error" style="display:none;color:var(--danger);"></small>
+                    <small class="form-hint">Formato vertical (9:16). O aluno assiste em carrossel, arrastando para cima.</small>
+                </div>
+                <div class="ctype-panel form-group" data-ctype="pdf" hidden>
+                    <label class="form-label" for="cfg-module-pdf">Diretório do PDF</label>
+                    <input class="form-control" type="text" id="cfg-module-pdf" placeholder="Link do Dropbox ou código após dropbox.com/scl/fi/…">
+                </div>
+                <div class="ctype-panel form-group" data-ctype="quiz" hidden>
+                    <div class="mquiz-list-head">
+                        <label class="form-label">Perguntas do quiz</label>
+                        <div class="mquiz-sheet-actions">
+                            <!-- Planilha: js/quiz-sheet.js. Importar só acrescenta ao fim da lista. -->
+                            <label class="btn btn-ghost btn-sm" for="cfg-module-quiz-sheet-file" title="Importar perguntas de planilha (.xlsx)">
+                                <i class="fas fa-file-import"></i> Importar
+                            </label>
+                            <input type="file" id="cfg-module-quiz-sheet-file" accept=".xlsx,.xls,.csv" hidden>
+                            <button type="button" class="btn btn-ghost btn-sm" id="cfg-module-quiz-sheet-export" title="Exportar todas as perguntas para planilha (.xlsx)">
+                                <i class="fas fa-file-export"></i> Exportar
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Mesmo padrão dos vídeos curtos: a lista é montada por
+                         js/admin-courses.js e espelhada em JSON no hidden abaixo,
+                         que é o que js/admin.js lê ao salvar o módulo. O editor
+                         logo abaixo serve tanto para adicionar quanto para editar
+                         (o lápis de um item recarrega os campos). -->
+                    <input type="hidden" id="cfg-module-quiz-data" value="[]">
+                    <div class="mquiz-list" id="cfg-module-quiz-list"></div>
+
+                    <div class="mquiz-editor">
+                        <div class="mquiz-editor-head">
+                            <span class="mquiz-editor-title" id="cfg-module-quiz-editor-title">
+                                <i class="fas fa-circle-plus"></i> Nova pergunta
+                            </span>
+                            <button type="button" class="mquiz-editor-cancel" id="cfg-module-quiz-cancel"
+                                    title="Cancelar edição" style="display:none;">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <input class="form-control" type="text" id="cfg-module-quiz-question"
+                               placeholder="Digite a pergunta">
+
+                        <div class="mquiz-image-row">
+                            <div class="mquiz-image-preview" id="cfg-module-quiz-image-preview">
+                                <span class="image-initials"><i class="fas fa-image"></i></span>
+                            </div>
+                            <div class="mquiz-image-actions">
+                                <label class="btn btn-ghost btn-sm" for="cfg-module-quiz-image-file">
+                                    <i class="fas fa-image"></i> Escolher imagem
+                                </label>
+                                <input type="file" id="cfg-module-quiz-image-file" accept="image/*" hidden>
+                                <button type="button" class="btn btn-ghost btn-sm" id="cfg-module-quiz-image-clear">
+                                    <i class="fas fa-times"></i> Remover
+                                </button>
+                                <small class="form-hint" id="cfg-module-quiz-image-info">Opcional — o card mostra só o texto.</small>
+                            </div>
+                        </div>
+
+                        <!-- Alternativas A–D: o rádio à esquerda marca qual é a correta. -->
+                        <div class="mquiz-options" id="cfg-module-quiz-options">
+                            <label class="mquiz-option">
+                                <input type="radio" name="cfg-module-quiz-correct" value="0" checked>
+                                <span class="mquiz-option-letter">A</span>
+                                <input class="form-control mquiz-option-input" type="text" data-option="0" placeholder="Alternativa A">
+                            </label>
+                            <label class="mquiz-option">
+                                <input type="radio" name="cfg-module-quiz-correct" value="1">
+                                <span class="mquiz-option-letter">B</span>
+                                <input class="form-control mquiz-option-input" type="text" data-option="1" placeholder="Alternativa B">
+                            </label>
+                            <label class="mquiz-option">
+                                <input type="radio" name="cfg-module-quiz-correct" value="2">
+                                <span class="mquiz-option-letter">C</span>
+                                <input class="form-control mquiz-option-input" type="text" data-option="2" placeholder="Alternativa C">
+                            </label>
+                            <label class="mquiz-option">
+                                <input type="radio" name="cfg-module-quiz-correct" value="3">
+                                <span class="mquiz-option-letter">D</span>
+                                <input class="form-control mquiz-option-input" type="text" data-option="3" placeholder="Alternativa D">
+                            </label>
+                        </div>
+
+                        <textarea class="form-control mquiz-explanation-input" id="cfg-module-quiz-explanation"
+                                  placeholder="Explicação (opcional) — aparece no card assim que o aluno responde"></textarea>
+
+                        <small class="form-hint" id="cfg-module-quiz-error" style="display:none;color:var(--danger);"></small>
+
+                        <button type="button" class="btn btn-ghost mquiz-add-btn" id="cfg-module-quiz-add">
+                            <i class="fas fa-plus"></i> Adicionar pergunta
+                        </button>
+                    </div>
+                    <small class="form-hint">O aluno vê um card por vez e a resposta certa aparece assim que ele responde.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-module-attachments">
+                        Anexos <span style="color:var(--text-3);font-weight:400;">(título;URL — um por linha)</span>
+                    </label>
+                    <textarea class="form-control" id="cfg-module-attachments" placeholder="Ex.: Guia;https://example.com/guia.pdf"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-full" id="cfg-module-save">
+                        <i class="fas fa-save"></i> Salvar Módulo
+                    </button>
+                    <button class="btn btn-danger btn-icon" id="cfg-module-delete" style="display:none;" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div id="cfg-module-loading" class="cfg-loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de formulário de Avaliação (empilhado sobre o detalhe do curso) -->
+    <div class="modal" id="cfg-quiz-form-modal" role="dialog" aria-modal="true" aria-labelledby="cfg-quiz-form-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cfg-quiz-form-title"><i class="fas fa-clipboard-list"></i> Gerenciar Questão</h2>
+                <span class="close" id="cfg-quiz-form-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <select class="form-control" id="cfg-quiz-subject" hidden></select>
+                <select class="form-control" id="cfg-quiz-theme" hidden></select>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-quiz-question">Pergunta</label>
+                    <input class="form-control" type="text" id="cfg-quiz-question" placeholder="Digite a pergunta">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Imagem da questão <span style="color:var(--text-3);font-weight:400;">(opcional, altura 256px, comprimida)</span></label>
+                    <div class="image-picker">
+                        <div class="image-preview quiz-image-preview" id="cfg-quiz-image-preview">
+                            <span class="image-initials"><i class="fas fa-image"></i></span>
+                        </div>
+                        <div class="image-picker-actions">
+                            <label class="btn btn-ghost btn-sm" for="cfg-quiz-image-file">
+                                <i class="fas fa-image"></i> Escolher imagem
+                            </label>
+                            <input type="file" id="cfg-quiz-image-file" accept="image/*" hidden>
+                            <button type="button" class="btn btn-ghost btn-sm" id="cfg-quiz-image-clear">
+                                <i class="fas fa-times"></i> Remover
+                            </button>
+                            <small class="form-hint" id="cfg-quiz-image-info">Sem imagem — a questão mostra apenas o texto.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-quiz-option1">Opção 1</label>
+                    <input class="form-control" type="text" id="cfg-quiz-option1" placeholder="Opção 1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-quiz-option2">Opção 2</label>
+                    <input class="form-control" type="text" id="cfg-quiz-option2" placeholder="Opção 2">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-quiz-option3">Opção 3</label>
+                    <input class="form-control" type="text" id="cfg-quiz-option3" placeholder="Opção 3">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-quiz-option4">Opção 4</label>
+                    <input class="form-control" type="text" id="cfg-quiz-option4" placeholder="Opção 4">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cfg-quiz-correct">Resposta Correta</label>
+                    <select class="form-control" id="cfg-quiz-correct">
+                        <option value="0">Opção 1</option>
+                        <option value="1">Opção 2</option>
+                        <option value="2">Opção 3</option>
+                        <option value="3">Opção 4</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-full" id="cfg-quiz-save">
+                        <i class="fas fa-save"></i> Salvar Questão
+                    </button>
+                    <button class="btn btn-danger btn-icon" id="cfg-quiz-delete" style="display:none;" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div id="cfg-quiz-loading" class="cfg-loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+
+
+                <!-- Usuários Tab -->
+                <div class="tab-content" id="cfg-users-tab">
+                    <div class="content-panels users-panels">
+                        <div class="panel-card">
+                            <div class="panel-header">
+                                <div class="panel-icon"><i class="fas fa-users"></i></div>
+                                <h2>Contas de Alunos</h2>
+                            </div>
+                            <div class="panel-body">
+                                <div class="users-toolbar">
+                                    <small class="form-hint">Contas, senhas e desativação ficam no Dados LAMIC (Administração › Usuários).</small>
+                                </div>
+                                <!-- Busca (botão-lupa com popover) + abas de status +
+                                     filtros por unidade e função, todos na mesma linha.
+                                     Valores vêm das próprias contas cadastradas. -->
+                                <div class="hfilter-row" id="cfg-users-filter-row">
+                                    <div class="hfilter-chip hfilter-search-chip" data-field="search">
+                                        <button type="button" class="hfilter-chip-btn hfilter-search-btn" id="cfg-users-search-btn" title="Buscar por nome ou login">
+                                            <i class="fas fa-magnifying-glass"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover hfilter-search-popover">
+                                            <input type="search" class="hfilter-chip-search" id="cfg-users-filter" placeholder="Buscar por nome ou login..." autocomplete="off" spellcheck="false">
+                                        </div>
+                                    </div>
+                                    <div class="hfilter-status-tabs" id="cfg-users-status-tabs" role="tablist">
+                                        <button type="button" class="hfilter-status-tab is-active" data-status="active">Ativos</button>
+                                        <button type="button" class="hfilter-status-tab" data-status="inactive">Inativos</button>
+                                        <button type="button" class="hfilter-status-tab" data-status="all">Ambos</button>
+                                    </div>
+                                    <div class="hfilter-chip" data-field="unit">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Unidade">Unidade</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <input type="text" class="hfilter-chip-search" placeholder="Buscar unidade..." autocomplete="off" spellcheck="false">
+                                            <div class="hfilter-chip-list" id="cfg-users-filter-unit-list"></div>
+                                        </div>
+                                    </div>
+                                    <div class="hfilter-chip" data-field="role">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Função">Função</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <input type="text" class="hfilter-chip-search" placeholder="Buscar função..." autocomplete="off" spellcheck="false">
+                                            <div class="hfilter-chip-list" id="cfg-users-filter-role-list"></div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="hfilter-clear-chip" id="cfg-users-filter-clear" style="display:none;">
+                                        <i class="fas fa-xmark"></i> Limpar filtros
+                                    </button>
+                                </div>
+                                <div id="cfg-users-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Tab -->
+                <div class="tab-content active" id="cfg-dashboard-tab">
+                    <div class="dashboard-mode-toggle">
+                        <button type="button" class="deadline-mode-btn active" id="cfg-dash-mode-course" data-mode="course">
+                            <i class="fas fa-book"></i> Por curso
+                        </button>
+                        <button type="button" class="deadline-mode-btn" id="cfg-dash-mode-user" data-mode="user">
+                            <i class="fas fa-user"></i> Por colaborador
+                        </button>
+                        <button type="button" class="deadline-mode-btn" id="cfg-dash-mode-unit" data-mode="unit">
+                            <i class="fas fa-building"></i> Por unidade
+                        </button>
+                    </div>
+
+                    <!-- Seletor: colaborador — busca + filtros por unidade/função, grade de cards -->
+                    <div id="cfg-dash-user-picker" class="dashboard-picker dashboard-picker-users">
+                        <div class="hfilter-row" id="cfg-dash-user-filter-row">
+                            <div class="hfilter-chip hfilter-search-chip" data-field="search">
+                                <button type="button" class="hfilter-chip-btn hfilter-search-btn" id="cfg-dash-user-search-btn" title="Buscar por nome">
+                                    <i class="fas fa-magnifying-glass"></i>
+                                </button>
+                                <div class="hfilter-chip-popover hfilter-search-popover">
+                                    <input type="search" class="hfilter-chip-search" id="cfg-dash-user-search" placeholder="Buscar colaborador por nome..." autocomplete="off" spellcheck="false">
+                                </div>
+                            </div>
+                            <div class="hfilter-chip" data-field="unit">
+                                <button type="button" class="hfilter-chip-btn">
+                                    <span class="hfilter-chip-label" data-default="Unidade">Unidade</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="hfilter-chip-popover">
+                                    <input type="text" class="hfilter-chip-search" placeholder="Buscar unidade..." autocomplete="off" spellcheck="false">
+                                    <div class="hfilter-chip-list" id="cfg-dash-user-filter-unit-list"></div>
+                                </div>
+                            </div>
+                            <div class="hfilter-chip" data-field="role">
+                                <button type="button" class="hfilter-chip-btn">
+                                    <span class="hfilter-chip-label" data-default="Função">Função</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="hfilter-chip-popover">
+                                    <input type="text" class="hfilter-chip-search" placeholder="Buscar função..." autocomplete="off" spellcheck="false">
+                                    <div class="hfilter-chip-list" id="cfg-dash-user-filter-role-list"></div>
+                                </div>
+                            </div>
+                            <button type="button" class="hfilter-clear-chip" id="cfg-dash-user-filter-clear" style="display:none;">
+                                <i class="fas fa-xmark"></i> Limpar filtros
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Colaboradores em cards, até 5 por linha -->
+                    <div id="cfg-dash-user-cards" class="dash-user-grid" style="display:none;"></div>
+
+                    <!-- Seletor: unidade — só busca, porque a própria unidade já é o filtro -->
+                    <div id="cfg-dash-unit-picker" class="dashboard-picker dashboard-picker-users" style="display:none;">
+                        <div class="hfilter-row" id="cfg-dash-unit-filter-row">
+                            <div class="hfilter-chip hfilter-search-chip" data-field="search">
+                                <button type="button" class="hfilter-chip-btn hfilter-search-btn" id="cfg-dash-unit-search-btn" title="Buscar por unidade">
+                                    <i class="fas fa-magnifying-glass"></i>
+                                </button>
+                                <div class="hfilter-chip-popover hfilter-search-popover">
+                                    <input type="search" class="hfilter-chip-search" id="cfg-dash-unit-search" placeholder="Buscar unidade por nome..." autocomplete="off" spellcheck="false">
+                                </div>
+                            </div>
+                            <span class="hfilter-chip-note" id="cfg-dash-unit-count"></span>
+                        </div>
+                    </div>
+
+                    <!-- Unidades em cards: são poucas e cada uma carrega mais métricas que o card de pessoa -->
+                    <div id="cfg-dash-unit-cards" class="dash-unit-grid" style="display:none;"></div>
+
+                    <!-- Seletor: curso (categoria fixa = a selecionada nas Configurações) -->
+                    <div id="cfg-dash-course-picker" class="dashboard-picker" style="display:none;">
+                        <div class="dash-theme-combobox">
+                            <button type="button" class="dash-theme-trigger" id="cfg-dash-subject-trigger">
+                                <span class="dash-theme-trigger-text">
+                                    <i class="fas fa-layer-group"></i>
+                                    <span id="cfg-dash-subject-label">Todos os temas</span>
+                                </span>
+                                <i class="fas fa-chevron-down dash-theme-caret"></i>
+                            </button>
+                            <div class="dash-theme-popover" id="cfg-dash-subject-popover"></div>
+                        </div>
+                        <span class="dash-category-chip" id="cfg-dash-category-chip">
+                            <i class="fas fa-folder-open"></i> <span id="cfg-dash-category-label">—</span>
+                        </span>
+                    </div>
+
+                    <!-- Assuntos do tema escolhido, em cards selecionáveis -->
+                    <div id="cfg-dash-course-cards" class="dash-course-grid" style="display:none;"></div>
+
+                    <div id="cfg-dash-empty" class="dashboard-empty">
+                        <i class="fas fa-chart-pie"></i>
+                        <p>Selecione um colaborador ou um curso para ver os indicadores.</p>
+                    </div>
+
+                </div>
+
+                <!-- Histórico Tab -->
+                <div class="tab-content" id="cfg-history-tab">
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <div class="panel-icon"><i class="fas fa-table-list"></i></div>
+                            <h2>Histórico de Avaliações</h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="history-toolbar">
+                                <div class="hfilter-row" id="cfg-history-filter-row">
+                                    <!-- "Assunto" é o curso (campo interno `theme`) e "Tema" é o
+                                         tema-pai (campo interno `subject`) — mesma nomenclatura do
+                                         cadastro em Temas/Assuntos. -->
+                                    <div class="hfilter-chip" data-field="subject">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Tema">Tema</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <input type="text" class="hfilter-chip-search" placeholder="Buscar tema..." autocomplete="off" spellcheck="false">
+                                            <div class="hfilter-chip-list" id="cfg-history-filter-subject-list"></div>
+                                        </div>
+                                    </div>
+                                    <div class="hfilter-chip" data-field="theme">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Assunto">Assunto</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <input type="text" class="hfilter-chip-search" placeholder="Buscar assunto..." autocomplete="off" spellcheck="false">
+                                            <div class="hfilter-chip-list" id="cfg-history-filter-theme-list"></div>
+                                        </div>
+                                    </div>
+                                    <div class="hfilter-chip" data-field="name">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Nome">Nome</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <input type="text" class="hfilter-chip-search" placeholder="Buscar nome..." autocomplete="off" spellcheck="false">
+                                            <div class="hfilter-chip-list" id="cfg-history-filter-name-list"></div>
+                                        </div>
+                                    </div>
+                                    <div class="hfilter-chip" data-field="role">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Cargo">Cargo</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <input type="text" class="hfilter-chip-search" placeholder="Buscar cargo..." autocomplete="off" spellcheck="false">
+                                            <div class="hfilter-chip-list" id="cfg-history-filter-role-list"></div>
+                                        </div>
+                                    </div>
+                                    <div class="hfilter-chip" data-field="unit">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Unidade">Unidade</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover">
+                                            <input type="text" class="hfilter-chip-search" placeholder="Buscar unidade..." autocomplete="off" spellcheck="false">
+                                            <div class="hfilter-chip-list" id="cfg-history-filter-unit-list"></div>
+                                        </div>
+                                    </div>
+                                    <!-- Nota (0 a 10) do resultado — não confundir com "Avaliação",
+                                         que são as estrelas dadas pelo aluno ao curso. -->
+                                    <div class="hfilter-chip" data-field="score">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Nota">Nota</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover hfilter-chip-popover-score">
+                                            <div class="hfilter-score-range">
+                                                <label>Mín. <input type="number" id="cfg-history-filter-score-min" min="0" max="10" step="0.5" placeholder="0"></label>
+                                                <label>Máx. <input type="number" id="cfg-history-filter-score-max" min="0" max="10" step="0.5" placeholder="10"></label>
+                                            </div>
+                                            <div class="hfilter-score-actions">
+                                                <button type="button" class="hfilter-chip-item" id="cfg-history-filter-score-clear">Qualquer nota</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hfilter-chip" data-field="rating">
+                                        <button type="button" class="hfilter-chip-btn">
+                                            <span class="hfilter-chip-label" data-default="Avaliação">Avaliação</span>
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="hfilter-chip-popover hfilter-chip-popover-stars">
+                                            <div class="history-filter-stars" id="cfg-history-filter-rating" data-value="0">
+                                                <i class="fas fa-star" data-star="1"></i>
+                                                <i class="fas fa-star" data-star="2"></i>
+                                                <i class="fas fa-star" data-star="3"></i>
+                                                <i class="fas fa-star" data-star="4"></i>
+                                                <i class="fas fa-star" data-star="5"></i>
+                                                <span class="history-filter-stars-label">Qualquer</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="hfilter-toggle-chip" id="cfg-history-filter-comments">
+                                        <i class="fas fa-comment"></i> Com comentários
+                                    </button>
+                                    <button type="button" class="hfilter-clear-chip" id="cfg-history-filter-clear" style="display:none;">
+                                        <i class="fas fa-xmark"></i> Limpar filtros
+                                    </button>
+                                </div>
+                                <div class="history-toolbar-actions">
+                                    <button class="btn btn-primary" id="cfg-history-add-btn" title="Adicionar um registro manualmente">
+                                        <i class="fas fa-plus"></i> Adicionar
+                                    </button>
+                                    <button class="btn btn-ghost" id="cfg-history-export-btn" title="Baixar histórico filtrado em Excel">
+                                        <i class="fas fa-file-excel"></i> Exportar
+                                    </button>
+                                    <label class="btn btn-ghost" for="cfg-history-import-file" title="Importar registros de uma planilha Excel">
+                                        <i class="fas fa-file-import"></i> Importar
+                                    </label>
+                                    <input type="file" id="cfg-history-import-file" accept=".xlsx,.xls" hidden>
+                                    <button class="btn btn-danger" id="cfg-history-clear-btn" title="Apagar todo o histórico">
+                                        <i class="fas fa-trash-can"></i> Limpar Lista
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="cfg-history-loading" class="cfg-loading-spinner"></div>
+                            <div id="cfg-history-table-wrap" class="dashboard-table-wrap history-table-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    </section>
+
+    <!-- Firebase (SDK compat: scripts classicos, funcionam tambem via file://) -->
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
+    <script defer src="js/course-image.js?v=202611231200"></script>
+    <!-- Carrega xlsx/jspdf/html2canvas sob demanda (js/vendor-loader.js). -->
+    <script defer src="js/vendor-loader.js?v=202611231200"></script>
+    <script defer src="js/firebase-config.js?v=202611231200"></script>
+    <script defer src="js/main.js?v=202611231200"></script>
+    <script defer src="js/connection-guard.js?v=202611231200"></script>
+    <script defer src="js/db-sync.js?v=202611231200"></script>
+    <script defer src="js/crypto-utils.js?v=202611231200"></script>
+    <script defer src="js/deadlines.js?v=202611231200"></script>
+    <script defer src="js/attempts.js?v=202611231200"></script>
+    <script defer src="js/certificate.js?v=202611231200"></script>
+    <script defer src="js/colaboradores-dados.js?v=202611231200"></script>
+    <script defer src="js/ui.js?v=202611231200"></script>
+    <script defer src="js/auth.js?v=202611231200"></script>
+    <script defer src="js/dados-session.js?v=202611231400"></script>
+    <script defer src="js/quiz-sheet.js?v=202611231200"></script>
+    <script defer src="js/admin.js?v=202611231200"></script>
+    <script defer src="js/admin-courses.js?v=202611231200"></script>
+    <script defer src="js/admin-users.js?v=202611231300"></script>
+    <script defer src="js/admin-excel.js?v=202611231200"></script>
+    <script defer src="js/admin-xlsx-charts.js?v=202611231200"></script>
+    <script defer src="js/admin-pdf-report.js?v=202611231200"></script>
+    <script defer src="js/admin-dashboard.js?v=202611231200"></script>
+    <script defer src="js/admin-history.js?v=202611231200"></script>
+    <script defer src="js/portal-auth.js?v=202611231200"></script>
+    <script defer src="js/student-profile.js?v=202611231200"></script>
+    <script defer src="js/student-header.js?v=202611231200"></script>
+    <!-- Depois de admin-history.js (U.getHistoryRows) e student-auth.js (sessão). -->
+    <script defer src="js/ranking.js?v=202611231200"></script>
+</body>
+</html>

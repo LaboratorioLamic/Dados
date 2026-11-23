@@ -1,0 +1,3128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manutenções — Gestão de Ativos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="OT.css">
+<link rel="stylesheet" href="ocorrencias.css">
+<link rel="stylesheet" href="cq.css">
+<link rel="stylesheet" href="empresas.css">
+<link rel="stylesheet" href="home.css">
+</head>
+<body class="auth-locked">
+<script src="lamic-carregando.js" data-nome="Manutenção LAMIC"></script>
+
+<!-- ══════════ AUTH OVERLAY ══════════ -->
+<div id="auth-overlay" class="auth-overlay">
+
+  <!-- TELA: CARREGANDO (padrão enquanto Firebase responde) -->
+  <div id="auth-screen-loading" class="auth-screen active">
+    <div class="auth-loading-wrap">
+      <div class="auth-loading-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </div>
+      <div class="auth-loading-name">Manutenção LAMIC</div>
+      <div class="auth-loading-spinner"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <!-- TELA: SEM CONEXÃO -->
+  <div id="auth-screen-no-connection" class="auth-screen">
+    <div class="auth-card auth-noconn-card">
+      <div class="auth-noconn-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="1" y1="1" x2="23" y2="23"/>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+          <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+      </div>
+      <div class="auth-noconn-title">Sem conexão com o servidor</div>
+      <div class="auth-noconn-msg">
+        O acesso ao sistema requer conexão com o banco de dados.<br>
+        Verifique sua internet e tente novamente.
+      </div>
+      <button class="auth-btn auth-btn-primary" onclick="location.reload()">
+        Tentar novamente
+      </button>
+    </div>
+  </div>
+
+  <!-- TELA: SEM SESSÃO / SEM ACESSO (login único pelo Dados LAMIC) -->
+  <div id="auth-screen-dados" class="auth-screen">
+    <div class="auth-card" style="text-align:center">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+      </div>
+      <h2 id="auth-dados-titulo" style="margin:6px 0 8px">Entre pelo Dados LAMIC</h2>
+      <p id="auth-dados-msg" style="font-size:13px;color:var(--text-secondary);margin:0 0 18px">A Manutenção usa o mesmo login e senha do Dados LAMIC.</p>
+      <a class="btn btn-primary" href="https://laboratoriolamic.github.io/Dados/" target="_top" style="width:100%;justify-content:center">Ir para o Dados LAMIC</a>
+    </div>
+  </div>
+
+</div><!-- /auth-overlay -->
+
+<!-- Backdrop do sidebar -->
+<div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+<!-- Sidebar overlay -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+    </div>
+    <div class="sidebar-logo-text">
+      <strong>Manutenção LAMIC</strong>
+      <span>Gestão & Operação</span>
+    </div>
+    <button class="sidebar-close" onclick="closeSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Principal</div>
+    <div class="nav-item active" onclick="switchTab('inicio')" id="nav-inicio">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      Início
+    </div>
+    <div class="nav-item" onclick="switchTab('ativos')" id="nav-ativos">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 16V7a2 2 0 00-2-2H6a2 2 0 00-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 01-.9 1.45H3.62a1 1 0 01-.9-1.45L4 16"/></svg></span>
+      Ativos
+    </div>
+    <div class="nav-item" onclick="switchTab('rotina')" id="nav-rotina">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+      Rotina
+    </div>
+    <div class="nav-item" onclick="switchTab('os')" id="nav-os">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
+      Ordens de Trabalho
+    </div>
+    <div class="nav-item" onclick="switchTab('ocorrencias')" id="nav-ocorrencias">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+      Ocorrências
+      <span class="oc-nav-badge" id="oc-nav-badge" style="display:none;"></span>
+    </div>
+    <div class="nav-item" onclick="switchTab('cq')" id="nav-cq" style="display:none;">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6"/><path d="M10 3v6.5L4.6 18.4A2 2 0 006.3 21.5h11.4a2 2 0 001.7-3.1L14 9.5V3"/><line x1="7.5" y1="15" x2="16.5" y2="15"/></svg></span>
+      Controle de Qualidade
+      <span class="oc-nav-badge cq-nav-badge" id="cq-nav-badge" style="display:none;"></span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="nav-section-label" id="nav-section-sistema">Sistema</div>
+    <div class="nav-item" onclick="switchTab('config')" id="nav-config">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h.09a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+      Configurações
+    </div>
+  </nav>
+
+  <div class="dark-mode-row opt-mode-row">
+    <button class="dark-mode-btn opt-mode-btn" id="opt-mode-btn" onclick="toggleOptimizedMode()" title="Modo otimizado">
+      <div class="dm-track">
+        <div class="dm-thumb opt-dm-thumb">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px;flex-shrink:0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+      </div>
+    </button>
+    <span class="dark-mode-label">Modo otimizado</span>
+  </div>
+
+  <div class="dark-mode-row">
+    <button class="dark-mode-btn" id="dark-mode-btn" onclick="toggleDarkMode()" title="Modo noturno">
+      <div class="dm-track">
+        <div class="dm-thumb">
+          <div class="dm-sun">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </div>
+          <div class="dm-moon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </div>
+        </div>
+      </div>
+    </button>
+    <span class="dark-mode-label">Modo noturno</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-pill" id="sidebar-user-pill" onclick="openUserProfileModal()" title="Meu Perfil">
+      <div class="user-avatar">??</div>
+      <div style="flex:1;min-width:0;overflow:hidden;">
+        <div class="user-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Carregando...</div>
+        <div class="user-role">—</div>
+      </div>
+    </div>
+    <button class="sidebar-logout-btn" onclick="authDoLogout()" title="Sair do sistema">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
+  </div>
+</aside>
+
+<div id="app">
+  <div id="main-area">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="openSidebar()" title="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="topbar-brand">
+        <div class="topbar-brand-dot"></div>
+        <div>
+          <div class="topbar-title" id="topbar-title">Início</div>
+          <div class="topbar-breadcrumb" id="topbar-breadcrumb">Sistema / Início</div>
+        </div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <!-- Filtro de setores (sempre visível) -->
+        <button id="sector-filter-badge" class="sector-badge" style="display:none;margin-right:100px;"
+          onclick="openTopbarSectorFilter()" title="Filtrar por unidade e setor">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="width:13px;height:13px;flex-shrink:0;">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+          <span id="sector-badge-text">Todos os setores</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="width:11px;height:11px;flex-shrink:0;opacity:.7;">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div id="content-area">
+      <div id="tab-inicio" class="tab-panel active"></div>
+      <!-- ── ABA ROTINA ── -->
+      <div id="tab-rotina" class="tab-panel">
+
+        <!-- Sidebar esquerda -->
+        <aside class="rotina-left-nav">
+          <div class="rotina-nav-label">Módulos</div>
+          <div class="rotina-nav-item active" id="rnav-rotinas" onclick="switchRotinaTab('rotinas')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Rotinas
+          </div>
+          <div class="rotina-nav-item" id="rnav-tarefas" onclick="switchRotinaTab('tarefas')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            Tarefas
+          </div>
+          <div class="rotina-nav-item" id="rnav-agenda" onclick="switchRotinaTab('agenda')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="15" r="1" fill="currentColor"/><circle cx="12" cy="15" r="1" fill="currentColor"/><circle cx="16" cy="15" r="1" fill="currentColor"/></svg>
+            Agenda
+          </div>
+          <div class="rotina-nav-item" id="rnav-atividades" onclick="switchRotinaTab('atividades')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Atividades
+          </div>
+        </aside>
+
+        <!-- Conteúdo principal -->
+        <div class="rotina-content">
+
+          <!-- SUB-PAINEL: ROTINAS -->
+          <div id="rpanel-rotinas" class="rotina-panel active">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Rotinas de Manutenção</h2>
+                <p>Gerencie as rotinas preventivas e de manutenção dos equipamentos</p>
+              </div>
+              <div class="status-filter-group" id="rotina-status-filter-group">
+                <button class="status-filter-btn active active-green" id="sfbtn-rotina-ativo" onclick="setRotinaStatusFilter('ativo')">Ativos</button>
+                <button class="status-filter-btn" id="sfbtn-rotina-inativo" onclick="setRotinaStatusFilter('inativo')">Inativos</button>
+                <button class="status-filter-btn" id="sfbtn-rotina-ambos" onclick="setRotinaStatusFilter('ambos')">Ambos</button>
+              </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="rotina-toolbar">
+              <div id="ativo-selector-display">
+                <button class="btn-select-ativo" onclick="openAtivoSelectorModal()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  Selecionar Ativo
+                </button>
+              </div>
+              <div class="rotina-toolbar-sep"></div>
+
+              <div style="display:flex;align-items:center;gap:6px;">
+                <select id="filter-tipo" class="field-select" style="width:auto;min-width:160px;" onchange="renderRotinasTable();updateNotifBadge()">
+                  <option value="">Tipo (Todos)</option>
+                  <option value="Preventivo">Preventivo</option>
+                  <option value="Rotina">Rotina</option>
+                </select>
+                <button id="btn-editar-tipo-rotina" class="btn btn-outline btn-icon" onclick="openTipoModal()" title="Gerenciar Tipos">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+              </div>
+
+              <div id="filter-unidade-rotina" class="autocomplete-wrapper" style="min-width:130px;display:none;">
+                <input id="filter-unidade-rotina-input" class="field-select" type="text" placeholder="Unidade (Todas)" autocomplete="off"
+                  oninput="rotinaUnidadeFilter()"
+                  onfocus="rotinaUnidadeFilter()"
+                  onblur="setTimeout(rotinaUnidadeClose,180)"
+                  style="width:100%;cursor:text;">
+                <input type="hidden" id="filter-unidade-rotina-val" value="">
+                <div class="autocomplete-dropdown" id="filter-unidade-rotina-drop"></div>
+              </div>
+
+              <div id="filter-setor-rotina" class="autocomplete-wrapper" style="min-width:150px;">
+                <input id="filter-setor-rotina-input" class="field-select" type="text" placeholder="Setor (Todos)" autocomplete="off"
+                  oninput="rotinaSetorFilter()"
+                  onfocus="rotinaSetorFilter()"
+                  onblur="setTimeout(rotinaSetorClose,180)"
+                  style="width:100%;cursor:text;">
+                <input type="hidden" id="filter-setor-rotina-val" value="">
+                <div class="autocomplete-dropdown" id="filter-setor-rotina-drop"></div>
+              </div>
+
+              <div id="filter-cat-rotina" class="autocomplete-wrapper" style="min-width:150px;">
+                <input id="filter-cat-rotina-input" class="field-select" type="text" placeholder="Categoria (Todas)" autocomplete="off"
+                  oninput="rotinaCatFilter()"
+                  onfocus="rotinaCatFilter()"
+                  onblur="setTimeout(rotinaCatClose,180)"
+                  style="width:100%;cursor:text;">
+                <input type="hidden" id="filter-cat-rotina-val" value="">
+                <div class="autocomplete-dropdown" id="filter-cat-rotina-drop"></div>
+              </div>
+
+              <div class="topbar-spacer"></div>
+
+              <!-- Bell notificações -->
+              <div class="notif-wrapper">
+                <button class="notif-btn" onclick="toggleNotifDropdown()" title="Notificações">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                  <span class="notif-badge" id="notif-badge">0</span>
+                </button>
+                <div class="notif-dropdown" id="notif-dropdown">
+                  <div class="notif-header">
+                    <span>Alertas de Tarefas</span>
+                    <span id="notif-count-label" style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">0 alertas</span>
+                  </div>
+                  <div class="notif-list" id="notif-list">
+                    <div class="notif-empty">Nenhum alerta no momento</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabela de Rotinas -->
+            <div class="data-table-wrapper atividades-table-wrapper">
+              <div class="atividades-table-scroll">
+                <table class="data-table" id="rotinas-table">
+                  <thead>
+                    <tr id="rotinas-thead-row">
+                      <th class="th-sortable th-sort-active" onclick="sortRotinasBy('nome')" data-sort-col="nome" data-sort-arrow=" ↑">Nome da Rotina</th>
+                      <th class="th-sortable" onclick="sortRotinasBy('equipamento')" data-sort-col="equipamento" data-sort-arrow="">Equipamento</th>
+                      <th class="th-sortable" onclick="sortRotinasBy('tipo')" data-sort-col="tipo" data-sort-arrow="">Tipo</th>
+                      <th class="th-sortable" onclick="sortRotinasBy('setor')" data-sort-col="setor" data-sort-arrow="">Setor</th>
+                      <th class="th-sortable" onclick="sortRotinasBy('categoria')" data-sort-col="categoria" data-sort-arrow="">Categoria</th>
+                      <th>Checklist</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rotinas-tbody">
+                    <tr><td colspan="6"><div class="data-table-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg><strong>Nenhuma rotina cadastrada</strong><p>Clique no botão "+" para criar a primeira rotina</p></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- FAB -->
+            <button class="rotina-fab" id="fab-new-rotina" onclick="openRotinaDrawer()" title="Nova Rotina">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+
+          <!-- SUB-PAINEL: TAREFAS -->
+          <div id="rpanel-tarefas" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Tarefas Programadas</h2>
+                <p>Acompanhe e gerencie todas as tarefas de manutenção</p>
+              </div>
+              <div class="status-filter-group">
+                <button class="status-filter-btn active active-green" id="sfbtn-tarefa-ativo" onclick="setTarefaStatusFilter('main','ativo')">Ativos</button>
+                <button class="status-filter-btn" id="sfbtn-tarefa-inativo" onclick="setTarefaStatusFilter('main','inativo')">Inativos</button>
+                <button class="status-filter-btn" id="sfbtn-tarefa-ambos" onclick="setTarefaStatusFilter('main','ambos')">Ambos</button>
+              </div>
+            </div>
+            <button class="rotina-fab" id="fab-new-tarefa" onclick="openTarefaDrawer()" title="Nova Tarefa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+
+            <div class="rotina-toolbar" style="margin-bottom:16px;">
+              <div id="ativo-selector-display-tarefas">
+                <button class="btn-select-ativo" onclick="openAtivoSelectorCtx('tarefas')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  Filtrar por Ativo
+                </button>
+              </div>
+              <div id="rotina-filter-tarefas-wrap" style="display:none;">
+                <button class="btn-select-ativo" id="btn-filtrar-rotina-tarefas" onclick="openRotinaSelectorCtx('tarefas')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                  Filtrar por Rotina
+                </button>
+              </div>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                <!-- Filtros inline tarefas -->
+                <div id="tarefas-filter-inline" class="agenda-filter-inline">
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">TIPO</label>
+                    <select id="tarefas-filter-tipo" class="field-select" style="width:150px;padding:6px 30px 6px 10px;font-size:12px;" onchange="renderTarefasTable()">
+                      <option value="">Todos</option>
+                    </select>
+                  </div>
+                  <div class="agenda-filter-field" id="tarefas-filter-field-unidade" style="display:none;">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">UNIDADE</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-tarefas-filter-unidade">
+                      <input type="text" id="tarefas-filter-unidade" class="agenda-autocomplete-input" placeholder="Todas" autocomplete="off" oninput="tabFiltroAutocomplete('tarefas','unidade')" onfocus="tabFiltroAutocomplete('tarefas','unidade')" onblur="tabFiltroAutocompleteBlur('tarefas','unidade')" onkeydown="tabFiltroAutocompleteKey(event,'tarefas','unidade')">
+                      <div class="agenda-autocomplete-list" id="tarefas-autocomplete-unidade"></div>
+                    </div>
+                  </div>
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">SETOR</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-tarefas-filter-setor">
+                      <input type="text" id="tarefas-filter-setor" class="agenda-autocomplete-input" placeholder="Todos" autocomplete="off" oninput="tabFiltroAutocomplete('tarefas','setor')" onfocus="tabFiltroAutocomplete('tarefas','setor')" onblur="tabFiltroAutocompleteBlur('tarefas','setor')" onkeydown="tabFiltroAutocompleteKey(event,'tarefas','setor')">
+                      <div class="agenda-autocomplete-list" id="tarefas-autocomplete-setor"></div>
+                    </div>
+                  </div>
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">CATEGORIA</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-tarefas-filter-cat">
+                      <input type="text" id="tarefas-filter-cat" class="agenda-autocomplete-input" placeholder="Todas" autocomplete="off" oninput="tabFiltroAutocomplete('tarefas','cat')" onfocus="tabFiltroAutocomplete('tarefas','cat')" onblur="tabFiltroAutocompleteBlur('tarefas','cat')" onkeydown="tabFiltroAutocompleteKey(event,'tarefas','cat')">
+                      <div class="agenda-autocomplete-list" id="tarefas-autocomplete-cat"></div>
+                    </div>
+                  </div>
+                </div>
+                <button id="btn-tarefas-filtro" class="btn btn-outline" onclick="toggleTabFiltroInline('tarefas')" title="Filtros" style="padding:8px 10px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                </button>
+                <button id="btn-minhas-tarefas" class="btn btn-outline" onclick="toggleMinhasTarefas()" title="Filtrar por minhas responsabilidades" style="gap:7px;font-size:12.5px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  Minhas Tarefas
+                </button>
+              </div>
+            </div>
+
+            <div class="data-table-wrapper atividades-table-wrapper">
+              <div class="atividades-table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr id="tarefas-thead-row">
+                      <th style="width:48px;">Status</th>
+                      <th class="th-sortable th-sort-active" onclick="sortTarefasBy('titulo')" data-sort-col="titulo" data-sort-arrow=" ↑">Rotina / Tarefa</th>
+                      <th class="th-sortable" onclick="sortTarefasBy('equipamento')" data-sort-col="equipamento" data-sort-arrow="">Equipamento</th>
+                      <th class="th-sortable" onclick="sortTarefasBy('dataTarefa')" data-sort-col="dataTarefa" data-sort-arrow="">Data</th>
+                      <th class="th-sortable" onclick="sortTarefasBy('proximaData')" data-sort-col="proximaData" data-sort-arrow="">Próxima Data</th>
+                      <th>Lembrete</th>
+                      <th>Situação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tarefas-tbody">
+                    <tr><td colspan="7"><div class="data-table-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><strong>Nenhuma tarefa cadastrada</strong><p>Clique em "Nova Tarefa" para começar</p></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-PAINEL: AGENDA -->
+          <div id="rpanel-agenda" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Agenda de Manutenção</h2>
+                <p>Visualize as tarefas programadas por dia no calendário</p>
+              </div>
+            </div>
+
+            <div class="rotina-toolbar" style="margin-bottom:16px;">
+              <div id="ativo-selector-display-agenda">
+                <button class="btn-select-ativo" onclick="openAtivoSelectorCtx('agenda')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  Filtrar por Ativo
+                </button>
+              </div>
+              <div id="rotina-filter-agenda-wrap" style="display:none;">
+                <button class="btn-select-ativo" id="btn-filtrar-rotina-agenda" onclick="openRotinaSelectorCtx('agenda')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                  Filtrar por Rotina
+                </button>
+              </div>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                <!-- Filtros inline agenda -->
+                <div id="agenda-filter-inline" class="agenda-filter-inline">
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">Tipo</label>
+                    <select id="agenda-filter-tipo" class="field-select" style="width:150px;padding:6px 30px 6px 10px;font-size:12px;" onchange="renderAgendaCalendario()">
+                      <option value="">Todos</option>
+                    </select>
+                  </div>
+                  <div class="agenda-filter-field" id="agenda-filter-field-unidade" style="display:none;">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">Unidade</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-agenda-filter-unidade">
+                      <input type="text" id="agenda-filter-unidade" class="agenda-autocomplete-input" placeholder="Todas" autocomplete="off" oninput="agendaAutocomplete('unidade')" onfocus="agendaAutocomplete('unidade')" onblur="agendaAutocompleteBlur('unidade')" onkeydown="agendaAutocompleteKey(event,'unidade')">
+                      <div class="agenda-autocomplete-list" id="agenda-autocomplete-unidade"></div>
+                    </div>
+                  </div>
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">Setor</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-agenda-filter-setor">
+                      <input type="text" id="agenda-filter-setor" class="agenda-autocomplete-input" placeholder="Todos" autocomplete="off" oninput="agendaAutocomplete('setor')" onfocus="agendaAutocomplete('setor')" onblur="agendaAutocompleteBlur('setor')" onkeydown="agendaAutocompleteKey(event,'setor')">
+                      <div class="agenda-autocomplete-list" id="agenda-autocomplete-setor"></div>
+                    </div>
+                  </div>
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">Categoria</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-agenda-filter-cat">
+                      <input type="text" id="agenda-filter-cat" class="agenda-autocomplete-input" placeholder="Todas" autocomplete="off" oninput="agendaAutocomplete('cat')" onfocus="agendaAutocomplete('cat')" onblur="agendaAutocompleteBlur('cat')" onkeydown="agendaAutocompleteKey(event,'cat')">
+                      <div class="agenda-autocomplete-list" id="agenda-autocomplete-cat"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Botão filtro -->
+                <button id="btn-agenda-filtro" class="btn btn-outline" onclick="toggleAgendaFiltroInline()" title="Filtros" style="padding:8px 10px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                </button>
+                <!-- Minhas tarefas -->
+                <button id="btn-minhas-tarefas-agenda" class="btn btn-outline" onclick="toggleMinhasTarefasAgenda()" style="gap:7px;font-size:12.5px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  Minhas Tarefas
+                </button>
+              </div>
+            </div>
+
+            <!-- Calendário -->
+            <div class="agenda-calendar-wrap">
+              <div class="agenda-cal-header">
+                <button class="agenda-nav-btn" onclick="agendaNavMes(-1)" title="Anterior">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button class="agenda-mes-btn" id="agenda-mes-label" onclick="agendaAbrirMesPicker()"></button>
+                <button class="agenda-nav-btn" onclick="agendaNavMes(1)" title="Próximo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <div class="agenda-view-toggle">
+                  <button id="agenda-view-btn-mensal" class="agenda-view-btn active" onclick="agendaSetView('mensal')" title="Visualização mensal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                    Mensal
+                  </button>
+                  <button id="agenda-view-btn-semanal" class="agenda-view-btn" onclick="agendaSetView('semanal')" title="Visualização semanal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="8" y1="14" x2="8" y2="18"/><line x1="16" y1="14" x2="16" y2="18"/></svg>
+                    Semanal
+                  </button>
+                </div>
+              </div>
+              <div class="agenda-weekdays">
+                <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div>
+                <div>Qui</div><div>Sex</div><div>Sáb</div>
+              </div>
+              <div class="agenda-grid" id="agenda-grid"></div>
+            </div>
+
+            <!-- Picker de mês/ano -->
+            <div class="agenda-picker-backdrop" id="agenda-picker-backdrop" onclick="agendaFecharMesPicker()" style="display:none;"></div>
+            <div class="agenda-picker-popup" id="agenda-picker-popup" style="display:none;">
+              <div class="agenda-picker-header">
+                <button class="agenda-nav-btn" onclick="agendaPickerNavAno(-1)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span id="agenda-picker-ano" style="font-weight:700;font-size:15px;"></span>
+                <button class="agenda-nav-btn" onclick="agendaPickerNavAno(1)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+              <div class="agenda-picker-meses" id="agenda-picker-meses"></div>
+            </div>
+          </div>
+
+          <!-- SUB-PAINEL: ATIVIDADES -->
+          <div id="rpanel-atividades" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Atividades Realizadas</h2>
+                <p>Histórico completo de todas as manutenções concluídas</p>
+              </div>
+            </div>
+
+            <div class="rotina-toolbar" style="margin-bottom:16px;">
+              <div id="ativo-selector-display-atividades">
+                <button class="btn-select-ativo" onclick="openAtivoSelectorCtx('atividades')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  Filtrar por Ativo
+                </button>
+              </div>
+              <div id="rotina-filter-atividades-wrap" style="display:none;">
+                <button class="btn-select-ativo" id="btn-filtrar-rotina-atividades" onclick="openRotinaSelectorCtx('atividades')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+                  Filtrar por Rotina
+                </button>
+              </div>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                <!-- Filtros inline atividades -->
+                <div id="atividades-filter-inline" class="agenda-filter-inline">
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">TIPO</label>
+                    <select id="atividades-filter-tipo" class="field-select" style="width:150px;padding:6px 30px 6px 10px;font-size:12px;" onchange="renderAtividadesTable()">
+                      <option value="">Todos</option>
+                    </select>
+                  </div>
+                  <div class="agenda-filter-field" id="atividades-filter-field-unidade" style="display:none;">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">UNIDADE</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-atividades-filter-unidade">
+                      <input type="text" id="atividades-filter-unidade" class="agenda-autocomplete-input" placeholder="Todas" autocomplete="off" oninput="tabFiltroAutocomplete('atividades','unidade')" onfocus="tabFiltroAutocomplete('atividades','unidade')" onblur="tabFiltroAutocompleteBlur('atividades','unidade')" onkeydown="tabFiltroAutocompleteKey(event,'atividades','unidade')">
+                      <div class="agenda-autocomplete-list" id="atividades-autocomplete-unidade"></div>
+                    </div>
+                  </div>
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">SETOR</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-atividades-filter-setor">
+                      <input type="text" id="atividades-filter-setor" class="agenda-autocomplete-input" placeholder="Todos" autocomplete="off" oninput="tabFiltroAutocomplete('atividades','setor')" onfocus="tabFiltroAutocomplete('atividades','setor')" onblur="tabFiltroAutocompleteBlur('atividades','setor')" onkeydown="tabFiltroAutocompleteKey(event,'atividades','setor')">
+                      <div class="agenda-autocomplete-list" id="atividades-autocomplete-setor"></div>
+                    </div>
+                  </div>
+                  <div class="agenda-filter-field">
+                    <label class="field-label" style="margin:0;font-size:11px;white-space:nowrap;">CATEGORIA</label>
+                    <div class="agenda-autocomplete-wrap" id="wrap-atividades-filter-cat">
+                      <input type="text" id="atividades-filter-cat" class="agenda-autocomplete-input" placeholder="Todas" autocomplete="off" oninput="tabFiltroAutocomplete('atividades','cat')" onfocus="tabFiltroAutocomplete('atividades','cat')" onblur="tabFiltroAutocompleteBlur('atividades','cat')" onkeydown="tabFiltroAutocompleteKey(event,'atividades','cat')">
+                      <div class="agenda-autocomplete-list" id="atividades-autocomplete-cat"></div>
+                    </div>
+                  </div>
+                </div>
+                <button id="btn-atividades-filtro" class="btn btn-outline" onclick="toggleTabFiltroInline('atividades')" title="Filtros" style="padding:8px 10px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                </button>
+                <button id="btn-minhas-atividades" class="btn btn-outline" onclick="toggleMinhasAtividades()" title="Filtrar atividades publicadas por mim" style="gap:7px;font-size:12.5px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  Minhas Atividades
+                </button>
+              </div>
+            </div>
+
+            <div class="data-table-wrapper atividades-table-wrapper">
+              <div class="atividades-table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr id="atividades-thead-row">
+                      <th class="th-sortable th-sort-active" onclick="sortAtividadesBy('dataRealizada')" data-sort-col="dataRealizada" data-sort-arrow=" ↓">Data Realizada</th>
+                      <th class="th-sortable" onclick="sortAtividadesBy('rotina')" data-sort-col="rotina" data-sort-arrow="">Rotina</th>
+                      <th class="th-sortable" onclick="sortAtividadesBy('equipamento')" data-sort-col="equipamento" data-sort-arrow="">Equipamento</th>
+                      <th class="th-sortable" onclick="sortAtividadesBy('setor')" data-sort-col="setor" data-sort-arrow="">Setor</th>
+                      <th class="th-sortable" onclick="sortAtividadesBy('categoria')" data-sort-col="categoria" data-sort-arrow="">Categoria</th>
+                      <th class="th-sortable" onclick="sortAtividadesBy('dataPublicacao')" data-sort-col="dataPublicacao" data-sort-arrow="">Publicado em</th>
+                      <th class="th-sortable" onclick="sortAtividadesBy('publicadoPor')" data-sort-col="publicadoPor" data-sort-arrow="">Publicado por</th>
+                      <th style="width:80px;">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="atividades-tbody">
+                    <tr><td colspan="7"><div class="data-table-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><strong>Nenhuma atividade registrada</strong><p>As atividades aparecem após publicar tarefas</p></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /rotina-content -->
+      </div><!-- /tab-rotina -->
+      <div id="tab-os" class="tab-panel">
+        <div class="placeholder-view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          <h3>Ordens de Trabalho</h3>
+          <p>Módulo de gestão de OS estará disponível em breve.</p>
+        </div>
+      </div>
+      <div id="tab-ocorrencias" class="tab-panel"></div>
+      <div id="tab-cq" class="tab-panel"></div>
+      <div id="tab-config" class="tab-panel">
+
+        <!-- Nav lateral esquerda -->
+        <aside class="rotina-left-nav">
+          <div class="rotina-nav-label">Configurações</div>
+          <div class="rotina-nav-item active" id="cnav-usuario" onclick="switchConfigTab('usuario')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Usuários
+          </div>
+          <div class="rotina-nav-item" id="cnav-grupos" onclick="switchConfigTab('grupos')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6"/><circle cx="17" cy="7" r="3"/><path d="M21 20c0-3.3-2.7-6-6-6"/><path d="M9 20h6"/></svg>
+            Grupos de Usuários
+          </div>
+          <div class="rotina-nav-item" id="cnav-org" onclick="switchConfigTab('org')" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M6.5 10v4.5a1 1 0 001 1H14"/></svg>
+            Unidades e setores
+          </div>
+          <div class="rotina-nav-item" id="cnav-empresas" onclick="switchConfigTab('empresas')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Empresas
+          </div>
+          <div class="rotina-nav-item" id="cnav-ocorrencias" onclick="switchConfigTab('ocorrencias')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Ocorrências
+          </div>
+          <div class="rotina-nav-item" id="cnav-cq" onclick="switchConfigTab('cq')" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6"/><path d="M10 3v6.5L4.6 18.4A2 2 0 006.3 21.5h11.4a2 2 0 001.7-3.1L14 9.5V3"/><line x1="7.5" y1="15" x2="16.5" y2="15"/></svg>
+            Controle de Qualidade
+          </div>
+          <div class="rotina-nav-divider"></div>
+          <div class="rotina-nav-item" id="cnav-backup" onclick="switchConfigTab('backup')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Backup
+          </div>
+        </aside>
+
+        <!-- Conteúdo -->
+        <div class="rotina-content">
+
+          <!-- PAINEL: USUÁRIOS -->
+          <div id="cpanel-usuario" class="rotina-panel active">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Usuários</h2>
+                <p>Usuários vêm do Dados LAMIC. No primeiro acesso entram no grupo padrão (★); aqui se ajusta grupo, setores, cargo e status.</p>
+              </div>
+              <button class="btn btn-primary" onclick="openUserEditModal()" style="gap:7px;display:none" id="btn-novo-usuario">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Novo Usuário
+              </button>
+            </div>
+
+            <!-- Toggle: permitir criação de contas -->
+            <div class="cfg-toggle-row" id="cfg-allow-registration-row" style="display:none">
+              <div class="cfg-toggle-info">
+                <div class="cfg-toggle-label">Permitir criação de contas pela tela de login</div>
+                <div class="cfg-toggle-desc">Quando desativado, o botão "Criar Conta" fica oculto na tela de login</div>
+              </div>
+              <button class="cfg-toggle-btn" id="btn-toggle-registration" onclick="toggleAllowRegistration()" title="Alternar">
+                <span class="cfg-toggle-track"><span class="cfg-toggle-thumb"></span></span>
+              </button>
+            </div>
+
+            <!-- Filtros de status -->
+            <div style="display:flex;align-items:center;gap:8px;margin:16px 0 0;">
+              <div class="status-filter-group">
+                <button class="status-filter-btn active active-green" id="sfbtn-user-ativo"   onclick="setUsersFilter('ativo')">Ativos</button>
+                <button class="status-filter-btn"                     id="sfbtn-user-inativo" onclick="setUsersFilter('inativo')">Inativos</button>
+                <button class="status-filter-btn"                     id="sfbtn-user-ambos"   onclick="setUsersFilter('ambos')">Ambos</button>
+              </div>
+            </div>
+
+            <!-- Tabela de usuários (dinâmica) -->
+            <div class="data-table-wrapper" style="margin-top:12px;">
+              <table class="data-table" id="users-table">
+                <thead>
+                  <tr>
+                    <th>Usuário</th>
+                    <th>CPF</th>
+                    <th>Cargo</th>
+                    <th>Grupo</th>
+                    <th>Status</th>
+                    <th style="width:96px;text-align:right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="users-tbody">
+                  <tr><td colspan="6"><div class="data-table-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                    <strong>Carregando usuários...</strong>
+                  </div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- PAINEL: GRUPOS -->
+          <div id="cpanel-grupos" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Grupos de Usuários</h2>
+                <p>Gerencie permissões por grupo e defina o grupo padrão para novos cadastros</p>
+              </div>
+              <button class="btn btn-primary" id="btn-novo-grupo" onclick="openGroupEditModal()" style="gap:7px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Novo Grupo
+              </button>
+            </div>
+
+            <div class="data-table-wrapper" style="margin-top:0;">
+              <table class="data-table" id="groups-table">
+                <thead>
+                  <tr>
+                    <th>Nome do Grupo</th>
+                    <th>Membros</th>
+                    <th>Padrão p/ cadastros</th>
+                    <th style="width:100px;text-align:right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="groups-tbody">
+                  <tr><td colspan="4"><div class="data-table-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6"/><circle cx="17" cy="7" r="3"/><path d="M21 20c0-3.3-2.7-6-6-6"/></svg>
+                    <strong>Nenhum grupo cadastrado</strong>
+                    <p>Crie grupos para gerenciar permissões de usuários</p>
+                  </div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- PAINEL: UNIDADES E SETORES (org.js) -->
+          <div id="cpanel-org" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Unidades e setores</h2>
+                <p>Cada setor pertence a uma unidade. Usados em Ativos, Rotinas, OT, Ocorrências, permissões e no Controle de Qualidade</p>
+              </div>
+            </div>
+            <div id="org-gerenciador-cfg" class="cfg-card"></div>
+          </div>
+
+          <!-- PAINEL: EMPRESAS -->
+          <!-- PAINEL: CATÁLOGOS DE OCORRÊNCIAS -->
+          <div id="cpanel-ocorrencias" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Ocorrências</h2>
+                <p>Listas usadas no registro e no tratamento das ocorrências de ativos</p>
+              </div>
+            </div>
+            <div id="cpanel-ocorrencias-body"></div>
+          </div>
+
+          <!-- PAINEL: CONTROLE DE QUALIDADE -->
+          <div id="cpanel-cq" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Controle de Qualidade</h2>
+                <p>Unidades, estação e etiquetas, catálogos, validação e dados do módulo</p>
+              </div>
+            </div>
+            <div id="cpanel-cq-body"></div>
+          </div>
+
+          <div id="cpanel-empresas" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Empresas</h2>
+                <p>Gerencie empresas e prestadores terceirizados</p>
+              </div>
+              <button id="btn-nova-empresa" class="btn btn-primary" onclick="empOpenForm(null)" style="gap:7px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Nova Empresa
+              </button>
+            </div>
+
+            <!-- Busca -->
+            <div class="ot-search" style="margin-bottom:12px;max-width:320px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="Buscar empresa..." oninput="empSearchChange(this.value)"
+                style="width:100%;padding-left:32px;" class="field-input">
+            </div>
+
+            <div class="data-table-wrapper">
+              <table class="data-table" id="emp-table">
+                <thead>
+                  <tr>
+                    <th>Empresa / CNPJ</th>
+                    <th>Contato Principal</th>
+                    <th>E-mail</th>
+                    <th style="width:110px;text-align:right;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="emp-tbody">
+                  <tr><td colspan="4"><div class="data-table-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                    <strong>Nenhuma empresa cadastrada</strong>
+                    <p>Cadastre empresas terceirizadas para vincular às OTs</p>
+                  </div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- PAINEL: BACKUP -->
+          <div id="cpanel-backup" class="rotina-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2>Backup &amp; Restauração</h2>
+                <p>Exporte e importe todos os dados do sistema em formato JSON</p>
+              </div>
+            </div>
+
+            <!-- Backup completo: o nó inteiro da Manutenção no banco (todos os módulos: ativos, OT, CQ, ocorrências, empresas, arquivo...) -->
+            <div class="cfg-backup-card" style="margin-bottom:16px">
+              <div class="cfg-backup-card-icon cfg-backup-icon-export">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              </div>
+              <div>
+                <div class="cfg-backup-card-title">Backup completo do banco</div>
+                <div class="cfg-backup-card-desc">Baixa ou restaura <b>tudo</b> da Manutenção (ativos, rotinas, publicações, OT, CQ, ocorrências, empresas, arquivo e usuários). Também aceita o export JSON do Firebase antigo. Só administradores.</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                  <button class="btn btn-primary" onclick="baixarBackupCompleto()">Baixar backup completo</button>
+                  <button class="btn btn-outline" onclick="document.getElementById('backup-completo-arquivo').click()">Restaurar backup completo…</button>
+                  <button class="btn btn-outline" onclick="completarDoBancoAntigo()" title="Copia do banco antigo só o que ainda não existe aqui (CQ, ocorrências, empresas…)">Completar do banco antigo</button>
+                  <input type="file" id="backup-completo-arquivo" accept=".json,application/json" style="display:none" onchange="restaurarBackupCompleto(this)">
+                </div>
+              </div>
+            </div>
+
+            <div class="cfg-backup-grid">
+
+              <!-- Card: Exportar -->
+              <div class="cfg-backup-card">
+                <div class="cfg-backup-card-icon cfg-backup-icon-export">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </div>
+                <div class="cfg-backup-card-title">Exportar Backup</div>
+                <div class="cfg-backup-card-desc">Gera um arquivo <code>.json</code> com todos os dados: ativos, rotinas, tarefas, publicações e configurações.</div>
+                <div class="cfg-backup-meta" id="backup-meta-export">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span id="backup-last-export-label">Nenhum export realizado nesta sessão</span>
+                </div>
+                <button class="btn btn-primary cfg-backup-btn" onclick="exportarBackup()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Baixar Backup
+                </button>
+              </div>
+
+              <!-- Card: Importar -->
+              <div class="cfg-backup-card">
+                <div class="cfg-backup-card-icon cfg-backup-icon-import">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div class="cfg-backup-card-title">Restaurar Backup</div>
+                <div class="cfg-backup-card-desc">Importa um arquivo <code>.json</code> gerado por este sistema. <strong>Atenção:</strong> todos os dados atuais serão substituídos.</div>
+                <div class="cfg-backup-drop-zone" id="backup-drop-zone"
+                  ondragover="backupDragOver(event)" ondragleave="backupDragLeave(event)" ondrop="backupDrop(event)"
+                  onclick="document.getElementById('backup-file-input').click()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;opacity:.5;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <div class="cfg-backup-drop-text">
+                    <strong>Arraste o arquivo aqui</strong><br>
+                    <span>ou clique para selecionar</span>
+                  </div>
+                  <input type="file" id="backup-file-input" accept=".json" style="display:none;" onchange="backupFileSelected(event)">
+                </div>
+                <div class="cfg-backup-file-info" id="backup-file-info" style="display:none;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--cyan);flex-shrink:0;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span id="backup-file-name" style="flex:1;font-size:12.5px;font-weight:600;color:var(--text-primary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                  <button class="anexo-del" onclick="limparArquivoBackup()" title="Remover">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+                <button class="btn cfg-backup-btn" id="btn-restaurar-backup" onclick="restaurarBackup()" style="background:var(--red);color:#fff;box-shadow:0 4px 12px rgba(230,57,70,0.25);" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Restaurar Dados
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Card: Arquivar histórico de publicações (arquivo.js) -->
+            <div class="cfg-backup-card arq-card" id="arq-card" style="display:none;">
+              <div style="display:flex;align-items:center;gap:14px;">
+                <div class="cfg-backup-card-icon arq-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                </div>
+                <div>
+                  <div class="cfg-backup-card-title">Arquivar histórico de atividades</div>
+                  <div class="cfg-backup-card-desc">Publicações com mais de 12 meses saem do banco principal e vão para um arquivo compactado, sem perda de dados. Elas continuam consultáveis (carregadas sob demanda), ficam somente leitura e cada grupo arquivado guarda um hash de integridade.</div>
+                </div>
+              </div>
+              <div id="arq-painel"></div>
+            </div>
+
+            <!-- Aviso de integridade -->
+            <div class="cfg-backup-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div>
+                <strong>Atenção ao restaurar:</strong> a operação substitui permanentemente todos os dados atuais pelo conteúdo do arquivo importado. Faça sempre um export antes de restaurar.
+              </div>
+            </div>
+
+            <div class="cfg-section" style="margin-top:24px;">
+              <div class="cfg-section-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Informações do sistema
+              </div>
+              <div class="cfg-card">
+                <div class="cfg-sysinfo-grid" id="cfg-sysinfo-grid"></div>
+              </div>
+            </div>
+
+          </div>
+        </div><!-- /rotina-content -->
+      </div>
+
+      <div id="tab-ativos" class="tab-panel">
+        <div class="section-header" style="margin-bottom: 16px;">
+          <div>
+            <div class="section-title">Ativos</div>
+            <div class="section-subtitle">Gerenciamento do inventário e equipamentos</div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="toolbar-group">
+            <div id="ativos-search-wrap" style="display:flex;align-items:center;position:relative;">
+              <button id="btn-ativos-search" class="btn btn-outline btn-icon" onclick="toggleAtivosSearch()" title="Buscar ativo" style="z-index:1;flex-shrink:0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+              <div id="ativos-search-field" style="display:none;overflow:hidden;width:0;transition:width 0.2s ease;margin-left:4px;">
+                <input id="ativos-search-input" type="text" class="field-input" placeholder="Buscar ativo..."
+                  oninput="renderCards()" onkeydown="if(event.key==='Escape') toggleAtivosSearch()"
+                  style="width:200px;height:36px;font-size:13px;">
+              </div>
+            </div>
+            <div class="sector-search-wrap" id="unit-search-wrap" style="position:relative;display:none;">
+              <input id="main-unit-filter-input" type="text" class="field-input sector-search-input"
+                placeholder="Unidade (Todas)" autocomplete="off"
+                oninput="unitSearchFilter(this.value)"
+                onfocus="unitSearchOpen()"
+                onkeydown="unitSearchKey(event)"
+                style="min-width:150px;height:36px;font-size:13px;padding-right:28px;">
+              <span class="sector-search-caret" onclick="unitSearchToggle()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+              <div id="unit-search-dropdown" class="sector-search-dropdown" style="display:none;"></div>
+            </div>
+            <div class="sector-search-wrap" id="sector-search-wrap" style="position:relative;">
+              <input id="main-sector-filter-input" type="text" class="field-input sector-search-input"
+                placeholder="Setor (Todos)" autocomplete="off"
+                oninput="sectorSearchFilter(this.value)"
+                onfocus="sectorSearchOpen()"
+                onkeydown="sectorSearchKey(event)"
+                style="min-width:180px;height:36px;font-size:13px;padding-right:28px;">
+              <span class="sector-search-caret" onclick="sectorSearchToggle()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+              <div id="sector-search-dropdown" class="sector-search-dropdown" style="display:none;"></div>
+            </div>
+            <div class="sector-search-wrap" id="amb-search-wrap" style="position:relative;display:none;">
+              <span class="amb-input-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V4a1 1 0 011-1h10a1 1 0 011 1v17"/><circle cx="14.5" cy="12" r=".9" fill="currentColor"/></svg></span>
+              <input id="main-amb-filter-input" type="text" class="field-input sector-search-input amb-input"
+                placeholder="Ambiente (Todos)" autocomplete="off"
+                oninput="ambSearchFilter(this.value)"
+                onfocus="ambSearchOpen()"
+                onkeydown="ambSearchKey(event)"
+                style="min-width:170px;height:36px;font-size:13px;padding-right:28px;">
+              <span class="sector-search-caret" onclick="ambSearchToggle()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+              <div id="amb-search-dropdown" class="sector-search-dropdown" style="display:none;"></div>
+            </div>
+            <button id="btn-editar-setor-toolbar" class="btn btn-outline btn-icon" onclick="openSetorModal()" title="Unidades e setores">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <div class="sector-search-wrap" id="category-search-wrap" style="position:relative;">
+              <input id="main-category-filter-input" type="text" class="field-input sector-search-input"
+                placeholder="Categoria (Todas)" autocomplete="off"
+                oninput="categorySearchFilter(this.value)"
+                onfocus="categorySearchOpen()"
+                onkeydown="categorySearchKey(event)"
+                style="min-width:180px;height:36px;font-size:13px;padding-right:28px;">
+              <span class="sector-search-caret" onclick="categorySearchToggle()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+              <div id="category-search-dropdown" class="sector-search-dropdown" style="display:none;"></div>
+            </div>
+            <button id="btn-nova-categoria-toolbar" class="btn btn-outline btn-icon" onclick="openCategoriaModal()" title="Nova Categoria">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <div id="tipo-filter-wrap" class="sector-search-wrap" style="position:relative;display:none;" onclick="tipoSearchToggle()">
+              <input id="main-tipo-filter-input" type="text" class="field-input sector-search-input"
+                placeholder="Tipo (Todos)" autocomplete="off" readonly
+                onkeydown="tipoSearchKey(event)"
+                style="min-width:160px;height:36px;font-size:13px;padding-right:28px;cursor:pointer;">
+              <span class="sector-search-caret">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+              <div id="tipo-search-dropdown" class="sector-search-dropdown" style="display:none;"></div>
+            </div>
+          </div>
+          <div class="toolbar-group toolbar-group-right">
+            <div class="ativos-filter-toolbar-zone" id="ativos-filter-toolbar-zone">
+              <div id="ativos-filter-inline" class="ativos-filter-inline" aria-hidden="true"></div>
+            </div>
+            <div class="notif-wrapper" id="ativos-notif-wrapper">
+              <button class="notif-btn" onclick="toggleAtivosNotifDropdown()" title="Alertas de tarefas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                <span class="notif-badge" id="ativos-notif-badge">0</span>
+              </button>
+              <div class="notif-dropdown" id="ativos-notif-dropdown">
+                <div class="notif-header">
+                  <span>Alertas de Tarefas</span>
+                  <span id="ativos-notif-count-label" style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">0 alertas</span>
+                </div>
+                <div class="notif-list" id="ativos-notif-list">
+                  <div class="notif-empty">Nenhum alerta no momento</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ativos-subtabs" id="ativos-subtabs">
+          <button class="ativos-subtab active" id="subtab-em-operacao" onclick="ativosSetSubtab('em_operacao')">Em Operação</button>
+          <button class="ativos-subtab" id="subtab-em-desuso" onclick="ativosSetSubtab('em_desuso')">Em Desuso</button>
+        </div>
+
+        <div id="assets-grid" class="assets-grid">
+          </div>
+
+        <button class="fab-btn" id="fab-new-ativo" onclick="openAtivoModal()" title="Novo Ativo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast global -->
+<div id="toast"></div>
+
+<!-- ══════════ MODAL CONFIRMAR LOGOUT ══════════ -->
+<div class="modal-overlay" id="modal-confirmar-logout">
+  <div class="modal sm logout-modal">
+    <div class="logout-modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </div>
+    <div class="logout-modal-title">Sair do sistema?</div>
+    <div class="logout-modal-desc">Sua sessão será encerrada. Você precisará fazer login novamente para acessar o sistema.</div>
+    <div class="logout-modal-actions">
+      <button class="btn btn-outline logout-cancel-btn" onclick="closeModal('modal-confirmar-logout')">Cancelar</button>
+      <button class="btn logout-confirm-btn" onclick="_confirmarLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:15px;height:15px;">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sair
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL RENOMEAR ANEXO ══════════ -->
+<!-- ══════════ MODAL AVISO ANEXO PENDENTE ══════════ -->
+<div class="modal-overlay" id="modal-aviso-anexo-pendente">
+  <div class="modal sm logout-modal" style="border-top:4px solid var(--red);">
+    <div class="logout-modal-icon" style="margin-top:32px;background:rgba(230,57,70,0.1);border-color:rgba(230,57,70,0.25);color:var(--red);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:30px;height:30px;">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <div class="logout-modal-title" style="color:var(--red);">Arquivo enviado pendente</div>
+    <div class="logout-modal-desc">
+      Há um arquivo já enviado que ainda não foi salvo.<br><br>
+      Para cancelar, <strong>exclua o arquivo</strong> da lista de anexos antes de fechar.
+    </div>
+    <div class="logout-modal-actions" style="justify-content:center;">
+      <button class="btn logout-confirm-btn" onclick="closeModal('modal-aviso-anexo-pendente')" style="flex:unset;padding:10px 28px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:15px;height:15px;">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-renomear-anexo">
+  <div class="modal sm" style="border-top:4px solid var(--cyan);padding:0;overflow:hidden;">
+    <div style="display:flex;align-items:center;gap:14px;padding:24px 24px 0;">
+      <div style="width:44px;height:44px;border-radius:12px;background:rgba(0,180,216,0.1);border:1.5px solid rgba(0,180,216,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--cyan);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:20px;height:20px;">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">Renomear anexo</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Altere o nome de exibição do arquivo</div>
+      </div>
+    </div>
+    <div style="padding:20px 24px 8px;">
+      <label class="field-label" style="margin-bottom:6px;">Novo nome</label>
+      <input id="renomear-anexo-input" type="text" class="field-input"
+        placeholder="Nome do arquivo..."
+        onkeydown="if(event.key==='Enter') _confirmarRenomearAnexo(); if(event.key==='Escape') closeModal('modal-renomear-anexo');"
+        style="font-size:14px;">
+    </div>
+    <div class="logout-modal-actions" style="padding:16px 24px;">
+      <button class="btn btn-outline logout-cancel-btn" onclick="closeModal('modal-renomear-anexo')">Cancelar</button>
+      <button class="btn logout-confirm-btn" onclick="_confirmarRenomearAnexo()"
+        style="background:var(--cyan);box-shadow:0 4px 16px rgba(0,180,216,0.3);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:15px;height:15px;">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Salvar nome
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL CONFIRMAR EXCLUIR PUBLICAÇÃO ══════════ -->
+<!-- ══════════ MODAL CONFIRMAR EXCLUIR ANEXO ══════════ -->
+<div class="modal-overlay" id="modal-confirmar-excluir-anexo">
+  <div class="modal sm logout-modal" style="border-top:4px solid var(--red);">
+    <div class="logout-modal-icon" style="margin-top:32px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
+    </div>
+    <div class="logout-modal-title">Excluir anexo?</div>
+    <div class="logout-modal-desc">O arquivo <strong id="excluir-anexo-nome"></strong> será <strong>permanentemente removido</strong> do Drive.<br><br>Esta ação <strong>não pode ser desfeita</strong>.</div>
+    <div class="logout-modal-actions">
+      <button id="btn-cancelar-excluir-anexo" class="btn btn-outline logout-cancel-btn" onclick="closeModal('modal-confirmar-excluir-anexo')">Cancelar</button>
+      <button id="btn-confirmar-excluir-anexo" class="btn logout-confirm-btn" onclick="_confirmarExcluirAnexo()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:15px;height:15px;">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+        </svg>
+        Excluir
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirmar-excluir-pub">
+  <div class="modal sm logout-modal" style="border-top:4px solid var(--red);">
+    <div class="logout-modal-icon" style="margin-top:32px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+        <path d="M10 11v6"/><path d="M14 11v6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>
+    </div>
+    <div class="logout-modal-title">Excluir publicação?</div>
+    <div class="logout-modal-desc">Este registro de atividade será <strong>permanentemente removido</strong>. Os anexos enviados ao Drive também serão deletados.<br><br>Esta ação <strong>não pode ser desfeita</strong>.</div>
+    <div class="logout-modal-actions">
+      <button class="btn btn-outline logout-cancel-btn" onclick="closeModal('modal-confirmar-excluir-pub')">Cancelar</button>
+      <button class="btn logout-confirm-btn" id="btn-confirmar-excluir-pub" onclick="_confirmarExcluirPublicacao()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:15px;height:15px;">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+        </svg>
+        Excluir
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL CONFIRMAR RESTAURAÇÃO ══════════ -->
+<div class="modal-overlay" id="modal-confirmar-restauracao">
+  <div class="modal sm" style="border-top:4px solid var(--red);">
+    <div class="modal-header" style="padding-bottom:0;border-bottom:none;">
+      <div class="modal-header-left">
+        <div class="modal-header-icon" style="background:rgba(230,57,70,0.12);color:var(--red);border-color:rgba(230,57,70,0.2);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" style="color:var(--red);">Ação irreversível</div>
+          <div class="modal-subtitle">Restauração de backup</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-confirmar-restauracao')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding-top:16px;">
+      <div class="restauracao-aviso">
+        <p>Todos os dados atuais — ativos, rotinas, tarefas e publicações — serão <strong>permanentemente substituídos</strong> pelo conteúdo do arquivo selecionado.</p>
+        <p style="margin-top:8px;">Esta operação <strong>não pode ser desfeita</strong>. Certifique-se de ter exportado um backup recente antes de continuar.</p>
+      </div>
+      <div class="form-field" style="margin-top:18px;margin-bottom:0;">
+        <label class="field-label" style="color:var(--red);font-weight:700;">
+          Digite <span style="font-family:'DM Mono',monospace;background:rgba(230,57,70,0.1);padding:1px 6px;border-radius:4px;letter-spacing:1px;">SIM</span> para confirmar
+        </label>
+        <input type="text" id="restauracao-confirm-input" class="field-input restauracao-confirm-input"
+          placeholder="Digite SIM aqui..."
+          oninput="validarConfirmRestauracao()"
+          onkeydown="if(event.key==='Enter') executarRestauracao()">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-confirmar-restauracao')">Cancelar</button>
+      <button class="btn" id="btn-executar-restauracao"
+        style="background:var(--red);color:#fff;box-shadow:0 4px 12px rgba(230,57,70,0.25);opacity:.4;cursor:not-allowed;"
+        onclick="executarRestauracao()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Restaurar Dados
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DRAWER BACKDROP ══════════ -->
+<div id="drawer-backdrop" class="drawer-backdrop"></div>
+
+<!-- ══════════ DRAWER DIREITO — ROTINA ══════════ -->
+<div id="right-drawer" class="right-drawer">
+  <div class="drawer-header">
+    <div class="drawer-header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+    </div>
+    <div>
+      <div class="drawer-title" id="drawer-rotina-title">Nova Rotina</div>
+      <div class="drawer-subtitle" id="drawer-rotina-subtitle">Preencha os dados da rotina de manutenção</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="drawer-tabs">
+    <button class="drawer-tab-btn active" id="dtab-btn-operacao" onclick="switchDrawerTab('operacao')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Operação
+    </button>
+  </div>
+
+  <!-- Body com os painéis -->
+  <div class="drawer-body">
+
+    <!-- Painel: Operação -->
+    <div id="dtab-operacao" class="drawer-tab-panel active">
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Identificação
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Nome da Rotina <span class="required">*</span></label>
+          <input type="text" id="rotina-nome" class="field-input" placeholder="Ex: Verificação semanal de calibração">
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Ativo <span class="required">*</span></label>
+          <div class="autocomplete-wrapper">
+            <input type="text" id="rotina-equip-input" class="field-input" placeholder="Pesquisar ativo..." autocomplete="off"
+              oninput="filterEquipAutocomplete()" onfocus="filterEquipAutocomplete()" onblur="setTimeout(()=>closeEquipDropdown(),180)">
+            <div class="autocomplete-dropdown" id="rotina-equip-dropdown"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Setor</label>
+            <div class="read-field" id="rotina-setor-display">
+              <span class="read-field-placeholder">— automático —</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Categoria</label>
+            <div class="read-field" id="rotina-cat-display">
+              <span class="read-field-placeholder">— automático —</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Tipo <span class="required">*</span></label>
+          <select id="rotina-tipo" class="field-select" onchange="toggleIsentoPreventiva()">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+
+        <!-- Bloco exclusivo tipo Preventiva -->
+        <div id="bloco-isento-preventiva" style="display:none;">
+          <div class="isento-toggle-card">
+            <div class="isento-toggle-info">
+              <div class="isento-toggle-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Isento de manutenção preventiva
+              </div>
+              <div class="isento-toggle-desc">Indica que este equipamento está dispensado da rotina preventiva padrão</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="rotina-isento-check" onchange="toggleIsentoFields()">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div id="bloco-isento-fields" style="display:none;">
+            <div class="form-field">
+              <label class="field-label">Justificativa da isenção</label>
+              <textarea id="rotina-isento-descricao" class="field-input field-textarea" placeholder="Descreva o motivo da isenção de manutenção preventiva..." rows="3"></textarea>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Documentos anexados</label>
+
+              <!-- Lista de anexos já enviados ao Drive -->
+              <div id="rotina-anexos-lista"></div>
+
+              <!-- Zona para adicionar novo anexo -->
+              <div class="isento-upload-box" id="rotina-isento-upload-box">
+                <div class="upload-drop-zone" id="isento-rotina-upload-zone">
+                  <input type="file" id="isento-rotina-file-input" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--text-muted);"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                  <div class="anexo-drop-text">Clique ou arraste o arquivo aqui</div>
+                  <div class="anexo-drop-hint">PDF, JPG, PNG — máx. um por vez</div>
+                </div>
+                <div id="isento-rotina-file-preview" style="display:none;"></div>
+                <input type="text" id="isento-rotina-upload-title" class="field-input" placeholder="Título do documento *" style="margin-top:8px;">
+                <button type="button" id="isento-rotina-upload-btn" class="btn btn-outline" style="margin-top:8px;width:100%;" onclick="doUploadIsentoAnexo()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /dtab-operacao -->
+
+
+  </div><!-- /drawer-body -->
+
+  <div class="drawer-footer">
+    <button id="btn-hist-rotina" class="btn btn-outline" style="display:none;" onclick="openRastreabilidadeModal('rotina')" title="Rastreabilidade de edições">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </button>
+    <button class="btn btn-outline" onclick="closeRotinaDrawer()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveRotina()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      <span id="drawer-save-label">Salvar Rotina</span>
+    </button>
+  </div>
+</div><!-- /right-drawer -->
+
+<!-- ══════════ MODAL BUSCA DE ATIVO ══════════ -->
+<div class="modal-overlay" id="modal-ativo-selector">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Selecionar Ativo</div>
+          <div class="modal-subtitle">Busque e selecione para filtrar as rotinas</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-ativo-selector')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="ativo-search-input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="ativo-selector-search" class="field-input" placeholder="Pesquisar por nome, código ou setor..." oninput="renderAtivoSelectorList()">
+      </div>
+      <div id="ativo-selector-list" class="ativo-search-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-ativo-selector')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL RESPONSÁVEIS DA TAREFA ══════════ -->
+
+<!-- ══════════ MODAL SELEÇÃO DE ROTINA (FILTRO TAREFAS) ══════════ -->
+<div class="modal-overlay" id="modal-rotina-selector-tarefas">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Selecionar Rotina</div>
+          <div class="modal-subtitle">Filtre as tarefas pela rotina</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-rotina-selector-tarefas')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="rotina-selector-tarefas-list" class="ativo-search-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-rotina-selector-tarefas')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL SELEÇÃO DE ROTINA (FILTRO AGENDA) ══════════ -->
+<div class="modal-overlay" id="modal-rotina-selector-agenda">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Selecionar Rotina</div>
+          <div class="modal-subtitle">Filtre a agenda pela rotina</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-rotina-selector-agenda')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="rotina-selector-agenda-list" class="ativo-search-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-rotina-selector-agenda')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL GERENCIAR TIPOS ══════════ -->
+<div class="modal-overlay" id="modal-tipo">
+  <div class="modal sm">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Tipos de Rotina</div>
+          <div class="modal-subtitle">Gerencie os tipos disponíveis</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-tipo')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="field-label">Tipos cadastrados</label>
+        <div id="tipo-list" style="display:grid;gap:8px;margin-bottom:12px;"></div>
+      </div>
+      <div class="form-field" style="margin-bottom:0;">
+        <label class="field-label">Novo tipo</label>
+        <input type="text" id="input-novo-tipo" class="field-input" placeholder="Ex: Preditivo"
+          onkeydown="if(event.key==='Enter') salvarTipo()">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-tipo')">Fechar</button>
+      <button class="btn btn-primary" id="tipo-save-btn" onclick="salvarTipo()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL VISUALIZAR ROTINA ══════════ -->
+<div class="modal-overlay" id="modal-rotina-view">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="rotina-view-title">Detalhes da Rotina</div>
+          <div class="modal-subtitle" id="rotina-view-subtitle">Informações completas</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="modal-close" onclick="openRastreabilidadeModal('rotina-view')" title="Rastreabilidade de edições">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+        <button id="btn-editar-rotina" class="btn btn-outline" onclick="editarRotinaAtual()" style="padding:0 12px;min-height:34px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;margin-right:6px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+          Editar
+        </button>
+        <button class="modal-close" onclick="closeModal('modal-rotina-view')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-body" style="max-height:60vh;">
+      <div id="rotina-view-body"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="btn-toggle-rotina" onclick="toggleRotinaStatus()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        Inativar
+      </button>
+      <button id="btn-excluir-rotina" class="btn btn-primary" style="background:var(--red);box-shadow:none;" onclick="confirmarDeleteRotina()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        Excluir
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DRAWER DIREITO — TAREFA ══════════ -->
+<div id="right-drawer-tarefa" class="right-drawer">
+  <div class="drawer-header">
+    <div class="drawer-header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    </div>
+    <div>
+      <div class="drawer-title" id="drawer-tarefa-title">Nova Tarefa</div>
+      <div class="drawer-subtitle">Programe a execução de uma rotina</div>
+    </div>
+  </div>
+
+  <!-- Abas do drawer de tarefa -->
+  <div class="drawer-tabs">
+    <button class="drawer-tab-btn active" id="dtab-tarefa-btn-dados" onclick="switchTarefaDrawerTab('dados')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Dados
+    </button>
+    <button class="drawer-tab-btn" id="dtab-tarefa-btn-checklist" onclick="switchTarefaDrawerTab('checklist')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span id="dtab-tarefa-checklist-label">Checklist da Tarefa</span>
+    </button>
+  </div>
+
+  <div class="drawer-body">
+
+    <!-- Painel: Dados -->
+    <div id="dtab-tarefa-dados" class="drawer-tab-panel active">
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 16V7a2 2 0 00-2-2H6a2 2 0 00-2 2v9m16 0H4"/></svg>
+          Equipamento & Rotina
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Título da Tarefa <span class="required">*</span></label>
+          <input type="text" id="tarefa-titulo" class="field-input" placeholder="Ex: Calibração mensal de março">
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Ativo <span class="required">*</span></label>
+          <div class="ativo-search-wrap" id="tarefa-equip-wrap" style="position:relative;">
+            <input type="text" id="tarefa-equip-input" class="field-input" placeholder="Pesquisar ativo..." autocomplete="off"
+              oninput="onTarefaEquipSearch()" onfocus="onTarefaEquipFocus()" onblur="onTarefaEquipBlur()">
+            <input type="hidden" id="tarefa-equip-select" value="">
+            <div id="tarefa-equip-dropdown" class="ativo-search-dropdown" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Rotina <span class="required">*</span></label>
+          <select id="tarefa-rotina-select" class="field-select" onchange="onTarefaRotinaChange()">
+            <option value="">Selecione a rotina...</option>
+          </select>
+        </div>
+
+        <!-- Info da rotina (somente leitura) -->
+        <div id="tarefa-rotina-info" class="rotina-info-card" style="display:none;">
+          <div class="rotina-info-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Dados da Rotina
+          </div>
+          <div class="rotina-info-grid">
+            <div class="rotina-info-cell">
+              <div class="rotina-info-cell-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
+              </div>
+              <div>
+                <div class="rotina-info-label">Tipo</div>
+                <div class="rotina-info-value" id="tinfo-tipo">—</div>
+              </div>
+            </div>
+            <div class="rotina-info-cell">
+              <div class="rotina-info-cell-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div>
+                <div class="rotina-info-label">Setor</div>
+                <div class="rotina-info-value" id="tinfo-setor">—</div>
+              </div>
+            </div>
+            <div class="rotina-info-cell">
+              <div class="rotina-info-cell-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 16V7a2 2 0 00-2-2H6a2 2 0 00-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 01-.9 1.45H3.62a1 1 0 01-.9-1.45L4 16"/>
+                </svg>
+              </div>
+              <div>
+                <div class="rotina-info-label">Categoria</div>
+                <div class="rotina-info-value" id="tinfo-cat">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Programação
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" id="tarefa-data-label">Data da Tarefa <span class="required" id="tarefa-data-required">*</span></label>
+          <input type="date" id="tarefa-data" class="field-input" oninput="autoCalcProximaData()">
+        </div>
+
+        <div id="tarefa-lembrete-field" class="form-field">
+          <label class="field-label">Lembrete (dias antes)</label>
+          <input type="number" id="tarefa-lembrete" class="field-input" min="0" placeholder="Ex: 3">
+        </div>
+
+        <div class="form-field" id="tarefa-proxima-field">
+          <label class="field-label">Próxima Data</label>
+          <div class="auto-date-field" id="tarefa-proxima-display">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Calculado automaticamente
+          </div>
+          <input type="hidden" id="tarefa-proxima-data">
+        </div>
+      </div>
+
+      <div class="form-section" id="tarefa-recorrencia-section">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Recorrência
+        </div>
+
+        <div class="form-row">
+          <div class="form-field" id="tarefa-fazer-cada-field">
+            <label class="field-label">Fazer a cada <span class="required">*</span></label>
+            <input type="number" id="tarefa-fazer-cada" class="field-input" min="1" placeholder="Ex: 15" oninput="autoCalcProximaData()">
+          </div>
+          <div class="form-field">
+            <label class="field-label">Frequência <span class="required">*</span></label>
+            <select id="tarefa-frequencia" class="field-select" onchange="onTarefaFrequenciaChange()">
+              <option value="Sempre">Sempre</option>
+              <option value="Dia">Dia(s)</option>
+              <option value="Semana">Semana(s)</option>
+              <option value="Meses" selected>Mês(es)</option>
+              <option value="Anos">Ano(s)</option>
+              <option value="DiaDaSemana">Dia da Semana</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dias da semana (visível apenas quando DiaDaSemana) -->
+        <div id="tarefa-dias-semana-field" class="form-field" style="display:none;">
+          <label class="field-label">Dias da semana <span class="required">*</span></label>
+          <div class="dias-semana-grid" id="tarefa-dias-semana-grid">
+            <button type="button" class="dia-semana-btn" data-dia="1" onclick="toggleDiaSemana(1)">Seg</button>
+            <button type="button" class="dia-semana-btn" data-dia="2" onclick="toggleDiaSemana(2)">Ter</button>
+            <button type="button" class="dia-semana-btn" data-dia="3" onclick="toggleDiaSemana(3)">Qua</button>
+            <button type="button" class="dia-semana-btn" data-dia="4" onclick="toggleDiaSemana(4)">Qui</button>
+            <button type="button" class="dia-semana-btn" data-dia="5" onclick="toggleDiaSemana(5)">Sex</button>
+            <button type="button" class="dia-semana-btn" data-dia="6" onclick="toggleDiaSemana(6)">Sáb</button>
+            <button type="button" class="dia-semana-btn" data-dia="0" onclick="toggleDiaSemana(0)">Dom</button>
+          </div>
+        </div>
+
+        <div class="form-row" id="tarefa-repetir-row" style="align-items:flex-end;">
+          <div class="form-field">
+            <label class="field-label">Repetir <span class="required">*</span></label>
+            <select id="tarefa-repetir" class="field-select" onchange="toggleTarefaVezesField()">
+              <option value="Sempre">Sempre</option>
+              <option value="Por">Por quantidade de vezes</option>
+            </select>
+          </div>
+          <div class="form-field" id="tarefa-field-vezes" style="display:none;">
+            <label class="field-label">Vezes <span class="required">*</span></label>
+            <input type="number" id="tarefa-vezes" class="field-input" min="1" placeholder="Nº de vezes">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Responsáveis
+        </div>
+        <div class="form-field" style="margin-bottom:0;">
+          <div class="autocomplete-wrapper">
+            <input type="text" id="resp-search-input" class="field-input"
+              placeholder="Buscar usuário ou grupo..."
+              autocomplete="off"
+              oninput="filterResponsaveisSearch()"
+              onfocus="filterResponsaveisSearch()"
+              onblur="setTimeout(closeResponsaveisDropdown, 180)">
+            <div class="autocomplete-dropdown" id="resp-search-dropdown"></div>
+          </div>
+          <div id="responsaveis-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom:0;">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Observações
+        </div>
+
+        <div class="form-field">
+          <textarea id="tarefa-obs" class="field-textarea" placeholder="Informações adicionais sobre a tarefa..."></textarea>
+        </div>
+
+        <div class="form-field" style="margin-bottom:12px;">
+          <div class="toggle-row">
+            <div style="flex:1;min-width:0;">
+              <div class="toggle-row-title">Realizado por terceiro</div>
+              <div class="toggle-sub">Solicita empresa e técnico responsável ao publicar</div>
+            </div>
+            <label class="toggle-switch" style="flex-shrink:0;margin-left:14px;">
+              <input type="checkbox" id="tarefa-terceiro" onchange="onTarefaTerceiroChange()">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div id="tarefa-terceiro-section" style="display:none;margin-bottom:12px;">
+          <div class="form-row">
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="field-label">Empresa Padrão</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="tarefa-empresa-padrao" class="field-input" placeholder="Pesquisar empresa..." autocomplete="off"
+                  oninput="tarefaEmpresaFilter()" onfocus="tarefaEmpresaFilter()" onblur="setTimeout(()=>tarefaEmpresaClose(),180)">
+                <div class="autocomplete-dropdown" id="tarefa-empresa-padrao-dd"></div>
+              </div>
+            </div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="field-label">Responsável Padrão</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="tarefa-resp-padrao" class="field-input" placeholder="Pesquisar responsável..." autocomplete="off"
+                  oninput="tarefaRespFilter()" onfocus="tarefaRespFilter()" onblur="setTimeout(()=>tarefaRespClose(),180)">
+                <div class="autocomplete-dropdown" id="tarefa-resp-padrao-dd"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field" style="margin-bottom:0;">
+          <div class="toggle-row">
+            <div style="flex:1;min-width:0;">
+              <div class="toggle-row-title">Exigir anexo na publicação</div>
+              <div class="toggle-sub">Pelo menos 1 link obrigatório ao publicar</div>
+            </div>
+            <label class="toggle-switch" style="flex-shrink:0;margin-left:14px;">
+              <input type="checkbox" id="tarefa-anexo-obrigatorio">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /dtab-tarefa-dados -->
+
+    <!-- Painel: Checklist da Tarefa -->
+    <div id="dtab-tarefa-checklist" class="drawer-tab-panel">
+      <div class="form-section-title" style="margin-bottom:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Itens do Checklist da Tarefa
+      </div>
+      <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
+        Checklist específico desta tarefa. Será solicitado na publicação.
+      </p>
+      <div class="checklist-add-row">
+        <input type="text" id="tarefa-checklist-novo-item" class="field-input" placeholder="Descreva o item..."
+          onkeydown="if(event.key==='Enter'){addTarefaChecklistItem();event.preventDefault();}">
+        <button class="btn btn-primary" onclick="addTarefaChecklistItem()" style="white-space:nowrap;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Adicionar
+        </button>
+      </div>
+      <div id="tarefa-checklist-builder" class="checklist-builder">
+        <div class="checklist-empty-tip">Nenhum item adicionado.</div>
+      </div>
+    </div><!-- /dtab-tarefa-checklist -->
+
+  </div><!-- /drawer-body -->
+
+  <div class="drawer-footer">
+    <div style="margin-right:auto; display:flex; align-items:center; gap:12px;">
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <label class="field-label" style="margin:0;font-size:12px;line-height:1.2;color:var(--text-muted);">Ativo</label>
+        <div class="status-toggle" style="margin:0;">
+          <input type="checkbox" id="tarefa-status" class="status-toggle-input" onchange="updateTarefaStatusToggleLabel()" checked>
+          <label class="status-toggle-label" for="tarefa-status">
+            <span id="tarefa-status-label">Ativo</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <button id="btn-hist-tarefa" class="btn btn-outline" style="display:none;" onclick="openRastreabilidadeModal('tarefa')" title="Rastreabilidade de edições">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </button>
+    <button class="btn btn-outline" onclick="closeTarefaDrawer()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveTarefa()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+      <span id="tarefa-save-label">Salvar Tarefa</span>
+    </button>
+  </div>
+</div><!-- /right-drawer-tarefa -->
+
+<!-- ══════════ MODAL DETALHE DA TAREFA ══════════ -->
+<div class="modal-overlay" id="modal-tarefa-detalhe">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="tarefa-detalhe-title">Detalhe da Tarefa</div>
+          <div class="modal-subtitle" id="tarefa-detalhe-subtitle">Informações completas</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+        <button class="modal-close" onclick="openRastreabilidadeModal('tarefa-view')" title="Rastreabilidade de edições">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+        <button id="btn-editar-tarefa" class="modal-close" style="width:auto;padding:0 10px;gap:5px;font-size:12px;font-weight:600;font-family:inherit;" onclick="editarTarefaAtual()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+          Editar
+        </button>
+        <button class="modal-close" onclick="closeModal('modal-tarefa-detalhe')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Abas da tarefa -->
+    <div class="drawer-tabs" style="background:var(--bg);border-bottom:1px solid var(--border);padding:0 24px;">
+      <button class="drawer-tab-btn active" id="tdtab-btn-info" onclick="switchTarefaDetalheTab('info')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Informações
+      </button>
+      <button class="drawer-tab-btn" id="tdtab-btn-atividades" onclick="switchTarefaDetalheTab('atividades')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span id="tdtab-label-atividades">Atividades</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div id="tdtab-info" style="display:block;">
+        <div id="tarefa-detalhe-body"></div>
+      </div>
+      <div id="tdtab-atividades" style="display:none;">
+        <div class="data-table-wrapper" style="overflow:auto;">
+          <table class="data-table">
+            <thead>
+              <tr id="historico-thead-row">
+                <th class="th-sortable th-sort-active" onclick="sortHistoricoBy('dataRealizada')" data-sort-col="dataRealizada" data-sort-arrow=" ↓">Data Realizada</th>
+                <th class="th-sortable" onclick="sortHistoricoBy('dataPublicacao')" data-sort-col="dataPublicacao" data-sort-arrow="">Publicado em</th>
+                <th class="th-sortable" onclick="sortHistoricoBy('publicadoPor')" data-sort-col="publicadoPor" data-sort-arrow="">Publicado por</th>
+                <th>Checklist</th>
+                <th>Observações</th>
+              </tr>
+            </thead>
+            <tbody id="historico-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-excluir-tarefa" class="btn btn-outline" style="color:var(--red);border-color:rgba(230,57,70,0.3);" onclick="excluirTarefaAtual()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        Excluir
+      </button>
+      <button class="btn btn-primary" id="btn-publicar-tarefa" onclick="openPublicarModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+        Publicar Tarefa
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL PUBLICAR TAREFA ══════════ -->
+<div class="modal-overlay" id="modal-publicar">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Publicar Tarefa</div>
+          <div class="modal-subtitle">Registre a execução da manutenção</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="cancelarPublicacao()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="pub-info-tarefa" style="background:linear-gradient(135deg,var(--night) 0%,var(--night-mid) 100%);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:18px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;">
+        <div style="position:absolute;right:-18px;top:-18px;width:80px;height:80px;border-radius:50%;background:rgba(0,168,204,0.08);border:1px solid rgba(0,168,204,0.14);pointer-events:none;"></div>
+        <!-- Ativo -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,168,204,0.18);border:1px solid rgba(0,168,204,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" style="width:13px;height:13px;"><path d="M20 16V7a2 2 0 00-2-2H6a2 2 0 00-2 2v9"/><path d="M2 16h20"/><path d="M6 20h12"/></svg>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+            <span style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:rgba(255,255,255,0.38);">Ativo</span>
+            <span id="pub-info-ativo-val" style="font-size:13.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
+          </div>
+        </div>
+        <!-- Divisor -->
+        <div style="height:1px;background:rgba(255,255,255,0.07);"></div>
+        <!-- Rotina + Tarefa -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2" style="width:11px;height:11px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+            </div>
+            <div style="min-width:0;">
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:rgba(255,255,255,0.35);">Rotina</div>
+              <div id="pub-info-rotina-val" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2" style="width:11px;height:11px;"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            </div>
+            <div style="min-width:0;">
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:rgba(255,255,255,0.35);">Tarefa</div>
+              <div id="pub-info-tarefa-val" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field" style="margin-bottom:0;">
+          <label class="field-label">Data de Realização <span class="required">*</span></label>
+          <input type="date" id="pub-data-realizada" class="field-input">
+        </div>
+        <div class="form-field" style="margin-bottom:0;">
+          <label class="field-label">Hora de Realização <span class="required">*</span></label>
+          <input type="time" id="pub-hora-realizada" class="field-input">
+        </div>
+      </div>
+      <div id="pub-checklist-section" style="display:none;">
+        <div id="pub-checklist" class="pub-checklist"></div>
+        <div class="pub-checklist-progress">
+          <span id="pub-progress-label">0 / 0 itens marcados</span>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="pub-progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div id="pub-anexo-section" style="display:none;margin-top:14px;">
+        <div class="form-section-title" style="margin-bottom:10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          Anexos <span id="pub-anexo-req-label" style="font-size:10px;color:var(--red);font-weight:700;margin-left:4px;display:none;">* obrigatório</span>
+        </div>
+        <!-- Upload de arquivo -->
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+          <input type="text" id="pub-upload-title" class="field-input" placeholder="Nome do arquivo" style="flex:1;min-width:0;">
+          <button id="pub-upload-btn" class="btn btn-primary" onclick="doUploadAnexo('pub', a => addPubAnexoFromUpload(a), () => _getUploadPrefixo('pub'))" style="flex-shrink:0;gap:6px;" title="Fazer upload">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:14px;height:14px;">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Enviar
+          </button>
+        </div>
+        <div id="pub-upload-zone" class="upload-drop-zone" title="Clique ou arraste um arquivo PDF ou imagem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:.45;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="upload-drop-text"><strong>Clique ou arraste o arquivo</strong><br><span>PDF ou imagem</span></div>
+          <input type="file" id="pub-file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg" style="display:none;">
+        </div>
+        <div id="pub-file-preview" style="display:none;"></div>
+        <div id="pub-anexo-list" class="anexo-list" style="margin-top:8px;"></div>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="form-field" style="margin-bottom:0;">
+          <div class="toggle-row" style="cursor:pointer;" onclick="togglePubTerceiro()">
+            <div style="flex:1;min-width:0;">
+              <div class="toggle-row-title">Realizado por terceiro</div>
+              <div class="toggle-sub">Registra empresa e técnico responsável nesta publicação</div>
+            </div>
+            <label class="toggle-switch" style="flex-shrink:0;margin-left:14px;" onclick="event.stopPropagation()">
+              <input type="checkbox" id="pub-terceiro-checkbox" onchange="togglePubTerceiro()">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div id="pub-terceiro-section" style="display:none;margin-top:8px;">
+          <div class="form-row">
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="field-label">Empresa Responsável</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="pub-empresa-responsavel" class="field-input" placeholder="Pesquisar empresa..." autocomplete="off"
+                  oninput="pubEmpresaFilter()" onfocus="pubEmpresaFilter()" onblur="setTimeout(()=>pubEmpresaClose(),180)">
+                <div class="autocomplete-dropdown" id="pub-empresa-responsavel-dd"></div>
+              </div>
+            </div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="field-label">Técnico Responsável</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="pub-tecnico-responsavel" class="field-input" placeholder="Selecione uma empresa primeiro" autocomplete="off"
+                  oninput="pubTecnicoFilter()" onfocus="pubTecnicoFilter()" onblur="setTimeout(()=>pubTecnicoClose(),180)" disabled>
+                <div class="autocomplete-dropdown" id="pub-tecnico-responsavel-dd"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-field" style="margin-top:14px; margin-bottom:0;">
+        <label class="field-label">Observações</label>
+        <textarea id="pub-notas" class="field-textarea" placeholder="Notas sobre a execução..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cancelarPublicacao()">Cancelar</button>
+      <button id="btn-confirmar-publicacao" class="btn btn-primary" onclick="publicarTarefa()" style="background:var(--green);box-shadow:0 4px 12px rgba(42,157,143,0.3);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/></svg>
+        Confirmar Publicação
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL VER PUBLICAÇÃO ══════════ -->
+<div class="modal-overlay" id="modal-pub-view">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Publicação Registrada</div>
+          <div class="modal-subtitle" id="pub-view-subtitle">Detalhes da execução</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="modal-close" onclick="openRastreabilidadeModal('pub-view')" title="Rastreabilidade da atividade">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+        <button class="modal-close" onclick="closePubView()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body" id="pub-view-body"></div>
+    <div class="modal-footer">
+      <button id="btn-excluir-pub-view" class="btn btn-outline" style="color:var(--red);border-color:rgba(230,57,70,0.35);margin-right:auto;" onclick="excluirPublicacaoFromView()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Excluir
+      </button>
+      <button id="btn-editar-pub-view" class="btn btn-primary" onclick="editarPubView()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        Editar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL EDITAR PUBLICAÇÃO ══════════ -->
+<div class="modal-overlay" id="modal-editar-pub">
+  <div class="modal sm">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Editar Publicação</div>
+          <div class="modal-subtitle">Altere os dados desta execução</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="cancelarEdicaoPublicacao()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-pub-id">
+      <div class="form-row">
+        <div class="form-field" style="margin-bottom:0;">
+          <label class="field-label">Data de Realização <span class="required">*</span></label>
+          <input type="date" id="edit-pub-data" class="field-input">
+        </div>
+        <div class="form-field" style="margin-bottom:0;">
+          <label class="field-label">Hora de Realização <span class="required">*</span></label>
+          <input type="time" id="edit-pub-hora" class="field-input">
+        </div>
+      </div>
+      <div id="edit-pub-terceiro-section" style="display:none;">
+        <div class="form-row">
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="field-label">Empresa Responsável</label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="edit-pub-empresa" class="field-input" placeholder="Pesquisar empresa..." autocomplete="off"
+                oninput="editPubEmpresaFilter()" onfocus="editPubEmpresaFilter()" onblur="setTimeout(()=>editPubEmpresaClose(),180)">
+              <div class="autocomplete-dropdown" id="edit-pub-empresa-dd"></div>
+            </div>
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="field-label">Técnico Responsável</label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="edit-pub-tecnico" class="field-input" placeholder="Selecione uma empresa primeiro" autocomplete="off"
+                oninput="editPubTecnicoFilter()" onfocus="editPubTecnicoFilter()" onblur="setTimeout(()=>editPubTecnicoClose(),180)" disabled>
+              <div class="autocomplete-dropdown" id="edit-pub-tecnico-dd"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Observações</label>
+        <textarea id="edit-pub-notas" class="field-textarea" placeholder="Notas sobre a execução..."></textarea>
+      </div>
+      <div class="form-field" style="margin-bottom:0;">
+        <label class="field-label">Anexos</label>
+        <!-- Upload de arquivo -->
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+          <input type="text" id="edit-pub-upload-title" class="field-input" placeholder="Nome do arquivo" style="flex:1;min-width:0;">
+          <button id="edit-pub-upload-btn" class="btn btn-primary" onclick="doUploadAnexo('edit-pub', a => addEditPubAnexoFromUpload(a), () => _getUploadPrefixo('edit-pub'))" style="flex-shrink:0;gap:6px;" title="Fazer upload">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:14px;height:14px;">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Enviar
+          </button>
+        </div>
+        <div id="edit-pub-upload-zone" class="upload-drop-zone" title="Clique ou arraste um arquivo PDF ou imagem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:.45;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="upload-drop-text"><strong>Clique ou arraste o arquivo</strong><br><span>PDF ou imagem</span></div>
+          <input type="file" id="edit-pub-file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg" style="display:none;">
+        </div>
+        <div id="edit-pub-file-preview" style="display:none;"></div>
+        <div id="edit-pub-anexo-list" class="anexo-list" style="margin-top:8px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cancelarEdicaoPublicacao()">Cancelar</button>
+      <button id="btn-salvar-edicao-pub" class="btn btn-primary" onclick="salvarEdicaoPublicacao()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAIS EXISTENTES ══════════ -->
+<div class="right-drawer" id="modal-ativo">
+  <div class="drawer-header">
+    <div class="drawer-header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </div>
+    <div>
+      <div class="drawer-title" id="modal-ativo-title">Novo Ativo</div>
+      <div class="drawer-subtitle">Preencha os dados do equipamento</div>
+    </div>
+  </div>
+
+  <div class="drawer-body">
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Identificação
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Nome do Ativo <span class="required">*</span></label>
+            <input type="text" id="ativo-nome" class="field-input" placeholder="Ex: Monitor Multiparamétrico">
+          </div>
+          <div class="form-field">
+            <label class="field-label">Código <span class="required">*</span></label>
+            <input type="text" id="ativo-codigo" class="field-input" placeholder="Ex: EQ-1001">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Tipo <span class="required">*</span></label>
+            <select id="ativo-tipo" class="field-input" onchange="onAtivoTipoChange(this.value)">
+              <option value="Equipamento">Equipamento</option>
+              <option value="Infraestrutura">Infraestrutura</option>
+              <option value="Procedimento">Procedimento</option>
+              <option value="Diversos">Diversos</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Unidade · Setor <span class="required">*</span></label>
+            <div class="input-with-btn">
+              <div class="sector-search-wrap" id="form-setor-wrap" style="position:relative;flex:1;">
+                <input id="ativo-setor-input" type="text" class="field-input sector-search-input"
+                  placeholder="Selecione ou digite..." autocomplete="off"
+                  oninput="formSetorFilter(this.value)"
+                  onfocus="formSetorOpen()"
+                  onkeydown="formSetorKey(event)"
+                  style="width:100%;height:36px;font-size:13px;padding-right:28px;">
+                <span class="sector-search-caret" onclick="formSetorToggle()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+                </span>
+                <div id="form-setor-dropdown" class="sector-search-dropdown" style="display:none;"></div>
+                <input type="hidden" id="ativo-setor">
+              </div>
+              <button id="btn-editar-setor-form" class="btn btn-outline btn-icon" onclick="openSetorModal()" title="Unidades e setores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Categoria <span class="required">*</span></label>
+            <div class="input-with-btn">
+              <div class="sector-search-wrap" id="form-categoria-wrap" style="position:relative;flex:1;">
+                <input id="ativo-categoria-input" type="text" class="field-input sector-search-input"
+                  placeholder="Selecione ou digite..." autocomplete="off"
+                  oninput="formCategoriaFilter(this.value)"
+                  onfocus="formCategoriaOpen()"
+                  onkeydown="formCategoriaKey(event)"
+                  style="width:100%;height:36px;font-size:13px;padding-right:28px;">
+                <span class="sector-search-caret" onclick="formCategoriaToggle()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+                </span>
+                <div id="form-categoria-dropdown" class="sector-search-dropdown" style="display:none;"></div>
+                <input type="hidden" id="ativo-categoria">
+              </div>
+              <button id="btn-editar-categoria-form" class="btn btn-outline btn-icon" onclick="openCategoriaModal()" title="Gerenciar Categorias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <!-- Ambiente (sala): aparece quando o setor escolhido tem ambientes vinculados (org.js) -->
+        <div class="form-row" id="ativo-ambiente-row" style="display:none;">
+          <div class="form-field">
+            <label class="field-label">Ambiente <span class="required">*</span> <span class="amb-hint" id="ativo-ambiente-hint"></span></label>
+            <div class="input-with-btn">
+              <div class="sector-search-wrap" id="form-ambiente-wrap" style="position:relative;flex:1;">
+                <span class="amb-input-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V4a1 1 0 011-1h10a1 1 0 011 1v17"/><circle cx="14.5" cy="12" r=".9" fill="currentColor"/></svg></span>
+                <input id="ativo-ambiente-input" type="text" class="field-input sector-search-input amb-input"
+                  placeholder="Selecione a sala..." autocomplete="off"
+                  oninput="formAmbienteFilter(this.value)"
+                  onfocus="formAmbienteOpen()"
+                  onkeydown="formAmbienteKey(event)"
+                  style="width:100%;height:36px;font-size:13px;padding-right:28px;">
+                <span class="sector-search-caret" onclick="formAmbienteToggle()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+                </span>
+                <div id="form-ambiente-dropdown" class="sector-search-dropdown" style="display:none;"></div>
+                <input type="hidden" id="ativo-ambiente">
+              </div>
+              <button class="btn btn-outline btn-icon" onclick="formAmbienteGerenciar()" title="Ambientes da unidade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+          </div>
+          <!-- Setores compartilhados: outros setores do mesmo ambiente que também usam o ativo (org.js) -->
+          <div class="form-field" id="ativo-comp-row" style="display:none;">
+            <label class="field-label">Compartilhar com
+              <span class="comp-info" tabindex="0" data-tip="Outros setores deste ambiente que também usam o ativo — o setor acima continua responsável">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              </span>
+            </label>
+            <div class="comp-pop-wrap" id="ativo-comp-wrap">
+              <button type="button" class="field-input comp-pop-btn" id="ativo-comp-btn" aria-haspopup="true" aria-expanded="false" onclick="formCompPopToggle()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                <span class="comp-pop-rot" id="ativo-comp-rot">Nenhum setor</span>
+                <svg class="comp-pop-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="org-pop comp-pop" id="ativo-comp-pop" role="menu">
+                <div class="org-pop-head"><b>Compartilhar com</b></div>
+                <div class="org-pop-lista" id="ativo-comp-chips"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section" id="ativo-especificacoes-section">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Especificações Técnicas
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Marca</label>
+            <input type="text" id="ativo-marca" class="field-input" placeholder="Fabricante">
+          </div>
+          <div class="form-field">
+            <label class="field-label">Modelo</label>
+            <input type="text" id="ativo-modelo" class="field-input" placeholder="Modelo do equipamento">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Número de Série</label>
+            <input type="text" id="ativo-serie" class="field-input" placeholder="S/N">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Status de Uso
+        </div>
+        <div class="ativo-status-toggle-row">
+          <button type="button" id="btn-ativo-em-uso"
+            class="ativo-status-btn active" onclick="ativoSetStatus('em_uso')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Em Uso
+          </button>
+          <button type="button" id="btn-ativo-em-pausa"
+            class="ativo-status-btn" onclick="ativoSetStatus('em_pausa')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            Em Pausa
+          </button>
+          <button type="button" id="btn-ativo-em-desuso"
+            class="ativo-status-btn" onclick="ativoSetStatus('em_desuso')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            Em Desuso
+          </button>
+        </div>
+        <div id="ativo-pausa-section" style="display:none; margin-top:12px;">
+          <label class="field-label" style="margin-bottom:6px;">
+            OTs associadas à pausa <span class="required">*</span>
+            <span style="font-weight:400;color:var(--text-muted);font-size:11px;"> — mínimo 1 obrigatória</span>
+          </label>
+          <div class="ativo-pausa-ots" id="ativo-pausa-ots-list"></div>
+          <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px;"
+            onclick="ativoAddPausaOT()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Adicionar OT
+          </button>
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-bottom:0;">
+        <div class="form-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Observações
+        </div>
+        <div class="form-field" style="margin-bottom:0;">
+          <textarea id="ativo-nota" class="field-textarea" placeholder="Informações adicionais sobre o ativo..."></textarea>
+        </div>
+      </div>
+
+  </div>
+  <div class="drawer-footer">
+    <button id="btn-hist-ativo" class="btn btn-outline" style="display:none;" onclick="openRastreabilidadeModal('ativo')" title="Rastreabilidade de edições">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </button>
+    <button class="btn btn-outline" onclick="closeModal('modal-ativo')">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarAtivo()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar Ativo
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-setor">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="setor-modal-title">Unidades e setores</div>
+          <div class="modal-subtitle" id="setor-modal-sub">Cadastre as unidades e os setores de cada uma</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="orgFecharGerenciador()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="org-gerenciador"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="orgFecharGerenciador()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Janela da unidade: setores em chips (org.js) -->
+<div class="modal-overlay" id="modal-org-unidade">
+  <div class="modal org-det-modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4h6v4"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="org-det-titulo">Unidade</div>
+          <div class="modal-subtitle" id="org-det-sub">Setores da unidade</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="orgFecharUnidade()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="org-detalhe"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="orgFecharUnidade()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-categoria">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="categoria-modal-title">Gerenciar Categorias</div>
+          <div class="modal-subtitle">Adicione ou edite categorias</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-categoria')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="field-label">Categorias cadastradas</label>
+        <div id="categoria-list" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;"></div>
+      </div>
+      <div class="form-field" style="margin-bottom:0;">
+        <label class="field-label">Nome da Categoria</label>
+        <input type="text" id="input-nova-categoria" class="field-input" placeholder="Ex: Equipamentos Médicos">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-categoria')">Cancelar</button>
+      <button class="btn btn-primary" id="categoria-save-btn" onclick="salvarCategoria()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-visualizar">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="visualizar-title">Detalhes do Ativo</div>
+          <div class="modal-subtitle" id="visualizar-subtitle">Informações completas do equipamento</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="modal-close" onclick="openRastreabilidadeModal('ativo-view')" title="Rastreabilidade de edições">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+        <button class="modal-close" onclick="closeModal('modal-visualizar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Abas do ativo -->
+    <div class="drawer-tabs" style="background:var(--bg);border-bottom:1px solid var(--border);padding:0 24px;">
+      <button class="drawer-tab-btn active" id="avtab-btn-info" onclick="switchAtivoTab('info')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Informações
+      </button>
+      <button class="drawer-tab-btn" id="avtab-btn-rotinas" onclick="switchAtivoTab('rotinas')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="avtab-label-rotinas">Rotinas</span>
+      </button>
+      <button class="drawer-tab-btn" id="avtab-btn-ots" onclick="switchAtivoTab('ots')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span id="avtab-label-ots">OT's</span>
+      </button>
+      <button class="drawer-tab-btn" id="avtab-btn-ocorrencias" onclick="switchAtivoTab('ocorrencias')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="avtab-label-ocorrencias">Ocorrências</span>
+      </button>
+    </div>
+
+    <div class="modal-body" style="padding:0;max-height:60vh;overflow-y:auto;">
+      <div id="avtab-info" style="padding:24px 28px;display:block;">
+        <div id="visualizar-body"></div>
+      </div>
+      <div id="avtab-rotinas" style="padding:16px 24px;display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <div class="status-filter-group">
+            <button class="status-filter-btn active active-green" id="sfbtn-av-rotina-ativo" onclick="setAtivoRotinaStatusFilter('ativo')">Ativos</button>
+            <button class="status-filter-btn" id="sfbtn-av-rotina-inativo" onclick="setAtivoRotinaStatusFilter('inativo')">Inativos</button>
+            <button class="status-filter-btn" id="sfbtn-av-rotina-ambos" onclick="setAtivoRotinaStatusFilter('ambos')">Ambos</button>
+          </div>
+        </div>
+        <div id="ativo-rotinas-list"></div>
+      </div>
+      <div id="avtab-ots" style="padding:16px 24px;display:none;">
+        <div id="ativo-ots-list"></div>
+      </div>
+      <div id="avtab-ocorrencias" style="padding:16px 24px;display:none;">
+        <div id="ativo-ocorrencias-list"></div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-visualizar')">Fechar</button>
+      <button id="btn-excluir-ativo" class="btn btn-outline" style="color:var(--red);border-color:rgba(230,57,70,0.3);display:none;" onclick="excluirAtivoAtual()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Excluir
+      </button>
+      <button id="btn-editar-ativo" class="btn btn-primary" onclick="editarAtivoAtual()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        Editar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL SELEÇÃO DE SETORES ══════════ -->
+<div class="modal-overlay" id="modal-sector-select">
+  <div class="modal md">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <div class="modal-title">Selecionar unidades e setores</div>
+          <div class="modal-subtitle" id="sector-modal-subtitle">Marque a unidade inteira ou setores específicos</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button id="btn-sector-modal-edit-setor" class="btn btn-outline btn-icon" onclick="openSetorModal()" title="Gerenciar Setores" style="display:none;padding:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="modal-close" onclick="closeSectorModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="sector-modal-toolbar">
+      <div class="sector-modal-count" id="sector-modal-count">0 selecionados</div>
+      <button type="button" class="sector-select-all-btn" id="btn-sector-select-all" onclick="toggleSelectAllSectors()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px;">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Selecionar todos
+      </button>
+    </div>
+    <div class="modal-body sector-modal-body">
+      <div id="sector-modal-list" class="sector-grid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeSectorModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-confirm-sectors" onclick="confirmSectorModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL PERFIL DO USUÁRIO ══════════ -->
+<div class="modal-overlay" id="modal-user-profile">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </div>
+        <div>
+          <div class="modal-title">Meu Perfil</div>
+          <div class="modal-subtitle">Visualize e edite suas informações</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeUserProfileModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Informações (somente leitura) -->
+      <div class="form-section-title" style="margin-bottom:14px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Informações Cadastrais
+      </div>
+
+      <div class="profile-info-grid">
+        <div class="profile-info-item" style="grid-column:1/-1;">
+          <div class="profile-info-label">Nome Completo</div>
+          <div class="profile-info-value" id="profile-nome">—</div>
+        </div>
+        <div class="profile-info-item">
+          <div class="profile-info-label">CPF</div>
+          <div class="profile-info-value" id="profile-cpf">—</div>
+        </div>
+        <div class="profile-info-item">
+          <div class="profile-info-label">Cargo</div>
+          <div class="profile-info-value" id="profile-cargo">—</div>
+        </div>
+        <div class="profile-info-item">
+          <div class="profile-info-label">Usuário</div>
+          <div class="profile-info-value" id="profile-username">—</div>
+        </div>
+        <div class="profile-info-item">
+          <div class="profile-info-label">Grupo</div>
+          <div class="profile-info-value" id="profile-grupo">—</div>
+        </div>
+      </div>
+
+      <!-- Campos editáveis -->
+      <div class="form-section-title" style="margin-bottom:14px;margin-top:4px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/>
+        </svg>
+        Editar Conta
+      </div>
+
+      <div id="profile-error" class="modal-error-bar" style="display:none;"></div>
+
+      <div class="form-field" style="margin-bottom:14px;">
+        <label class="field-label">Senha Atual</label>
+        <input type="password" id="profile-current-password" class="field-input"
+          placeholder="Digite sua senha atual para alterar" autocomplete="current-password">
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label class="field-label">Nova Senha</label>
+          <input type="password" id="profile-new-password" class="field-input"
+            placeholder="Deixe em branco para manter" autocomplete="new-password">
+        </div>
+        <div class="form-field">
+          <label class="field-label">Confirmar Nova Senha</label>
+          <input type="password" id="profile-confirm-password" class="field-input"
+            placeholder="Repita a nova senha" autocomplete="new-password">
+        </div>
+      </div>
+
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="authDoLogout()" style="color:var(--red);border-color:rgba(230,57,70,.3);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sair
+      </button>
+      <button class="btn btn-primary" onclick="saveUserProfile()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Salvar Alterações
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL EDITAR / CRIAR USUÁRIO ══════════ -->
+<div class="modal-overlay" id="modal-user-edit">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </div>
+        <div>
+          <div class="modal-title" id="user-edit-modal-title">Novo Usuário</div>
+          <div class="modal-subtitle">Preencha os dados do usuário</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeUserEditModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="user-edit-error" class="modal-error-bar" style="display:none;"></div>
+
+      <div class="form-field">
+        <label class="field-label">Nome Completo <span class="required">*</span></label>
+        <input type="text" id="user-edit-nome" class="field-input" placeholder="NOME COMPLETO DO USUÁRIO"
+          oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="field-label">CPF</label>
+          <input type="text" id="user-edit-cpf" class="field-input" placeholder="000.000.000-00"
+            oninput="this.value=formatCPF(this.value)" maxlength="14">
+        </div>
+        <div class="form-field">
+          <label class="field-label">Cargo</label>
+          <div style="display:flex;gap:8px;align-items:stretch;">
+            <select id="user-edit-cargo" class="field-select" style="flex:1;">
+              <option value="">— Sem cargo —</option>
+            </select>
+            <button type="button" class="btn btn-outline btn-icon" onclick="openCargosModal('user-edit')"
+              title="Gerenciar Cargos" style="flex-shrink:0;padding:0 10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:15px;height:15px;">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Usuário (login) <span class="required">*</span></label>
+        <input type="text" id="user-edit-username" class="field-input"
+          placeholder="ex: joao.silva (sem espaços)" autocomplete="off"
+          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9._-]/g,'')">
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="field-label">Senha <span class="required" id="user-pwd-req-label">*</span></label>
+          <input type="password" id="user-edit-password" class="field-input" placeholder="Nova senha (ou em branco p/ manter)" autocomplete="new-password">
+        </div>
+        <div class="form-field">
+          <label class="field-label">Confirmar Senha</label>
+          <input type="password" id="user-edit-confirm" class="field-input" placeholder="Repita a senha" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field" id="user-edit-grupo-field">
+          <label class="field-label">Grupo <span class="required" id="user-edit-grupo-req">*</span></label>
+          <div style="display:flex;gap:8px;align-items:stretch;">
+            <select id="user-edit-grupo" class="field-select" style="flex:1;"
+              onchange="_onUserEditGrupoChange()">
+              <option value="">— Selecione um grupo —</option>
+            </select>
+            <button type="button" id="btn-user-edit-admin" class="btn btn-outline btn-icon user-admin-toggle-btn"
+              onclick="toggleUserEditAdmin()" title="Promover a administrador"
+              style="display:none;flex-shrink:0;padding:0 10px;min-width:36px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="field-label">Setores Visíveis</label>
+          <button type="button" id="btn-user-edit-setores" class="btn btn-outline"
+            onclick="openUserEditSectorModal()" style="width:100%;justify-content:flex-start;gap:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
+            <span id="user-edit-setores-label">Todos do grupo</span>
+          </button>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Setores que este usuário pode filtrar</div>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Status</label>
+        <div class="status-toggle-row">
+          <input type="checkbox" id="user-edit-status" class="toggle-input" onchange="updateUserEditStatusLabel()" checked>
+          <label class="toggle-label" for="user-edit-status"></label>
+          <span id="user-edit-status-label" style="font-size:13px;font-weight:500;color:var(--text-secondary);">Ativo</span>
+          <span id="user-edit-status-self-hint" style="display:none;font-size:11px;color:var(--text-secondary);margin-left:6px;">(não é possível inativar o próprio usuário)</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeUserEditModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUserEdit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Salvar Usuário
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL SELEÇÃO DE ROTINA (FILTRO ATIVIDADES) ══════════ -->
+<div class="modal-overlay" id="modal-rotina-selector-atividades">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Selecionar Rotina</div>
+          <div class="modal-subtitle">Filtre as atividades pela rotina</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-rotina-selector-atividades')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="rotina-selector-atividades-list" class="ativo-search-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-rotina-selector-atividades')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL RASTREABILIDADE DE EDIÇÕES ══════════ -->
+<div class="modal-overlay" id="modal-rastreabilidade" style="z-index:630;">
+  <div class="modal sm">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="rastreabilidade-title">Rastreabilidade de Edições</div>
+          <div class="modal-subtitle" id="rastreabilidade-subtitle">Rastreabilidade das alterações</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-rastreabilidade')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div id="rastreabilidade-list" style="max-height:420px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-rastreabilidade')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL PERMISSÃO DE SETORES DO GRUPO ══════════ -->
+<div class="modal-overlay" id="modal-group-sector">
+  <div class="modal sm">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="group-sector-modal-title">Setores do Grupo</div>
+          <div class="modal-subtitle">Setores que os membros podem filtrar</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeGroupSectorModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+        Setores marcados ficam visíveis como opção de filtro para membros deste grupo. Setores desmarcados não aparecem para os usuários do grupo.
+      </div>
+      <div class="sector-modal-toolbar" style="padding:0 0 12px 0;">
+        <span id="group-sector-count" class="sector-modal-count">0 selecionados</span>
+        <button type="button" id="btn-group-sector-all" class="sector-select-all-btn" onclick="_toggleGroupSectorAll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px;"><polyline points="20 6 9 17 4 12"/></svg>
+          Selecionar todos
+        </button>
+      </div>
+      <div id="group-sector-list" class="sector-grid" style="max-height:340px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeGroupSectorModal()">Cancelar</button>
+      <button id="btn-group-sector-save" class="btn btn-primary" onclick="saveGroupSectorModal()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL EDITAR / CRIAR GRUPO ══════════ -->
+<div class="modal-overlay" id="modal-group-edit">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6"/>
+            <circle cx="17" cy="7" r="3"/><path d="M21 20c0-3.3-2.7-6-6-6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="modal-title" id="group-edit-modal-title">Novo Grupo</div>
+          <div class="modal-subtitle">Configure nome, permissões e status padrão</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeGroupEditModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="group-edit-error" class="modal-error-bar" style="display:none;"></div>
+
+      <!-- Nome + toggle padrão -->
+      <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:20px;">
+        <div class="form-field" style="flex:1;margin-bottom:0;">
+          <label class="field-label">Nome do Grupo <span class="required">*</span></label>
+          <input type="text" id="group-edit-nome" class="field-input" placeholder="Ex: Técnicos, Supervisores...">
+        </div>
+        <label for="group-edit-default" style="display:flex;align-items:center;gap:10px;
+          padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);
+          cursor:pointer;flex-shrink:0;transition:border-color .15s;white-space:nowrap;"
+          id="group-default-card">
+          <input type="checkbox" id="group-edit-default" class="toggle-input" onchange="updateGroupEditDefaultLabel()">
+          <label class="toggle-label" for="group-edit-default" style="flex-shrink:0;"></label>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text-primary);" id="group-edit-default-label">Não é padrão</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:1px;">Grupo padrão p/ cadastros</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- Seção de permissões -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" style="width:15px;height:15px;">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.5px;text-transform:uppercase;">Permissões</span>
+        </div>
+        <span style="font-size:11px;color:var(--text-muted);">Clique nas linhas para ativar/desativar</span>
+      </div>
+
+      <div id="group-perm-container" class="perm-grid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeGroupEditModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveGroupEdit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Salvar Grupo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL GERENCIAR CARGOS ══════════ -->
+<div class="modal-overlay" id="modal-cargos-manage">
+  <div class="modal sm">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2"/>
+            <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="modal-title">Gerenciar Cargos</div>
+          <div class="modal-subtitle">Adicione, edite ou exclua cargos do sistema</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeCargosModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="cargos-error" class="modal-error-bar" style="display:none;"></div>
+
+      <!-- Lista de cargos -->
+      <div class="form-field">
+        <label class="field-label">Cargos cadastrados</label>
+        <div id="cargos-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;
+          max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:4px;">
+        </div>
+      </div>
+
+      <!-- Adicionar / Editar -->
+      <div class="form-field" style="margin-bottom:0;">
+        <label class="field-label" id="cargo-form-label">Novo cargo</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="cargo-input" class="field-input" placeholder="Nome do cargo"
+            onkeydown="if(event.key==='Enter'){doSaveCargo();event.preventDefault();}">
+          <button class="btn btn-primary" onclick="doSaveCargo()" style="flex-shrink:0;white-space:nowrap;">
+            <span id="cargo-save-label">Adicionar</span>
+          </button>
+          <button class="btn btn-outline" id="btn-cancel-cargo-edit" onclick="cancelEditCargo()"
+            style="flex-shrink:0;display:none;">Cancelar</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeCargosModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL AGENDA: DETALHE DO DIA
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-agenda-dia">
+  <div class="modal" style="max-width:min(960px,96vw);width:96vw;">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" id="agenda-dia-titulo">Tarefas do dia</div>
+          <div class="modal-subtitle" id="agenda-dia-subtitulo"></div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeAgendaDiaModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:0;max-height:70vh;overflow-y:auto;overflow-x:hidden;">
+      <div id="agenda-dia-content" style="padding:20px 24px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeAgendaDiaModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window._dbReady = new Promise(resolve => { window._dbReadyResolve = resolve; });
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="bd.js"></script>
+<script src="dialogo.js"></script>
+<script src="key.js"></script>
+<script src="upload.js"></script>
+<script src="script.js"></script>
+<script src="org.js"></script>
+<script src="arquivo.js"></script>
+<script src="agenda.js"></script>
+<script src="OT.js"></script>
+<script src="ocorrencias.js"></script>
+<script src="cq-engine.js"></script>
+<script src="cq.js"></script>
+<script src="cq-cadastros.js"></script>
+<script src="cq-trocas.js"></script>
+<script src="cq-controle-preparo.js"></script>
+<script src="cq-lancamento.js"></script>
+<script src="cq-esterilizacao.js"></script>
+<script src="cq-graficos.js"></script>
+<script src="cq-acoes.js"></script>
+<script src="cq-exemplo.js"></script>
+<script src="cq-planilha.js"></script>
+<script src="empresas.js"></script>
+<script src="home.js"></script>
+</body>
+</html>

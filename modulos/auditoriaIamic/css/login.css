@@ -1,0 +1,132 @@
+/* =========================================================================
+   LOGIN
+   ========================================================================= */
+#loginOverlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 16px;
+}
+
+/* Partículas decorativas de fundo */
+#loginOverlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 20% 20%, rgba(37,99,235,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(37,99,235,0.10) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.login-box {
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(20px);
+    padding: 44px 40px;
+    border-radius: var(--r-3xl);
+    box-shadow: var(--shadow-xl), 0 0 0 1px rgba(37,99,235,0.10);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    animation: modalUp 0.4s var(--ease-spring);
+    position: relative;
+}
+
+/* Badge LAMIC no topo */
+.login-box::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: var(--grad-accent);
+    border-radius: 0 0 var(--r-full) var(--r-full);
+}
+
+.login-box .fa-lock {
+    display: block;
+    width: 56px;
+    height: 56px;
+    background: var(--grad-accent);
+    border-radius: var(--r-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 22px;
+    box-shadow: var(--shadow-accent);
+}
+
+.login-box h2 {
+    margin: 0 0 6px;
+    color: var(--primary);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+.login-box p {
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.login-input {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-md);
+    font-size: 15px;
+    margin-bottom: 14px;
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    outline: none;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface-muted);
+}
+.login-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+    background: #fff;
+}
+.login-input.error {
+    border-color: var(--c-red);
+    color: var(--c-red);
+    background: #fef2f2;
+    box-shadow: 0 0 0 4px rgba(220,38,38,0.10);
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+    20%, 40%, 60%, 80% { transform: translateX(6px); }
+}
+.shake { animation: shake 0.5s; }
+#timerDisplay { margin-top: 12px; color: var(--c-red); font-weight: 700; font-size: 14px; min-height: 20px; }
+#loadingText { margin-top: 15px; color: var(--accent); font-size: 13px; display: none; }
+
+/* Link "Criar conta" / "Voltar ao login" */
+.login-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 14px; padding: 4px 8px;
+    border: none; background: none; cursor: pointer;
+    font-size: 13.5px; font-family: inherit; color: var(--text-muted);
+}
+.login-link b { color: var(--accent); }
+.login-link:hover { color: var(--primary); }
+
+/* Auto-cadastro */
+#loginOverlay { overflow-y: auto; }
+.signup-box { margin: auto; }
+.signup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.signup-error { min-height: 18px; margin: -4px 0 10px; color: var(--c-red); font-size: 13px; font-weight: 600; text-align: left; }
+@media (max-width: 420px) {
+    .signup-row { grid-template-columns: 1fr; gap: 0; }
+    .login-box.signup-box { padding: 32px 22px; }
+}

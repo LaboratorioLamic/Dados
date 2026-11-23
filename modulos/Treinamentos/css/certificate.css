@@ -1,0 +1,506 @@
+/* Arte do certificado de conclusão.
+   Estilos isolados (navy/dourado, fonte serifada) — não reaproveitam as
+   variáveis do portal de propósito: o certificado tem identidade própria e
+   precisa renderizar igual independente do tema do resto da página.
+   As folhas são renderizadas fora da tela e viram imagem via html2canvas
+   (ver js/certificate.js), por isso usam medidas fixas em px, não relativas. */
+
+/* O palco precisa ter layout real (o html2canvas mede as caixas do elemento
+   original antes de clonar), mas não pode aparecer para o usuário. Ficar
+   atrás de tudo com z-index negativo e sem interação resolve os dois lados:
+   o layout é calculado normalmente, e nada é exibido porque o body opaco
+   cobre o palco. Evita `left:-20000px`, que faz o html2canvas medir caixas
+   como 0 e quebrar ao montar patterns de gradiente. */
+.cert-stage {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 1308px;
+    z-index: -9999;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+/* Dentro do clone do html2canvas o palco precisa voltar a ser visível —
+   `visibility: hidden` é herdado e sairia uma folha em branco. */
+.cert-stage.is-capturing { visibility: visible; }
+
+/* ─── Overlay de "Baixando certificado" ───
+   Bloqueia a página inteira (inclusive os modais, que ficam em z-index ~2650)
+   enquanto o PDF é montado. */
+.cert-loading-lock { overflow: hidden !important; }
+
+.cert-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(9, 17, 34, 0.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: cert-overlay-in 0.18s ease both;
+}
+
+.cert-loading-overlay.is-leaving { animation: cert-overlay-in 0.2s ease reverse both; }
+
+@keyframes cert-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.cert-loading-panel {
+    width: min(320px, 86vw);
+    padding: 26px 24px 22px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+    text-align: center;
+    font-family: 'Inter', system-ui, sans-serif;
+    animation: cert-panel-in 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes cert-panel-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.95); }
+    to { opacity: 1; transform: none; }
+}
+
+.cert-loading-spinner {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9c7d2e;
+    font-size: 22px;
+    background: #fffdf7;
+    border: 3px solid #eee2c2;
+    border-top-color: #c8a24c;
+    animation: cert-spin 0.9s linear infinite;
+}
+
+@keyframes cert-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* O ícone gira junto com a borda; girar ao contrário o mantém de pé. */
+.cert-loading-spinner i { animation: cert-spin 0.9s linear infinite reverse; }
+
+.cert-loading-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f2544;
+    letter-spacing: -0.2px;
+}
+
+.cert-loading-hint {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.cert-loading-bar {
+    position: relative;
+    height: 4px;
+    margin-top: 16px;
+    border-radius: 999px;
+    background: #eef1f5;
+    overflow: hidden;
+}
+
+.cert-loading-bar span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 40%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #c8a24c, #e6c877);
+    animation: cert-bar 1.1s ease-in-out infinite;
+}
+
+@keyframes cert-bar {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cert-loading-spinner,
+    .cert-loading-spinner i,
+    .cert-loading-bar span { animation-duration: 2.4s; }
+}
+
+.cert-page {
+    position: relative;
+    width: 1308px;
+    height: 924px;
+    background: #fdfaf3;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    color: #0f2544;
+    overflow: hidden;
+}
+
+/* Faixas navy do topo e do rodapé */
+.cert-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 112px;
+    background: #0f2244;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cert-band.is-top { top: 0; }
+.cert-band.is-bottom { bottom: 0; }
+
+.cert-band-text {
+    font-size: 15px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: #d8c08a;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.cert-band-text span.dot { color: #b99b5f; }
+
+/* Miolo claro entre as duas faixas.
+   Dimensões explícitas (não top/bottom) porque o html2canvas resolve mal
+   caixas definidas só por offsets quando o elemento é clonado fora da tela.
+
+   REGRA DESTA FOLHA DE ESTILO: nenhum seletor `.cert-*` pode usar
+   `background-image` (nem gradiente, nem url()). O html2canvas 1.4.1 desenha
+   qualquer background-image via `createPattern` sobre um canvas auxiliar cujo
+   tamanho vem da caixa do elemento; quando essa caixa mede menos de 1px em
+   algum eixo, `canvas.width` trunca para 0 e o render morre com
+   "Failed to execute 'createPattern' ... width or height of 0", derrubando o
+   PDF inteiro. Cor sólida e <img> (desenhada com drawImage, não com pattern)
+   não passam por esse caminho — ver .cert-texture. */
+.cert-body {
+    position: absolute;
+    top: 112px;
+    left: 0;
+    width: 1308px;
+    height: 700px;
+    background-color: transparent; /* a cor vem da .cert-texture, abaixo */
+    padding: 42px 78px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Fundo do miolo (cor + textura de losangos) como imagem única já no tamanho
+   final: o mosaico é feito dentro do próprio SVG (<pattern>), então o
+   html2canvas só precisa de um drawImage. */
+.cert-texture {
+    position: absolute;
+    top: 112px;
+    left: 0;
+    width: 1308px;
+    height: 700px;
+    display: block;
+}
+
+/* Cantos ornamentais dourados */
+.cert-corner {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    border: 3px solid #c8a24c;
+}
+.cert-corner.tl { top: 22px; left: 22px; border-right: none; border-bottom: none; }
+.cert-corner.tr { top: 22px; right: 22px; border-left: none; border-bottom: none; }
+.cert-corner.bl { bottom: 22px; left: 22px; border-right: none; border-top: none; }
+.cert-corner.br { bottom: 22px; right: 22px; border-left: none; border-top: none; }
+
+.cert-corner-dot {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    background: #b3122b;
+}
+.cert-corner-dot.tl { top: 26px; left: 26px; }
+.cert-corner-dot.tr { top: 26px; right: 26px; }
+.cert-corner-dot.bl { bottom: 26px; left: 26px; }
+.cert-corner-dot.br { bottom: 26px; right: 26px; }
+
+/* Cabeçalho do miolo: logo | título | selo */
+.cert-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.cert-logo {
+    width: 250px;
+    flex-shrink: 0;
+}
+.cert-logo img { width: 100%; display: block; }
+
+.cert-head-center { text-align: center; flex: 1; }
+
+.cert-kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #b3922f;
+    font-weight: 600;
+}
+
+.cert-title {
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.05;
+    margin-top: 6px;
+    color: #0f2544;
+}
+
+.cert-subtitle {
+    font-size: 25px;
+    font-style: italic;
+    color: #7c6a4e;
+    margin-top: 2px;
+}
+
+.cert-seal {
+    width: 104px;
+    height: 104px;
+    border-radius: 50%;
+    border: 2px solid #d3b673;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.cert-seal-inner {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    border: 1px solid #d3b673;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c8a24c;
+    font-size: 26px;
+}
+
+/* Losango em vez de ícone de webfont: o html2canvas não renderiza glifos de
+   icon-font de forma confiável, e formas em CSS puro sempre saem certas. */
+.cert-seal-mark {
+    width: 20px;
+    height: 20px;
+    background: #c8a24c;
+    transform: rotate(45deg);
+}
+
+.cert-rule {
+    width: 1152px; /* 1308 - 78*2 de padding: explícito para o html2canvas */
+    height: 1px;
+    flex-shrink: 0;
+    background-color: #d6bd85; /* sólido: gradiente em caixa de 1px quebra o html2canvas */
+    margin: 26px 0 0;
+}
+
+/* Corpo: destinatário e texto */
+.cert-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.cert-certify {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: #55617a;
+    font-weight: 600;
+}
+
+.cert-name {
+    font-size: clamp(42px, 4vw, 62px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.12;
+    margin: 20px auto 0;
+    color: #12294c;
+    max-width: 1000px;
+    width: min(1000px, 100%);
+    text-wrap: balance;
+}
+
+.cert-diamonds {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 24px 0 26px;
+}
+.cert-diamond {
+    width: 13px;
+    height: 13px;
+    background: #c8a24c;
+    transform: rotate(45deg);
+}
+.cert-diamond.small { width: 7px; height: 7px; background: #d9c79a; }
+
+.cert-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    line-height: 1.95;
+    color: #33445f;
+    max-width: 950px;
+}
+.cert-text strong { color: #12294c; font-weight: 700; }
+
+/* Assinaturas */
+.cert-signatures {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 120px;
+    margin-top: 8px;
+}
+
+.cert-sign {
+    width: 330px;
+    text-align: center;
+}
+
+.cert-sign-img {
+    height: 92px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+.cert-sign-img img {
+    max-height: 92px;
+    max-width: 240px;
+    display: block;
+}
+
+.cert-sign-line {
+    height: 1px;
+    background: #9aa6b8;
+    margin: 6px 0 9px;
+}
+
+.cert-sign-name {
+    font-size: 23px;
+    font-weight: 700;
+    color: #12294c;
+}
+
+.cert-sign-role {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #5b6a83;
+    margin-top: 3px;
+}
+
+.cert-sign-divider {
+    width: 1px;
+    height: 96px;
+    background-color: #e0cea1;
+    position: relative;
+}
+.cert-sign-divider::after {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    background: #c8a24c;
+    transform: translateY(-50%) rotate(45deg);
+}
+
+/* ─── Verso: conteúdo programático ─── */
+.cert-hours-badge {
+    width: 104px;
+    height: 104px;
+    border-radius: 12px;
+    border: 1px solid #d3b673;
+    background: #f6efdf;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.cert-hours-badge .num {
+    font-size: 34px;
+    font-weight: 700;
+    color: #12294c;
+    line-height: 1;
+}
+.cert-hours-badge .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    color: #8a7a5c;
+    margin-top: 4px;
+}
+
+.cert-topics-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #b3922f;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 30px;
+}
+/* Largura fixa em vez de flex:1 — com base flexível o html2canvas pode
+   resolver a caixa como 0. Cor sólida pelo mesmo motivo do .cert-rule. */
+.cert-topics-label::after {
+    content: '';
+    width: 930px;
+    height: 1px;
+    flex-shrink: 0;
+    background-color: #ddc593;
+}
+
+.cert-topics {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 54px;
+}
+
+.cert-topic {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 15px 4px;
+    border-bottom: 1px solid #e3dccb;
+}
+
+.cert-topic-num {
+    font-size: 20px;
+    font-weight: 600;
+    color: #c0a058;
+    font-variant-numeric: oldstyle-nums;
+    min-width: 26px;
+}
+
+.cert-topic-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    color: #24344d;
+}

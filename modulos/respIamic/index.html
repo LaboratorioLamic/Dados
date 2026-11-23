@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- CACHE DO NAVEGADOR
+         O index.html NÃO pode ficar em cache: é ele que carrega os arquivos
+         versionados abaixo (`?v=...`). Se o HTML antigo permanecesse no cache,
+         o navegador continuaria pedindo as versões antigas de js/css — foi
+         assim que apareceram telas misturando código novo e velho (salvamentos
+         recusados, botões sem efeito) que "sumiam" só com Ctrl+F5.
+         Os arquivos js/css, esses SIM podem ficar em cache: cada publicação
+         muda o `?v=`, o que já força o download da versão nova. -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>AgendaLAMIC | Agenda de Testes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    
+    <!-- Configuração de bibliotecas externas -->
+    <script src="js/tailwind-config.js?v=20260916d"></script>
+    <script src="js/chart-defaults.js?v=20261119a"></script>
+
+    <!-- Estilos da aplicação -->
+    <link rel="stylesheet" href="css/variables.css?v=20260916d">
+    <link rel="stylesheet" href="css/base.css?v=20260916d">
+    <link rel="stylesheet" href="css/components.css?v=20261119e">
+    <link rel="stylesheet" href="css/calendar.css?v=20260916d">
+    <link rel="stylesheet" href="css/header.css?v=20260916d">
+    <link rel="stylesheet" href="css/drawer.css?v=20260916d">
+    <link rel="stylesheet" href="css/home.css?v=20260916d">
+    <link rel="stylesheet" href="css/login.css?v=20260916d">
+    <link rel="stylesheet" href="css/notifications.css?v=20260916d">
+    <link rel="stylesheet" href="css/upload.css?v=20260916d">
+    <link rel="stylesheet" href="css/view-record.css?v=20260916d">
+    <link rel="stylesheet" href="css/coleta-ativa.css?v=20260916d">
+</head>
+<body class="font-sans text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
+<script src="lamic-carregando.js" data-nome="Agendas LAMIC" data-espera="#login-error"></script>
+    
+    <!-- Container de Notificações -->
+    <div id="notification-container" class="fixed top-[84px] right-4 z-[9999] space-y-2 pointer-events-none w-[min(22rem,90vw)]"></div>
+    
+    <header class="app-header relative text-white shrink-0 z-50">
+        <div class="w-full px-4 sm:px-5 h-[68px] flex items-center gap-4">
+
+            <!-- Menu (hambúrguer) + identidade -->
+            <div class="flex items-center gap-4 min-w-0">
+                <button id="burger-btn" type="button" onclick="toggleDrawer()" aria-label="Abrir menu" aria-expanded="false" aria-controls="side-drawer"
+                    class="burger bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 shrink-0">
+                    <span class="burger-box">
+                        <span class="burger-bar"></span>
+                        <span class="burger-bar"></span>
+                        <span class="burger-bar"></span>
+                    </span>
+                </button>
+                <div class="h-9 w-px bg-white/12 hidden sm:block"></div>
+                <div class="h-11 flex items-center shrink-0">
+                    <img src="https://i.imgur.com/vXM6l52.png" alt="AgendasLAMIC" class="h-full w-auto object-contain">
+                </div>
+                <div class="h-9 w-px bg-white/12 hidden md:block"></div>
+                <div class="hidden md:block leading-none">
+                    <span class="block text-[15px] font-light tracking-[0.22em] uppercase">Agenda<span class="font-black text-blue-400">LAMIC</span></span>
+                    <span class="block mt-1 text-[9px] font-bold uppercase tracking-[0.3em] text-navy-300">Agenda de Testes</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ══ MENU SUSPENSO LATERAL ESQUERDO ══ -->
+    <div id="drawer-backdrop" onclick="closeDrawer()"></div>
+
+    <aside id="side-drawer" role="dialog" aria-modal="true" aria-label="Menu de navegação">
+        <!-- Cabeçalho do drawer -->
+        <div class="px-5 pt-5 pb-4 border-b border-white/10">
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="drawer-section-title">Menu</p>
+                    <p class="mt-1.5 text-white font-black text-sm tracking-tight">Painel de Controle</p>
+                </div>
+                <button onclick="closeDrawer()" aria-label="Fechar menu"
+                    class="h-9 w-9 shrink-0 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 text-white/80 hover:text-white flex items-center justify-center">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+
+            <div id="drawer-user" class="hidden mt-4 items-center gap-3 p-3 rounded-2xl bg-white/[0.05] border border-white/10">
+                <div id="drawer-user-initials" class="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-black text-xs shadow-lg"></div>
+                <div class="min-w-0 flex-1">
+                    <p id="drawer-user-name" class="text-white font-bold text-xs truncate"></p>
+                    <p id="drawer-user-role" class="text-[10px] font-bold uppercase tracking-widest text-blue-300 mt-0.5"></p>
+                </div>
+                <button onclick="closeDrawer(); openMyAccountModal();" title="Minha conta"
+                    class="h-8 w-8 rounded-lg bg-white/[0.07] hover:bg-blue-600 text-white/80 hover:text-white flex items-center justify-center">
+                    <i class="fas fa-user-cog text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navegação -->
+        <nav class="drawer-nav flex-1 overflow-y-auto px-3 py-4 space-y-1">
+            <p class="drawer-section-title px-2 mb-2">Navegação</p>
+
+            <button onclick="drawerNavigate('inicio')" data-drawer-tab="inicio" class="drawer-item is-active">
+                <span class="drawer-ico"><i class="fas fa-house"></i></span>
+                <span class="drawer-label">Início</span>
+            </button>
+
+            <p class="drawer-section-title px-2 pt-3 pb-1">Agendas</p>
+
+            <!-- Grupo: Teste Respiratório -->
+            <div class="drawer-group drawer-group-blue" data-drawer-group="respiratorio">
+                <button type="button" onclick="toggleDrawerGroup('respiratorio')" aria-expanded="false"
+                    aria-controls="drawer-panel-respiratorio" class="drawer-item drawer-group-header">
+                    <span class="drawer-ico"><i class="fas fa-lungs"></i></span>
+                    <span class="drawer-label">Respiratório</span>
+                    <i class="fas fa-chevron-down drawer-chevron"></i>
+                </button>
+                <div class="drawer-group-panel" id="drawer-panel-respiratorio">
+                    <div>
+                        <div class="drawer-subitems">
+                            <button onclick="drawerNavigateAgenda('respiratorio','dashboard')" data-drawer-agenda="respiratorio" data-drawer-tab="dashboard" class="drawer-subitem">
+                                <i class="fas fa-calendar-alt"></i>Agenda
+                            </button>
+                            <button onclick="drawerNavigateAgenda('respiratorio','dados')" data-drawer-agenda="respiratorio" data-drawer-tab="dados" class="drawer-subitem">
+                                <i class="fas fa-table-list"></i>Tabela
+                            </button>
+                            <button onclick="drawerNavigateAgenda('respiratorio','indicadores')" data-drawer-agenda="respiratorio" data-drawer-tab="indicadores" class="drawer-subitem">
+                                <i class="fas fa-chart-line"></i>Indicadores
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grupo: Espermograma -->
+            <div class="drawer-group drawer-group-teal" data-drawer-group="espermograma">
+                <button type="button" onclick="toggleDrawerGroup('espermograma')" aria-expanded="false"
+                    aria-controls="drawer-panel-espermograma" class="drawer-item drawer-group-header">
+                    <span class="drawer-ico"><i class="fas fa-microscope"></i></span>
+                    <span class="drawer-label">Espermograma</span>
+                    <i class="fas fa-chevron-down drawer-chevron"></i>
+                </button>
+                <div class="drawer-group-panel" id="drawer-panel-espermograma">
+                    <div>
+                        <div class="drawer-subitems">
+                            <button onclick="drawerNavigateAgenda('espermograma','dashboard')" data-drawer-agenda="espermograma" data-drawer-tab="dashboard" class="drawer-subitem">
+                                <i class="fas fa-calendar-alt"></i>Agenda
+                            </button>
+                            <button onclick="drawerNavigateAgenda('espermograma','dados')" data-drawer-agenda="espermograma" data-drawer-tab="dados" class="drawer-subitem">
+                                <i class="fas fa-table-list"></i>Tabela
+                            </button>
+                            <button onclick="drawerNavigateAgenda('espermograma','indicadores')" data-drawer-agenda="espermograma" data-drawer-tab="indicadores" class="drawer-subitem">
+                                <i class="fas fa-chart-line"></i>Indicadores
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grupo: Coleta Domiciliar -->
+            <div class="drawer-group drawer-group-amber" data-drawer-group="coletaDomiciliar">
+                <button type="button" onclick="toggleDrawerGroup('coletaDomiciliar')" aria-expanded="false"
+                    aria-controls="drawer-panel-coletaDomiciliar" class="drawer-item drawer-group-header">
+                    <span class="drawer-ico"><i class="fas fa-house-medical"></i></span>
+                    <span class="drawer-label">Domiciliar</span>
+                    <i class="fas fa-chevron-down drawer-chevron"></i>
+                </button>
+                <div class="drawer-group-panel" id="drawer-panel-coletaDomiciliar">
+                    <div>
+                        <div class="drawer-subitems">
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliar','dashboard')" data-drawer-agenda="coletaDomiciliar" data-drawer-tab="dashboard" class="drawer-subitem">
+                                <i class="fas fa-calendar-alt"></i>Agenda
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliar','dados')" data-drawer-agenda="coletaDomiciliar" data-drawer-tab="dados" class="drawer-subitem">
+                                <i class="fas fa-table-list"></i>Tabela
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliar','indicadores')" data-drawer-agenda="coletaDomiciliar" data-drawer-tab="indicadores" class="drawer-subitem">
+                                <i class="fas fa-chart-line"></i>Indicadores
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliar','demografia')" data-drawer-agenda="coletaDomiciliar" data-drawer-tab="demografia" class="drawer-subitem">
+                                <i class="fas fa-map-location-dot"></i>Demografia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grupo: Coleta Domiciliar Milagres -->
+            <div class="drawer-group drawer-group-ice" data-drawer-group="coletaDomiciliarMilagres">
+                <button type="button" onclick="toggleDrawerGroup('coletaDomiciliarMilagres')" aria-expanded="false"
+                    aria-controls="drawer-panel-coletaDomiciliarMilagres" class="drawer-item drawer-group-header">
+                    <span class="drawer-ico"><i class="fas fa-house-medical"></i></span>
+                    <span class="drawer-label">Domiciliar Milagres</span>
+                    <i class="fas fa-chevron-down drawer-chevron"></i>
+                </button>
+                <div class="drawer-group-panel" id="drawer-panel-coletaDomiciliarMilagres">
+                    <div>
+                        <div class="drawer-subitems">
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliarMilagres','dashboard')" data-drawer-agenda="coletaDomiciliarMilagres" data-drawer-tab="dashboard" class="drawer-subitem">
+                                <i class="fas fa-calendar-alt"></i>Agenda
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliarMilagres','dados')" data-drawer-agenda="coletaDomiciliarMilagres" data-drawer-tab="dados" class="drawer-subitem">
+                                <i class="fas fa-table-list"></i>Tabela
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliarMilagres','indicadores')" data-drawer-agenda="coletaDomiciliarMilagres" data-drawer-tab="indicadores" class="drawer-subitem">
+                                <i class="fas fa-chart-line"></i>Indicadores
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliarMilagres','demografia')" data-drawer-agenda="coletaDomiciliarMilagres" data-drawer-tab="demografia" class="drawer-subitem">
+                                <i class="fas fa-map-location-dot"></i>Demografia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3">
+                <button onclick="drawerNavigate('config')" data-drawer-tab="config" id="drawer-btn-config" class="drawer-item hidden">
+                    <span class="drawer-ico"><i class="fas fa-sliders-h"></i></span>
+                    <span class="drawer-label">Configurações</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Rodapé -->
+        <div class="px-4 py-4 border-t border-white/10 space-y-3">
+            <button onclick="closeDrawer(); logoutUser();"
+                class="w-full h-11 rounded-2xl bg-white/[0.06] hover:bg-red-600 border border-white/10 hover:border-red-500 text-white font-black text-[11px] uppercase tracking-[0.18em] flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i>Sair do Sistema
+            </button>
+            <p class="text-center text-[9px] font-bold uppercase tracking-[0.26em] text-navy-400">Agendas<span class="text-blue-400">LAMIC</span></p>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+
+        <section id="tab-inicio" class="tab-content active w-full max-w-[1500px] mx-auto">
+            <div class="text-center mb-8 mt-2">
+                <span class="inline-flex h-12 w-12 rounded-2xl bg-navy-900 text-blue-400 items-center justify-center shadow-lg mb-4">
+                    <i class="fas fa-layer-group text-lg"></i>
+                </span>
+                <h2 class="text-navy-900 font-black text-2xl sm:text-3xl tracking-tight leading-none">Selecione uma agenda</h2>
+                <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-3">Escolha o serviço para visualizar calendário, tabela e indicadores</p>
+            </div>
+
+            <div id="home-cards-grid" class="home-grid"></div>
+        </section>
+
+        <section id="tab-dashboard" class="tab-content w-full max-w-[1500px] mx-auto">
+            <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-200/80 mb-6 flex flex-col lg:flex-row gap-4 lg:gap-6 justify-between lg:items-center">
+                <div class="flex items-center gap-4">
+                    <button onclick="switchTab('inicio')" title="Voltar ao início" class="h-11 w-11 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-2xl flex items-center justify-center shrink-0 transition-colors">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="h-11 w-11 rounded-2xl bg-navy-900 flex items-center justify-center shadow-lg shrink-0" data-agenda-accent>
+                        <i id="agenda-icone-dashboard" class="fas fa-lungs"></i>
+                    </div>
+                    <div>
+                        <h2 id="agenda-nome-dashboard" class="text-navy-900 font-black text-lg sm:text-xl tracking-tight leading-none">Teste Respiratório</h2>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Calendário operacional</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <button onclick="switchTab('dados')" title="Abrir tabela de agendamentos" aria-label="Abrir tabela de agendamentos" class="h-10 px-3 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-table-list text-[10px]"></i>Tabela</button>
+                    <button onclick="openHistoryModal({type:'global'})" title="Rastreabilidade" class="h-10 w-10 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl flex items-center justify-center"><i class="fas fa-clock-rotate-left text-sm"></i></button>
+                    <div class="h-10 flex items-center gap-1 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Modo de visualização">
+                        <button id="view-tab-week" role="tab" onclick="setCalendarView('week')" class="view-tab h-8 px-3 rounded-lg font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-calendar-week text-[10px]"></i>Semana</button>
+                        <button id="view-tab-month" role="tab" onclick="setCalendarView('month')" class="view-tab h-8 px-3 rounded-lg font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-table-cells text-[10px]"></i>Mês</button>
+                    </div>
+                    <button onclick="goToToday()" title="Ir para hoje" class="h-10 px-3 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-crosshairs text-[10px]"></i>Hoje</button>
+                    <div class="h-10 flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+                        <button onclick="navigatePeriod(-1)" id="btn-period-prev" title="Período anterior" class="h-8 w-8 rounded-lg bg-white hover:bg-navy-900 hover:text-white text-navy-900 shadow-sm flex items-center justify-center"><i class="fas fa-chevron-left text-xs"></i></button>
+                        <h3 id="current-month-label" class="font-black text-navy-900 uppercase tracking-[0.14em] text-xs w-40 sm:w-48 text-center">Abril 2026</h3>
+                        <button onclick="navigatePeriod(1)" id="btn-period-next" title="Próximo período" class="h-8 w-8 rounded-lg bg-white hover:bg-navy-900 hover:text-white text-navy-900 shadow-sm flex items-center justify-center"><i class="fas fa-chevron-right text-xs"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80">
+                <div id="calendar-month-view" class="hidden">
+                    <div class="calendar-grid mb-4">
+                        <div class="text-center text-[10px] font-black uppercase text-red-500 tracking-widest">Dom</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Seg</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Ter</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Qua</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Qui</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sex</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sáb</div>
+                    </div>
+                    <div id="calendar-body" class="calendar-grid"></div>
+                </div>
+
+                <div id="calendar-week-view">
+                    <div class="week-scroll">
+                        <div class="week-frame">
+                            <div id="week-head" class="week-row week-head"></div>
+                            <div id="week-canvas" class="week-row week-canvas"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legenda dos exames  -->
+                <div class="mt-5 pt-4 border-t border-slate-100 flex justify-center">
+                    <div class="flex items-center justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 flex-wrap">
+                        <div class="flex items-center gap-1" data-agenda-legenda="tresp">
+                            <span class="day-chip day-chip-tresp">TRESP n</span>
+                            <span>Respiratório</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="tsbac">
+                            <span class="day-chip day-chip-tsbac">TSBAC n</span>
+                            <span>Bacteriano</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="agendado">
+                            <div id="legenda-agendado-dot" class="h-2 w-2 rounded-full bg-teal-500"></div>
+                            <span>Agendado</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="cancelado">
+                            <span class="day-chip day-chip-cancel"><i class="fas fa-ban"></i>n</span>
+                            <span>Cancelado</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="concluido">
+                            <div class="h-3 w-3 rounded border border-green-300 bg-green-600 text-white flex items-center justify-center text-[6px]"><i class="fas fa-check"></i></div>
+                            <span>Concluído</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="atrasado">
+                            <div class="h-3 w-3 rounded border border-red-300 bg-red-50"></div>
+                            <span>Atrasado</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="ausente">
+                            <div class="h-3 w-3 rounded border border-amber-400 bg-amber-100"></div>
+                            <span>Ausente</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="infantil">
+                            <span class="day-chip day-chip-faixa day-chip-infantil">INF n</span>
+                            <span>Infantil</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="adolescente">
+                            <span class="day-chip day-chip-faixa day-chip-adolescente">ADO n</span>
+                            <span>Adolescente</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="rn">
+                            <span class="day-chip day-chip-faixa day-chip-rn">RN n</span>
+                            <span>Recém-nascido</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="menores">
+                            <span class="day-chip day-chip-faixa day-chip-menores"><i class="fas fa-child"></i>n</span>
+                            <span>Menores de idade</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="andamento">
+                            <div class="h-3 w-3 rounded border border-purple-300 bg-purple-50"></div>
+                            <span>Em andamento</span>
+                        </div>
+                        <!-- Selos do resumo do dia na visão mensal -->
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selo-checklist">
+                            <span class="day-chip day-chip-warn"><i class="fas fa-clipboard-list"></i>n</span>
+                            <span>Checklist pendente</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selo-distante">
+                            <span class="day-chip day-chip-far"><i class="fas fa-road-circle-exclamation"></i></span>
+                            <span>Distante</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selo-coleta">
+                            <span class="day-chip day-chip-live"><i class="fas fa-play"></i></span>
+                            <span>Coletando agora</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Elementos ocultos para manter compatibilidade com renderTraceability() -->
+            <span id="trace-created" class="hidden"></span>
+            <span id="trace-edited" class="hidden"></span>
+            <span id="trace-deleted" class="hidden"></span>
+            <div id="traceability-list" class="hidden"></div>
+        </section>
+
+        <section id="tab-dados" class="tab-content w-full max-w-[1500px] mx-auto">
+            <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden">
+                <div class="p-5 sm:p-6 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 mb-6">
+                        <div class="flex items-center gap-4">
+                            <button onclick="switchTab('inicio')" title="Voltar ao início" aria-label="Voltar ao início" class="h-11 w-11 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-2xl flex items-center justify-center shrink-0 transition-colors">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <div class="h-11 w-11 rounded-2xl bg-navy-900 flex items-center justify-center shadow-lg shrink-0" data-agenda-accent>
+                                <i id="agenda-icone-tabela" class="fas fa-lungs"></i>
+                            </div>
+                            <div>
+                                <h2 id="agenda-nome-tabela" class="text-xl font-black text-navy-900 tracking-tight leading-none">Teste Respiratório</h2>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.22em] mt-1.5">Relação de agendamentos</p>
+                            </div>
+                        </div>
+                        <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                            <button onclick="switchTab('dashboard')" title="Voltar para a agenda" aria-label="Voltar para a agenda" class="px-5 py-3 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-2xl font-black text-[11px] tracking-[0.16em] uppercase flex items-center justify-center gap-2 transition-colors">
+                                <i class="fas fa-calendar-days"></i>Agenda
+                            </button>
+                            <button onclick="openRecordModal()" class="px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 font-black text-[11px] tracking-[0.16em] shadow-lg shadow-blue-600/25">
+                                <i class="fas fa-plus mr-2"></i>NOVO AGENDAMENTO
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="filter-search" onkeyup="updateTableFilters()" placeholder="Buscar Paciente ou Pedido..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none">
+                        </div>
+                        <select id="filter-atendente" onchange="updateTableFilters()" class="border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 bg-white font-medium text-slate-600 focus:outline-none">
+                            <option value="">Filtrar por Atendente</option>
+                        </select>
+                        <select id="filter-substrato" onchange="updateTableFilters()" class="border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 bg-white font-medium text-slate-600 focus:outline-none">
+                            <option value="">Filtrar por Substrato</option>
+                        </select>
+                        <select id="filter-status" onchange="updateTableFilters()" class="border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 bg-white font-medium text-slate-600 focus:outline-none">
+                            <option value="">Filtrar por Status</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-navy-900 text-white/85 text-[9px] uppercase tracking-[0.22em] font-black">
+                            <tr>
+                                <th class="px-5 py-4">Data/Hora</th>
+                                <th class="px-5 py-4">Paciente (Idade)</th>
+                                <th class="px-5 py-4" data-agenda-coluna="exame">Exame / Substrato</th>
+                                <th class="px-5 py-4" data-agenda-coluna="abstinencia">Abstinência</th>
+                                <th class="px-5 py-4" data-agenda-coluna="endereco">Endereço</th>
+                                <th class="px-5 py-4" data-agenda-coluna="coletador">Coletador</th>
+                                <th class="px-5 py-4">Nº Pedido / Atendente</th>
+                                <th class="px-5 py-4 text-center">Checklist</th>
+                                <th class="px-5 py-4 text-center">Status</th>
+                                <th class="px-5 py-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="text-sm divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row gap-3 justify-between items-center text-[11px] font-bold text-slate-500">
+                    <span id="pagination-info" class="uppercase tracking-wider">Mostrando 0 de 0</span>
+                    <div class="flex gap-2">
+                        <button onclick="changePage(-1)" class="px-4 py-2 bg-white border border-slate-200 rounded-xl hover:border-navy-900 hover:text-navy-900 shadow-sm disabled:opacity-50"><i class="fas fa-chevron-left mr-1.5 text-[9px]"></i>Anterior</button>
+                        <button onclick="changePage(1)" class="px-4 py-2 bg-white border border-slate-200 rounded-xl hover:border-navy-900 hover:text-navy-900 shadow-sm disabled:opacity-50">Próximo<i class="fas fa-chevron-right ml-1.5 text-[9px]"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-indicadores" class="tab-content w-full max-w-[1500px] mx-auto">
+
+            <!-- Cabeçalho + filtros em popover -->
+            <div id="ind-filtros" class="glass-card relative z-30 p-4 sm:p-5 rounded-3xl border border-slate-200/80 mb-5">
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="h-11 w-11 rounded-2xl bg-navy-900 flex items-center justify-center shadow-lg shrink-0" data-agenda-accent>
+                            <i id="agenda-icone-indicadores" class="fas fa-lungs"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-navy-900 font-black text-lg tracking-tight leading-none"><span id="ind-titulo-aba">Indicadores</span> — <span id="agenda-nome-indicadores">Teste Respiratório</span></h3>
+                            <p id="ind-resumo-filtro" class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Filtros de análise</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Mensal | Diário -->
+                        <div id="ind-granul-wrap" class="flex bg-slate-100 rounded-xl p-1">
+                            <button type="button" data-ind-granul="mes" onclick="setIndGranularidade('mes')" class="ind-seg px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider">Mensal</button>
+                            <button type="button" data-ind-granul="dia" onclick="setIndGranularidade('dia')" class="ind-seg px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider">Diário</button>
+                        </div>
+
+                        <!-- Período -->
+                        <div class="relative" data-ind-pop-wrap>
+                            <button type="button" onclick="toggleIndPopover('periodo')" class="ind-pop-btn">
+                                <i class="fas fa-calendar-days"></i><span id="ind-periodo-texto">2026</span><i class="fas fa-chevron-down text-[9px] opacity-60"></i>
+                            </button>
+                            <div id="ind-pop-periodo" class="ind-pop hidden w-72">
+                                <div class="grid grid-cols-3 gap-1 bg-slate-100 rounded-xl p-1 mb-3">
+                                    <button type="button" data-ind-modo="all" onclick="setIndModo('all')" class="ind-seg py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider">Geral</button>
+                                    <button type="button" data-ind-modo="year" onclick="setIndModo('year')" class="ind-seg py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider">Ano inteiro</button>
+                                    <button type="button" data-ind-modo="range" onclick="setIndModo('range')" class="ind-seg py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider">Intervalo</button>
+                                </div>
+                                <div id="ind-periodo-grade">
+                                    <div class="flex items-center justify-between mb-2.5">
+                                        <button type="button" onclick="mudarIndAno(-1)" class="h-8 w-8 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"><i class="fas fa-chevron-left text-xs"></i></button>
+                                        <span id="ind-ano-label" class="text-lg font-black text-navy-900">2026</span>
+                                        <button type="button" onclick="mudarIndAno(1)" class="h-8 w-8 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"><i class="fas fa-chevron-right text-xs"></i></button>
+                                    </div>
+                                    <div id="ind-meses" class="grid grid-cols-4 gap-1.5"></div>
+                                </div>
+                                <p id="ind-periodo-rodape" class="mt-3 text-center text-[10px] font-black text-slate-500 bg-slate-50 rounded-lg py-2"></p>
+                            </div>
+                        </div>
+
+                        <!-- Horário -->
+                        <div class="relative" data-ind-pop-wrap>
+                            <button type="button" onclick="toggleIndPopover('horario')" class="ind-pop-btn">
+                                <i class="fas fa-clock"></i><span id="ind-horario-texto">Todo horário</span><i class="fas fa-chevron-down text-[9px] opacity-60"></i>
+                            </button>
+                            <div id="ind-pop-horario" class="ind-pop hidden w-64">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Faixa de horário de início</p>
+                                <div class="flex items-center gap-2">
+                                    <input type="time" id="ind-hora-de" step="1800" oninput="aplicarIndHorario()" class="flex-1 min-w-0 border border-slate-200 rounded-lg text-sm py-2 px-2 font-semibold text-slate-600">
+                                    <span class="text-slate-400 text-xs font-bold">até</span>
+                                    <input type="time" id="ind-hora-ate" step="1800" oninput="aplicarIndHorario()" class="flex-1 min-w-0 border border-slate-200 rounded-lg text-sm py-2 px-2 font-semibold text-slate-600">
+                                </div>
+                                <button type="button" onclick="limparIndHorario()" class="mt-3 w-full text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-lg py-2">Todo horário</button>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="relative" data-ind-pop-wrap>
+                            <button type="button" onclick="toggleIndPopover('status')" class="ind-pop-btn">
+                                <i class="fas fa-circle-check"></i><span id="ind-status-texto">Todos status</span><i class="fas fa-chevron-down text-[9px] opacity-60"></i>
+                            </button>
+                            <div id="ind-pop-status" class="ind-pop hidden w-56">
+                                <div id="ind-status-lista" class="space-y-1"></div>
+                            </div>
+                        </div>
+
+                        <!-- Tipo / Convênio (domiciliares) -->
+                        <div class="relative" data-ind-pop-wrap data-agenda-campo="endereco">
+                            <button type="button" onclick="toggleIndPopover('tipo')" class="ind-pop-btn">
+                                <i class="fas fa-id-card"></i><span id="ind-tipo-texto">Todos tipos</span><i class="fas fa-chevron-down text-[9px] opacity-60"></i>
+                            </button>
+                            <div id="ind-pop-tipo" class="ind-pop hidden w-60">
+                                <div id="ind-tipo-lista" class="space-y-1 max-h-72 overflow-y-auto pr-1"></div>
+                            </div>
+                        </div>
+
+                        <!-- Cidade (domiciliares) -->
+                        <div class="relative" data-ind-pop-wrap data-agenda-campo="endereco">
+                            <button type="button" onclick="toggleIndPopover('cidade')" class="ind-pop-btn">
+                                <i class="fas fa-city"></i><span id="ind-cidade-texto">Todas cidades</span><i class="fas fa-chevron-down text-[9px] opacity-60"></i>
+                            </button>
+                            <div id="ind-pop-cidade" class="ind-pop hidden w-64">
+                                <div class="relative mb-2">
+                                    <i class="fas fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400"></i>
+                                    <input type="search" placeholder="Buscar cidade" oninput="buscarIndCidade(this.value)" class="w-full border border-slate-200 rounded-lg text-xs py-1.5 pl-7 pr-2 font-semibold text-slate-600 focus:outline-none focus:border-blue-400">
+                                </div>
+                                <div id="ind-cidade-lista" class="space-y-1 max-h-64 overflow-y-auto pr-1"></div>
+                            </div>
+                        </div>
+
+                        <!-- Convênio (domiciliares) -->
+                        <div class="relative" data-ind-pop-wrap data-agenda-campo="endereco">
+                            <button type="button" onclick="toggleIndPopover('convenio')" class="ind-pop-btn">
+                                <i class="fas fa-hospital-user"></i><span id="ind-convenio-texto">Todos convênios</span><i class="fas fa-chevron-down text-[9px] opacity-60"></i>
+                            </button>
+                            <div id="ind-pop-convenio" class="ind-pop hidden w-60">
+                                <div class="relative mb-2">
+                                    <i class="fas fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400"></i>
+                                    <input type="search" placeholder="Buscar convênio" oninput="buscarIndConvenio(this.value)" class="w-full border border-slate-200 rounded-lg text-xs py-1.5 pl-7 pr-2 font-semibold text-slate-600 focus:outline-none focus:border-blue-400">
+                                </div>
+                                <div id="ind-convenio-lista" class="space-y-1 max-h-64 overflow-y-auto pr-1"></div>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="limparIndFiltros()" title="Limpar filtros" class="h-9 w-9 rounded-xl border border-slate-200 bg-white text-slate-400 hover:text-red-500 hover:border-red-200"><i class="fas fa-filter-circle-xmark"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3 mb-5">
+                <div class="ind-kpi" data-agenda-kpi="total"><span class="bg-navy-900"></span><p>Total</p><p id="kpi-total" class="text-navy-900">0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="tresp"><span class="bg-blue-600"></span><p>TRESP</p><p id="kpi-tresp" class="text-blue-600">0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="tsbac"><span class="bg-emerald-500"></span><p>TSBAC</p><p id="kpi-tsbac" class="text-emerald-600">0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="concluidos"><span class="bg-green-500"></span><p>Concluídos</p><p id="kpi-concluidos" class="text-green-600">0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="ausentes"><span class="bg-amber-600"></span><p>Ausentes</p><p id="kpi-ausentes" class="text-amber-600">0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="cancelados"><span class="bg-red-500"></span><p>Cancelados</p><p id="kpi-cancelados" class="text-red-600">0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="mediaDia"><span class="bg-sky-500"></span><p>Média / dia</p><p id="kpi-media-dia" class="text-sky-600">0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="receita"><span class="bg-violet-500"></span><p>Receita total</p><p id="kpi-receita" class="text-violet-600">R$ 0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="receitaPedido"><span class="bg-indigo-400"></span><p>Valor pedidos</p><p id="kpi-receita-pedido" class="text-indigo-600">R$ 0</p></div>
+                <div class="ind-kpi" data-agenda-kpi="receitaTaxa"><span class="bg-fuchsia-400"></span><p>Taxas de coleta</p><p id="kpi-receita-taxa" class="text-fuchsia-600">R$ 0</p></div>
+            </div>
+
+            <!-- Volume + por horário -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-5">
+                <div class="ind-card" data-agenda-chart="volume">
+                    <h3><i class="fas fa-chart-column"></i><span id="ind-titulo-volume">Volume mensal</span></h3>
+                    <div class="h-72"><canvas id="chart-ind-volume"></canvas></div>
+                </div>
+                <div class="ind-card" data-agenda-chart="horario">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <h3 class="!mb-0"><i class="fas fa-clock"></i>Volume por horário</h3>
+                        <div class="flex bg-slate-100 rounded-xl p-1 shrink-0">
+                            <button type="button" data-ind-passo="60" onclick="setIndPassoHorario(60)" class="ind-seg px-2.5 py-1 rounded-lg text-[10px] font-black">1 h</button>
+                            <button type="button" data-ind-passo="120" onclick="setIndPassoHorario(120)" class="ind-seg px-2.5 py-1 rounded-lg text-[10px] font-black">2 h</button>
+                        </div>
+                    </div>
+                    <div class="h-72"><canvas id="chart-ind-horario"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Rankings -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                <div class="ind-card" data-agenda-chart="semana">
+                    <h3><i class="fas fa-calendar-week"></i>Média por dia da semana</h3>
+                    <div class="h-64"><canvas id="chart-ind-semana"></canvas></div>
+                </div>
+                <div class="ind-card" data-agenda-chart="status">
+                    <h3><i class="fas fa-circle-check"></i>Status</h3>
+                    <div class="h-64"><canvas id="chart-ind-status"></canvas></div>
+                </div>
+                <div class="ind-card" data-agenda-chart="exame">
+                    <h3><i class="fas fa-vial"></i>Tipo de exame</h3>
+                    <div class="h-64"><canvas id="chart-ind-exame"></canvas></div>
+                </div>
+                <div class="ind-card" data-agenda-chart="substrato">
+                    <h3><i class="fas fa-flask"></i>Substratos</h3>
+                    <div class="h-64"><canvas id="chart-ind-substrato"></canvas></div>
+                </div>
+                <div class="ind-card" data-agenda-chart="convenio">
+                    <h3><i class="fas fa-id-card"></i>Convênios</h3>
+                    <div class="h-64"><canvas id="chart-ind-convenio"></canvas></div>
+                </div>
+                <div class="ind-card" data-agenda-chart="coletador">
+                    <h3><i class="fas fa-user-nurse"></i>Coletadores</h3>
+                    <div class="h-64"><canvas id="chart-ind-coletador"></canvas></div>
+                </div>
+                <div class="ind-card" data-agenda-chart="motivoPerda">
+                    <h3><i class="fas fa-ban"></i>Motivos de cancelamento</h3>
+                    <div class="h-64"><canvas id="chart-ind-motivo"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-demografia" class="tab-content w-full max-w-[1500px] mx-auto">
+            <!-- A barra de filtros (#ind-filtros) é movida para cá ao abrir a aba -->
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-5">
+                <div class="ind-card xl:col-span-2">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h3 class="!mb-0"><i class="fas fa-map-location-dot"></i>Mapa por bairro</h3>
+                        <div class="flex bg-slate-100 rounded-xl p-1 shrink-0">
+                            <button type="button" data-demo-metrica="qtd" onclick="setDemoMetrica('qtd')" class="ind-seg px-2.5 py-1 rounded-lg text-[10px] font-black">Atendimentos</button>
+                            <button type="button" data-demo-metrica="receita" onclick="setDemoMetrica('receita')" class="ind-seg px-2.5 py-1 rounded-lg text-[10px] font-black">Receita</button>
+                            <button type="button" data-demo-metrica="convenio" onclick="setDemoMetrica('convenio')" class="ind-seg px-2.5 py-1 rounded-lg text-[10px] font-black">% Convênio</button>
+                            <button type="button" data-demo-metrica="particular" onclick="setDemoMetrica('particular')" class="ind-seg px-2.5 py-1 rounded-lg text-[10px] font-black">% Particular</button>
+                        </div>
+                    </div>
+                    <div id="demo-mapa" class="relative isolate h-[460px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-50"></div>
+                    <p id="demo-geo-status" class="mt-2 text-[10px] font-bold text-slate-400"></p>
+                </div>
+                <div class="ind-card">
+                    <h3><i class="fas fa-ranking-star"></i>Top bairros</h3>
+                    <div class="h-[460px]"><canvas id="chart-demo-bairros"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                <div class="ind-card">
+                    <h3><i class="fas fa-city"></i>Por cidade</h3>
+                    <div class="h-64"><canvas id="chart-demo-cidades"></canvas></div>
+                </div>
+                <div class="ind-card">
+                    <h3><i class="fas fa-people-group"></i>Faixa etária</h3>
+                    <div class="h-64"><canvas id="chart-demo-idade"></canvas></div>
+                </div>
+            </div>
+
+            <div class="ind-card">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <h3 class="!mb-0"><i class="fas fa-table"></i>Bairros</h3>
+                    <div class="flex items-center gap-2">
+                        <div class="relative">
+                            <i class="fas fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400"></i>
+                            <input type="search" placeholder="Buscar bairro" oninput="buscarDemoTabela(this.value)" class="w-40 sm:w-52 border border-slate-200 rounded-lg text-xs py-1.5 pl-7 pr-2 font-semibold text-slate-600 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <button type="button" onclick="exportarDemografiaCSV()" class="text-[10px] font-black uppercase tracking-wider text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50"><i class="fas fa-file-csv mr-1"></i>CSV</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <div class="min-w-[560px]">
+                        <div class="demo-linha demo-cab">
+                            <button type="button" data-demo-ordem="bairro" onclick="ordenarDemoTabela('bairro')" class="text-left">Bairro<i></i></button>
+                            <button type="button" data-demo-ordem="qtd" onclick="ordenarDemoTabela('qtd')" class="text-left col-span-3">Atendimentos<i></i></button>
+                            <button type="button" data-demo-ordem="receita" onclick="ordenarDemoTabela('receita')" class="text-right">Receita<i></i></button>
+                            <button type="button" data-demo-ordem="idade" onclick="ordenarDemoTabela('idade')" class="text-right">Idade<i></i></button>
+                        </div>
+                        <div id="demo-tabela"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-config" class="tab-content w-full max-w-[1500px] mx-auto">
+            <div class="max-w-5xl mx-auto">
+
+                <!-- Cabeçalho da seção -->
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="h-11 w-11 rounded-2xl bg-navy-900 text-blue-400 flex items-center justify-center shadow-lg shrink-0">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-navy-900 font-black text-lg tracking-tight leading-none">Configurações</h2>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Administração do sistema</p>
+                    </div>
+                </div>
+
+                <!-- Sub-abas de Configurações -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-1.5 flex gap-1.5 mb-5">
+                    <button onclick="switchConfigTab('usuarios')" id="cfg-btn-usuarios"
+                        class="flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-navy-900 text-white shadow-md">
+                        <i class="fas fa-users"></i>Usuários
+                    </button>
+                    <button onclick="switchConfigTab('backup')" id="cfg-btn-backup"
+                        class="flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 text-slate-500 hover:bg-slate-100">
+                        <i class="fas fa-database"></i>Backup
+                    </button>
+                </div>
+
+                <!-- ══ ABA: USUÁRIOS ══ -->
+                <div id="cfg-tab-usuarios" class="cfg-tab">
+                    <!-- Filtros de status -->
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="setUsersFilter('all')" id="filter-users-all" class="px-5 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all bg-navy-900 text-white shadow">
+                            Todos
+                        </button>
+                        <button onclick="setUsersFilter('active')" id="filter-users-active" class="px-5 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all border-2 border-green-500 text-green-700 hover:bg-green-500 hover:text-white">
+                            <i class="fas fa-circle text-[8px] mr-1"></i>Ativos
+                        </button>
+                        <button onclick="setUsersFilter('inactive')" id="filter-users-inactive" class="px-5 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all border-2 border-red-400 text-red-600 hover:bg-red-500 hover:text-white">
+                            <i class="fas fa-circle text-[8px] mr-1"></i>Inativos
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-navy-900 px-6 py-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-users text-blue-400 text-lg"></i>
+                                <div>
+                                    <h3 class="font-black text-white text-sm uppercase tracking-wide">Gerenciar Usuários</h3>
+                                    <p class="text-blue-300 text-[10px] font-bold uppercase tracking-widest">Contas do sistema</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="openHistoryModal({type:'users'})" title="Histórico de usuários" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all text-white">
+                                    <i class="fas fa-clock text-sm"></i>
+                                </button>
+                                <!-- Toggle permitir criação de contas -->
+                                <label class="hidden items-center gap-2 cursor-pointer select-none" title="Permitir criação de contas">
+                                    <span class="text-white text-xs font-bold hidden sm:inline">Criação de contas</span>
+                                    <div class="relative" onclick="saveAllowRegistration(!document.getElementById('toggle-allow-registration').checked)">
+                                        <input type="checkbox" id="toggle-allow-registration" class="sr-only">
+                                        <div id="toggle-allow-reg-track" class="w-11 h-6 bg-slate-600 rounded-full transition-colors duration-300"></div>
+                                        <div id="toggle-allow-reg-thumb" class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300"></div>
+                                    </div>
+                                </label>
+                                <button onclick="openCreateUserModal()" style="display:none" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs tracking-widest transition-all flex items-center gap-1.5">
+                                    <i class="fas fa-user-plus"></i><span class="hidden sm:inline">Criar Usuário</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-5 py-3 font-black text-slate-500 uppercase tracking-widest">Nome</th>
+                                        <th class="px-5 py-3 font-black text-slate-500 uppercase tracking-widest">Usuário</th>
+                                        <th class="px-5 py-3 font-black text-slate-500 uppercase tracking-widest">CPF</th>
+                                        <th class="px-5 py-3 font-black text-slate-500 uppercase tracking-widest">Papel</th>
+                                        <th class="px-5 py-3 font-black text-slate-500 uppercase tracking-widest">Status</th>
+                                        <th class="px-5 py-3 font-black text-slate-500 uppercase tracking-widest text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ ABA: BACKUP ══ -->
+                <div id="cfg-tab-backup" class="cfg-tab hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Exportar -->
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200 hover:shadow-lg transition-all">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                    <i class="fas fa-download text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-black text-navy-900 text-lg">Exportar Dados</h3>
+                                    <p class="text-slate-600 text-sm">Baixe todos os agendamentos em formato JSON</p>
+                                </div>
+                            </div>
+                            <button onclick="exportData()" class="w-full bg-blue-600 text-white font-black py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg">
+                                <i class="fas fa-file-export mr-2"></i>Exportar Backup Completo
+                            </button>
+                            <p class="mt-3 text-xs text-slate-500"><i class="fas fa-info-circle mr-1"></i>Inclui todos os agendamentos, pacientes e configurações</p>
+                        </div>
+
+                        <!-- Importar -->
+                        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-200 hover:shadow-lg transition-all">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                                    <i class="fas fa-upload text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-black text-navy-900 text-lg">Importar Dados</h3>
+                                    <p class="text-slate-600 text-sm">Restaure agendamentos a partir de um backup</p>
+                                </div>
+                            </div>
+                            <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+                            <button onclick="document.getElementById('import-file').click()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl hover:bg-emerald-700 transition-all shadow-lg">
+                                <i class="fas fa-file-import mr-2"></i>Importar Backup
+                            </button>
+                            <p class="mt-3 text-xs text-slate-500"><i class="fas fa-exclamation-triangle mr-1 text-yellow-500"></i>Atenção: Isso substituirá todos os dados atuais</p>
+                        </div>
+                    </div>
+
+                    <!-- Status do Sistema -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h4 class="font-black text-navy-900 mb-4 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-blue-500"></i>Status do Sistema
+                        </h4>
+                        <div class="text-center">
+                            <div class="text-4xl font-black text-navy-900 mb-1" id="total-appointments">0</div>
+                            <div class="text-slate-500 font-medium text-sm">Total de Agendamentos</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Janela de visualização do agendamento (somente leitura) -->
+    <div id="modal-view-record" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[115] justify-center items-center p-4 overflow-y-auto">
+        <div id="view-card" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-white/20 my-auto">
+            <div id="view-barra-agenda" class="view-barra bg-blue-600"></div>
+
+            <div class="view-header relative">
+                <button type="button" onclick="closeViewRecord()" title="Fechar"
+                    class="absolute top-5 right-5 h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-all">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+                <button type="button" onclick="openViewRecordHistory()" title="Rastreabilidade deste agendamento"
+                    class="absolute top-5 right-16 h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-all">
+                    <i class="fas fa-clock text-lg"></i>
+                </button>
+
+                <p id="view-agenda-nome" class="view-agenda-nome">Agenda</p>
+                <h3 id="view-paciente" class="view-paciente">Paciente</h3>
+                <p id="view-quando" class="view-quando">—</p>
+                <div id="view-selos" class="view-selos"></div>
+            </div>
+
+            <div id="view-corpo" class="view-corpo"></div>
+
+            <div class="view-footer">
+                <button type="button" id="view-btn-coleta-ativa" onclick="toggleColetaAtiva()" class="view-btn view-btn-coleta-ativa view-btn-icone hidden" title="Iniciar coleta">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button type="button" id="view-btn-concluir" onclick="abrirConcluirVisita()" class="view-btn view-btn-concluir" title="Concluir agenda">
+                    <i class="fas fa-check-double"></i> Concluir
+                </button>
+                <button type="button" id="view-btn-ausente" onclick="abrirAusenciaVisita()" class="view-btn view-btn-ausente" title="Registrar paciente ausente">
+                    <i class="fas fa-user-xmark"></i> Ausente
+                </button>
+                <button type="button" onclick="editFromView()" class="view-btn view-btn-editar" title="Editar agendamento">
+                    <i class="fas fa-pen-to-square"></i> Editar
+                </button>
+                <button type="button" id="view-btn-excluir" onclick="deleteFromView()" class="view-btn view-btn-excluir view-btn-icone" title="Excluir agendamento" aria-label="Excluir agendamento">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conclusão da visita — permite concluir só parte dos pacientes -->
+    <div id="modal-concluir-visita" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[130] justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 my-auto">
+            <div class="bg-green-600 p-6 text-white">
+                <h3 class="font-black uppercase tracking-tight text-lg"><i class="fas fa-check-double mr-2"></i>Concluir Agenda</h3>
+                <p id="concluir-resumo" class="text-[10px] text-green-100 font-bold uppercase tracking-widest mt-1">—</p>
+            </div>
+
+            <div class="p-6 space-y-3">
+                <p class="text-[11px] font-bold text-slate-500">
+                    Marque quem foi atendido. Pacientes desmarcados continuam pendentes e a visita fica em andamento.
+                </p>
+                <div id="concluir-aviso-checklist" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl p-3"></div>
+                <div id="concluir-lista" class="flex flex-col gap-2 max-h-72 overflow-y-auto"></div>
+
+                <!-- Abstinência — só nas agendas que usam o campo (espermograma) -->
+                <div id="concluir-abstinencia-bloco" class="hidden">
+                    <label class="block text-[10px] font-black text-green-700 uppercase mb-2">
+                        Dias de Abstinência <span class="text-red-500">(obrigatório)</span>
+                    </label>
+                    <input type="number" id="concluir-abstinencia" min="0" max="30" placeholder="Ex.: 3"
+                        class="w-full border border-green-200 bg-green-50/60 rounded-xl py-2.5 px-3 shadow-sm text-sm placeholder-slate-400">
+                    <p class="text-[10px] font-bold text-slate-400 mt-1">
+                        Fica registrado no agendamento e na rastreabilidade.
+                    </p>
+                </div>
+
+                <!-- Coletador — só nas agendas que usam o campo (coleta domiciliar) -->
+                <div id="concluir-coletador-bloco" class="hidden rounded-xl border border-green-200 bg-green-50/60 p-3">
+                    <p class="text-[10px] font-black text-green-700 uppercase mb-1">Coletador Responsável</p>
+                    <p id="concluir-coletador-nome" class="text-xs font-black uppercase text-navy-900">—</p>
+                    <p class="text-[10px] font-bold text-slate-400 mt-1">
+                        Quem conclui a visita fica registrado como coletador.
+                    </p>
+                </div>
+
+                <!-- Taxa de coleta — só aparece quando a visita tem valor a receber.
+                     Pedido e taxa são quitados separadamente. -->
+                <div id="concluir-taxa-bloco" class="hidden rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+                    <p class="text-[10px] font-black text-amber-700 uppercase mb-2">Valor a receber</p>
+                    <div class="flex flex-col gap-2">
+                        <div id="concluir-taxa-pedido-linha" class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Pedido</p>
+                                <p id="concluir-taxa-pedido-valor" class="text-sm font-black text-navy-900">R$ 0,00</p>
+                            </div>
+                            <button type="button" id="concluir-taxa-pedido-btn" onclick="marcarTaxaColetaPagaConcluir('pedido')"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                <i id="concluir-taxa-pedido-icone" class="fas fa-circle-notch text-[11px]"></i>
+                                <span id="concluir-taxa-pedido-texto">Marcar como pago</span>
+                            </button>
+                        </div>
+                        <div id="concluir-taxa-taxa-linha" class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Taxa</p>
+                                <p id="concluir-taxa-taxa-valor" class="text-sm font-black text-navy-900">R$ 0,00</p>
+                            </div>
+                            <button type="button" id="concluir-taxa-taxa-btn" onclick="marcarTaxaColetaPagaConcluir('taxa')"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                <i id="concluir-taxa-taxa-icone" class="fas fa-circle-notch text-[11px]"></i>
+                                <span id="concluir-taxa-taxa-texto">Marcar como paga</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 pt-2 border-t border-amber-200/80">
+                            <p class="text-[10px] font-black text-slate-500 uppercase">Valor total</p>
+                            <p id="concluir-taxa-valor" class="text-sm font-black text-navy-900">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="marcarTodosConcluirVisita()"
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-navy-900">
+                    <i class="fas fa-list-check mr-1"></i>Marcar todos
+                </button>
+            </div>
+
+            <div class="view-footer">
+                <button type="button" onclick="confirmarConcluirVisita()" class="view-btn view-btn-concluir">
+                    <i class="fas fa-check"></i> Confirmar Conclusão
+                </button>
+                <button type="button" onclick="fecharConcluirVisita()" class="view-btn view-btn-fechar" title="Cancelar">
+                    <i class="fas fa-xmark"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ausência — marca quem faltou e registra a justificativa -->
+    <div id="modal-ausencia-visita" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[130] justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 my-auto">
+            <div class="bg-amber-500 p-6 text-white">
+                <h3 class="font-black uppercase tracking-tight text-lg"><i class="fas fa-user-xmark mr-2"></i>Paciente Ausente</h3>
+                <p id="ausencia-resumo" class="text-[10px] text-amber-50 font-bold uppercase tracking-widest mt-1">—</p>
+            </div>
+
+            <div class="p-6 space-y-3">
+                <p class="text-[11px] font-bold text-slate-500">
+                    Marque quem não compareceu. O horário continua ocupado na agenda — a vaga foi perdida pela falta.
+                </p>
+                <div id="ausencia-lista" class="flex flex-col gap-2 max-h-60 overflow-y-auto"></div>
+                <button type="button" onclick="marcarTodosAusenciaVisita()"
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-navy-900">
+                    <i class="fas fa-list-check mr-1"></i>Marcar todos
+                </button>
+
+                <div>
+                    <label class="block text-[10px] font-black text-amber-600 uppercase mb-2">
+                        Justificativa da ausência
+                    </label>
+                    <textarea id="ausencia-comentario" rows="3" maxlength="500"
+                        placeholder="Descreva o motivo da falta (ex.: paciente não atendeu, endereço fechado, desistiu no local)…"
+                        class="w-full border border-amber-200 bg-amber-50/60 rounded-xl py-2.5 px-3 shadow-sm text-sm placeholder-slate-400"></textarea>
+                    <p class="text-[10px] font-bold text-slate-400 mt-1">
+                        Fica registrado nos comentários do agendamento e na rastreabilidade.
+                    </p>
+                </div>
+            </div>
+
+            <div class="view-footer">
+                <button type="button" onclick="confirmarAusenciaVisita()" class="view-btn view-btn-ausente">
+                    <i class="fas fa-user-xmark"></i> Confirmar Ausência
+                </button>
+                <button type="button" onclick="fecharAusenciaVisita()" class="view-btn view-btn-fechar" title="Cancelar">
+                    <i class="fas fa-xmark"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-record" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[110] justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden border border-white/20 my-auto">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="modal-title" class="font-black uppercase tracking-tight text-xl">Novo Agendamento</h3>
+                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Protocolo do paciente</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btn-record-history" onclick="openAppointmentHistory()" title="Histórico do agendamento" class="h-10 w-10 hidden items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-clock text-xl"></i></button>
+                    <button type="button" onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
+                </div>
+            </div>
+
+            <form id="record-form" onsubmit="saveRecord(event)" class="p-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <input type="hidden" id="reg-id">
+                
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Data *</label>
+                    <input type="date" id="reg-data" required onchange="atualizarReservaEtariaUI()" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Hora Inicial *</label>
+                    <input type="time" id="reg-hora-inicio" required onchange="calculateTimes()" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm focus:ring-2 focus:ring-blue-500">
+                    <!-- Aviso da reserva etária da agenda (ver atualizarReservaEtariaUI() em utils.js) -->
+                    <p id="aviso-reserva-etaria" class="hidden mt-1.5 text-[10px] font-bold text-amber-600 leading-snug"></p>
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Duração Calculada</label>
+                    <input type="text" id="reg-duracao" readonly class="w-full bg-slate-50 border border-slate-200 text-slate-500 font-black rounded-xl py-2.5 px-3 cursor-not-allowed">
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Hora Final Estimada</label>
+                    <input type="time" id="reg-hora-fim" readonly class="w-full bg-slate-50 border border-slate-200 text-slate-500 font-black rounded-xl py-2.5 px-3 cursor-not-allowed">
+                </div>
+
+                <div class="col-span-1 md:col-span-4 border-t border-slate-100 my-1"></div>
+
+                <div class="col-span-1 md:col-span-2 relative">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome do Paciente *</label>
+                    <input type="text" id="reg-paciente" required autocomplete="off"
+                        oninput="this.value = this.value.toUpperCase(); filtrarPacientes(this.value)"
+                        onfocus="filtrarPacientes(this.value)"
+                        onblur="fecharSugestoesTardio('paciente')"
+                        class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                    <div id="paciente-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                    <!-- Opcional em geral; torna-se obrigatório automaticamente quando a Idade < 18 (ver toggleResponsavel() em acompanhantes.js) -->
+                    <button type="button" id="btn-toggle-responsavel" onclick="toggleResponsavel()"
+                        class="group mt-1.5 inline-flex items-center gap-1.5 pl-2.5 pr-3 py-1 bg-slate-100 hover:bg-navy-900 border border-slate-200 hover:border-navy-900 rounded-full shadow-sm transition-all duration-200 active:scale-95">
+                        <i class="fas fa-user-shield text-slate-500 group-hover:text-white text-[10px] transition-colors duration-200"></i>
+                        <span class="text-[10px] font-black text-slate-600 group-hover:text-white uppercase tracking-wide transition-colors duration-200">Incluir Responsável</span>
+                    </button>
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Idade *</label>
+                    <input type="number" id="reg-idade" required min="0" oninput="atualizarResponsavelPorIdade(); atualizarReservaEtariaUI()" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Whatsapp *</label>
+                    <input type="text" id="reg-contato" required placeholder="(00) 00000-0000" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+
+                <!-- ══ RESPONSÁVEL DO PACIENTE ══ -->
+                <div class="col-span-1 md:col-span-4">
+                    <div id="box-responsavel" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                        <div class="col-span-1 md:col-span-3">
+                            <label id="lbl-responsavel-nome" class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome do Responsável</label>
+                            <input type="text" id="reg-responsavel-nome" autocomplete="off"
+                                oninput="this.value = this.value.toUpperCase()"
+                                class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                        </div>
+                        <div class="col-span-1 md:col-span-1">
+                            <label id="lbl-responsavel-parentesco" class="block text-[10px] font-black text-slate-400 uppercase mb-2">Grau de Parentesco</label>
+                            <select id="reg-responsavel-parentesco" class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm font-bold text-navy-900">
+                                <option value="">Selecione...</option>
+                                <option value="Pai">Pai</option>
+                                <option value="Mãe">Mãe</option>
+                                <option value="Avô">Avô</option>
+                                <option value="Avó">Avó</option>
+                                <option value="Irmão">Irmão</option>
+                                <option value="Irmã">Irmã</option>
+                                <option value="Tio">Tio</option>
+                                <option value="Tia">Tia</option>
+                                <option value="Tutor(a)">Tutor(a)</option>
+                                <option value="Curador(a)">Curador(a)</option>
+                                <option value="Cônjuge">Cônjuge</option>
+                                <option value="Companheiro(a)">Companheiro(a)</option>
+                                <option value="Filho(a)">Filho(a)</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p id="ajuda-responsavel-menor" class="hidden mt-2 text-[10px] font-bold text-amber-600">
+                        <i class="fas fa-triangle-exclamation mr-1"></i>Paciente menor de 18 anos — inclusão do responsável e grau de parentesco é obrigatória.
+                    </p>
+                </div>
+
+                <!-- ══ PACIENTES ADICIONAIS (mesma visita, mesmo endereço) ══ -->
+                <div class="col-span-1 md:col-span-4 hidden" data-agenda-campo="multiPaciente">
+                    <div id="acompanhantes-lista" class="flex flex-col gap-3"></div>
+                    <button type="button" onclick="adicionarAcompanhante()"
+                        class="group mt-3 inline-flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 bg-slate-100 hover:bg-navy-900 border border-slate-200 hover:border-navy-900 rounded-xl shadow-sm transition-all duration-200 active:scale-95">
+                        <i class="fas fa-user-plus text-slate-500 group-hover:text-white text-sm transition-colors duration-200"></i>
+                        <span class="text-[11px] font-black text-slate-600 group-hover:text-white uppercase tracking-wide transition-colors duration-200">Adicionar Paciente</span>
+                    </button>
+                    <p id="acompanhantes-ajuda" class="hidden mt-2 text-[10px] font-bold text-slate-400">
+                        <i class="fas fa-circle-info mr-1"></i>Pessoas atendidas na mesma visita — não ocupam vaga adicional na agenda.
+                    </p>
+                </div>
+
+                <div class="col-span-1 md:col-span-2" data-agenda-campo="exame">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Exame *</label>
+                    <select id="reg-exame" required onchange="updateSubstratos(); calculateTimes()" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm font-bold text-navy-900">
+                        <option value="">Selecione...</option>
+                        <option value="TRESP">TRESP (Teste Respi. de Hidrogênio)</option>
+                        <option value="TSBAC">TSBAC (Teste de Supercrescimento)</option>
+                    </select>
+                </div>
+                <div class="col-span-1 md:col-span-1" data-agenda-campo="metano">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Metano *</label>
+                    <select id="reg-metano" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                        <option value="Sim">Sim</option>
+                        <option value="Não" selected>Não</option>
+                    </select>
+                </div>
+                <div class="col-span-1 md:col-span-1" data-agenda-campo="substrato">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Substrato *</label>
+                    <select id="reg-substrato" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                        <option value="">Aguardando exame...</option>
+                    </select>
+                </div>
+                <div class="col-span-1 md:col-span-2 hidden" data-agenda-campo="abstinencia">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Dias de Abstinência <span id="lbl-abstinencia-obrig" class="text-slate-300">(obrigatório ao concluir)</span></label>
+                    <input type="number" id="reg-abstinencia" min="0" max="30" placeholder="Ex.: 3" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+
+                <!-- ══ ENDEREÇO DA COLETA (agendas domiciliares) ══ -->
+                <div class="col-span-1 md:col-span-4 hidden" data-agenda-campo="endereco">
+                    <div id="reg-endereco-box" class="bg-amber-50/60 p-5 rounded-2xl border border-amber-200 transition-colors duration-200">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i id="reg-endereco-icone" class="fas fa-house-medical text-amber-600"></i>
+                            <label class="text-[11px] font-black text-slate-700 uppercase tracking-wider">Endereço da Coleta</label>
+                            <span id="reg-distante-selo" class="hidden items-center gap-1.5 ml-1 px-2 py-1 rounded-full bg-violet-600 text-white text-[9px] font-black uppercase tracking-wide">
+                                <i class="fas fa-road-circle-exclamation"></i> Localidade distante
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div class="md:col-span-3">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">CEP</label>
+                                <input type="text" id="reg-cep" placeholder="00000-000" maxlength="9" inputmode="numeric" oninput="formatCep(this)" onblur="buscarCep()" class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm">
+                            </div>
+                            <div class="md:col-span-7 relative">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Logradouro *</label>
+                                <input type="text" id="reg-logradouro" placeholder="Rua, avenida..." autocomplete="off"
+                                    oninput="filtrarSugestoes('logradouro', this.value)"
+                                    onfocus="filtrarSugestoes('logradouro', this.value)"
+                                    onblur="fecharSugestoesTardio('logradouro')"
+                                    class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm">
+                                <div id="logradouro-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nº *</label>
+                                <input type="text" id="reg-numero" class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm">
+                            </div>
+                            <div class="md:col-span-4 relative">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Bairro *</label>
+                                <input type="text" id="reg-bairro" autocomplete="off"
+                                    oninput="filtrarSugestoes('bairro', this.value)"
+                                    onfocus="filtrarSugestoes('bairro', this.value)"
+                                    onblur="fecharSugestoesTardio('bairro')"
+                                    class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                                <div id="bairro-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                            </div>
+                            <div class="md:col-span-4 relative">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Cidade *</label>
+                                <input type="text" id="reg-cidade" autocomplete="off"
+                                    oninput="filtrarSugestoes('cidade', this.value)"
+                                    onfocus="filtrarSugestoes('cidade', this.value)"
+                                    onblur="fecharSugestoesTardio('cidade')"
+                                    class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                                <div id="cidade-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                            </div>
+                            <div class="md:col-span-2 relative">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">UF *</label>
+                                <input type="text" id="reg-estado" placeholder="UF ou nome" autocomplete="off"
+                                    oninput="filtrarEstados(this.value)"
+                                    onfocus="filtrarEstados(this.value)"
+                                    onblur="setTimeout(validarEstado, 150)"
+                                    class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                                <div id="estados-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Complemento</label>
+                                <input type="text" id="reg-complemento" placeholder="Apto, bloco..." class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
+                            <div class="flex-1 min-w-[220px]">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <button type="button" id="btn-mapa-toggle" onclick="toggleMapaEndereco()"
+                                        class="group inline-flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                                        <i class="fas fa-map-location-dot text-white text-sm transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6"></i>
+                                        <span id="btn-mapa-label" class="text-[11px] font-black text-white uppercase tracking-wide">Ver no mapa</span>
+                                        <i class="fas fa-chevron-down text-white text-[10px] transition-transform duration-300"></i>
+                                    </button>
+                                    <label id="reg-distante-label" for="reg-distante"
+                                        class="inline-flex items-center gap-2 cursor-pointer select-none pl-3 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-violet-300 transition-all duration-200"
+                                        title="Marque quando o endereço fica em localidade distante (deslocamento maior)">
+                                        <input type="checkbox" id="reg-distante" onchange="atualizarDistanteUI()"
+                                            class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                                        <i id="reg-distante-icone" class="fas fa-road-circle-exclamation text-slate-300 text-sm transition-colors duration-200"></i>
+                                        <span id="reg-distante-texto" class="text-[11px] font-black text-slate-500 uppercase tracking-wide transition-colors duration-200">Distante</span>
+                                    </label>
+                                </div>
+                                <div id="mapa-endereco-container" class="hidden mt-3 rounded-xl overflow-hidden border border-amber-200 shadow-sm">
+                                    <iframe id="mapa-endereco-iframe" class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div id="reg-taxa-box"
+                                    class="flex w-full max-w-full flex-wrap sm:inline-flex sm:w-auto items-center gap-x-2 gap-y-2.5 pl-3.5 pr-2.5 py-2 rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200"
+                                    title="Valor a receber pela coleta domiciliar">
+                                    <i class="fas fa-sack-dollar shrink-0 text-emerald-500 text-sm"></i>
+                                    <div class="flex flex-col shrink-0 grow sm:grow-0 min-w-[9rem]">
+                                        <label for="reg-taxa-pedido" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Pedido</label>
+                                        <div class="flex flex-nowrap items-center gap-1.5">
+                                            <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
+                                            <input type="text" id="reg-taxa-pedido" inputmode="decimal" placeholder="0,00"
+                                                oninput="formatarTaxaColeta(this); atualizarTaxaColetaUI()"
+                                                onblur="atualizarTaxaColetaUI()"
+                                                class="w-20 border-0 border-b-2 border-slate-200 bg-transparent py-0.5 px-0 text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors duration-200">
+                                            <button type="button" id="btn-taxa-pedido-pago" onclick="toggleTaxaColetaParcelaPaga('pedido')"
+                                                title="Marcar o pedido como pago"
+                                                class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                                <i id="reg-taxa-pedido-pago-icone" class="fas fa-circle-notch text-[10px]"></i>
+                                                <span id="reg-taxa-pedido-pago-texto">A pagar</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span class="hidden sm:inline shrink-0 text-slate-300 font-black text-sm select-none">+</span>
+                                    <div class="flex flex-col shrink-0 grow sm:grow-0 min-w-[9rem]">
+                                        <label for="reg-taxa-taxa" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Taxa</label>
+                                        <div class="flex flex-nowrap items-center gap-1.5">
+                                            <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
+                                            <input type="text" id="reg-taxa-taxa" inputmode="decimal" placeholder="0,00"
+                                                oninput="formatarTaxaColeta(this); atualizarTaxaColetaUI()"
+                                                onblur="atualizarTaxaColetaUI()"
+                                                class="w-20 border-0 border-b-2 border-slate-200 bg-transparent py-0.5 px-0 text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors duration-200">
+                                            <button type="button" id="btn-taxa-taxa-pago" onclick="toggleTaxaColetaParcelaPaga('taxa')"
+                                                title="Marcar a taxa como paga"
+                                                class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                                <i id="reg-taxa-taxa-pago-icone" class="fas fa-circle-notch text-[10px]"></i>
+                                                <span id="reg-taxa-taxa-pago-texto">A pagar</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span class="hidden sm:inline shrink-0 text-slate-300 font-black text-sm select-none">=</span>
+                                    <div class="flex flex-col shrink-0 grow sm:grow-0 min-w-[9rem]">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Valor total *</span>
+                                        <div class="flex flex-nowrap items-center gap-1.5">
+                                            <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
+                                            <output id="reg-taxa-total" for="reg-taxa-pedido reg-taxa-taxa"
+                                                class="block w-20 border-0 border-b-2 border-slate-200 py-0.5 px-0 text-sm font-black text-slate-700">0,00</output>
+                                            <span id="reg-taxa-status"
+                                                class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border border-slate-200 text-slate-400">
+                                                <i id="reg-taxa-status-icone" class="fas fa-circle-notch text-[10px]"></i>
+                                                <span id="reg-taxa-status-texto">A pagar</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span class="hidden sm:inline shrink-0 text-slate-200 font-black text-sm select-none">|</span>
+                                    <!-- Tipo de cobrança: obrigatório, aceita Particular e Convênio juntos. -->
+                                    <div class="flex flex-col shrink-0 grow sm:grow-0 relative">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Tipo *</span>
+                                        <button type="button" id="btn-taxa-tipo" onclick="toggleTaxaColetaTipoPopover()"
+                                            title="Selecione o tipo de cobrança (Particular e/ou Convênio)"
+                                            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                            <i id="reg-taxa-tipo-icone" class="fas fa-tags text-[10px]"></i>
+                                            <span id="reg-taxa-tipo-texto">Selecionar</span>
+                                            <i class="fas fa-chevron-down text-[8px] opacity-60"></i>
+                                        </button>
+                                        <div id="taxa-tipo-popover" class="hidden absolute z-30 top-full right-0 mt-1.5 w-40 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5">
+                                            <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                                                <input type="checkbox" id="reg-taxa-tipo-particular" onchange="atualizarTaxaColetaUI()"
+                                                    class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                                <span class="text-[11px] font-black text-slate-600 uppercase tracking-wide">Particular</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                                                <input type="checkbox" id="reg-taxa-tipo-convenio" onchange="atualizarTaxaColetaUI()"
+                                                    class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                                <span class="text-[11px] font-black text-slate-600 uppercase tracking-wide">Convênio</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <!-- Convênios: obrigatório quando o tipo inclui Convênio; aceita vários. -->
+                                    <div id="taxa-convenio-bloco" class="hidden flex flex-col shrink-0 grow sm:grow-0 relative">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Convênio *</span>
+                                        <button type="button" id="btn-taxa-convenio" onclick="toggleTaxaConvenioPopover()"
+                                            title="Selecione o(s) convênio(s)"
+                                            class="inline-flex shrink-0 max-w-[14rem] items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                            <i id="reg-taxa-convenio-icone" class="fas fa-id-card-clip text-[10px]"></i>
+                                            <span id="reg-taxa-convenio-texto" class="truncate">Selecionar</span>
+                                            <i class="fas fa-chevron-down text-[8px] opacity-60"></i>
+                                        </button>
+                                        <div id="taxa-convenio-popover" class="hidden absolute z-30 bottom-full left-0 mb-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+                                            <div class="p-2 border-b border-slate-100">
+                                                <div class="relative">
+                                                    <i class="fas fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400"></i>
+                                                    <input type="text" id="taxa-convenio-busca" placeholder="Pesquisar convênio..." autocomplete="off"
+                                                        oninput="renderTaxaConvenioLista()"
+                                                        class="w-full border border-slate-200 rounded-lg py-1.5 pl-7 pr-2 text-xs focus:ring-violet-500 focus:border-violet-500">
+                                                </div>
+                                            </div>
+                                            <div id="taxa-convenio-lista" class="max-h-56 overflow-y-auto py-1"></div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="reg-taxa-pedido-pago" value="false">
+                                    <input type="hidden" id="reg-taxa-taxa-pago" value="false">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-2 hidden" data-agenda-campo="pontoReferencia">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Ponto de Referência</label>
+                    <input type="text" id="reg-ponto-referencia" placeholder="Ex.: em frente à praça" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+                <div class="col-span-1 md:col-span-2 hidden" data-agenda-campo="coletador">
+                    <div class="relative">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Coletador Responsável</label>
+                        <input type="text" id="reg-coletador" placeholder="Quem realizará a coleta..." autocomplete="off"
+                            oninput="filtrarAtendentes('coletador', this.value)"
+                            onfocus="filtrarAtendentes('coletador', this.value)"
+                            onblur="fecharSugestoesTardio('coletador'); conferirNomeOficial('coletador')"
+                            class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
+                        <div id="coletador-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                    </div>
+                    <!-- Coletador auxiliar — segunda pessoa que acompanha a coleta domiciliar.
+                         Fica escondido atrás do botão para não poluir o formulário no caso comum
+                         (um coletador só). -->
+                    <button type="button" id="btn-coletador-auxiliar" onclick="abrirColetadorAuxiliar()"
+                        class="mt-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border border-slate-200 bg-white text-slate-500 shadow-sm hover:border-teal-300 hover:text-teal-700 transition-all duration-200 active:scale-95">
+                        <i class="fas fa-user-plus text-[11px]"></i>
+                        <span>Adicionar coletador auxiliar</span>
+                    </button>
+                    <div id="coletador-auxiliar-bloco" class="hidden relative mt-2">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase">Coletador Auxiliar</label>
+                            <button type="button" onclick="removerColetadorAuxiliar()"
+                                class="text-[10px] font-black uppercase text-slate-400 hover:text-red-600 transition-colors">
+                                <i class="fas fa-xmark mr-1"></i>Remover
+                            </button>
+                        </div>
+                        <input type="text" id="reg-coletador-auxiliar" placeholder="Quem acompanhará a coleta..." autocomplete="off"
+                            oninput="filtrarAtendentes('coletador-auxiliar', this.value)"
+                            onfocus="filtrarAtendentes('coletador-auxiliar', this.value)"
+                            onblur="fecharSugestoesTardio('coletador-auxiliar'); conferirNomeOficial('coletador-auxiliar')"
+                            class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
+                        <div id="coletador-auxiliar-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                    </div>
+                </div>
+
+                <div id="campo-pedido-container" class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nº do Pedido *</label>
+                    <input type="text" id="reg-pedido" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+                <div class="col-span-1 md:col-span-2 relative">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Atendente Responsável *</label>
+                    <input type="text" id="reg-atendente" required placeholder="Busque ou selecione..." autocomplete="off"
+                        oninput="filtrarAtendentes('atendente', this.value)"
+                        onfocus="filtrarAtendentes('atendente', this.value)"
+                        onblur="fecharSugestoesTardio('atendente'); conferirNomeOficial('atendente')"
+                        class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
+                    <div id="atendente-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-blue-500 uppercase mb-2">Status da Agenda *</label>
+                    <select id="reg-status" required onchange="toggleCancelado()" class="w-full border border-blue-200 bg-blue-50 rounded-xl py-2.5 px-3 shadow-sm font-black text-blue-800">
+                        <option value="Agendado">Agendado</option>
+                        <option value="Em andamento">Em andamento</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Ausente">Ausente</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="col-span-1 md:col-span-4 border-t border-slate-100 my-1"></div>
+
+                <div id="box-checklist" class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">Checklist Operacional</label>
+                        <p class="text-[10px] text-slate-500">Preenchimento obrigatório para concluir processo</p>
+                    </div>
+                    <div class="flex gap-3 flex-wrap">
+                        <input type="hidden" id="chk-orientacao-val" value="false">
+                        <input type="hidden" id="chk-anexo-val" value="false">
+                        <input type="hidden" id="chk-endereco-val" value="false">
+                        <button type="button" id="btn-chk-orientacao" data-checklist-item="orientacao" onclick="toggleCheck('orientacao')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-check-circle text-lg"></i> Orientação</button>
+                        <button type="button" id="btn-chk-endereco" data-checklist-item="endereco" onclick="toggleCheck('endereco')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-map-location-dot text-lg"></i> Endereço</button>
+                        <button type="button" id="btn-chk-anexo" data-checklist-item="anexo" onclick="toggleCheck('anexo')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-file-medical text-lg"></i> Anexo Unilab</button>
+                    </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-3">Anexos do Agendamento</label>
+
+                    <div id="reg-anexos-list" class="anexo-lista mb-3"></div>
+
+                    <div class="anexo-widget">
+                        <div class="anexo-widget-linha">
+                            <select id="reg-upload-tipo" class="anexo-select">
+                                <option value="arquivo">Arquivo</option>
+                                <option value="imagem">Imagem</option>
+                                <option value="link">Link</option>
+                            </select>
+                            <input type="text" id="reg-upload-title" class="anexo-title-input" placeholder="Nome do anexo (ex.: Pedido médico)">
+                            <button type="button" id="reg-upload-btn" class="anexo-btn-enviar" onclick="submitAnexoUpload('reg')">Enviar</button>
+                        </div>
+
+                        <div id="reg-link-wrap" class="anexo-link-wrap hidden">
+                            <input type="url" id="reg-link-input" class="anexo-link-input" placeholder="https://...">
+                        </div>
+
+                        <div id="reg-file-preview" class="w-full hidden"></div>
+
+                        <div id="reg-upload-zone" class="anexo-drop-zone">
+                            <span class="anexo-drop-titulo"><i class="fas fa-cloud-arrow-up mr-1"></i> Clique ou arraste o arquivo aqui</span>
+                            <span id="reg-upload-dica" class="anexo-drop-dica">PDF, Word, planilha, slides · até 30 MB</span>
+                            <input type="file" id="reg-file-input" style="display:none">
+                        </div>
+
+                        <div id="reg-img-progress" class="anexo-progress hidden">
+                            <div class="anexo-progress-trilho"><div id="reg-img-progress-bar" class="anexo-progress-barra"></div></div>
+                            <span id="reg-img-progress-pct" class="anexo-progress-pct">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-4 flex justify-start items-center">
+                    <button type="button" id="btn-toggle-comentario" onclick="toggleComentario()" class="px-5 py-2.5 bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-sm flex items-center gap-2">
+                        <i class="fas fa-comment-dots text-sm"></i> Adicionar Comentário
+                    </button>
+                </div>
+
+                <div id="box-motivo" class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 transition-all hidden">
+                    <label id="lbl-comentario" class="block text-[10px] font-black text-slate-400 uppercase mb-2">Comentários Operacionais (Opcional)</label>
+                    <textarea id="reg-comentarios" rows="2" class="w-full border border-slate-200 bg-white rounded-xl py-3 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Observações do exame ou motivo do cancelamento..."></textarea>
+                    <div id="box-motivo-perda" class="hidden mt-4">
+                        <label class="block text-[10px] font-black text-red-500 uppercase mb-2">Motivo de Perda *</label>
+                        <div class="flex gap-2">
+                            <select id="reg-motivo-perda" class="flex-1 border border-red-200 bg-white rounded-xl py-2.5 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400 transition-all text-sm text-slate-700">
+                                <option value="">— Selecione um motivo —</option>
+                            </select>
+                            <button type="button" onclick="openMotivosPerdaModal()" title="Gerenciar motivos de perda" class="px-3 py-2.5 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white border border-red-200 rounded-xl transition-all shadow-sm flex items-center justify-center">
+                                <i class="fas fa-plus text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-4 mt-2 flex gap-4">
+                    <button type="submit" id="reg-save-btn" class="flex-1 bg-navy-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 shadow-xl transition-all uppercase tracking-widest text-xs">Confirmar Salvar</button>
+                    <button type="button" onclick="duplicateRecord()" title="Duplicar agendamento mantendo paciente, idade, WhatsApp e Nº do Pedido" class="px-4 py-4 border-2 border-blue-200 bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-2xl font-black transition-all text-xs flex items-center gap-2 uppercase tracking-widest"><i class="fas fa-copy"></i> Duplicar</button>
+                    <button type="button" onclick="closeModals()" class="px-8 py-4 border-2 border-slate-100 rounded-2xl font-black text-slate-400 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-day-details" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col h-[90vh] h-[90dvh]">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-4">
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-xl">Marcações do Dia</h3>
+                        <p id="day-details-date" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">00/00/0000</p>
+                    </div>
+                    <button id="btn-holiday-toggle" onclick="toggleHolidayMode()" class="relative h-8 w-14 bg-red-500 hover:bg-red-600 rounded-full transition-all duration-300 shadow-lg border-2 border-red-400/50">
+                        <div id="holiday-toggle-slider" class="absolute top-0.5 left-0.5 h-7 w-7 bg-white rounded-full shadow-md transition-transform duration-300 flex items-center justify-center">
+                            <i class="fas fa-calendar-times text-red-500 text-xs"></i>
+                        </div>
+                    </button>
+                    <button id="btn-blocked-slots" onclick="openBlockedSlotsModal()" title="Horários disponíveis para marcação" class="relative h-8 w-8 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all">
+                        <i class="fas fa-hourglass-half text-sm"></i>
+                        <span id="blocked-slots-badge" class="hidden absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">0</span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openDayHistory()" title="Histórico do dia" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"><i class="fas fa-clock"></i></button>
+                    <button onclick="closeModals()" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"><i class="fas fa-times text-xl"></i></button>
+                </div>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 min-h-0">
+                <div id="day-appointments-list" class="flex flex-col gap-3">
+                </div>
+            </div>
+            <div id="day-details-footer" class="px-6 pb-6 pt-4 border-t border-slate-200 bg-white shrink-0">
+                <button onclick="closeModals(); openRecordModalWithDate(document.getElementById('day-details-date').innerText)" class="w-full bg-slate-100 text-navy-900 border border-slate-200 font-black py-4 rounded-xl shadow-sm hover:bg-slate-200 transition-all uppercase tracking-widest text-xs">
+                    <i class="fas fa-plus mr-2"></i> Agendar neste dia
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-blocked-slots" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[110] justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh] max-h-[85dvh]">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                        <i class="fas fa-hourglass-half text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg">Horários do Dia</h3>
+                        <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest"><span id="blocked-slots-date">00/00/0000</span> · <span id="blocked-slots-agenda"></span></p>
+                    </div>
+                </div>
+                <button onclick="closeBlockedSlotsModal()" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all shrink-0"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="px-6 pt-4 shrink-0">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-relaxed">Desligue um horário para impedir novas marcações nele apenas neste dia.</p>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 min-h-0">
+                <div id="blocked-slots-list" class="flex flex-col gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-obs" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
+                <h3 class="font-black uppercase text-sm tracking-widest">Comentários do Agendamento</h3>
+                <button onclick="closeModals()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-8">
+                <input type="hidden" id="obs-id">
+                <textarea id="obs-text" rows="6" class="w-full border-slate-200 rounded-2xl p-5 border focus:outline-none focus:ring-2 focus:ring-navy-800 text-sm shadow-inner bg-slate-50" placeholder="Insira observações médicas..."></textarea>
+                <button onclick="saveObservation()" class="w-full mt-6 bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-navy-900 transition-all uppercase tracking-widest text-xs">Salvar Anotação</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MOTIVOS DE PERDA -->
+    <div id="modal-motivos-perda" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[150] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-red-600 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-black uppercase text-sm tracking-widest">Motivos de Perda</h3>
+                    <p class="text-[10px] text-red-200 font-bold uppercase tracking-widest mt-0.5">Gerenciar lista de motivos</p>
+                </div>
+                <button onclick="closeMotivosPerdaModal()"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="input-novo-motivo" placeholder="Novo motivo de perda..." class="flex-1 border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 transition-all" onkeydown="if(event.key==='Enter'){event.preventDefault();addMotivoPerda();}">
+                    <button type="button" onclick="addMotivoPerda()" class="px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-sm flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </button>
+                </div>
+                <div id="lista-motivos-perda" class="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
+                    <!-- motivos renderizados aqui -->
+                </div>
+            </div>
+            <div class="px-6 pb-6">
+                <button onclick="closeMotivosPerdaModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-3 rounded-2xl transition-all uppercase tracking-widest text-xs">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-checklist-confirm" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg">Checklist Incompleto</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Verificação obrigatória</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <p class="text-slate-700 font-medium mb-4">Você está agendando sem preencher as seguintes atividades:</p>
+                    <div id="checklist-missing-items" class="space-y-2">
+                        <!-- Items will be inserted here -->
+                    </div>
+                </div>
+                
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-amber-800 text-sm font-medium">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        É importante completar o checklist para garantir o padrão de qualidade do atendimento.
+                    </p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="confirmChecklistIncomplete()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-blue-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Continuar Mesmo Assim
+                    </button>
+                    <button onclick="cancelChecklistConfirm()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar ao Formulário
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Aviso: agendamento sem anexo vinculado -->
+    <div id="modal-anexo-faltando" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-paperclip text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg">Sem Anexo Vinculado</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Coleta Domiciliar</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <p class="text-slate-700 font-medium mb-4">Este agendamento de coleta domiciliar está sendo salvo <strong>sem nenhum anexo</strong> vinculado.</p>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-amber-800 text-sm font-medium">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Anexe o pedido médico ou a guia do paciente para manter o registro completo.
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="confirmAnexoFaltando()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-blue-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Salvar Mesmo Assim
+                    </button>
+                    <button onclick="cancelAnexoFaltando()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar e Anexar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Alerta de Horário de Exceção (06h–07h e domingo, Coleta Domiciliar) -->
+    <div id="modal-horario-excecao" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg">Horário de Exceção</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Coleta Domiciliar · 06h–07h e domingos</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <p class="text-slate-700 font-medium mb-4">O horário das <strong>06:00 às 07:00</strong> (ou qualquer horário aos <strong>domingos</strong>) é uma faixa de exceção da coleta domiciliar, reservada para casos de necessidade.</p>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-amber-800 text-sm font-medium">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Confirme apenas se este agendamento realmente precisa ser feito neste horário.
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="confirmHorarioExcecao()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-blue-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Confirmar Horário
+                    </button>
+                    <button onclick="cancelHorarioExcecao()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Encaixe Excepcional (4º endereço no mesmo horário, coleta domiciliar) -->
+    <div id="modal-slot-excedente" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 transform transition-all">
+            <div class="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+                <div class="relative flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm">
+                        <i class="fas fa-route text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg leading-tight">Encaixe Excepcional</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Coleta Domiciliar · Endereço extra</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black uppercase tracking-wide">
+                        <i class="fas fa-clock text-[11px]"></i>
+                        <span id="slot-excedente-hora">--:--</span>
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-black uppercase tracking-wide">
+                        <i class="fas fa-location-dot text-[11px]"></i>
+                        <span id="slot-excedente-ordinal">4º</span> endereço
+                    </span>
+                </div>
+
+                <p class="text-slate-700 font-medium mb-4">Este horário já atingiu o limite de endereços da rota. O encaixe é possível, mas depende da disponibilidade da equipe em campo.</p>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-amber-800 text-sm font-medium">
+                        <i class="fas fa-triangle-exclamation mr-2"></i>
+                        Este agendamento <strong>deve ser comunicado e confirmado</strong> com a equipe responsável pela coleta domiciliar antes de ser considerado garantido.
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="confirmSlotExcedente()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-blue-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Já Comuniquei
+                    </button>
+                    <button onclick="cancelSlotExcedente()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Limite Diário Excedido (espermograma · sábado) -->
+    <div id="modal-limite-excedente" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 transform transition-all">
+            <div class="bg-gradient-to-br from-teal-500 via-cyan-600 to-indigo-600 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+                <div class="relative flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm">
+                        <i class="fas fa-user-shield text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg leading-tight">Limite Excedido</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Espermograma · Sábado</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 text-xs font-black uppercase tracking-wide">
+                        <i class="fas fa-calendar-day text-[11px]"></i>
+                        <span id="limite-excedente-data">--/--</span>
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 text-xs font-black uppercase tracking-wide">
+                        <i class="fas fa-clock text-[11px]"></i>
+                        <span id="limite-excedente-hora">--:--</span>
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-black uppercase tracking-wide">
+                        <i class="fas fa-plus text-[11px]"></i>
+                        <span id="limite-excedente-ordinal">3ª</span> agenda
+                    </span>
+                </div>
+
+                <p class="text-slate-700 font-medium mb-4">O sábado já atingiu o limite de <strong><span id="limite-excedente-limite">2</span> agendamentos</strong>. É permitido encaixar <strong>apenas 1 agenda extra</strong> neste dia.</p>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex gap-3">
+                    <i class="fas fa-triangle-exclamation text-amber-500 mt-0.5"></i>
+                    <p class="text-amber-800 text-sm font-medium">
+                        Para exceder o limite, o agendamento <strong>deve ter aprovação do setor responsável</strong>. Só confirme se a aprovação já foi obtida.
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="confirmSlotExcedente()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-teal-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Aprovado
+                    </button>
+                    <button onclick="cancelSlotExcedente()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Alerta de Data Passada -->
+    <div id="modal-past-date" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 transform transition-all">
+            <div class="bg-gradient-to-r from-red-500 to-pink-600 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+                
+                <div class="flex items-center gap-4 relative z-10">
+                    <div class="h-14 w-14 bg-white/20 rounded-xl flex items-center justify-center animate-pulse">
+                        <i class="fas fa-calendar-times text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-xl">Data Passada</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Alerta de agendamento</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fas fa-exclamation text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-red-800 font-bold text-lg mb-2">⚠️ ATENÇÃO!</p>
+                                <p class="text-red-700 font-medium">Você está tentando marcar um exame em uma data que já passou.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <p class="text-slate-700 text-sm font-medium mb-2">
+                            <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                            Deseja continuar com o agendamento mesmo assim?
+                        </p>
+                        <p class="text-slate-600 text-xs">Esta ação irá criar um agendamento retroativo.</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="confirmPastDate()" class="flex-1 bg-gradient-to-r from-red-500 to-pink-600 text-white font-black py-3 rounded-xl hover:shadow-lg transition-all uppercase tracking-widest text-xs transform hover:scale-105">
+                        <i class="fas fa-check mr-2"></i>Sim, Continuar
+                    </button>
+                    <button onclick="cancelPastDate()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico de Alterações -->
+    <div id="modal-history" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[160] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-100">
+            <!-- Header -->
+            <div class="bg-navy-900 p-5 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-history text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black uppercase tracking-tight text-base">Histórico de Alterações</h3>
+                            <p id="history-subtitle" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-0.5">Rastreabilidade geral</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleHistoryMonthPicker(event)" title="Filtrar por mês" id="btn-history-month-toggle" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all">
+                            <i class="fas fa-calendar-alt text-sm"></i>
+                        </button>
+                        <input type="hidden" id="history-month-filter" value="">
+                        <button onclick="document.getElementById('modal-history').classList.remove('active')" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div id="history-list" class="px-5 py-4 max-h-[55vh] overflow-y-auto divide-y divide-slate-50">
+                <p class="text-center text-slate-400 font-bold uppercase text-xs py-10">Nenhum registro encontrado</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <span id="history-pagination-info" class="text-xs font-bold text-slate-500">0 de 0</span>
+                <div class="flex gap-2">
+                    <button onclick="changeHistoryPage(-1)" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-white transition-all">
+                        <i class="fas fa-chevron-left mr-1"></i>Anterior
+                    </button>
+                    <button onclick="changeHistoryPage(1)" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-white transition-all">
+                        Próximo<i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmação Exclusão de Registro de Rastreabilidade -->
+    <div id="modal-audit-delete-confirm" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[250] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-gradient-to-br from-red-600 to-red-800 p-5 text-white relative overflow-hidden">
+                <div class="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full pointer-events-none"></div>
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="h-11 w-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-history text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-base">Excluir Registro</h3>
+                        <p class="text-red-200 text-[10px] font-bold uppercase tracking-widest mt-0.5">Rastreabilidade</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5">
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-5 flex items-start gap-3">
+                    <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-exclamation text-white text-sm"></i>
+                    </div>
+                    <p class="text-red-700 text-sm font-medium">Este registro de auditoria será <strong>excluído permanentemente</strong> do histórico.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('modal-audit-delete-confirm').classList.remove('active')"
+                        class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </button>
+                    <button onclick="confirmAuditDeleteEntry()"
+                        class="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white font-black py-3 rounded-2xl hover:from-red-700 hover:to-red-800 shadow-lg shadow-red-200 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-trash-alt mr-2"></i>Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Picker Dropdown (rastreabilidade) -->
+    <div id="history-month-picker" class="hidden fixed z-[300] w-60 rounded-2xl shadow-2xl overflow-hidden" style="top:0;left:0">
+        <div class="bg-navy-900 px-4 pt-4 pb-2">
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="changePickerYear(-1)" class="h-8 w-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
+                    <i class="fas fa-chevron-left text-white text-xs"></i>
+                </button>
+                <span id="picker-year" class="font-black text-white text-lg tracking-wide">2026</span>
+                <button onclick="changePickerYear(1)" class="h-8 w-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
+                    <i class="fas fa-chevron-right text-white text-xs"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 mb-3" id="picker-months"></div>
+        </div>
+        <div class="bg-navy-900 border-t border-white/10 px-4 pb-3">
+            <button onclick="clearHistoryMonthFilter()" class="w-full text-center text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all py-2 flex items-center justify-center gap-1.5">
+                <i class="fas fa-times-circle"></i> Limpar filtro
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div id="modal-delete-confirm" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-red-100 transform transition-all">
+            <!-- Header vermelho -->
+            <div class="bg-gradient-to-br from-red-600 to-red-800 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20 pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 w-28 h-28 bg-black/10 rounded-full -ml-14 -mb-14 pointer-events-none"></div>
+                <div class="flex items-center gap-4 relative z-10">
+                    <div class="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner flex-shrink-0">
+                        <i class="fas fa-trash-alt text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-xl leading-tight">Excluir Agendamento</h3>
+                        <p class="text-red-200 text-[10px] font-bold uppercase tracking-widest mt-0.5">Ação irreversível</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <!-- Confirmação principal -->
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4">
+                    <div class="flex items-start gap-3">
+                        <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-exclamation text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-red-800 font-black text-sm uppercase tracking-wide mb-1">Tem certeza?</p>
+                            <p class="text-red-700 text-sm font-medium">Este agendamento será <strong>excluído permanentemente</strong> e não poderá ser recuperado.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aviso de remarcação -->
+                <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="h-8 w-8 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-lightbulb text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-amber-800 font-black text-xs uppercase tracking-wide mb-1">Precisa remarcar?</p>
+                            <p class="text-amber-700 text-xs font-medium leading-relaxed">Se o objetivo for <strong>mudar a data</strong>, use a opção <strong>"Editar"</strong> e altere apenas a data — não exclua o agendamento.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo de confirmação -->
+                <div class="mb-5">
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Digite <span class="text-red-600 font-black">SIM</span> para confirmar a exclusão</label>
+                    <input type="text" id="delete-confirm-input" oninput="onDeleteInputChange()" onpaste="return false" autocomplete="off" placeholder='Digite "SIM" aqui...' class="w-full border-2 border-slate-200 rounded-xl py-3 px-4 font-black text-slate-700 text-sm focus:outline-none focus:border-red-400 transition-all tracking-widest uppercase placeholder:normal-case placeholder:font-normal placeholder:tracking-normal">
+                </div>
+
+                <!-- Botões -->
+                <div class="flex gap-3">
+                    <button onclick="cancelDeleteRecord()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </button>
+                    <button id="btn-confirm-delete" onclick="confirmDeleteRecord()" disabled class="flex-1 bg-gradient-to-r from-red-300 to-red-400 text-white font-black py-3 rounded-2xl cursor-not-allowed shadow-sm transition-all uppercase tracking-widest text-xs opacity-60">
+                        <i class="fas fa-trash-alt mr-2"></i>Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="fixed inset-0 flex items-center justify-center p-4" style="z-index:10000; background:radial-gradient(900px 500px at 50% -10%, rgba(61,124,240,.20), transparent 60%), linear-gradient(160deg,#0b1221 0%,#0e1628 55%,#16203a 100%)">
+        <div class="bg-white rounded-[28px] shadow-2xl w-full max-w-sm overflow-hidden ring-1 ring-white/10">
+            <div class="relative p-8 flex flex-col items-center" style="background:linear-gradient(160deg,#111a2e 0%,#0e1628 60%,#0b1221 100%)">
+                <span class="absolute bottom-0 left-0 right-0 h-[2px]" style="background:linear-gradient(90deg,transparent,rgba(61,124,240,.9),transparent)"></span>
+                <img src="https://i.imgur.com/vXM6l52.png" alt="Logo" class="h-16 w-auto object-contain mb-4">
+                <h1 class="text-white font-black text-lg uppercase tracking-[0.18em]">Agendas<span class="text-blue-400">LAMIC</span></h1>
+                <p class="text-navy-300 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Agenda de Testes</p>
+            </div>
+
+            <!-- Sem login próprio: a sessão vem do Dados LAMIC -->
+            <div id="login-form-box" class="p-6 text-center">
+                <p id="login-error" class="text-slate-600 text-sm font-bold mb-5">Verificando sua sessão do Dados LAMIC…</p>
+                <a id="btn-ir-dados" href="https://laboratoriolamic.github.io/Dados/" class="hidden w-full h-12 flex items-center justify-center gap-2 bg-navy-900 hover:bg-blue-700 text-white font-black rounded-2xl transition-all uppercase tracking-widest text-xs shadow-lg">
+                    <i class="fas fa-sign-in-alt"></i>Entrar pelo Dados LAMIC
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CRIAR USUÁRIO (admin) -->
+    <div id="modal-create-user" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[400] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-navy-900 p-5 text-white flex items-center justify-between">
+                <h3 class="font-black uppercase tracking-tight text-base">Criar Usuário</h3>
+                <button onclick="document.getElementById('modal-create-user').classList.remove('active')" class="h-8 w-8 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 space-y-3">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo *</label>
+                    <input type="text" id="modal-reg-fullname" list="modal-reg-atendentes-list" placeholder="Busque o nome..."
+                        class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                    <datalist id="modal-reg-atendentes-list"></datalist>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Usuário *</label>
+                    <input type="text" id="modal-reg-username" placeholder="login do Dados LAMIC"
+                        class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-400 transition-all"
+                        oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9]/g,'')">
+                    <p class="text-[10px] text-slate-400 mt-1">Mesmo login do Dados LAMIC. Senha e CPF ficam no Dados.</p>
+                </div>
+                <div class="hidden">
+                    <input type="text" id="modal-reg-cpf" placeholder="000.000.000-00" maxlength="14"
+                        class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-400 transition-all"
+                        oninput="formatCpfInput(this)">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Senha *</label>
+                    <div class="relative">
+                        <input type="password" id="modal-reg-pwd" placeholder="••••••••"
+                            class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 pr-10 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                        <button type="button" onclick="togglePwdVisibility('modal-reg-pwd','modal-reg-pwd-eye')" class="login-eye-btn text-slate-400 hover:text-slate-600">
+                            <i id="modal-reg-pwd-eye" class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Confirmar Senha *</label>
+                    <div class="relative">
+                        <input type="password" id="modal-reg-pwd-confirm" placeholder="••••••••"
+                            class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 pr-10 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                        <button type="button" onclick="togglePwdVisibility('modal-reg-pwd-confirm','modal-reg-pwd-confirm-eye')" class="login-eye-btn text-slate-400 hover:text-slate-600">
+                            <i id="modal-reg-pwd-confirm-eye" class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                <p id="modal-register-error" class="text-red-600 text-xs font-bold hidden"></p>
+                <button onclick="submitRegister(true)" class="w-full bg-navy-900 hover:bg-blue-700 text-white font-black py-3 rounded-2xl transition-all uppercase tracking-widest text-xs shadow-lg">
+                    <i class="fas fa-user-plus mr-2"></i>Criar Usuário
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMAÇÃO LIMPAR TODA RASTREABILIDADE -->
+    <div id="modal-clear-audit-confirm" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[300] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-gradient-to-br from-red-600 to-red-800 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full -mr-18 -mt-18 pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 pointer-events-none"></div>
+                <div class="flex items-center gap-4 relative z-10">
+                    <div class="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-history text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-xl leading-tight">Apagar Rastreabilidade</h3>
+                        <p class="text-red-200 text-[10px] font-bold uppercase tracking-widest mt-0.5">Ação irreversível</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4 flex items-start gap-3">
+                    <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-exclamation text-white text-sm"></i>
+                    </div>
+                    <p class="text-red-700 text-sm font-medium"><strong>Todo o histórico</strong> de alterações será apagado permanentemente e não poderá ser recuperado.</p>
+                </div>
+                <div class="bg-amber-50 border border-amber-300 rounded-2xl p-3 mb-6 flex items-center gap-2">
+                    <i class="fas fa-lightbulb text-amber-500 text-sm flex-shrink-0"></i>
+                    <p class="text-amber-700 text-xs font-medium">Esta ação afeta todos os usuários do sistema.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('modal-clear-audit-confirm').classList.remove('active')"
+                        class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </button>
+                    <button onclick="executeClearAllAuditLog()"
+                        class="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white font-black py-3 rounded-2xl hover:from-red-700 hover:to-red-800 shadow-lg shadow-red-200 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-trash-alt mr-2"></i>Apagar Tudo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMAÇÃO EXCLUSÃO DE USUÁRIO -->
+    <div id="modal-delete-user-confirm" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[450] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-gradient-to-br from-red-600 to-red-800 p-5 text-white relative overflow-hidden">
+                <div class="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full pointer-events-none"></div>
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="h-11 w-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user-times text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-base">Excluir Usuário</h3>
+                        <p id="delete-user-subtitle" class="text-red-200 text-[10px] font-bold uppercase tracking-widest mt-0.5"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5">
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-5 flex items-start gap-3">
+                    <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-exclamation text-white text-sm"></i>
+                    </div>
+                    <p class="text-red-700 text-sm font-medium">Esta conta será <strong>removida permanentemente</strong>. O usuário perderá o acesso ao sistema.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('modal-delete-user-confirm').classList.remove('active')" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </button>
+                    <button onclick="confirmDeleteUser()" class="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white font-black py-3 rounded-2xl hover:from-red-700 hover:to-red-800 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-trash mr-2"></i>Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MINHA CONTA (alterar própria senha) -->
+    <div id="modal-my-account" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[400] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-navy-900 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user-circle text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-base">Minha Conta</h3>
+                        <p class="text-blue-300 text-[10px] font-bold tracking-widest">Dados e segurança</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('modal-my-account').classList.remove('active')" class="h-8 w-8 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 space-y-3">
+                <!-- Dados somente leitura -->
+                <div class="bg-slate-50 rounded-2xl p-4 space-y-2 border border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome</span>
+                        <span id="myaccount-fullname" class="text-sm font-bold text-navy-900"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Usuário</span>
+                        <span id="myaccount-username" class="text-sm font-mono text-slate-600"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">CPF</span>
+                        <span id="myaccount-cpf" class="text-sm text-slate-500"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Papel</span>
+                        <span id="myaccount-role" class="text-sm font-bold"></span>
+                    </div>
+                </div>
+                <!-- Alterar senha -->
+                <div class="border-t border-slate-100 pt-3">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Alterar Senha</p>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Senha Atual *</label>
+                            <div class="relative">
+                                <input type="password" id="myaccount-old-pwd" placeholder="••••••••"
+                                    class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 pr-10 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                                <button type="button" onclick="togglePwdVisibility('myaccount-old-pwd','myaccount-old-pwd-eye')" class="login-eye-btn text-slate-400 hover:text-slate-600">
+                                    <i id="myaccount-old-pwd-eye" class="fas fa-eye text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nova Senha *</label>
+                            <div class="relative">
+                                <input type="password" id="myaccount-new-pwd" placeholder="••••••••"
+                                    class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 pr-10 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                                <button type="button" onclick="togglePwdVisibility('myaccount-new-pwd','myaccount-new-pwd-eye')" class="login-eye-btn text-slate-400 hover:text-slate-600">
+                                    <i id="myaccount-new-pwd-eye" class="fas fa-eye text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Confirmar Nova Senha *</label>
+                            <div class="relative">
+                                <input type="password" id="myaccount-confirm-pwd" placeholder="••••••••"
+                                    class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 pr-10 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                                <button type="button" onclick="togglePwdVisibility('myaccount-confirm-pwd','myaccount-confirm-pwd-eye')" class="login-eye-btn text-slate-400 hover:text-slate-600">
+                                    <i id="myaccount-confirm-pwd-eye" class="fas fa-eye text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p id="myaccount-error" class="text-red-600 text-xs font-bold hidden"></p>
+                <div class="flex gap-3 pt-1">
+                    <button onclick="document.getElementById('modal-my-account').classList.remove('active')" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">Fechar</button>
+                    <button onclick="saveMyAccountPassword()" class="flex-1 bg-navy-900 hover:bg-blue-700 text-white font-black py-3 rounded-2xl transition-all uppercase tracking-widest text-xs shadow-lg">
+                        <i class="fas fa-key mr-2"></i>Alterar Senha
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR USUÁRIO (admin) -->
+    <div id="modal-edit-user" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[400] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-navy-900 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user-edit text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-base">Editar Usuário</h3>
+                        <p id="edit-user-subtitle" class="text-blue-300 text-[10px] font-bold tracking-widest"></p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('modal-edit-user').classList.remove('active')" class="h-8 w-8 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 space-y-3">
+                <input type="hidden" id="edit-user-username">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo *</label>
+                    <input type="text" id="edit-user-fullname" list="edit-user-atendentes-list" placeholder="Busque o nome..."
+                        class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                    <datalist id="edit-user-atendentes-list"></datalist>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">CPF</label>
+                    <input type="text" id="edit-user-cpf" placeholder="000.000.000-00" maxlength="14"
+                        class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-400 transition-all"
+                        oninput="formatCpfInput(this)">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Papel</label>
+                    <select id="edit-user-role" class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-400 transition-all font-bold">
+                        <option value="user">Usuário</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</label>
+                    <select id="edit-user-active" class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-400 transition-all font-bold">
+                        <option value="true">Ativo</option>
+                        <option value="false">Inativo</option>
+                    </select>
+                </div>
+                <div class="border-t border-slate-100 pt-3">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nova Senha <span class="normal-case font-normal">(deixe em branco para manter)</span></label>
+                    <div class="relative">
+                        <input type="password" id="edit-user-pwd" placeholder="••••••••"
+                            class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 pr-10 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                        <button type="button" onclick="togglePwdVisibility('edit-user-pwd','edit-user-pwd-eye')" class="login-eye-btn text-slate-400 hover:text-slate-600">
+                            <i id="edit-user-pwd-eye" class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Confirmar Nova Senha</label>
+                    <div class="relative">
+                        <input type="password" id="edit-user-pwd-confirm" placeholder="••••••••"
+                            class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 pr-10 text-sm focus:outline-none focus:border-blue-400 transition-all">
+                        <button type="button" onclick="togglePwdVisibility('edit-user-pwd-confirm','edit-user-pwd-confirm-eye')" class="login-eye-btn text-slate-400 hover:text-slate-600">
+                            <i id="edit-user-pwd-confirm-eye" class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                <p id="edit-user-error" class="text-red-600 text-xs font-bold hidden"></p>
+                <div class="flex gap-3 pt-1">
+                    <button onclick="document.getElementById('modal-edit-user').classList.remove('active')" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        Cancelar
+                    </button>
+                    <button onclick="saveEditUser()" class="flex-1 bg-navy-900 hover:bg-blue-700 text-white font-black py-3 rounded-2xl transition-all uppercase tracking-widest text-xs shadow-lg">
+                        <i class="fas fa-save mr-2"></i>Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Infraestrutura ─────────────────────────────────────────── -->
+    <script src="js/firebase-config.js?v=20261123a"></script>
+    <script src="js/agendas.js?v=20261119b"></script>
+    <script src="js/state.js?v=20260916d"></script>
+    <script src="js/utils.js?v=20260916d"></script>
+    <script src="js/notifications.js?v=20260916d"></script>
+
+    <!-- ── Domínio ────────────────────────────────────────────────── -->
+    <script src="js/auth.js?v=20261123c"></script>
+    <script src="js/audit.js?v=20260916d"></script>
+    <script src="js/firebase-data.js?v=20260916d"></script>
+    <script src="js/motivos-perda.js?v=20260916d"></script>
+    <script src="js/atendentes.js?v=20260916d"></script>
+    <script src="js/validation.js?v=20260916d"></script>
+
+    <!-- ── Interface ──────────────────────────────────────────────── -->
+    <script src="js/navigation.js?v=20261119a"></script>
+    <script src="js/home.js?v=20260916d"></script>
+    <script src="js/checklist.js?v=20260916d"></script>
+    <script src="js/acompanhantes.js?v=20260916d"></script>
+    <script src="js/upload.js?v=20261123w"></script>
+    <script src="js/save.js?v=20260916d"></script>
+    <script src="js/table.js?v=20260916d"></script>
+    <script src="js/charts.js?v=20261119i"></script>
+    <script src="js/demografia.js?v=20261119j"></script>
+    <script src="js/calendar.js?v=20260916d"></script>
+    <script src="js/modals.js?v=20260916d"></script>
+    <script src="js/view-record.js?v=20260916d"></script>
+    <script src="js/coleta-ativa.js?v=20260916d"></script>
+    <script src="js/concluir-visita.js?v=20260916d"></script>
+    <script src="js/ausencia-visita.js?v=20260916d"></script>
+    <script src="js/backup.js?v=20261123a"></script>
+
+    <!-- ── Bootstrap ──────────────────────────────────────────────── -->
+    <script src="js/app-init.js?v=20261123a"></script>
+</body>
+</html>

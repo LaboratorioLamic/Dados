@@ -1,0 +1,195 @@
+/* Sinalização de "coleta em andamento" — coletador no local, coletando.
+   Usa azul (cor da agenda/ação neutra) em vez do roxo já reservado ao status
+   "Em andamento" (visita parcialmente concluída) e do verde de "Concluído",
+   para não se confundir com nenhum dos dois. */
+
+:root {
+    --coleta-azul: #2563eb;
+    --coleta-azul-escuro: #2563eb;
+}
+
+/* ── SELO PLAY + ANEL GIRANDO ─────────────────────────────
+   Componente único reusado nos três lugares: círculo azul com o ícone de
+   play centralizado, envolto por um anel que gira sem parar — a mesma
+   leitura visual de "carregando/em progresso" de um spinner, mas com o
+   play garantindo que a ação (coleta) fique identificável à distância. */
+.coleta-play-selo {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    border-radius: 999px;
+    background: var(--coleta-azul);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.45);
+}
+
+.coleta-play-selo i {
+    position: relative;
+    z-index: 1;
+    /* leve deslocamento óptico: o triângulo do play parece centralizado
+       quando puxado 1px para a direita do centro geométrico */
+    margin-left: 1px;
+}
+
+.coleta-play-selo::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    border-top-color: var(--coleta-azul);
+    border-right-color: var(--coleta-azul);
+    animation: coleta-girar 0.9s linear infinite;
+}
+
+@keyframes coleta-girar {
+    to { transform: rotate(360deg); }
+}
+
+/* ── BOTÃO PLAY/PAUSE (janela de visualização) ───────────── */
+.view-btn-coleta-ativa {
+    background: #eff6ff;
+    color: var(--coleta-azul);
+    border-color: #bfdbfe;
+}
+
+.view-btn-coleta-ativa:hover {
+    background: var(--coleta-azul);
+    color: #fff;
+    border-color: var(--coleta-azul);
+}
+
+/* Play ativo: botão fica "aceso" e pulsa discretamente para chamar atenção
+   de que a ação (pausar) é a próxima esperada. */
+.view-btn-coleta-ativa-on {
+    background: var(--coleta-azul);
+    color: #fff;
+    border-color: var(--coleta-azul);
+    animation: coleta-btn-pulso 1.8s ease-in-out infinite;
+}
+
+.view-btn-coleta-ativa-on:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+@keyframes coleta-btn-pulso {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45); }
+    50%      { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+}
+
+/* ── JANELA DE VISUALIZAÇÃO — contorno tracejado ─────────── */
+#view-card.coleta-ativa {
+    outline: 3px dashed var(--coleta-azul);
+    outline-offset: -3px;
+    border-radius: 2rem;
+}
+
+/* Selo no cabeçalho, ao lado dos demais selos de status */
+.view-selo-coleta-ativa {
+    background: var(--coleta-azul) !important;
+    color: #fff !important;
+}
+
+.view-selo-coleta-ativa .coleta-play-selo {
+    width: 12px;
+    height: 12px;
+    font-size: 6px;
+    box-shadow: none;
+    background: transparent;
+}
+
+.view-selo-coleta-ativa .coleta-play-selo::before {
+    inset: -2px;
+    border-width: 1.5px;
+}
+
+/* ── CARD DO DIA (calendário) ────────────────────────────── */
+/* A cor original do card (status/agenda) fica por baixo; as listras azuis
+   entram como uma camada translúcida por cima, então o card nunca perde a
+   informação de cor que já carregava — só ganha a sinalização extra. */
+.card-coleta-ativa {
+    border-color: var(--coleta-azul) !important;
+}
+
+/* Faixa lateral esquerda (cor da agenda/status) vira azul enquanto a coleta
+   está ativa — a mesma cor que já domina o resto da sinalização. Classe
+   própria em vez de :first-child: o primeiro filho do card passou a ser o
+   overlay de listras (inset:0), não a faixa fina de 1.5px. */
+.card-coleta-accent {
+    background: var(--coleta-azul-escuro) !important;
+}
+
+.card-coleta-listras {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        135deg,
+        rgba(37, 99, 235, 0.10) 0px,
+        rgba(37, 99, 235, 0.10) 10px,
+        transparent 10px,
+        transparent 20px
+    );
+    background-size: 200% 200%;
+    animation: coleta-listras-marcha 6s linear infinite;
+}
+
+@keyframes coleta-listras-marcha {
+    from { background-position: 0 0; }
+    to   { background-position: 56px 0; }
+}
+
+/* Selo play fixo à direita central do card — canto de leitura imediata */
+.card-coleta-ativa-selo {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 20px;
+    height: 20px;
+    font-size: 8px;
+}
+
+/* ── VISÃO SEMANAL — contorno tracejado + selo play fixo à direita ──────── */
+.week-event-coleta-ativa {
+    border-style: dashed !important;
+    border-width: 2px !important;
+    border-color: var(--coleta-azul) !important;
+}
+
+/* Faixa de cor (accent) do evento vira azul escuro enquanto a coleta está ativa */
+.week-event-coleta-ativa .week-event-accent {
+    background: var(--coleta-azul-escuro) !important;
+}
+
+.week-event-play-selo {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    z-index: 20;
+    width: 16px;
+    height: 16px;
+    font-size: 6px;
+}
+
+/* Cards muito baixos (agenda cheia) encolhem o selo para não estourar a altura */
+.week-event-tight .week-event-play-selo {
+    width: 13px;
+    height: 13px;
+    font-size: 5px;
+    right: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .coleta-play-selo::before,
+    .view-btn-coleta-ativa-on,
+    .card-coleta-listras {
+        animation: none;
+    }
+}

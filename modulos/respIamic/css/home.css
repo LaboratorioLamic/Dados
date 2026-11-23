@@ -1,0 +1,187 @@
+/* Tela inicial — cards de seleção de agenda */
+
+.home-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+    max-width: 84rem;
+    margin: 0 auto;
+}
+
+.home-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid rgba(226, 232, 240, .9);
+    border-radius: 1.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    transition: transform .28s var(--ease-drawer), box-shadow .28s ease, border-color .28s ease;
+}
+
+/* Faixa superior colorida por agenda */
+.home-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: var(--card-accent);
+    opacity: .85;
+}
+
+.home-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -18px rgba(15, 23, 42, .3);
+    border-color: var(--card-accent);
+}
+
+.home-card.is-current {
+    border-color: var(--card-accent);
+    box-shadow: 0 0 0 3px var(--card-ring);
+}
+
+.home-card-blue  { --card-accent: #3d7cf0; --card-soft: #eff6ff; --card-ring: rgba(61,124,240,.16); --card-strong: #1d4ed8; }
+.home-card-teal  { --card-accent: #14b8a6; --card-soft: #f0fdfa; --card-ring: rgba(20,184,166,.16); --card-strong: #0f766e; }
+.home-card-amber { --card-accent: #f59e0b; --card-soft: #fffbeb; --card-ring: rgba(245,158,11,.18); --card-strong: #b45309; }
+.home-card-ice   { --card-accent: #38bdf8; --card-soft: #f0f9ff; --card-ring: rgba(56,189,248,.18); --card-strong: #0369a1; }
+
+/* Corpo clicável */
+.home-card-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .95rem;
+    padding: 1.5rem 1.4rem 1.25rem;
+    text-align: left;
+    cursor: pointer;
+    background: none;
+    width: 100%;
+}
+.home-card-main:focus-visible { outline: 2px solid var(--card-accent); outline-offset: -4px; }
+
+.home-card-top { display: flex; align-items: center; gap: .9rem; }
+
+.home-card-icon {
+    height: 3.1rem; width: 3.1rem; flex: 0 0 auto;
+    border-radius: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--card-accent);
+    color: #fff; font-size: 1.25rem;
+    box-shadow: 0 8px 18px -8px var(--card-accent);
+    transition: transform .28s var(--ease-drawer);
+}
+.home-card:hover .home-card-icon { transform: scale(1.06) rotate(-4deg); }
+
+.home-card-title { min-width: 0; flex: 1; }
+.home-card-title h3 {
+    font-size: 1.05rem; font-weight: 900; color: #0e1628;
+    letter-spacing: -.01em; line-height: 1.1;
+}
+.home-card-title p {
+    margin-top: .3rem;
+    font-size: .6rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .2em; color: #94a3b8;
+}
+
+.home-card-flag {
+    font-size: .55rem; font-weight: 900; text-transform: uppercase; letter-spacing: .18em;
+    padding: .3rem .55rem; border-radius: .5rem;
+    background: var(--card-soft); color: var(--card-strong);
+    border: 1px solid var(--card-ring);
+}
+
+.agenda-cidade-tag {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .6rem; font-weight: 900; text-transform: uppercase; letter-spacing: .12em;
+    padding: .22rem .6rem .22rem .5rem; border-radius: 999px;
+    background: var(--card-accent, var(--agenda-cor, #f59e0b)); color: #fff;
+    vertical-align: middle;
+    box-shadow: 0 4px 10px -4px rgba(0,0,0,.35);
+}
+.agenda-cidade-tag i { font-size: .65rem; }
+
+.home-card-desc { font-size: .8rem; color: #64748b; line-height: 1.45; }
+
+.home-card-meta {
+    display: flex; flex-wrap: wrap; gap: .4rem;
+}
+.home-card-meta span {
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-size: .65rem; font-weight: 700; color: #475569;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    padding: .3rem .55rem; border-radius: .55rem;
+}
+.home-card-meta i { color: var(--card-accent); font-size: .6rem; }
+
+.home-card-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: .5rem; margin-top: .15rem;
+}
+.home-stat {
+    text-align: center; padding: .55rem .25rem;
+    background: #f8fafc; border: 1px solid #eef2f7; border-radius: .75rem;
+}
+.home-stat strong {
+    display: block; font-size: 1.15rem; font-weight: 900; color: #0e1628; line-height: 1;
+}
+.home-stat span {
+    display: block; margin-top: .28rem;
+    font-size: .53rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .14em; color: #94a3b8;
+}
+
+.home-card-gauge { margin-top: .1rem; }
+.home-gauge-head {
+    display: flex; justify-content: space-between;
+    font-size: .58rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .14em; color: #94a3b8; margin-bottom: .35rem;
+}
+.home-gauge-track { height: 5px; border-radius: 999px; background: #eef2f7; overflow: hidden; }
+.home-gauge-fill {
+    height: 100%; border-radius: 999px;
+    background: var(--card-accent);
+    transition: width .5s var(--ease-drawer);
+}
+
+.home-card-alert {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .62rem; font-weight: 800;
+    color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca;
+    padding: .35rem .6rem; border-radius: .55rem;
+    align-self: flex-start;
+}
+
+.home-card-alerts {
+    display: flex; flex-wrap: wrap; gap: .4rem;
+    padding: 0 .15rem;
+}
+
+.home-card-alert-ausente {
+    color: #92400e; background: #fefce8; border-color: #fcd34d;
+}
+
+.home-card-alert-atrasado {
+    color: #7f1d1d; background: #fef2f2; border-color: #fecaca;
+}
+
+/* Minibotões */
+.home-card-actions {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid #eef2f7;
+    background: #fbfcfe;
+}
+.home-card-actions button {
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    padding: .85rem .35rem;
+    font-size: .6rem; font-weight: 900; text-transform: uppercase; letter-spacing: .12em;
+    color: #64748b; cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+}
+.home-card-actions button + button { border-left: 1px solid #eef2f7; }
+.home-card-actions button:hover { background: var(--card-accent); color: #fff; }
+.home-card-actions button:focus-visible { outline: 2px solid var(--card-accent); outline-offset: -2px; }
+.home-card-actions i { font-size: .75rem; }
+
+@media (max-width: 420px) {
+    .home-card-actions button span { display: none; }
+    .home-card-stats { grid-template-columns: repeat(2, 1fr); }
+}

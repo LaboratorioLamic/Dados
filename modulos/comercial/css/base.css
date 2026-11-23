@@ -1,0 +1,58 @@
+/* ═══════════════════════════════════════════════════════════════
+   base.css — Cores, tipografia e reset — COMERCIAL LAMIC
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --night: #162036; --night-mid: #162036; --night-light: #1e2d4a;
+  --cyan: #00a8cc; --cyan-hover: #0090b0; --cyan-light: rgba(0, 168, 204, .12);
+  --bg: #f4f7f6; --bg-card: #fff; --bg-soft: #f8fafc;
+  --text-primary: #0e1628; --text-secondary: #4a5568; --text-muted: #718096;
+  --border: #e2e8f0; --border-hover: #b6c3d4;
+  --red: #e63946;   --red-bg: rgba(230, 57, 70, .1);
+  --amber: #e8913a; --amber-bg: rgba(244, 162, 97, .16);
+  --green: #2a9d8f; --green-bg: rgba(42, 157, 143, .12);
+  --gray: #94a3b8;  --gray-bg: rgba(148, 163, 184, .16);
+  --sidebar-w: 250px; --topbar-h: 60px;
+  --shadow-sm: 0 1px 3px rgba(14, 22, 40, .08);
+  --shadow-md: 0 4px 16px rgba(14, 22, 40, .12);
+  --shadow-lg: 0 12px 40px rgba(14, 22, 40, .18);
+  --radius: 8px; --radius-lg: 12px;
+  --t: all .18s ease;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b1220; --bg-card: #121c30; --bg-soft: #16223a;
+  --text-primary: #e6edf7; --text-secondary: #a9b6cc; --text-muted: #7c8aa3;
+  --border: #22314f; --border-hover: #36486b;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, .6);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "DM Sans", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+input, textarea { font-family: inherit; font-size: 14px; }
+.fa-solid { line-height: 1; }
+
+/* Barras de rolagem discretas */
+* { scrollbar-width: thin; scrollbar-color: var(--border-hover) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
+.sidebar * { scrollbar-color: #2b3a58 transparent; }
+
+/* Utilitários */
+.mono { font-family: "DM Mono", monospace; }
+.muted { color: var(--text-muted); }
+.riscado { opacity: .55; text-decoration: line-through; }
+.hint { font-size: 11.5px; color: var(--text-muted); }

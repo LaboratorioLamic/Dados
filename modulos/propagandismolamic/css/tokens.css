@@ -1,0 +1,80 @@
+:root {
+    /* Cores base */
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #eff6ff;
+    --primary-border: #bfdbfe;
+
+    --surface: #ffffff;
+    --bg: #f8fafc;
+    --bg-deep: #0f172a;
+
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --text-soft: #94a3b8;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    /* Semânticas */
+    --success: #10b981;
+    --success-dark: #047857;
+    --success-light: #ecfdf5;
+    --success-border: #a7f3d0;
+
+    --warning: #f59e0b;
+    --warning-dark: #b45309;
+    --warning-light: #fffbeb;
+    --warning-border: #fde68a;
+
+    --danger: #ef4444;
+    --danger-dark: #b91c1c;
+    --danger-light: #fef2f2;
+    --danger-border: #fecaca;
+
+    --purple: #8b5cf6;
+    --purple-dark: #5b21b6;
+    --purple-light: #f5f3ff;
+    --purple-border: #ddd6fe;
+
+    --whatsapp: #25d366;
+    --whatsapp-dark: #128c7e;
+
+    /* Espaçamento */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
+    --sp-5: 24px;
+    --sp-6: 32px;
+
+    /* Formas */
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 999px;
+
+    /* Sombras */
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, .06);
+    --shadow: 0 4px 12px rgba(15, 23, 42, .08);
+    --shadow-lg: 0 20px 40px -12px rgba(15, 23, 42, .28);
+
+    /* Tipografia */
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --fs-xs: 11px;
+    --fs-sm: 12px;
+    --fs-base: 14px;
+    --fs-md: 15px;
+    --fs-lg: 18px;
+    --fs-xl: 22px;
+
+    /* Camadas */
+    --z-nav: 20;
+    --z-header: 30;
+    --z-modal: 100;
+    --z-carregando: 150;
+    --z-toast: 200;
+
+    /* Layout */
+    --nav-largura: 240px;
+    --transicao: .2s ease;
+}

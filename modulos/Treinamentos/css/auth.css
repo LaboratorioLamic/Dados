@@ -1,0 +1,1368 @@
+/* Modal de acesso ao painel de configuracoes (login e primeiro cadastro).
+   Vive fora de #cfg-root e usa as variaveis do portal (css/main.css). */
+
+.header-settings {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1.05em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.header-settings:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(45deg);
+}
+
+.header-settings:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.auth-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(9, 15, 30, 0.62);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.auth-modal.active { display: flex; }
+
+.auth-card {
+    position: relative;
+    background: var(--card);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 24px 60px -12px rgba(9, 15, 30, 0.45), 0 8px 20px -8px rgba(9, 15, 30, 0.25);
+    width: 100%;
+    max-width: 410px;
+    overflow: hidden;
+    animation: authIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* faixa de cor no topo da janela */
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), #60a5fa 50%, #7c3aed);
+}
+
+@keyframes authIn {
+    from { opacity: 0; transform: translateY(14px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.auth-card.error { animation: authShake 0.4s ease; }
+
+@keyframes authShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-7px); }
+    75% { transform: translateX(7px); }
+}
+
+.auth-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 22px 24px 16px;
+}
+
+.auth-header h2 {
+    font-size: 1.05em;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+/* icone do cabecalho em "pilula" colorida */
+.auth-header h2 i {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 0.82em;
+    background: linear-gradient(135deg, var(--accent), #60a5fa);
+    color: #fff;
+    box-shadow: 0 6px 14px -4px rgba(79, 142, 247, 0.6);
+}
+
+.auth-close {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 9px;
+    font-size: 1.4em;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.auth-close:hover { background: #fee2e2; color: var(--danger); }
+
+.auth-body { padding: 4px 24px 24px; }
+
+.auth-intro {
+    font-size: 0.86em;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+    line-height: 1.55;
+}
+
+.auth-body label {
+    display: block;
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 7px;
+}
+
+.auth-body input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.92em;
+    color: var(--text-primary);
+    background: #fafbfc;
+    margin-bottom: 18px;
+    transition: border-color 0.16s, box-shadow 0.16s, background 0.16s;
+}
+
+.auth-body input[type="password"]:hover { border-color: #cbd5e1; }
+
+.auth-body input[type="password"]:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    background: var(--card);
+    box-shadow: 0 0 0 4px rgba(79, 142, 247, 0.15);
+}
+
+.auth-submit {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--accent), #6ba4f8);
+    color: #fff;
+    border: none;
+    border-radius: 11px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.93em;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    box-shadow: 0 8px 18px -6px rgba(79, 142, 247, 0.65);
+    transition: transform 0.16s, box-shadow 0.16s, filter 0.16s;
+}
+
+.auth-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+    box-shadow: 0 12px 24px -8px rgba(79, 142, 247, 0.75);
+}
+
+.auth-submit:active:not(:disabled) { transform: translateY(0); }
+.auth-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.auth-error {
+    display: none;
+    font-size: 0.82em;
+    color: var(--danger);
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.auth-error.active { display: block; }
+
+.auth-lockout {
+    display: none;
+    font-size: 0.82em;
+    color: var(--warning);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.auth-lockout.active { display: block; }
+
+.auth-progress-container {
+    display: none;
+    height: 4px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.auth-progress-container.active { display: block; }
+
+.auth-progress {
+    height: 100%;
+    width: 0;
+    background: var(--warning);
+}
+
+/* Alterna o portal e o painel admin dentro da mesma pagina */
+body.admin-mode .selection-bar,
+body.admin-mode .page-body { display: none; }
+
+body.admin-mode #cfg-root { display: block; }
+
+/* ─── Botão "Minha Conta" no header (login/perfil do aluno) ─── */
+.header-account {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.88em;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.header-account:hover { background: rgba(255, 255, 255, 0.2); }
+.header-account:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Só o PRIMEIRO item do grupo da direita empurra (margin-left: auto); os
+   demais ficam colados nele. Com dois "auto" o espaço sobrava dividido e o
+   botão de plataformas acabava no centro da barra. */
+.header-account:first-of-type { margin-left: auto; }
+.header-home ~ .header-account { margin-left: 0; }
+.header-settings { margin-left: 0; }
+
+/* ─── Modal de cadastro/login do aluno ─── */
+.student-auth-card { max-width: 440px; }
+
+.student-auth-tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--surface-2, #f1f5f9);
+    border-radius: 11px;
+    padding: 4px;
+    margin-bottom: 18px;
+}
+
+.student-auth-tab {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 9px 0;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.student-auth-tab.active {
+    background: var(--card);
+    color: var(--accent);
+    box-shadow: 0 2px 6px -2px rgba(9, 15, 30, 0.2);
+}
+
+.auth-body input[type="text"],
+.auth-body input[type="email"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.92em;
+    color: var(--text-primary);
+    background: #fafbfc;
+    margin-bottom: 18px;
+    transition: border-color 0.16s, box-shadow 0.16s, background 0.16s;
+}
+
+.auth-body input[type="text"]:focus,
+.auth-body input[type="email"]:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    background: var(--card);
+    box-shadow: 0 0 0 4px rgba(79, 142, 247, 0.15);
+}
+
+.auth-body .form-hint {
+    display: block;
+    font-size: 0.74em;
+    color: var(--text-3, var(--text-muted));
+    margin: -12px 0 16px;
+}
+
+/* Combobox pesquisável de nome (cadastro) */
+.student-name-combobox { position: relative; margin-bottom: 4px; }
+.student-name-combobox input { margin-bottom: 0; }
+
+.student-name-popover {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    box-shadow: 0 12px 28px -8px rgba(9, 15, 30, 0.35);
+    z-index: 10;
+}
+
+.student-name-popover.active { display: block; }
+
+.student-name-popover-item {
+    padding: 10px 14px;
+    font-size: 0.88em;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.student-name-popover-item:hover { background: var(--surface-2, #f1f5f9); }
+
+.student-name-popover-empty {
+    padding: 12px 14px;
+    font-size: 0.82em;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* Overlay de carregamento enquanto busca a lista de colaboradores no cadastro */
+.student-register-loading {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: var(--card);
+    border-radius: 12px;
+    text-align: center;
+    padding: 20px;
+}
+
+.student-register-loading.active { display: flex; }
+
+.student-register-spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid var(--surface-2, #f1f5f9);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: studentRegisterSpin 0.75s linear infinite;
+}
+
+.student-register-loading span:last-child {
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+@keyframes studentRegisterSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ─── Modal de perfil do aluno ─── */
+.student-profile-card { max-width: 720px; }
+
+.student-profile-tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--surface-2, #f1f5f9);
+    border-radius: 11px;
+    padding: 4px;
+    margin-bottom: 18px;
+}
+
+/* Subabas (Visão geral/Histórico) dentro de cada categoria: mesmo padrão,
+   um pouco menor para marcar hierarquia abaixo das abas de categoria. */
+.student-profile-subtabs {
+    margin-bottom: 14px;
+    padding: 3px;
+}
+.student-profile-subtabs .student-auth-tab {
+    padding: 7px 0;
+    font-size: 0.8em;
+}
+
+.student-profile-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.student-profile-info-item {
+    background: #fafbfc;
+    border: 1.5px solid var(--border);
+    border-radius: 13px;
+    padding: 10px 13px;
+    min-width: 0;
+}
+
+.student-profile-info-item .label {
+    display: block;
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.student-profile-info-item .label i {
+    margin-right: 5px;
+    color: var(--accent);
+}
+
+.student-profile-info-item .value {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.92em;
+    font-weight: 700;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+    .student-profile-info { grid-template-columns: 1fr; }
+}
+
+.student-profile-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.student-profile-stat {
+    background: #fafbfc;
+    border: 1.5px solid var(--border);
+    border-radius: 13px;
+    padding: 14px;
+    text-align: center;
+}
+
+.student-profile-stat strong {
+    display: block;
+    font-size: 1.6em;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+}
+
+.student-profile-stat span {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.74em;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.student-profile-progress-block { margin-bottom: 18px; }
+
+.student-profile-block-title {
+    display: block;
+    font-size: 0.78em;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+}
+
+.student-profile-block-title i { margin-right: 6px; color: var(--accent); }
+
+.student-profile-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.student-progress-item {
+    padding: 10px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: #fafbfc;
+}
+
+.student-progress-item-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.student-progress-item-name {
+    font-size: 0.86em;
+    font-weight: 700;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.student-progress-item-pct {
+    font-size: 0.8em;
+    font-weight: 800;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.student-progress-item.is-complete .student-progress-item-pct { color: var(--success); }
+
+.student-progress-bar {
+    width: 100%;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+.student-progress-bar span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}
+
+.student-progress-item.is-complete .student-progress-bar span { background: var(--success); }
+
+.student-profile-list.is-detail { max-height: 430px; }
+
+.student-profile-list {
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.student-profile-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: #fafbfc;
+}
+
+.student-profile-item-name {
+    font-size: 0.86em;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.student-profile-item-meta {
+    font-size: 0.74em;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.student-profile-item-score {
+    font-size: 0.92em;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.student-profile-item-score.is-approved { background: rgba(34,197,94,0.12); color: var(--success); }
+.student-profile-item-score.is-reproved { background: rgba(239,68,68,0.1); color: var(--danger); }
+
+.student-profile-logout {
+    background: transparent !important;
+    color: var(--danger) !important;
+    border: 1.5px solid var(--danger) !important;
+    box-shadow: none !important;
+}
+
+.student-profile-logout:hover:not(:disabled) {
+    background: var(--danger) !important;
+    color: #fff !important;
+}
+
+/* ─── Barra de filtros da aba Histórico ─── */
+.student-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.student-filter-popover-wrap { position: relative; }
+
+.student-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.75em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.16s, color 0.16s, background 0.16s, transform 0.16s;
+}
+.student-filter-chip:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+.student-filter-chip.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.student-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.08);
+    font-size: 0.88em;
+    font-weight: 800;
+}
+.student-filter-chip.is-active .student-filter-count { background: rgba(255, 255, 255, 0.25); }
+
+.student-filter-caret { font-size: 0.75em; opacity: 0.7; }
+.student-filter-chip[aria-expanded="true"] .student-filter-caret { transform: rotate(180deg); }
+
+.student-filter-popover {
+    position: absolute;
+    top: calc(100% + 7px);
+    left: 0;
+    z-index: 40;
+    width: 250px;
+    padding: 11px;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+    animation: student-popover-in 0.16s ease both;
+}
+
+@keyframes student-popover-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+.student-filter-popover-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.7em;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.student-filter-clear {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 800;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+}
+.student-filter-clear:hover { text-decoration: underline; }
+
+.student-filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 230px;
+    padding: 2px;
+    overflow-y: auto;
+}
+
+/* Cada tema é um botão selecionável (não um checkbox): a marca de seleção é
+   o próprio pill, com um "check" que só aparece quando ativo. */
+.student-filter-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    background: var(--surface);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.16s, border-color 0.16s, transform 0.12s, box-shadow 0.16s;
+}
+.student-filter-option:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+.student-filter-option:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.25);
+}
+.student-filter-option.is-selected {
+    background: rgba(79, 142, 247, 0.12);
+    border-color: var(--accent);
+}
+
+.student-filter-option-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 19px;
+    height: 19px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    background: var(--card);
+    color: transparent;
+    font-size: 0.6em;
+    transition: background 0.16s, border-color 0.16s, color 0.16s;
+}
+.student-filter-option.is-selected .student-filter-option-mark {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.student-filter-option-text { flex: 1; min-width: 0; }
+.student-filter-option-text strong {
+    display: block;
+    font-size: 0.78em;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.student-filter-option-text small {
+    display: block;
+    font-size: 0.66em;
+    color: var(--text-muted);
+}
+
+.student-filter-option-count {
+    flex-shrink: 0;
+    min-width: 20px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.07);
+    font-size: 0.68em;
+    font-weight: 800;
+    text-align: center;
+    color: var(--text-muted);
+}
+.student-filter-option.is-selected .student-filter-option-count {
+    background: var(--accent);
+    color: #fff;
+}
+
+.student-filter-empty {
+    margin: 0;
+    padding: 8px;
+    font-size: 0.74em;
+    color: var(--text-muted);
+}
+
+/* ─── Cards de curso no perfil (mesma linguagem visual da galeria) ─── */
+.student-course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+}
+
+.student-course-card {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    padding: 0;
+    font-family: inherit;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    animation: student-card-in 0.34s ease both;
+    animation-delay: calc(var(--card-i, 0) * 45ms);
+}
+
+@keyframes student-card-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+.student-course-card:hover,
+.student-course-card:focus-visible {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.13);
+    outline: none;
+}
+
+.student-course-card:active { transform: translateY(-1px) scale(0.995); }
+
+.student-course-card::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), #8b5cf6);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.24s ease;
+}
+
+.student-course-card:hover::after,
+.student-course-card:focus-visible::after { transform: scaleX(1); }
+
+.student-course-card:hover .student-course-thumb img,
+.student-course-card:hover .student-course-initials { transform: scale(1.07); }
+
+/* Selo "Ver histórico" que sobe sobre a capa no hover */
+.student-course-hover {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: rgba(15, 23, 42, 0.55);
+    color: #fff;
+    font-size: 0.76em;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.student-course-card:hover .student-course-hover,
+.student-course-card:focus-visible .student-course-hover { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+    .student-course-card,
+    .student-course-card:hover,
+    .student-course-card:active { animation: none; transform: none; }
+    .student-course-thumb img,
+    .student-course-initials { transition: none; }
+}
+
+.student-course-thumb {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.student-course-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+}
+
+.student-course-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.7em;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: hsl(var(--initials-hue, 220) 62% 34%);
+    background: linear-gradient(135deg,
+        hsl(var(--initials-hue, 220) 70% 92%),
+        hsl(var(--initials-hue, 220) 70% 84%));
+    transition: transform 0.35s ease;
+}
+
+.student-course-badge {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--card);
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78em;
+    box-shadow: var(--shadow-sm);
+}
+
+.student-course-body {
+    padding: 11px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.student-course-body h4 {
+    font-size: 0.86em;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-course-category {
+    font-size: 0.72em;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.student-course-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+/* direction: ltr — ver comentário em css/admin.css: o .star-rating do
+   formulário de satisfação (css/main.css) é rtl e vazava para cá. */
+.star-rating { display: inline-flex; gap: 1px; direction: ltr; unicode-bidi: normal; }
+.star-rating i { font-size: 11.5px; }
+.star-rating i.is-on { color: #f5b301; }
+.star-rating i.is-off { color: #e2e5ea; }
+.student-course-no-rating { font-size: 0.7em; color: var(--text-muted); font-style: italic; }
+
+.student-course-score {
+    font-size: 0.82em;
+    font-weight: 800;
+}
+.student-course-score.is-approved { color: var(--success); }
+.student-course-score.is-reproved { color: var(--danger); }
+
+.student-course-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 7px;
+    padding-top: 7px;
+    border-top: 1px solid var(--border);
+}
+
+.student-course-attempt {
+    font-size: 0.68em;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.student-course-late {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 7px;
+    padding: 5px 8px;
+    border-radius: 8px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.7em;
+    font-weight: 700;
+}
+
+.student-cert-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    margin-top: 9px;
+    padding: 9px 10px;
+    border: 1.5px solid #d3b673;
+    border-radius: 9px;
+    background: #fffdf7;
+    color: #9c7d2e;
+    font-family: inherit;
+    font-size: 0.75em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.16s, color 0.16s;
+}
+
+.student-cert-btn:hover { background: #c8a24c; color: #fff; border-color: #c8a24c; }
+
+/* ─── Detalhe do curso (abre ao clicar no card do histórico) ─── */
+.student-course-detail {
+    animation: student-detail-in 0.26s ease both;
+}
+
+@keyframes student-detail-in {
+    from { opacity: 0; transform: translateX(14px); }
+    to { opacity: 1; transform: none; }
+}
+
+.student-detail-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    margin-bottom: 12px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.76em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.16s, color 0.16s, transform 0.16s;
+}
+.student-detail-back:hover { border-color: var(--accent); color: var(--accent); transform: translateX(-2px); }
+
+.student-detail-hero {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.student-detail-thumb {
+    position: relative;
+    width: 78px;
+    height: 78px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+}
+.student-detail-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.student-detail-heading h4 {
+    font-size: 0.98em;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.25;
+}
+.student-detail-heading p {
+    margin: 3px 0 0;
+    font-size: 0.74em;
+    color: var(--text-muted);
+}
+.student-detail-modules { font-weight: 600; }
+
+.student-detail-desc {
+    margin: 11px 0 0;
+    font-size: 0.78em;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.student-detail-attempts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 13px;
+}
+
+.student-attempt-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.72em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.16s;
+}
+.student-attempt-pill:hover { border-color: var(--accent); color: var(--accent); }
+.student-attempt-pill.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.student-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 9px;
+    margin-top: 14px;
+}
+
+.student-detail-stat {
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: #fafbfc;
+}
+.student-detail-stat .label {
+    display: block;
+    font-size: 0.64em;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+}
+.student-detail-stat .value {
+    display: block;
+    font-size: 0.84em;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.student-detail-stat .value.is-approved { color: var(--success); }
+.student-detail-stat .value.is-reproved { color: var(--danger); }
+
+.student-detail-block {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: #fafbfc;
+}
+.student-detail-block-title {
+    display: block;
+    font-size: 0.64em;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.student-detail-rating { margin-bottom: 5px; }
+.student-detail-comment {
+    margin: 0;
+    font-size: 0.78em;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.student-detail-cert { margin-top: 14px; }
+
+/* ─── Alterar senha ─── */
+.student-profile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    padding: 11px 14px;
+    margin-bottom: 10px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 0.86em;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.16s, color 0.16s;
+}
+.student-profile-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─── Overlay de reconexão (js/connection-guard.js) ───
+   Cobre a página inteira quando a conexão com o Realtime Database cai. O
+   z-index fica acima de qualquer modal do painel para que nada continue
+   clicável por baixo — a intenção é justamente impedir que alguém opere sobre
+   dados que podem estar desatualizados. */
+#connection-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+#connection-overlay.is-visible { opacity: 1; visibility: visible; }
+
+.connection-overlay-card {
+    max-width: 420px;
+    width: 100%;
+    padding: 32px 28px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+    text-align: center;
+}
+.connection-overlay-card h2 {
+    margin: 18px 0 10px;
+    font-size: 1.18em;
+    font-weight: 700;
+    color: #0f172a;
+}
+.connection-overlay-card p {
+    margin: 0 0 10px;
+    font-size: 0.9em;
+    line-height: 1.55;
+    color: #475569;
+}
+.connection-overlay-card .connection-overlay-hint {
+    margin-bottom: 0;
+    font-size: 0.82em;
+    color: #94a3b8;
+}
+.connection-overlay-spinner {
+    width: 38px;
+    height: 38px;
+    margin: 0 auto;
+    border: 3px solid rgba(148, 163, 184, 0.35);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: connection-spin 0.8s linear infinite;
+}
+@keyframes connection-spin { to { transform: rotate(360deg); } }
+
+body.is-connection-blocked { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+    .connection-overlay-spinner { animation-duration: 2.4s; }
+    #connection-overlay { transition: none; }
+}
+
+/* ─── Overlay de gravação (js/db-sync.js) ───
+   Escurece a tela enquanto uma alteração do painel está a caminho do banco.
+   Fica logo abaixo do overlay de reconexão: se a conexão cair no meio de uma
+   gravação, quem tem de aparecer por cima é o aviso de queda, não o spinner
+   de "salvando". Bloqueia ponteiro e rolagem para que um segundo clique não
+   dispare a mesma ação duas vezes enquanto a primeira ainda não voltou. */
+#db-busy-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+#db-busy-overlay.is-visible { opacity: 1; visibility: visible; }
+
+.db-busy-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    min-width: 220px;
+    padding: 28px 32px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.26);
+    text-align: center;
+}
+.db-busy-card .db-busy-label {
+    margin: 0;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: #0f172a;
+}
+.db-busy-card .db-busy-hint {
+    margin: 0;
+    font-size: 0.8em;
+    color: #94a3b8;
+}
+.db-busy-spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid rgba(148, 163, 184, 0.35);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: db-busy-spin 0.8s linear infinite;
+}
+@keyframes db-busy-spin { to { transform: rotate(360deg); } }
+
+body.is-db-busy { overflow: hidden; }
+body.is-db-busy #cfg-root { pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .db-busy-spinner { animation-duration: 2.4s; }
+    #db-busy-overlay { transition: none; }
+}
+
+/* ─── Aviso de sessão encerrada (js/student-auth.js) ───
+   Mesma linguagem visual do overlay de reconexão: a conta foi desativada ou
+   removida enquanto a aba estava aberta e não há nada a fazer na página além
+   de esperar o recarregamento. */
+#session-revoked-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}

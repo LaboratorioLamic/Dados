@@ -1,0 +1,180 @@
+/* =========================================================================
+   SIDEBAR — fixa no desktop, overlay no mobile
+   ========================================================================= */
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2,6,23,0.6);
+    backdrop-filter: blur(3px);
+    z-index: 1000;
+    animation: fadeIn 0.2s var(--ease);
+}
+body.sidebar-open .sidebar-backdrop { display: block; }
+
+.sidebar {
+    width: var(--sidebar-w);
+    background: var(--grad-sidebar);
+    color: #fff;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 1001;
+    transform: translateX(calc(-1 * var(--sidebar-w)));
+    transition: transform 0.30s var(--ease);
+    box-shadow: 4px 0 32px rgba(2,6,23,0.30);
+    border-right: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
+}
+body.sidebar-open .sidebar { transform: translateX(0); }
+
+/* Logo / Marca */
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 28px 20px 24px;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+}
+.sidebar-logo i {
+    width: 38px;
+    height: 38px;
+    background: var(--grad-accent);
+    border-radius: var(--r-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.40);
+    flex-shrink: 0;
+}
+
+/* Nav items */
+.sidebar nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+}
+
+.sidebar button {
+    width: 100%;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.55);
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-radius: var(--r-md);
+    transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
+    position: relative;
+    font-family: inherit;
+}
+.sidebar button i {
+    width: 18px;
+    text-align: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+.sidebar button:hover {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.9);
+    transform: translateX(2px);
+}
+.sidebar button.active {
+    background: rgba(37,99,235,0.20);
+    color: #fff;
+    font-weight: 600;
+}
+.sidebar button.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background: var(--accent-light);
+    border-radius: 0 3px 3px 0;
+}
+.sidebar button.active i { color: var(--accent-light); }
+
+.sidebar-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.07);
+    margin: 8px 12px;
+    flex-shrink: 0;
+}
+
+/* Label de grupo na sidebar */
+.sidebar-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.28);
+    padding: 6px 16px 4px;
+    margin-top: 4px;
+}
+
+/* User bar */
+.sidebar-user {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sidebar-user i.fa-user-circle {
+    font-size: 22px;
+    color: var(--accent-light);
+    flex-shrink: 0;
+}
+.sidebar-user span#currentuserLabel {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+    font-size: 13px;
+}
+.sidebar-user button#btnLogout {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--r-sm);
+    flex-shrink: 0;
+    font-size: 14px;
+    transition: background var(--t-fast), color var(--t-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-left: auto;
+}
+.sidebar-user button#btnLogout:hover {
+    background: rgba(220,38,38,0.20);
+    color: #fca5a5;
+}

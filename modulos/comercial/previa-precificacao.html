@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Precificação LAMIC — Prévia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root{
+  --night:#0e1628;--night-mid:#162036;--night-light:#1e2d4a;
+  --cyan:#00a8cc;--cyan-hover:#0090b0;--cyan-light:rgba(0,168,204,.12);
+  --bg:#f4f7f6;--bg-card:#fff;--bg-soft:#f8fafc;
+  --text-primary:#0e1628;--text-secondary:#4a5568;--text-muted:#718096;
+  --border:#e2e8f0;
+  --red:#e63946;--red-bg:rgba(230,57,70,.1);
+  --amber:#e8913a;--amber-bg:rgba(244,162,97,.16);
+  --green:#2a9d8f;--green-bg:rgba(42,157,143,.12);
+  --gray:#94a3b8;--gray-bg:rgba(148,163,184,.16);
+  --violet:#6366f1;
+  --sidebar-w:250px;--topbar-h:60px;
+  --shadow-sm:0 1px 3px rgba(14,22,40,.08);--shadow-md:0 4px 16px rgba(14,22,40,.12);--shadow-lg:0 12px 40px rgba(14,22,40,.18);
+  --radius:8px;--radius-lg:12px;--t:all .18s ease;
+}
+:root[data-theme="dark"]{
+  --bg:#0b1220;--bg-card:#121c30;--bg-soft:#16223a;
+  --text-primary:#e6edf7;--text-secondary:#a9b6cc;--text-muted:#7c8aa3;
+  --border:#22314f;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.4);--shadow-md:0 4px 16px rgba(0,0,0,.45);--shadow-lg:0 12px 40px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",system-ui,sans-serif;background:var(--bg);color:var(--text-primary);font-size:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+input,textarea{font-family:inherit;font-size:14px}
+.fa-solid{line-height:1}
+
+/* ── LOGIN ── */
+.auth{position:fixed;inset:0;background:var(--night);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.auth.hide{display:none}
+.auth-card{width:100%;max-width:344px;background:var(--night-light);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:32px;box-shadow:var(--shadow-lg);color:#fff}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.brand-ico{width:36px;height:36px;border-radius:9px;background:var(--cyan);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;box-shadow:0 4px 14px rgba(0,168,204,.4)}
+.brand-name{font-weight:600;font-size:14px}
+.brand-sub{font-size:10px;letter-spacing:.08em;color:#8fa1bf;text-transform:uppercase;margin-top:2px}
+.auth h1{font-size:20px;font-weight:600;margin-bottom:6px}
+.auth p{font-size:12.5px;color:#8fa1bf;margin-bottom:22px}
+.auth label{display:block;font-size:11.5px;font-weight:600;color:#a9b6cc;margin:14px 0 6px}
+.auth .inp{position:relative}
+.auth .inp i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#5f7090;font-size:13px}
+.auth input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:10px 12px 10px 36px;color:#fff;outline:none;transition:var(--t)}
+.auth input:focus{border-color:var(--cyan);background:rgba(0,168,204,.08)}
+.btn-primary{width:100%;margin-top:22px;background:var(--cyan);color:#fff;border:0;border-radius:var(--radius);padding:11px;font-weight:600;display:flex;gap:9px;align-items:center;justify-content:center;transition:var(--t)}
+.btn-primary:hover{background:var(--cyan-hover)}
+.btn-ghost-dark{width:100%;margin-top:10px;background:transparent;color:#a9b6cc;border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);padding:10px;font-weight:500;display:flex;gap:9px;align-items:center;justify-content:center}
+
+/* ── SHELL ── */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--night);color:#cfd8e8;display:flex;flex-direction:column;z-index:40;transition:transform .2s ease}
+.sidebar .brand{padding:18px 18px 0;margin-bottom:22px}
+.nav-sec{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#5f7090;padding:14px 22px 6px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9px 14px;margin:1px 10px;border-radius:var(--radius);color:#b3c0d6;text-decoration:none;font-size:13.5px;transition:var(--t);cursor:pointer}
+.nav a i{width:18px;text-align:center;font-size:14px}
+.nav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.nav a.active{background:var(--cyan-light);color:#fff;box-shadow:inset 3px 0 0 var(--cyan)}
+.nav a.active i{color:var(--cyan)}
+.nav .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;font-weight:600;border-radius:10px;padding:1px 7px}
+.side-foot{margin-top:auto;padding:14px;border-top:1px solid rgba(255,255,255,.06)}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:6px 8px;font-size:12.5px;color:#b3c0d6}
+.toggle-row .switch{margin-left:auto}
+.switch{width:34px;height:19px;border-radius:10px;background:#2b3a58;position:relative;border:0;transition:var(--t)}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:var(--t)}
+.switch.on{background:var(--cyan)}.switch.on::after{left:17px}
+.user{display:flex;align-items:center;gap:10px;padding:10px 8px 2px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#2a9d8f;color:#fff;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-n{font-size:13px;color:#fff;font-weight:500}.user-g{font-size:11px;color:#7c8aa3}
+
+.app{margin-left:var(--sidebar-w);min-height:100vh;overflow-x:clip}
+.pop-list{position:relative}
+.topbar{height:var(--topbar-h);background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;padding:0 24px;position:sticky;top:0;z-index:30}
+.hamb{display:none;background:none;border:0;color:var(--text-primary);font-size:18px}
+.tb-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 4px var(--cyan-light)}
+.tb-title{font-weight:600;font-size:15px}.tb-crumb{font-size:11.5px;color:var(--text-muted)}
+.tb-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.icon-btn{width:36px;height:36px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);display:flex;align-items:center;justify-content:center;position:relative;font-size:14px;transition:var(--t)}
+.icon-btn:hover{color:var(--cyan);border-color:var(--cyan)}
+.icon-btn .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid var(--bg-card)}
+.mock-tag{font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-bg);padding:4px 10px;border-radius:20px;display:flex;gap:6px;align-items:center}
+
+.page{padding:24px;max-width:none}
+.screen{display:none}.screen.active{display:block}
+.h-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.h-row h2{font-size:20px;font-weight:600}.h-row p{color:var(--text-muted);font-size:13px;margin-top:3px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0}
+.card-h h3{font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center}
+.card-h h3 i{color:var(--cyan);font-size:13px}
+.card-h span{font-size:12px;color:var(--text-muted)}
+.btn{border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);border-radius:var(--radius);padding:8px 14px;font-weight:500;font-size:13px;display:inline-flex;gap:8px;align-items:center;transition:var(--t);white-space:nowrap}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.pri{background:var(--cyan);border-color:var(--cyan);color:#fff}.btn.pri:hover{background:var(--cyan-hover);color:#fff}
+.btn.sm{padding:5px 10px;font-size:12px}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.kpi{padding:16px 18px}
+.kpi-l{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px}
+.kpi-v{font-size:26px;font-weight:600;margin-top:8px;letter-spacing:-.02em}
+.kpi-s{font-size:12px;color:var(--text-muted);margin-top:4px}
+.kpi .ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+
+.bars{padding:14px 18px 18px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 52px;gap:10px;align-items:center;margin:9px 0;font-size:12.5px}
+.bar-row .nm{color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:10px;border-radius:5px;background:var(--bg-soft);position:relative}
+.bar-fill{height:100%;border-radius:5px}
+.bar-min,.bar-alvo{position:absolute;top:-4px;bottom:-4px;width:2px;opacity:.7}
+.bar-min{background:var(--red)}.bar-alvo{background:var(--green)}
+.bar-v{text-align:right;font-family:"DM Mono",monospace;font-size:12px}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--text-muted);padding:0 18px 14px}
+.legend b{display:inline-block;width:10px;height:2px;margin-right:5px;vertical-align:middle}
+
+.feed{padding:8px 18px 14px}
+.feed-i{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px}
+.feed-i:last-child{border:0}
+.feed-i .t{color:var(--text-muted);font-size:11.5px;margin-top:2px}
+
+/* ── POPOVER ── */
+.pop-wrap{position:relative;display:inline-block}
+.pop-wrap.block{display:block}
+.pop-wrap.open{z-index:56}
+.pop-btn{display:flex;align-items:center;gap:10px;min-width:180px;width:100%;padding:6px 12px 6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-card);color:var(--text-primary);text-align:left;transition:var(--t)}
+.pop-btn:hover{border-color:#b6c3d4}
+:root[data-theme="dark"] .pop-btn:hover{border-color:#36486b}
+.pop-wrap.open .pop-btn{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-light)}
+.pop-btn.set{border-color:var(--cyan);background:var(--cyan-light)}
+.pb-ic{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;background:var(--bg-soft);color:var(--text-secondary);flex-shrink:0}
+.pop-btn.set .pb-ic{background:var(--cyan);color:#fff}
+.pb-txt{display:flex;flex-direction:column;min-width:0;flex:1}
+.pb-l{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);font-weight:600}
+.pb-v{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb-chev{font-size:10px;color:var(--text-muted);transition:transform .2s}
+.pop-wrap.open .pb-chev{transform:rotate(180deg);color:var(--cyan)}
+.pb-clear{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--cyan);background:transparent}
+.pb-clear:hover{background:var(--cyan);color:#fff}
+
+.pop{position:absolute;top:calc(100% + 8px);left:0;width:310px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top left;pointer-events:none;transition:opacity .16s ease,transform .16s ease;overflow:hidden;outline:none}
+.pop.right{left:auto;right:0;transform-origin:top right}
+.pop.up{top:auto;bottom:calc(100% + 8px);transform:translateY(6px) scale(.98);transform-origin:bottom left}
+.pop.up.right{transform-origin:bottom right}
+.pop-wrap.open .pop{opacity:1;transform:none;pointer-events:auto}
+.pop-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px}
+.pop-head span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--text-muted)}
+.pop-x{border:0;background:none;color:var(--text-muted);width:24px;height:24px;border-radius:6px}
+.pop-x:hover{background:var(--bg-soft);color:var(--text-primary)}
+.pop-search{margin:0 10px 6px;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-soft);color:var(--text-muted);font-size:12px}
+.pop-search:focus-within{border-color:var(--cyan)}
+.pop-search input{border:0;outline:none;background:transparent;padding:8px 0;width:100%;color:var(--text-primary);font-size:13px}
+.pop-list{max-height:330px;overflow-y:auto;padding:4px 6px 8px}
+.pop-group{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;color:var(--text-muted);padding:10px 10px 4px}
+.pop-opt{display:flex;align-items:center;gap:11px;width:100%;padding:8px 10px;border:0;background:none;border-radius:var(--radius);text-align:left;color:var(--text-primary);transition:background .12s}
+.pop-opt:hover,.pop-opt.hi{background:var(--bg-soft)}
+.po-ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);flex-shrink:0}
+.po-txt{display:flex;flex-direction:column;flex:1;min-width:0}
+.po-l{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.po-d{font-size:11.5px;color:var(--text-muted);margin-top:1px}
+.po-n{font-family:"DM Mono",monospace;font-size:11px;color:var(--text-muted);background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:1px 7px}
+.po-ck{font-size:12px;color:var(--cyan);width:14px;opacity:0}
+.pop-opt.sel .po-l{font-weight:600}
+.pop-opt.sel .po-ck{opacity:1}
+.pop-empty{padding:22px 10px;text-align:center;color:var(--text-muted);font-size:12.5px}
+.pop-empty i{display:block;font-size:20px;margin-bottom:8px;opacity:.6}
+.pop-foot{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted)}
+.pop-foot kbd{font-family:"DM Mono",monospace;font-size:10px;border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--bg-soft)}
+.pop-foot button{border:0;background:none;color:var(--cyan);font-size:12px;font-weight:600}
+.pop-bd{position:fixed;inset:0;z-index:55;display:none}
+.pop-bd.open{display:block}
+
+/* table */
+.toolbar{display:flex;gap:10px;padding:14px 18px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border)}
+.search{flex:1;min-width:200px;display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;background:var(--bg-soft);color:var(--text-muted);height:44px}
+.search:focus-within{border-color:var(--cyan)}
+.search input{border:0;background:transparent;outline:none;color:var(--text-primary);width:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:12px 18px 0}
+.chip{border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:7px;transition:var(--t)}
+.chip:hover{border-color:var(--cyan)}
+.chip.on{border-color:var(--cyan);background:var(--cyan-light);color:var(--cyan)}
+.chip .d{width:8px;height:8px;border-radius:50%}
+.chip b{font-weight:600}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);font-weight:600;text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg-card)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+tr.row{cursor:pointer}tr.row:hover td{background:var(--bg-soft)}
+td.num,th.num{text-align:right;font-family:"DM Mono",monospace}
+.mn{font-family:"DM Mono",monospace;font-weight:500;color:var(--cyan)}
+.desc{max-width:min(34vw,520px);overflow:hidden;text-overflow:ellipsis}
+.tag{display:inline-flex;gap:6px;align-items:center;font-size:11px;padding:2px 8px;border-radius:5px;background:var(--bg-soft);color:var(--text-secondary);border:1px solid var(--border)}
+.tag i{font-size:10px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+.st i{font-size:11px}
+.st.r{color:var(--red);background:var(--red-bg)}.st.a{color:var(--amber);background:var(--amber-bg)}
+.st.g{color:var(--green);background:var(--green-bg)}.st.x{color:var(--gray);background:var(--gray-bg)}
+.warn-i{color:var(--amber);font-size:11px;display:inline-flex;gap:5px;align-items:center}
+.foot{display:flex;justify-content:space-between;padding:12px 18px;font-size:12px;color:var(--text-muted)}
+
+/* drawer */
+.backdrop{position:fixed;inset:0;background:rgba(14,22,40,.45);opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+.backdrop.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:480px;max-width:100%;background:var(--bg-card);z-index:70;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.drawer.open{transform:none}
+.dr-h{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+.dr-h h3{font-size:16px;font-weight:600;margin-top:4px;line-height:1.3}
+.dr-h .meta{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.dr-b{flex:1;overflow-y:auto;padding:18px 22px}
+.dr-f{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.sec-t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:600;margin:18px 0 10px;display:flex;gap:7px;align-items:center}
+.sec-t:first-child{margin-top:0}
+.flow{display:flex;align-items:center;gap:4px;font-size:11.5px;flex-wrap:wrap}
+.flow span{padding:4px 10px;border-radius:20px;background:var(--bg-soft);color:var(--text-muted);border:1px solid var(--border);display:inline-flex;gap:5px;align-items:center}
+.flow span.done{color:var(--green);border-color:transparent;background:var(--green-bg)}
+.flow span.cur{color:#fff;background:var(--cyan);border-color:var(--cyan)}
+.flow > i{color:var(--text-muted);font-size:9px}
+.comp{height:14px;border-radius:7px;display:flex;overflow:hidden;margin:6px 0 8px}
+.comp-leg{display:flex;gap:14px;font-size:11.5px;color:var(--text-muted);flex-wrap:wrap}
+.comp-leg b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.casc{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.casc-r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+.casc-r:last-child{border:0}
+.casc-r .lft{display:flex;gap:10px;align-items:center}
+.casc-r .lft > i{width:16px;text-align:center;color:var(--text-muted);font-size:12px}
+.casc-r .s{font-size:11.5px;color:var(--text-muted)}
+.casc-r .v{font-family:"DM Mono",monospace}
+.casc-r.tot{background:var(--bg-soft);font-weight:600}
+.casc-r.skip{opacity:.45}
+.casc-r.neg .v{color:var(--red)}
+.casc-r.res .v{font-weight:600}
+.prices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pbox{border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.pbox .l{font-size:11.5px;color:var(--text-muted);display:flex;gap:6px;align-items:center}
+.pbox .v{font-size:20px;font-weight:600;font-family:"DM Mono",monospace;margin-top:4px}
+.pbox input{width:100%;font-size:20px;font-weight:600;font-family:"DM Mono",monospace;border:0;outline:none;background:transparent;color:var(--text-primary);margin-top:2px}
+.pbox.edit{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-light)}
+.pbox .m{font-size:12px;margin-top:4px}
+.just{margin-top:10px}
+.just label{font-size:12px;font-weight:600;color:var(--text-secondary)}
+.just textarea{width:100%;margin-top:6px;border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;resize:vertical;min-height:60px;background:var(--bg-soft);color:var(--text-primary);outline:none}
+.just textarea:focus{border-color:var(--cyan)}
+.just .req{color:var(--red);font-size:11.5px;margin-top:4px;display:none}
+.alert{border-radius:var(--radius);padding:10px 12px;font-size:12.5px;display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;line-height:1.45}
+.alert > i{margin-top:2px}
+.alert.r{background:var(--red-bg);color:var(--red)}.alert.a{background:var(--amber-bg);color:#b86b1f}.alert.x{background:var(--gray-bg);color:var(--text-secondary)}
+:root[data-theme="dark"] .alert.a{color:var(--amber)}
+.hist-i{display:flex;gap:10px;font-size:12.5px;padding:8px 0;border-bottom:1px dashed var(--border)}
+.hist-i:last-child{border:0}
+.hist-i .t{font-size:11.5px;color:var(--text-muted)}
+
+/* simulador */
+.sim-grid{display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start}
+.form{padding:18px}
+.f-label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin:16px 0 7px}
+.f-label:first-child{margin-top:0}
+.opt-cards{display:flex;flex-direction:column;gap:6px}
+.oc{display:flex;gap:11px;align-items:center;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-card);color:var(--text-primary);text-align:left;transition:var(--t)}
+.oc:hover{border-color:#b6c3d4}
+.oc .po-ic{--c:var(--text-muted)}
+.oc b{font-size:13px;font-weight:600;display:block}
+.oc small{font-size:11.5px;color:var(--text-muted)}
+.oc .ck{margin-left:auto;color:var(--cyan);opacity:0}
+.oc.on{border-color:var(--cyan);background:var(--cyan-light)}
+.oc.on .po-ic{--c:var(--cyan)}
+.oc.on .ck{opacity:1}
+.range-row{display:flex;gap:10px;align-items:center}
+.range-row input[type=range]{flex:1;accent-color:var(--cyan)}
+.range-row .val{font-family:"DM Mono",monospace;font-weight:600;min-width:58px;text-align:right}
+.range-row.off{opacity:.4;pointer-events:none}
+.impact{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;padding:16px 18px}
+.imp{border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.imp .l{font-size:11.5px;color:var(--text-muted);display:flex;gap:6px;align-items:center}
+.imp .v{font-size:18px;font-weight:600;margin-top:4px;font-family:"DM Mono",monospace}
+.imp .d{font-size:12px;margin-top:2px;display:flex;gap:5px;align-items:center}
+.up{color:var(--green)}.dn{color:var(--red)}
+
+/* pendencias */
+.tabs{display:flex;gap:2px;padding:0 18px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:13px 14px;font-size:13px;font-weight:500;color:var(--text-muted);border:0;background:none;border-bottom:2px solid transparent;white-space:nowrap;display:flex;gap:8px;align-items:center}
+.tab.on{color:var(--cyan);border-color:var(--cyan)}
+.tab .n{font-size:11px;background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;padding:0 7px;color:var(--text-secondary)}
+.pend-desc{padding:14px 18px 0;font-size:12.5px;color:var(--text-muted);display:flex;gap:8px;align-items:center}
+
+.placeholder{padding:60px 20px;text-align:center;color:var(--text-muted)}
+.placeholder > i{font-size:34px;color:var(--cyan)}
+.placeholder h3{color:var(--text-primary);font-size:16px;margin:12px 0 6px}
+.placeholder ul{list-style:none;margin-top:14px;display:inline-block;text-align:left;font-size:13px;line-height:2}
+.placeholder li i{color:var(--cyan);margin-right:8px;font-size:11px}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--night);color:#fff;padding:11px 18px;border-radius:var(--radius);font-size:13px;box-shadow:var(--shadow-lg);transition:transform .25s;z-index:200;display:flex;gap:9px;align-items:center}
+.toast i{color:var(--cyan)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── etapa 2: custos, tabelas, config, importar ── */
+.subnav{display:flex;gap:4px;margin-bottom:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:4px;width:fit-content;max-width:100%;overflow-x:auto;box-shadow:var(--shadow-sm)}
+.subnav button{border:0;background:none;padding:8px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;color:var(--text-muted);display:flex;gap:8px;align-items:center;white-space:nowrap;transition:var(--t)}
+.subnav button:hover{color:var(--text-primary)}
+.subnav button.on{background:var(--cyan-light);color:var(--cyan)}
+.pane{display:none}.pane.on{display:block}
+.info-strip{display:flex;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.formula{font-family:"DM Mono",monospace;font-size:12px;background:var(--bg-soft);border:1px dashed var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text-secondary);display:flex;gap:8px;align-items:center}
+.formula i{color:var(--cyan)}
+.kpis.k3{grid-template-columns:repeat(3,1fr)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.tcard{padding:16px 18px;cursor:pointer;transition:var(--t);display:flex;flex-direction:column;gap:14px;text-align:left;font:inherit;color:inherit}
+.tcard:hover{border-color:var(--cyan);box-shadow:var(--shadow-md)}
+.tcard.on{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-light)}
+.tc-h{display:flex;gap:12px;align-items:center}
+.tc-ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);flex-shrink:0}
+.tc-n{font-weight:600;font-size:14.5px}.tc-s{font-size:12px;color:var(--text-muted);margin-top:1px}
+.tc-h>div{flex:1;min-width:0}
+.tc-b{margin-top:6px}.tc-b .badge-s{margin-left:0}
+.tc-h .badge-s{margin-left:auto;flex-shrink:0}
+.tc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tc-stats div{background:var(--bg-soft);border-radius:var(--radius);padding:8px 10px}
+.tc-stats b{display:block;font-family:"DM Mono",monospace;font-size:14px;font-weight:500}
+.tc-stats span{display:block;font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-f{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--text-muted)}
+.badge-s{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;display:inline-flex;gap:5px;align-items:center}
+.badge-s.base{background:var(--cyan-light);color:var(--cyan)}.badge-s.warn{background:var(--amber-bg);color:var(--amber)}
+.badge-s.ok{background:var(--green-bg);color:var(--green)}.badge-s.off{background:var(--gray-bg);color:var(--gray)}.badge-s.bad{background:var(--red-bg);color:var(--red)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:18px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:600;color:var(--text-secondary);display:flex;gap:7px;align-items:center}
+.field label i{color:var(--text-muted);font-size:11px}
+.field .hint{font-size:11.5px;color:var(--text-muted)}
+.inp{display:flex;align-items:center;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-soft);transition:var(--t)}
+.inp:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-light);background:var(--bg-card)}
+.inp input{flex:1;border:0;background:transparent;outline:none;padding:9px 12px;color:var(--text-primary);font-family:"DM Mono",monospace;min-width:0;width:100%}
+.inp .suf{padding:0 12px;color:var(--text-muted);font-size:12px;border-left:1px solid var(--border);align-self:stretch;display:flex;align-items:center}
+.inp .pre{padding:0 0 0 12px;color:var(--text-muted);font-size:12px}
+.switch.lt{background:var(--border)}.switch.lt.on{background:var(--cyan)}
+.cb{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg-card);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;transition:var(--t);padding:0}
+.cb:hover{border-color:var(--cyan)}
+.cb.on{background:var(--cyan);border-color:var(--cyan)}
+.cb i{opacity:0}.cb.on i{opacity:1}
+.cb:disabled{cursor:not-allowed;opacity:.55}
+.perm th,.perm td{text-align:center}
+.perm td:first-child,.perm th:first-child{text-align:left}
+.perm td:first-child i{width:18px;color:var(--text-muted);margin-right:8px}
+.perm .na{color:var(--border);font-size:11px}
+.split{display:grid;grid-template-columns:270px 1fr;gap:14px;align-items:start}
+.glist{padding:8px}
+.gitem{display:flex;gap:11px;align-items:center;padding:10px;border-radius:var(--radius);cursor:pointer;transition:var(--t)}
+.gitem:hover{background:var(--bg-soft)}.gitem.on{background:var(--cyan-light)}
+.gitem .n{font-weight:600;font-size:13px}.gitem .s{font-size:11.5px;color:var(--text-muted)}
+.gitem .po-ic{width:34px;height:34px}
+.ucell{display:flex;gap:10px;align-items:center}
+.ucell .avatar{width:30px;height:30px;font-size:11px}
+.ucell .s{font-size:11.5px;color:var(--text-muted)}
+.steps{display:flex;padding:18px;border-bottom:1px solid var(--border);overflow-x:auto;gap:0}
+.step{display:flex;align-items:center;gap:10px;flex:1;min-width:140px;font-size:12.5px;color:var(--text-muted);white-space:nowrap}
+.step .c{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0;background:var(--bg-card)}
+.step.done .c{background:var(--green);border-color:var(--green);color:#fff}
+.step.cur .c{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 0 4px var(--cyan-light)}
+.step.cur{color:var(--text-primary);font-weight:600}
+.step:not(:last-child)::after{content:"";flex:1;height:2px;background:var(--border);margin:0 10px;min-width:16px}
+.step.done:not(:last-child)::after{background:var(--green)}
+.wz-body{padding:18px;min-height:260px}
+.choice{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.drop{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:38px 20px;text-align:center;color:var(--text-muted);cursor:pointer;transition:var(--t)}
+.drop:hover{border-color:var(--cyan);background:var(--cyan-light)}
+.drop > i{font-size:32px;color:var(--cyan);margin-bottom:12px;display:block}
+.drop b{color:var(--text-primary)}
+.file-ok{display:flex;gap:12px;align-items:center;border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-top:14px}
+.file-ok > i{font-size:24px;color:#1d7044}
+.map-r{display:grid;grid-template-columns:1fr 22px 1fr 110px;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.map-r:last-child{border:0}
+.map-r .col{font-family:"DM Mono",monospace;font-size:12px}
+.map-r .col b{color:var(--cyan);margin-right:6px}
+.map-r > i{color:var(--text-muted);font-size:11px;text-align:center}
+.wz-f{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border)}
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.delta-up{color:var(--red)}.delta-dn{color:var(--green)}
+.sec-card-h{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.sec-card-h h3{font-size:15px;font-weight:600}
+.sec-card-h .sub{font-size:12px;color:var(--text-muted)}
+.sec-card-h .rt{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.inp input.txt{font-family:"DM Sans",system-ui,sans-serif}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg-soft)}
+.seg button{border:0;background:none;padding:5px 10px;font-size:12px;font-weight:500;color:var(--text-muted);display:inline-flex;gap:6px;align-items:center;transition:var(--t)}
+.seg button i{font-size:10px}
+.seg button.on{background:var(--cyan);color:#fff}
+.add-extra{gap:8px;background:var(--bg-soft)}
+.mini{border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text-primary);padding:6px 9px;font-size:12.5px;outline:none;min-width:0;flex:1}
+.mini:focus{border-color:var(--cyan)}
+.mini.v-in{flex:0 0 86px;font-family:"DM Mono",monospace;text-align:right}
+.set-prev{display:flex;gap:12px;align-items:center;padding:14px;border:1px dashed var(--border);border-radius:var(--radius-lg);background:var(--bg-soft);flex-wrap:wrap}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:var(--c);box-shadow:inset 0 0 0 3px var(--bg-card);padding:0;transition:transform .12s}
+.sw:hover{transform:scale(1.1)}
+.sw.on{border-color:var(--c)}
+.sw-custom{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;background:conic-gradient(#e63946,#eab308,#16a34a,#00a8cc,#6366f1,#ec4899,#e63946);color:#fff;font-size:11px}
+.sw-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.sw-custom.on{border-color:var(--text-primary)}
+.icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:6px;max-height:228px;overflow-y:auto;padding:2px}
+.ig{aspect-ratio:1;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-card);color:var(--text-secondary);font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--t);padding:0}
+.ig:hover{border-color:var(--c);color:var(--c)}
+.ig.on{background:var(--c);border-color:var(--c);color:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent)}
+.price-in{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:6px;padding:0 8px;background:var(--bg-card);transition:var(--t)}
+.price-in span{font-size:11px;color:var(--text-muted)}
+.price-in input{width:84px;border:0;outline:none;background:transparent;font-family:"DM Mono",monospace;font-size:13px;text-align:right;padding:6px 0;color:var(--text-primary)}
+.price-in i{color:var(--amber);font-size:11px}
+.price-in:hover{border-color:#b6c3d4}
+.price-in:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-light)}
+.price-in.on{border-color:var(--cyan);background:var(--cyan-light)}
+.price-in input::-webkit-inner-spin-button{opacity:.4}
+.delta{font-size:10.5px;min-height:12px;margin-top:2px}
+table.tab-edit td{padding:8px 14px;vertical-align:middle}
+tr.edited td{background:color-mix(in srgb,var(--cyan) 5%,transparent)}
+tr.edited td:first-child{box-shadow:inset 3px 0 0 var(--cyan)}
+.acts{text-align:right;white-space:nowrap}
+.acts button{width:28px;height:28px;border-radius:6px;border:1px solid transparent;background:none;color:var(--text-muted);font-size:12px;transition:var(--t)}
+.acts button:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan);background:var(--cyan-light)}
+.acts button:disabled{opacity:.3;cursor:not-allowed}
+.bulk{display:none;align-items:center;gap:8px;padding:10px 18px;background:var(--cyan-light);border-bottom:1px solid var(--border);flex-wrap:wrap;font-size:13px}
+.bulk.on{display:flex}
+.bulk .inp input{padding:5px 8px}
+.draft-bar{display:none;position:sticky;bottom:0;align-items:center;gap:12px;padding:12px 18px;background:var(--bg-card);border-top:2px solid var(--cyan);box-shadow:0 -6px 20px rgba(14,22,40,.08);border-radius:0 0 var(--radius-lg) var(--radius-lg);flex-wrap:wrap}
+.draft-bar.on{display:flex}
+.draft-bar > i{color:var(--cyan);font-size:18px}
+.draft-bar .s{font-size:12px;color:var(--text-muted);margin-top:2px}
+.csv-prev{font-family:"DM Mono",monospace;font-size:11.5px;line-height:1.6;background:var(--bg-soft);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;max-height:280px;overflow:auto;white-space:pre;color:var(--text-secondary)}
+.done-box{text-align:center;padding:30px 10px}
+.done-box > i{font-size:44px;color:var(--green)}
+.done-box h3{margin:12px 0 6px;font-size:17px}
+.done-box p{color:var(--text-muted);font-size:13px}
+
+@media (max-width:1024px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.sim-grid,.split{grid-template-columns:1fr}.kpis.k3{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:640px){.kpis.k3{grid-template-columns:1fr}.map-r{grid-template-columns:1fr 16px 1fr}.map-r .badge-s{grid-column:1/-1;justify-self:start}}
+@media (max-width:768px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}
+  .app{margin-left:0}.hamb{display:flex}
+  .page{padding:16px}.topbar{padding:0 16px}
+  .mock-tag{display:none}
+  .kpis{gap:10px}.kpi-v{font-size:21px}
+  .bar-row{grid-template-columns:100px 1fr 46px}
+  .impact{grid-template-columns:1fr}
+  .prices{grid-template-columns:1fr}
+  .toolbar .pop-wrap{flex:1 1 140px}
+  .pop-btn{min-width:0}
+  /* popover vira bottom sheet */
+  .pop-bd.open{background:rgba(14,22,40,.45)}
+  .pop,.pop.right,.pop.up,.pop.up.right{position:fixed;left:0;right:0;top:auto;bottom:0;width:100%;border-radius:16px 16px 0 0;transform:translateY(100%);transition:transform .22s ease,opacity .1s}
+  .pop::before{content:"";display:block;width:36px;height:4px;border-radius:2px;background:var(--border);margin:8px auto 0}
+  .pop-list{max-height:55vh}
+  .pop-foot .keys{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="auth" id="auth">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-ico"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+      <div><div class="brand-name">Precificação LAMIC</div><div class="brand-sub">Precificação &amp; Comercial</div></div>
+    </div>
+    <h1>Bem-vindo</h1>
+    <p>Faça login para acessar o sistema</p>
+    <label>Usuário</label><div class="inp"><i class="fa-solid fa-user"></i><input placeholder="Nome de usuário" value="pedro"></div>
+    <label>Senha</label><div class="inp"><i class="fa-solid fa-lock"></i><input type="password" placeholder="••••••••" value="demo1234"></div>
+    <button class="btn-primary" onclick="entrar()"><i class="fa-solid fa-right-to-bracket"></i>Entrar</button>
+    <button class="btn-ghost-dark"><i class="fa-solid fa-user-plus"></i>Criar Conta</button>
+  </div>
+</div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-ico"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+    <div><div class="brand-name" style="color:#fff">Precificação LAMIC</div><div class="brand-sub">Precificação &amp; Comercial</div></div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-sec">Principal</div>
+    <a data-s="inicio" class="active"><i class="fa-solid fa-house"></i>Início</a>
+    <a data-s="exames"><i class="fa-solid fa-flask-vial"></i>Exames</a>
+    <a data-s="custos"><i class="fa-solid fa-boxes-stacked"></i>Custos</a>
+    <a data-s="tabelas"><i class="fa-solid fa-table-list"></i>Tabelas de Preço</a>
+    <a data-s="simulador"><i class="fa-solid fa-chart-line"></i>Simulador</a>
+    <a data-s="pendencias"><i class="fa-solid fa-triangle-exclamation"></i>Pendências<span class="badge">7</span></a>
+    <div class="nav-sec">Sistema</div>
+    <a data-s="importar"><i class="fa-solid fa-file-import"></i>Importar / Exportar</a>
+    <a data-s="config"><i class="fa-solid fa-gear"></i>Configurações</a>
+  </nav>
+  <div class="side-foot">
+    <div class="toggle-row"><i class="fa-solid fa-moon"></i>Modo noturno <button class="switch" id="sw-dark" onclick="toggleDark()"></button></div>
+    <div class="user"><div class="avatar">PF</div><div><div class="user-n">Pedro F.</div><div class="user-g">Admin · Comercial</div></div></div>
+  </div>
+</aside>
+
+<!-- ═══ APP ═══ -->
+<div class="app">
+  <header class="topbar">
+    <button class="hamb" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+    <div class="tb-dot"></div>
+    <div><div class="tb-title" id="tb-title">Início</div><div class="tb-crumb" id="tb-crumb">Principal / Início</div></div>
+    <div class="tb-right">
+      <span class="mock-tag"><i class="fa-solid fa-flask"></i>PRÉVIA · dados de exemplo</span>
+      <button class="icon-btn" title="Notificações"><i class="fa-solid fa-bell"></i><span class="dot"></span></button>
+      <button class="icon-btn" title="Sair" onclick="sair()"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+    </div>
+  </header>
+
+  <main class="page">
+
+    <!-- INÍCIO -->
+    <section class="screen active" id="s-inicio">
+      <div class="h-row"><div><h2>Visão geral</h2><p>Tabela Particular · imposto 8,1% · margem mínima 24,5% · alvo 50%</p></div>
+        <button class="btn pri" onclick="go('simulador')"><i class="fa-solid fa-chart-line"></i>Simular reajuste</button></div>
+      <div class="kpis">
+        <div class="card kpi"><div class="kpi-l"><span class="ic" style="background:var(--cyan-light);color:var(--cyan)"><i class="fa-solid fa-percent"></i></span>Margem média</div><div class="kpi-v">49,1%</div><div class="kpi-s">1.267 exames com custo</div></div>
+        <div class="card kpi"><div class="kpi-l"><span class="ic" style="background:var(--red-bg);color:var(--red)"><i class="fa-solid fa-circle-xmark"></i></span>Abaixo do mínimo</div><div class="kpi-v" style="color:var(--red)">46</div><div class="kpi-s">22 vacinas · 1 com prejuízo</div></div>
+        <div class="card kpi"><div class="kpi-l"><span class="ic" style="background:var(--gray-bg);color:var(--gray)"><i class="fa-solid fa-circle-question"></i></span>Sem custo</div><div class="kpi-v">609</div><div class="kpi-s">margem desconhecida</div></div>
+        <div class="card kpi"><div class="kpi-l"><span class="ic" style="background:var(--amber-bg);color:var(--amber)"><i class="fa-solid fa-code-compare"></i></span>Divergência c/ sistema</div><div class="kpi-v">111</div><div class="kpi-s">39 preços diferentes · 72 ausentes</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h"><h3><i class="fa-solid fa-chart-simple"></i>Margem média por setor</h3><span>exames com custo</span></div>
+          <div class="bars" id="bars"></div>
+          <div class="legend"><span><b style="background:var(--red)"></b>Mínimo 24,5%</span><span><b style="background:var(--green)"></b>Alvo 50%</span></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3><i class="fa-solid fa-clock-rotate-left"></i>Últimas alterações</h3><span>histórico</span></div>
+          <div class="feed">
+            <div class="feed-i"><div class="avatar" style="width:28px;height:28px;font-size:11px">PF</div><div><b>VAC-RSV</b> proposto R$ 1.900 → R$ 2.140<div class="t">Pedro F. · hoje 09:42 · aguardando aprovação</div></div></div>
+            <div class="feed-i"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#e8913a">AM</div><div>Tabela <b>Hermes Pardini</b> importada (v2026-10)<div class="t">Ana M. · ontem 16:10 · 675 itens · 38 custos alterados</div></div></div>
+            <div class="feed-i"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#6366f1">RC</div><div>Reagente <b>ImmunoCAP</b> kit R$ 1.702 → R$ 1.788<div class="t">Rafael C. · 07/10 · 103 exames afetados</div></div></div>
+            <div class="feed-i"><div class="avatar" style="width:28px;height:28px;font-size:11px">PF</div><div><b>HEMOS</b> marcado para revisão (margem 2,0%)<div class="t">Pedro F. · 06/10</div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXAMES -->
+    <section class="screen" id="s-exames">
+      <div class="h-row"><div><h2>Exames</h2><p>Clique em um exame para ver a composição do preço</p></div>
+        <div style="display:flex;gap:8px"><button class="btn"><i class="fa-solid fa-file-export"></i>Exportar</button><button class="btn pri"><i class="fa-solid fa-plus"></i>Novo exame</button></div></div>
+      <div class="card">
+        <div class="toolbar">
+          <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="q" placeholder="Buscar mnemônico ou descrição…" oninput="renderTable()"></div>
+          <div id="pop-setor"></div>
+          <div id="pop-origem"></div>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="tbl-wrap" style="margin-top:10px">
+          <table><thead><tr><th>MN</th><th>Descrição</th><th>Setor</th><th class="num">Custo</th><th class="num">Sugerido</th><th class="num">Praticado</th><th class="num">Margem</th><th>Status</th></tr></thead><tbody id="tbody"></tbody></table>
+        </div>
+        <div class="foot"><span id="count"></span><span>Prévia com 12 de 1.876 exames</span></div>
+      </div>
+    </section>
+
+    <!-- SIMULADOR -->
+    <section class="screen" id="s-simulador">
+      <div class="h-row"><div><h2>Simulador de reajuste</h2><p>Veja o impacto antes de aplicar. Nada é alterado até enviar como proposta.</p></div></div>
+      <div class="sim-grid">
+        <div class="card form">
+          <span class="f-label">Escopo</span>
+          <div id="pop-escopo" class="block"></div>
+          <span class="f-label">Tipo de reajuste</span>
+          <div class="opt-cards" id="sim-tipo">
+            <button class="oc on" data-v="pct"><span class="po-ic"><i class="fa-solid fa-percent"></i></span><span><b>Percentual</b><small>Aplica % sobre o praticado</small></span><i class="fa-solid fa-circle-check ck"></i></button>
+            <button class="oc" data-v="min"><span class="po-ic"><i class="fa-solid fa-arrow-trend-up"></i></span><span><b>Levar ao mínimo</b><small>Só exames abaixo do mínimo</small></span><i class="fa-solid fa-circle-check ck"></i></button>
+            <button class="oc" data-v="sug"><span class="po-ic"><i class="fa-solid fa-wand-magic-sparkles"></i></span><span><b>Aplicar sugerido</b><small>Preço calculado pela margem alvo</small></span><i class="fa-solid fa-circle-check ck"></i></button>
+          </div>
+          <span class="f-label">Percentual</span>
+          <div class="range-row" id="sim-pct-row"><input type="range" id="sim-pct" min="0" max="25" step="0.5" value="10" oninput="renderSim()"><span class="val" id="sim-pct-v">10,0%</span></div>
+          <span class="f-label">Arredondamento</span>
+          <div id="pop-arred" class="block"></div>
+          <button class="btn-primary" onclick="toast('Proposta enviada para aprovação (simulação)')"><i class="fa-solid fa-paper-plane"></i>Enviar como proposta</button>
+        </div>
+        <div class="card">
+          <div class="impact" id="sim-impact"></div>
+          <div class="tbl-wrap"><table><thead><tr><th>MN</th><th>Descrição</th><th class="num">Atual</th><th class="num">Novo</th><th class="num">Margem atual</th><th class="num">Nova margem</th><th>Status</th></tr></thead><tbody id="sim-body"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PENDÊNCIAS -->
+    <section class="screen" id="s-pendencias">
+      <div class="h-row"><div><h2>Pendências</h2><p>Itens que impedem um preço confiável</p></div></div>
+      <div class="card">
+        <div class="tabs" id="ptabs"></div>
+        <div class="pend-desc" id="pdesc"></div>
+        <div class="tbl-wrap" style="margin-top:8px"><table><thead id="phead"></thead><tbody id="pbody"></tbody></table></div>
+        <div class="foot"><span id="pcount"></span><span></span></div>
+      </div>
+    </section>
+
+    <!-- CUSTOS -->
+    <section class="screen" id="s-custos">
+      <div class="h-row"><div><h2>Custos</h2><p>Base do custo de cada exame. Qualquer alteração recalcula as margens na hora.</p></div>
+        <button class="btn pri" id="custos-add"><i class="fa-solid fa-plus"></i><span>Novo reagente</span></button></div>
+      <div class="subnav" data-group="custos">
+        <button class="on" data-p="reag"><i class="fa-solid fa-vials"></i>Reagentes e insumos</button>
+        <button data-p="fixos"><i class="fa-solid fa-hand-holding-medical"></i>Custos fixos</button>
+        <button data-p="apoio"><i class="fa-solid fa-truck-medical"></i>Laboratórios de apoio</button>
+      </div>
+      <div class="pane on" id="custos-reag">
+        <div class="card">
+          <div class="info-strip">
+            <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="q-reag" placeholder="Buscar reagente ou fornecedor…" oninput="renderReag()"></div>
+            <span class="formula"><i class="fa-solid fa-calculator"></i>custo/teste = preço do kit ÷ (testes × (1 − perdas) − controles)</span>
+          </div>
+          <div class="tbl-wrap"><table><thead><tr><th>Reagente / insumo</th><th class="num">Preço kit</th><th class="num">Testes</th><th class="num">Perdas</th><th class="num">Controles</th><th class="num">Custo/teste</th><th class="num">Exames</th><th>Atualizado</th></tr></thead><tbody id="reag-body"></tbody></table></div>
+        </div>
+      </div>
+      <div class="pane" id="custos-fixos">
+        <div class="kpis k3" id="fixos-kpis"></div>
+        <div class="alert x"><i class="fa-solid fa-route"></i><div><b>Nem todo exame passa por coleta e triagem.</b> Cada setor define as etapas padrão (ex.: vacinas sem coleta/triagem; urina e fezes sem coleta) e cada exame pode ajustar. Custos de etapas não percorridas não entram no preço. Custos específicos (ex.: <b>aplicação</b> de vacina) são lançados manualmente no próprio exame.</div></div>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Custo</th><th>Planilha</th><th>Cobrança</th><th>Aplica-se a</th><th class="num">Valor</th><th class="num">Por exame</th><th></th></tr></thead><tbody id="fixos-body"></tbody></table></div></div>
+      </div>
+      <div class="pane" id="custos-apoio">
+        <div class="cards" id="apoio-cards"></div>
+        <div class="card" style="margin-top:14px">
+          <div class="sec-card-h"><span class="tc-ic" style="--c:var(--cyan)"><i class="fa-solid fa-link"></i></span><div><h3>Vínculo de mnemônicos</h3><div class="sub">Nosso mnemônico ↔ código do apoio (um código pode atender vários exames LAMIC). Feito uma vez, reaproveitado em toda importação.</div></div>
+            <div class="rt"><div id="pop-vlab"></div></div></div>
+          <div class="info-strip" id="vinc-sum" style="gap:6px"></div>
+          <div class="tbl-wrap"><table><thead><tr><th>MN LAMIC</th><th>Exame LAMIC</th><th></th><th>Código apoio</th><th>Exame no apoio</th><th>Vigência</th><th class="num">Preço</th><th>Situação</th></tr></thead><tbody id="vinc-body"></tbody></table></div>
+          <div class="foot"><span><i class="fa-solid fa-circle-info"></i> Prévia: 9 exemplos reais de 675 exames Pardini</span><span>Mesmo mnemônico + descrição diferente nunca é vinculado automaticamente</span></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="sec-card-h"><span class="tc-ic" style="--c:#0e7490"><i class="fa-solid fa-code-compare"></i></span><div><h3>Prévia da importação · Pardini tabela 4114 · vigência 24/09/2026</h3><div class="sub">Custo atual (planilha) × preço novo, nos 401 vínculos automáticos comparáveis</div></div>
+            <div class="rt"><span class="badge-s warn"><i class="fa-solid fa-arrow-up"></i>365 sobem · mediana +7,0%</span><span class="badge-s ok"><i class="fa-solid fa-arrow-down"></i>33 descem</span><span class="badge-s bad"><i class="fa-solid fa-circle-xmark"></i>41 caem abaixo do mínimo</span></div></div>
+          <div class="tbl-wrap"><table><thead><tr><th>MN</th><th>Exame</th><th class="num">Custo atual</th><th class="num">Novo custo</th><th class="num">Variação</th><th class="num">Margem</th><th>Status</th></tr></thead><tbody id="imp-body"></tbody></table></div>
+          <div class="wz-f"><span style="font-size:12px;color:var(--text-muted)"><i class="fa-solid fa-circle-info"></i> Prévia: 7 exemplos reais · 3 primeiros caem abaixo do mínimo</span><div style="display:flex;gap:8px"><button class="btn">Descartar</button><button class="btn pri" onclick="toast('Tabela Pardini 4114 aplicada — custos atualizados com vigência 24/09/2026')"><i class="fa-solid fa-check"></i>Aplicar nova tabela</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABELAS DE PREÇO -->
+    <section class="screen" id="s-tabelas">
+      <div class="h-row"><div><h2>Tabelas de preço</h2><p>Particular é a base. As demais aplicam desconto com piso de margem.</p></div>
+        <button class="btn pri"><i class="fa-solid fa-plus"></i>Nova tabela</button></div>
+      <div class="cards" id="tab-cards"></div>
+      <div class="card" style="margin-top:14px" id="tab-detail"></div>
+    </section>
+
+    <!-- IMPORTAR / EXPORTAR -->
+    <section class="screen" id="s-importar">
+      <div class="h-row"><div><h2>Importar / Exportar</h2><p>Toda importação mostra as diferenças antes de gravar.</p></div></div>
+      <div class="card">
+        <div class="steps" id="wz-steps"></div>
+        <div class="wz-body" id="wz-body"></div>
+        <div class="wz-f" id="wz-foot"></div>
+      </div>
+      <div class="sec-t" style="margin:22px 0 12px"><i class="fa-solid fa-file-export"></i>Exportar</div>
+      <div class="cards" id="exp-cards"></div>
+    </section>
+
+    <!-- CONFIGURAÇÕES -->
+    <section class="screen" id="s-config">
+      <div class="h-row"><div><h2>Configurações</h2><p>Usuários e grupos seguem o modelo do Manutenção LAMIC (bases separadas).</p></div></div>
+      <div class="subnav" data-group="cfg">
+        <button class="on" data-p="users"><i class="fa-solid fa-users"></i>Usuários</button>
+        <button data-p="groups"><i class="fa-solid fa-user-shield"></i>Grupos e permissões</button>
+        <button data-p="params"><i class="fa-solid fa-sliders"></i>Parâmetros</button>
+        <button data-p="setores"><i class="fa-solid fa-sitemap"></i>Setores</button>
+      </div>
+      <div class="pane on" id="cfg-users">
+        <div class="card">
+          <div class="toolbar">
+            <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="q-user" placeholder="Buscar nome ou usuário…" oninput="renderUsers()"></div>
+            <div id="pop-ugrupo"></div>
+            <div class="toggle-row" style="color:var(--text-secondary);gap:10px"><i class="fa-solid fa-door-open"></i>Cadastro aberto <button class="switch lt on" onclick="this.classList.toggle('on');toast(this.classList.contains('on')?'Novos usuários podem criar conta':'Cadastro fechado: só admin cria usuários')"></button></div>
+            <button class="btn pri"><i class="fa-solid fa-user-plus"></i>Novo usuário</button>
+          </div>
+          <div class="tbl-wrap"><table><thead><tr><th>Usuário</th><th>Cargo</th><th>Grupo</th><th>Setores</th><th>Status</th><th>Último acesso</th><th></th></tr></thead><tbody id="users-body"></tbody></table></div>
+        </div>
+      </div>
+      <div class="pane" id="cfg-groups">
+        <div class="split">
+          <div class="card"><div class="card-h"><h3><i class="fa-solid fa-user-shield"></i>Grupos</h3><button class="btn sm"><i class="fa-solid fa-plus"></i>Novo</button></div><div class="glist" id="glist"></div></div>
+          <div class="card" id="gperm"></div>
+        </div>
+      </div>
+      <div class="pane" id="cfg-params">
+        <div class="card">
+          <div class="sec-card-h"><span class="tc-ic" style="--c:var(--cyan)"><i class="fa-solid fa-sliders"></i></span><div><h3>Parâmetros de cálculo</h3><div class="sub">Valem para todos os exames. Setores podem ter alvo próprio.</div></div></div>
+          <div class="fgrid" id="params-form"></div>
+          <div style="padding:0 18px 18px"><div class="alert x" id="params-impact" style="margin:0"></div></div>
+          <div class="wz-f"><span style="font-size:12px;color:var(--text-muted)"><i class="fa-solid fa-shield-halved"></i> Alteração exige aprovação do grupo Custos/Financeiro e fica no histórico</span><div style="display:flex;gap:8px"><button class="btn" onclick="renderParams()">Descartar</button><button class="btn pri" onclick="saveParams()"><i class="fa-solid fa-floppy-disk"></i>Salvar parâmetros</button></div></div>
+        </div>
+      </div>
+      <div class="pane" id="cfg-setores">
+        <div class="card">
+          <div class="toolbar">
+            <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="q-set" placeholder="Buscar setor…" oninput="renderSetores()"></div>
+            <div id="pop-scat"></div>
+            <button class="btn pri" onclick="openSetor(-1)"><i class="fa-solid fa-plus"></i>Novo setor</button>
+          </div>
+          <div class="tbl-wrap"><table><thead><tr><th>Setor</th><th>Categoria</th><th>Etapas padrão</th><th class="num">Exames</th><th class="num">Margem alvo</th><th></th></tr></thead><tbody id="setores-body"></tbody></table></div>
+          <div class="foot"><span id="set-count"></span><span>Exames: total na planilha</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="s-placeholder"><div class="card placeholder" id="ph"></div></section>
+  </main>
+</div>
+
+<!-- DRAWER -->
+<div class="backdrop" id="bd" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="dr-h">
+    <div style="flex:1"><span class="mn" id="d-mn"></span><h3 id="d-desc"></h3><div class="meta" id="d-meta"></div></div>
+    <button class="icon-btn" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="dr-b" id="d-body"></div>
+  <div class="dr-f" id="d-foot"></div>
+</aside>
+
+<div class="pop-bd" id="pop-bd" onclick="closePop()"></div>
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-t"></span></div>
+
+<script>
+// ── PARÂMETROS (config/) ─────────────────────────────
+const P = { imposto:.081, cartao:.0229, examesPorAtend:3, margemMin:.245, margemAlvo:.50 };
+
+// ── CUSTOS FIXOS (colunas J, K, L, M, O da planilha) ──
+// tipo: 'exame' = linear (valor cheio em cada exame) | 'atend' = rateado ÷ exames por atendimento
+// etapa: só entra no custo se o exame passa por ela (coleta/triagem)
+const FIXOS = [
+  {nome:'Atendimento', col:'J', tipo:'exame', valor:6.50, ic:'fa-headset',      etapa:null},
+  {nome:'Sistemas',    col:'K', tipo:'exame', valor:0.50, ic:'fa-server',       etapa:null},
+  {nome:'Coleta',      col:'L', tipo:'exame', valor:2.50, ic:'fa-syringe',      etapa:'coleta'},
+  {nome:'Triagem',     col:'M', tipo:'exame', valor:0.12, ic:'fa-filter',       etapa:'triagem'},
+  {nome:'Analista',    col:'O', tipo:'exame', valor:0.65, ic:'fa-user-doctor',  etapa:null}
+];
+const ETAPAS = { coleta:{t:'Coleta', ic:'fa-syringe'}, triagem:{t:'Triagem', ic:'fa-filter'} };
+const fmt = v => v==null ? '—' : 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pct = v => v==null ? '—' : (v*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%';
+
+// ── SETORES (cadastro: categoria, ícone, cor, etapas padrão, alvo próprio) ──
+const CATS = {
+  interno:{t:'Setor interno', d:'Executado no LAMIC', ic:'fa-microscope', c:'var(--green)'},
+  servico:{t:'Serviço', d:'Vacinas e procedimentos', ic:'fa-hand-holding-medical', c:'var(--amber)'},
+  apoio:  {t:'Laboratório de apoio', d:'Enviado a terceiros', ic:'fa-truck-medical', c:'var(--cyan)'}
+};
+// n = exames do setor na planilha
+const SETORES = [
+  {nome:'ALÉRGENOS - IGE', cat:'interno', icon:'fa-seedling', c:'#2a9d8f', n:110},
+  {nome:'BACILOSCOPIA', cat:'interno', icon:'fa-lungs', c:'#64748b', n:6},
+  {nome:'BACTERIOLOGIA', cat:'interno', icon:'fa-bacteria', c:'#16a34a', n:7},
+  {nome:'BIOLOGIA MOLECULAR', cat:'interno', icon:'fa-dna', c:'#6366f1', n:48},
+  {nome:'BIOQUÍMICA - GLI', cat:'interno', icon:'fa-cubes-stacked', c:'#0e7490', n:11},
+  {nome:'BIOQUÍMICA - IONS', cat:'interno', icon:'fa-bolt', c:'#eab308', n:5},
+  {nome:'BIOQUÍMICA - LIQ', cat:'interno', icon:'fa-hand-holding-droplet', c:'#00a8cc', n:5},
+  {nome:'BIOQUÍMICA - S', cat:'interno', icon:'fa-vials', c:'#0e7490', n:53},
+  {nome:'BIOQUÍMICA - U', cat:'interno', icon:'fa-flask-vial', c:'#eab308', n:17, coleta:false},
+  {nome:'CITOLOGIA', cat:'interno', icon:'fa-microscope', c:'#8b5cf6', n:3},
+  {nome:'COAGULAÇÃO', cat:'interno', icon:'fa-heart-pulse', c:'#ec4899', n:9},
+  {nome:'HEMATOLOGIA', cat:'interno', icon:'fa-droplet', c:'#e63946', n:10},
+  {nome:'IMUNO-HORMÔNIOS', cat:'interno', icon:'fa-flask', c:'#8b5cf6', n:111},
+  {nome:'IMUNOTURBIDIMETRIA', cat:'interno', icon:'fa-shield-virus', c:'#00a8cc', n:9},
+  {nome:'MICOLOGIA', cat:'interno', icon:'fa-disease', c:'#a16207', n:2},
+  {nome:'PARASITOLOGIA', cat:'interno', icon:'fa-worm', c:'#a16207', n:28, coleta:false},
+  {nome:'TESTE DO PEZINHO', cat:'interno', icon:'fa-baby', c:'#ec4899', n:8},
+  {nome:'UROANÁLISE', cat:'interno', icon:'fa-toilet', c:'#eab308', n:10, coleta:false},
+  {nome:'VACINAS', cat:'servico', icon:'fa-syringe', c:'#e8913a', n:28, coleta:false, triagem:false, alvo:.30},
+  {nome:'CONCURSO', cat:'servico', icon:'fa-id-card', c:'#64748b', n:22},
+  {nome:'ALVARO', cat:'apoio', icon:'fa-building', c:'#00a8cc', n:65},
+  {nome:'DIAGNÓSTICO BRASIL', cat:'apoio', icon:'fa-building', c:'#6366f1', n:13},
+  {nome:'HERMES PARDINI - NTO', cat:'apoio', icon:'fa-building', c:'#0e7490', n:675},
+  {nome:'YATROS PATOLOGIA', cat:'apoio', icon:'fa-building', c:'#e8913a', n:17}
+];
+const setorObj = s => SETORES.find(x => x.nome === s);
+const setorIco = s => { const o = setorObj(s); return o ? {icon:o.icon, c:o.c, apoio:o.cat==='apoio', cat:o.cat} : {icon:'fa-vial', c:'var(--text-muted)'}; };
+const alvoSetor = s => setorObj(s)?.alvo;
+// etapas do exame: override do exame > padrão do setor > passa por tudo
+const etapas = e => ({ coleta: e.fluxo?.coleta ?? setorObj(e.setor)?.coleta ?? true, triagem: e.fluxo?.triagem ?? setorObj(e.setor)?.triagem ?? true });
+
+// ── EXAMES (exemplo, valores reais da planilha) ─────
+const EX = [
+  {mn:'E1',desc:'IGE ESPECÍFICA PARA CASPA DE GATO - IMMUNOCAP',setor:'ALÉRGENOS - IGE',origem:'interno',fonte:'ImmunoCAP (kit)',teste:8.51,preco:51,sistema:51,vol:42},
+  {mn:'D1',desc:'IGE ESPECÍFICO DERMATOPHAGOIDES PTERONYSSINUS (D1)',setor:'ALÉRGENOS - IGE',origem:'interno',fonte:'ImmunoCAP (kit)',teste:8.43,preco:53,sistema:53,vol:61},
+  {mn:'F281',desc:'ANTICORPOS IGE ESPECÍFICO (F281) - CURRY',setor:'ALÉRGENOS - IGE',origem:'interno',fonte:null,teste:null,preco:82,sistema:82,vol:2},
+  {mn:'HEMOS',desc:'HEMOSSEDIMENTAÇÃO (VHS)',setor:'HEMATOLOGIA',origem:'interno',fonte:'Kit VHS',teste:19.50,preco:26,sistema:26,vol:310},
+  {mn:'BNP-A',desc:'BNP - PEPTÍDEO NATRIURÉTICO',setor:'ALVARO',origem:'apoio',fonte:'Alvaro · tabela 2026-09',teste:83.48,preco:166,sistema:166,vol:18,negociado:true,codApoio:'BNP'},
+  {mn:'PC-RQ',desc:'PROTEINA C REATIVA - FLUIDOS BIOLÓGICOS',setor:'HERMES PARDINI - NTO',origem:'apoio',fonte:'Pardini 4114 · vig. 24/09/2026',teste:48.89,preco:80,sistema:80,vol:5,negociado:true,codApoio:'PC-RQ'},
+  {mn:'EXOMA',desc:'EXOMA COM ANÁLISE DE CNV E DNA MITOCONDRIAL',setor:'HERMES PARDINI - NTO',origem:'apoio',fonte:'Pardini 4114 · vig. 24/09/2026',teste:2000,preco:4000,sistema:5243,vol:1,negociado:true,codApoio:'EXOMA',auditar:true},
+  {mn:'ADV-PCR',desc:'DIAGNÓSTICO MOLECULAR DO ADENOVÍRUS',setor:'BIOLOGIA MOLECULAR',origem:'interno',fonte:'Kit PCR Adenovírus',teste:261.25,preco:481,sistema:560,vol:7},
+  {mn:'VAC-RSV',desc:'VACINA ABRYSVO',setor:'VACINAS',origem:'interno',fonte:'Dose Abrysvo',teste:1269.86,preco:1900,sistema:1900,vol:9,extras:[{nome:'Aplicação',valor:4.74}]},
+  {mn:'VAC-HEAA',desc:'VACINA HEPATITE A ADULTO',setor:'VACINAS',origem:'interno',fonte:'Dose Hepatite A',teste:126.39,preco:209,sistema:209,vol:14,extras:[{nome:'Aplicação',valor:4.74}],sys:{indice:1}},
+  {mn:'17-KS',desc:'17 CETOSTERÓIDES NEUTROS TOTAIS - 17 KS',setor:null,origem:'apoio',fonte:null,teste:null,preco:201,sistema:201,vol:0,fluxo:{coleta:false},negociado:false,codApoio:null},
+  {mn:'IGD',desc:'IGD - IMUNOGLOBULINA D',setor:'HERMES PARDINI - NTO',origem:'apoio',fonte:'Manual (não negociado)',teste:58.40,preco:140,sistema:87,vol:3,negociado:false,codApoio:null,just:'Preço mantido acima do sistema: negociação com médico solicitante.'}
+];
+
+function fixosDo(e){
+  const et = etapas(e);
+  return FIXOS.map(f => ({...f, aplica: !f.etapa || et[f.etapa], v: f.tipo === 'atend' ? f.valor / P.examesPorAtend : f.valor}));
+}
+function calc(e, preco = e.preco){
+  const alvo = alvoSetor(e.setor) ?? P.margemAlvo;
+  const fx = fixosDo(e), fixo = fx.filter(f => f.aplica).reduce((s,f) => s + f.v, 0);
+  const r = { fx, fixo, alvo, semCusto: e.teste == null };
+  if (r.semCusto) return Object.assign(r,{status:'x'});
+  r.taxa = 0;                                       // maquininha não entra no custo
+  r.extras = (e.extras || []).reduce((s,x) => s + x.valor, 0);
+  r.custo = fixo + e.teste + r.extras;
+  r.imposto = preco * P.imposto;
+  r.lucro = preco - r.custo - r.imposto;
+  r.margem = r.lucro / preco;
+  // projeção: quanto sobraria se pago na maquininha
+  r.taxaCartao = preco * P.cartao; r.lucroCartao = r.lucro - r.taxaCartao; r.margemCartao = r.lucroCartao / preco;
+  r.sugerido = Math.ceil(r.custo / (1 - P.imposto - alvo));
+  r.minimo = Math.ceil(r.custo / (1 - P.imposto - P.margemMin));
+  r.status = r.margem < P.margemMin ? 'r' : r.margem < alvo ? 'a' : 'g';
+  return r;
+}
+const ST = {
+  r:{t:'Abaixo do mínimo', i:'fa-circle-xmark', c:'var(--red)'},
+  a:{t:'Abaixo do alvo',   i:'fa-circle-exclamation', c:'var(--amber)'},
+  g:{t:'Saudável',         i:'fa-circle-check', c:'var(--green)'},
+  x:{t:'Sem custo',        i:'fa-circle-question', c:'var(--gray)'}
+};
+const stTag = s => `<span class="st ${s}"><i class="fa-solid ${ST[s].i}"></i>${ST[s].t}</span>`;
+const setorTag = s => s ? `<span class="tag"><i class="fa-solid ${setorIco(s).icon}" style="color:${setorIco(s).c}"></i>${s}</span>` : '<span class="warn-i"><i class="fa-solid fa-triangle-exclamation"></i>sem setor</span>';
+
+// ═══ POPOVER ════════════════════════════════════════
+// Substitui <select>: botão com rótulo + valor; painel com busca, grupos,
+// ícones, contagem, teclado (↑ ↓ Enter Esc). No celular vira bottom sheet.
+const POPS = {}; let openPop = null;
+function Pop(id, cfg){
+  const wrap = document.getElementById(id);
+  const st = Object.assign({ value: cfg.def ?? '' }, cfg, { id, wrap });
+  POPS[id] = st;
+  wrap.classList.add('pop-wrap');
+  wrap.innerHTML = `<button type="button" class="pop-btn" aria-haspopup="listbox" aria-expanded="false"></button><div class="pop" role="listbox" tabindex="-1"></div>`;
+  st.btn = wrap.querySelector('.pop-btn'); st.panel = wrap.querySelector('.pop');
+  st.btn.onclick = () => openPop === id ? closePop() : showPop(id);
+  renderPopBtn(id);
+  return st;
+}
+const popOpts = st => typeof st.options === 'function' ? st.options() : st.options;
+function renderPopBtn(id){
+  const st = POPS[id], all = popOpts(st), o = all.find(x => x.value === st.value) || all[0];
+  const isSet = st.value !== (st.def ?? '');
+  st.btn.classList.toggle('set', isSet);
+  st.btn.innerHTML = `<span class="pb-ic"><i class="fa-solid ${isSet && o.icon ? o.icon : st.icon}"></i></span>
+    <span class="pb-txt"><span class="pb-l">${st.label}</span><span class="pb-v">${o.label}</span></span>
+    ${isSet && st.clearable ? `<span class="pb-clear" title="Limpar" onclick="event.stopPropagation();setPop('${id}','${st.def ?? ''}')"><i class="fa-solid fa-xmark"></i></span>` : ''}
+    <i class="fa-solid fa-chevron-down pb-chev"></i>`;
+}
+function showPop(id){
+  closePop();
+  const st = POPS[id]; openPop = id; st.q = '';
+  st.wrap.classList.add('open'); st.btn.setAttribute('aria-expanded','true');
+  st.panel.classList.toggle('right', st.wrap.getBoundingClientRect().left + 320 > window.innerWidth);
+  document.getElementById('pop-bd').classList.add('open');
+  renderPopPanel(id);
+  // abre para cima quando falta espaço embaixo
+  const wr = st.wrap.getBoundingClientRect(), ph = st.panel.offsetHeight;
+  st.panel.classList.toggle('up', wr.bottom + ph + 12 > window.innerHeight && wr.top > window.innerHeight - wr.bottom);
+  const vis = st.vis; st.hi = Math.max(0, vis.findIndex(o => o.value === st.value));
+  renderPopList(id);
+  const s = st.panel.querySelector('.pop-search input');
+  (s && window.innerWidth > 768 ? s : st.panel).focus({preventScroll:true});
+}
+function closePop(){
+  if (!openPop) return;
+  const st = POPS[openPop];
+  st.wrap.classList.remove('open'); st.btn.setAttribute('aria-expanded','false');
+  document.getElementById('pop-bd').classList.remove('open');
+  openPop = null;
+}
+function renderPopPanel(id){
+  const st = POPS[id];
+  st.panel.innerHTML = `
+    <div class="pop-head"><span>${st.title || st.label}</span><button class="pop-x" onclick="closePop()"><i class="fa-solid fa-xmark"></i></button></div>
+    ${st.search ? `<div class="pop-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="${st.search}" oninput="POPS['${id}'].q=this.value;POPS['${id}'].hi=0;renderPopList('${id}')"></div>` : ''}
+    <div class="pop-list"></div>
+    <div class="pop-foot"><span class="keys"><kbd>↑↓</kbd> navegar · <kbd>Enter</kbd> · <kbd>Esc</kbd></span>
+      ${st.clearable ? `<button onclick="setPop('${id}','${st.def ?? ''}')"><i class="fa-solid fa-rotate-left"></i> Limpar</button>` : ''}</div>`;
+  renderPopList(id);
+}
+function renderPopList(id){
+  const st = POPS[id], q = (st.q || '').toLowerCase();
+  st.vis = popOpts(st).filter(o => !q || (o.label + ' ' + (o.desc||'')).toLowerCase().includes(q));
+  let h = '', g = null;
+  st.vis.forEach((o, i) => {
+    if (o.group && o.group !== g){ g = o.group; h += `<div class="pop-group">${g}</div>`; }
+    h += `<button class="pop-opt ${o.value===st.value?'sel':''} ${i===st.hi?'hi':''}" role="option" aria-selected="${o.value===st.value}" onmouseenter="POPS['${id}'].hi=${i};markHi('${id}')" onclick="choosePop('${id}',${i})">
+      <span class="po-ic" style="--c:${o.color||'var(--cyan)'}"><i class="fa-solid ${o.icon}"></i></span>
+      <span class="po-txt"><span class="po-l">${o.label}</span>${o.desc?`<span class="po-d">${o.desc}</span>`:''}</span>
+      ${o.count!=null?`<span class="po-n">${o.count}</span>`:''}<i class="fa-solid fa-check po-ck"></i></button>`;
+  });
+  st.panel.querySelector('.pop-list').innerHTML = h || `<div class="pop-empty"><i class="fa-solid fa-magnifying-glass"></i>Nada encontrado</div>`;
+}
+function markHi(id){
+  const st = POPS[id];
+  st.panel.querySelectorAll('.pop-opt').forEach((b,i) => b.classList.toggle('hi', i===st.hi));
+  const el = st.panel.querySelectorAll('.pop-opt')[st.hi], list = st.panel.querySelector('.pop-list');
+  if (el){ // rola só a lista, nunca a página
+    if (el.offsetTop < list.scrollTop) list.scrollTop = el.offsetTop - 6;
+    else if (el.offsetTop + el.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = el.offsetTop + el.offsetHeight - list.clientHeight + 6;
+  }
+}
+function choosePop(id, i){ setPop(id, POPS[id].vis[i].value); }
+function setPop(id, v){
+  const st = POPS[id]; st.value = v; renderPopBtn(id); closePop(); st.onChange?.(v);
+}
+document.addEventListener('keydown', e => {
+  if (!openPop) return;
+  const st = POPS[openPop];
+  if (e.key === 'Escape'){ closePop(); st.btn.focus(); }
+  else if (e.key === 'ArrowDown'){ e.preventDefault(); st.hi = Math.min(st.vis.length-1, st.hi+1); markHi(openPop); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); st.hi = Math.max(0, st.hi-1); markHi(openPop); }
+  else if (e.key === 'Enter' && st.vis[st.hi]){ e.preventDefault(); choosePop(openPop, st.hi); }
+});
+let lastW = window.innerWidth;
+window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - lastW) > 80) closePop(); lastW = window.innerWidth; });
+
+// ── NAV ─────────────────────────────────────────────
+const TITLES = { inicio:['Início','Principal / Início'], exames:['Exames','Principal / Exames'], custos:['Custos','Principal / Custos'],
+  tabelas:['Tabelas de Preço','Principal / Tabelas de Preço'], simulador:['Simulador','Principal / Simulador'],
+  pendencias:['Pendências','Principal / Pendências'], importar:['Importar / Exportar','Sistema / Importar'], config:['Configurações','Sistema / Configurações'] };
+const PH = {
+  custos:['fa-boxes-stacked','Custos','Cadastro de reagentes, custos fixos e tabelas dos laboratórios de apoio.',['Reagentes: preço do kit ÷ testes rendidos (+ perdas, controles, repetições)','Custos fixos: por atendimento (rateados) ou por exame','Apoio: Pardini, Alvaro, Diagnóstico Brasil, Yatros — versões e histórico']],
+  tabelas:['fa-table-list','Tabelas de Preço','Particular como base e tabelas derivadas.',['Cartões de Desconto, Funerária Vida, AFAGU, LAMIC VIVA+, Particular 02…','Desconto % sobre Particular + piso de margem','Exceções por exame e auditoria (substitui "Auditar Valores")']],
+  importar:['fa-file-import','Importar / Exportar','Entrada e saída de dados.',['Importar planilha atual (migração inicial)','Importar catálogo do sistema (BD) e tabelas de apoio','Exportar no formato do sistema, CSV e PDF da tabela']],
+  config:['fa-gear','Configurações','Mesmo modelo do Manutenção LAMIC.',['Usuários, grupos e cargos com permissões por módulo','Parâmetros: imposto, taxa de cartão, margem mínima/alvo, exames por atendimento','Setores e alvo de margem por setor']]
+};
+document.querySelectorAll('#nav a').forEach(a => a.onclick = () => go(a.dataset.s));
+function go(s){
+  closePop();
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('active', a.dataset.s===s));
+  document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
+  const el = document.getElementById('s-'+s);
+  if (el) el.classList.add('active');
+  else {
+    const [ic,t,d,li] = PH[s];
+    document.getElementById('ph').innerHTML = `<i class="fa-solid ${ic}"></i><h3>${t}</h3><p>${d}</p><ul>${li.map(x=>`<li><i class="fa-solid fa-chevron-right"></i>${x}</li>`).join('')}</ul><p style="margin-top:16px;font-size:12px"><i class="fa-solid fa-person-digging"></i> Tela detalhada na próxima etapa do planejamento.</p>`;
+    document.getElementById('s-placeholder').classList.add('active');
+  }
+  document.getElementById('tb-title').textContent = TITLES[s][0];
+  document.getElementById('tb-crumb').textContent = TITLES[s][1];
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo(0,0);
+}
+function entrar(){ document.getElementById('auth').classList.add('hide'); }
+function sair(){ document.getElementById('auth').classList.remove('hide'); }
+function toggleDark(){
+  const r = document.documentElement, on = r.dataset.theme !== 'dark';
+  r.dataset.theme = on ? 'dark' : 'light';
+  document.getElementById('sw-dark').classList.toggle('on', on);
+}
+function toast(t){ const el=document.getElementById('toast'); document.getElementById('toast-t').textContent=t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2400); }
+
+// ── INÍCIO: barras ──────────────────────────────────
+const SETORES_M = [['IMUNOTURBIDIMETRIA',.672],['BIOQUÍMICA - U',.665],['UROANÁLISE',.652],['IMUNO-HORMÔNIOS',.626],['COAGULAÇÃO',.625],['BIOQUÍMICA - S',.599],['BIOLOGIA MOLECULAR',.532],['HEMATOLOGIA',.494],['ALVARO',.473],['ALÉRGENOS - IGE',.459],['HERMES PARDINI',.447],['VACINAS',.362]];
+document.getElementById('bars').innerHTML = SETORES_M.map(([n,m]) => {
+  const c = m < P.margemMin ? 'var(--red)' : m < P.margemAlvo ? 'var(--amber)' : 'var(--green)';
+  return `<div class="bar-row"><span class="nm" title="${n}">${n}</span><div class="bar-track"><div class="bar-fill" style="width:${m/0.8*100}%;background:${c}"></div><div class="bar-min" style="left:${P.margemMin/0.8*100}%"></div><div class="bar-alvo" style="left:${P.margemAlvo/0.8*100}%"></div></div><span class="bar-v">${pct(m)}</span></div>`;
+}).join('');
+
+// ── POPOVERS: opções ────────────────────────────────
+function setorOptions(todosLabel, extra = []){
+  const n = s => EX.filter(e => e.setor === s).length;
+  return [
+    {value:'', label:todosLabel, icon:'fa-layer-group', desc:'Sem filtro de setor', count:EX.length},
+    ...extra,
+    ...Object.keys(CATS).flatMap(cat => SETORES.filter(s => s.cat === cat).sort((a,b) => a.nome.localeCompare(b.nome))
+      .map(s => ({value:s.nome, label:s.nome, icon:s.icon, color:s.c, count:n(s.nome), group:CATS[cat].t})))
+  ];
+}
+Pop('pop-setor', { label:'Setor', title:'Filtrar por setor', icon:'fa-filter', search:'Buscar setor…', clearable:true,
+  options: () => setorOptions('Todos os setores', [{value:'__none', label:'Sem setor', icon:'fa-triangle-exclamation', color:'var(--amber)', desc:'Pendente de classificação', count:EX.filter(e=>!e.setor).length}]),
+  onChange: renderTable });
+Pop('pop-origem', { label:'Origem', title:'Onde o exame é feito', icon:'fa-route', clearable:true,
+  options: [
+    {value:'', label:'Todas', icon:'fa-layer-group', desc:'Internos e apoio', count:EX.length},
+    {value:'interno', label:'Interno', icon:'fa-microscope', color:'var(--green)', desc:'Executado no LAMIC', count:EX.filter(e=>e.origem==='interno').length},
+    {value:'apoio', label:'Apoio', icon:'fa-truck-medical', color:'var(--cyan)', desc:'Enviado a laboratório de apoio', count:EX.filter(e=>e.origem==='apoio').length}
+  ], onChange: renderTable });
+Pop('pop-escopo', { label:'Aplicar em', title:'Escopo do reajuste', icon:'fa-bullseye', search:'Buscar setor…',
+  options: () => setorOptions('Todos os exames'), onChange: renderSim });
+Pop('pop-arred', { label:'Arredondar para', title:'Arredondamento', icon:'fa-coins', def:'1',
+  options: [
+    {value:'1',   label:'Inteiro', icon:'fa-coins', desc:'R$ 52,37 → R$ 53,00'},
+    {value:'5',   label:'Múltiplo de R$ 5', icon:'fa-money-bill-wave', desc:'R$ 52,37 → R$ 55,00'},
+    {value:'0.1', label:'Dezena de centavos', icon:'fa-scale-balanced', desc:'R$ 52,37 → R$ 52,40'}
+  ], onChange: renderSim });
+
+// ── EXAMES: tabela ──────────────────────────────────
+let fStatus = '';
+const flagIcons = e =>
+  (e.auditar ? ' <i class="fa-solid fa-magnifying-glass-dollar" title="Valor a auditar" style="color:var(--amber);font-size:11px"></i>' : '') +
+  (e.origem === 'apoio' && e.negociado ? ' <i class="fa-solid fa-handshake" title="Apoio com negociação" style="color:var(--green);font-size:11px"></i>' : '');
+function renderChips(){
+  const counts = {'':EX.length}; EX.forEach(e=>{const s=calc(e).status; counts[s]=(counts[s]||0)+1});
+  document.getElementById('chips').innerHTML =
+    `<button class="chip ${fStatus===''?'on':''}" onclick="fStatus='';renderTable()"><i class="fa-solid fa-list"></i>Todos <b>${counts['']}</b></button>` +
+    ['r','a','g','x'].map(k => `<button class="chip ${fStatus===k?'on':''}" onclick="fStatus='${k}';renderTable()"><span class="d" style="background:${ST[k].c}"></span>${ST[k].t} <b>${counts[k]||0}</b></button>`).join('');
+}
+function renderTable(){
+  renderChips();
+  const q = document.getElementById('q').value.toLowerCase(), fs = POPS['pop-setor'].value, fo = POPS['pop-origem'].value;
+  const rows = EX.filter(e => {
+    if (fStatus && calc(e).status !== fStatus) return false;
+    if (fs === '__none' ? e.setor : (fs && e.setor !== fs)) return false;
+    if (fo && e.origem !== fo) return false;
+    return !q || (e.mn+' '+e.desc).toLowerCase().includes(q);
+  });
+  document.getElementById('tbody').innerHTML = rows.map(e => {
+    const c = calc(e), i = EX.indexOf(e);
+    const div = e.sistema !== e.preco ? ` <span class="warn-i" title="Sistema: ${fmt(e.sistema)}"><i class="fa-solid fa-code-compare"></i></span>` : '';
+    return `<tr class="row" onclick="openDrawer(${i})"><td class="mn">${e.mn}${flagIcons(e)}</td><td class="desc" title="${e.desc}">${e.desc}</td>
+      <td>${setorTag(e.setor)}</td>
+      <td class="num">${c.semCusto?'—':fmt(c.custo)}</td><td class="num">${c.semCusto?'—':fmt(c.sugerido)}</td>
+      <td class="num">${fmt(e.preco)}${div}</td>
+      <td class="num" style="color:${c.status==='r'?'var(--red)':'inherit'}">${c.semCusto?'—':pct(c.margem)}</td><td>${stTag(c.status)}</td></tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)"><i class="fa-solid fa-magnifying-glass"></i> Nenhum exame encontrado</td></tr>';
+  document.getElementById('count').textContent = rows.length + ' exibidos';
+}
+
+// ── DRAWER ──────────────────────────────────────────
+let cur = null;
+function openDrawer(i){
+  cur = i; const e = EX[i];
+  document.getElementById('d-mn').textContent = e.mn;
+  document.getElementById('d-desc').textContent = e.desc;
+  document.getElementById('d-meta').innerHTML = `${setorTag(e.setor)}<span class="tag"><i class="fa-solid ${e.origem==='apoio'?'fa-truck-medical':'fa-microscope'}"></i>${e.origem==='apoio'?'Apoio':'Interno'}</span>${e.origem==='apoio'?(e.negociado?'<span class="tag" style="color:var(--green)"><i class="fa-solid fa-handshake"></i>Negociado</span>':'<span class="tag"><i class="fa-solid fa-handshake-slash"></i>Sem negociação</span>'):''}${e.auditar?'<span class="tag" style="color:var(--amber)"><i class="fa-solid fa-magnifying-glass-dollar"></i>A auditar</span>':''}`;
+  document.getElementById('d-foot').innerHTML = `<button class="btn" onclick="closeDrawer()">Cancelar</button><button class="btn pri" onclick="propor()"><i class="fa-solid fa-paper-plane"></i>Salvar como proposta</button>`;
+  renderDrawer(e.preco);
+  document.getElementById('drawer').classList.add('open'); document.getElementById('bd').classList.add('open');
+}
+// gaveta genérica (reagente, usuário, setor…)
+function openPanel({mn, title, meta = '', body, foot}){
+  document.getElementById('d-mn').textContent = mn;
+  document.getElementById('d-desc').textContent = title;
+  document.getElementById('d-meta').innerHTML = meta;
+  document.getElementById('d-body').innerHTML = body;
+  document.getElementById('d-body').scrollTop = 0;
+  document.getElementById('d-foot').innerHTML = foot ?? `<button class="btn" onclick="closeDrawer()">Cancelar</button><button class="btn pri" onclick="closeDrawer();toast('Alterações salvas (simulação)')"><i class="fa-solid fa-floppy-disk"></i>Salvar</button>`;
+  document.getElementById('drawer').classList.add('open'); document.getElementById('bd').classList.add('open');
+}
+const fld = (id, label, val, {suf = '', pre = '', icon = '', hint = '', on = '', step = 'any'} = {}) =>
+  `<div class="field"><label>${icon?`<i class="fa-solid ${icon}"></i>`:''}${label}</label><div class="inp">${pre?`<span class="pre">${pre}</span>`:''}<input id="${id}" type="number" step="${step}" value="${val}" oninput="${on}">${suf?`<span class="suf">${suf}</span>`:''}</div>${hint?`<span class="hint">${hint}</span>`:''}</div>`;
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('bd').classList.remove('open'); }
+function addExtra(){
+  const nome = document.getElementById('ex-nome').value.trim(), valor = +document.getElementById('ex-val').value;
+  if (!nome || !(valor > 0)){ toast('Informe nome e valor do custo'); return; }
+  (EX[cur].extras ??= []).push({nome, valor});
+  renderDrawer(+document.getElementById('d-preco').value || EX[cur].preco); renderTable();
+}
+function rmExtra(k){
+  EX[cur].extras.splice(k, 1);
+  renderDrawer(+document.getElementById('d-preco').value || EX[cur].preco); renderTable();
+}
+function toggleEtapa(k){
+  const e = EX[cur], et = etapas(e);
+  e.fluxo = {...et, [k]: !et[k]};
+  renderDrawer(+document.getElementById('d-preco').value || e.preco); renderTable();
+}
+function renderDrawer(preco){
+  const e = EX[cur], c = calc(e, preco);
+  let h = `<div class="sec-t"><i class="fa-solid fa-diagram-next"></i>Fluxo</div><div class="flow"><span class="done"><i class="fa-solid fa-check"></i>Rascunho</span><i class="fa-solid fa-chevron-right"></i><span class="done"><i class="fa-solid fa-check"></i>Proposto</span><i class="fa-solid fa-chevron-right"></i><span class="done"><i class="fa-solid fa-check"></i>Aprovado</span><i class="fa-solid fa-chevron-right"></i><span class="cur"><i class="fa-solid fa-globe"></i>Publicado</span></div>`;
+  if (c.semCusto) {
+    h += `<div class="sec-t"><i class="fa-solid fa-layer-group"></i>Composição do custo</div><div class="alert x"><i class="fa-solid fa-circle-question"></i><div><b>Custo do teste não cadastrado.</b><br>Vincule um reagente ou uma tabela de apoio. Sem isso a margem é desconhecida e o preço não pode ser publicado.</div></div>
+      <button class="btn pri"><i class="fa-solid fa-link"></i>Vincular reagente / apoio</button>`;
+  } else {
+    if (c.status==='r') h += `<div class="alert r" style="margin-top:16px"><i class="fa-solid fa-circle-xmark"></i><div>Margem ${pct(c.margem)} abaixo do mínimo de ${pct(P.margemMin)}. Preço mínimo viável: <b>${fmt(c.minimo)}</b>.</div></div>`;
+    const w = v => Math.max(0, v/preco*100);
+    h += `<div class="sec-t"><i class="fa-solid fa-chart-pie"></i>Composição do preço</div>
+      <div class="comp"><div style="width:${w(c.custo)}%;background:#64748b"></div><div style="width:${w(c.imposto+c.taxa)}%;background:var(--amber)"></div><div style="width:${w(c.lucro)}%;background:${c.lucro<0?'var(--red)':'var(--green)'}"></div></div>
+      <div class="comp-leg"><span><b style="background:#64748b"></b>Custo ${pct(c.custo/preco)}</span><span><b style="background:var(--amber)"></b>Imposto/taxas ${pct((c.imposto+c.taxa)/preco)}</span><span><b style="background:var(--green)"></b>Lucro ${pct(c.margem)}</span></div>
+      <div class="sec-t"><i class="fa-solid fa-calculator"></i>Cascata de custos</div>
+      <div class="casc">
+        <div class="casc-r"><div class="lft"><i class="fa-solid ${e.origem==='apoio'?'fa-truck-medical':'fa-vials'}"></i><div>Custo do teste<div class="s">${e.fonte}</div></div></div><span class="v">${fmt(e.teste)}</span></div>
+        ${c.fx.map(f => `<div class="casc-r ${f.aplica?'':'skip'}"><div class="lft"><i class="fa-solid ${f.ic}"></i><div>${f.nome}<div class="s">${!f.aplica ? 'não passa por esta etapa' : f.tipo==='atend' ? `${fmt(f.valor)} rateado ÷ ${P.examesPorAtend} exames` : 'linear, valor cheio'}</div></div></div><span class="v">${f.aplica?fmt(f.v):'—'}</span></div>`).join('')}
+        ${(e.extras||[]).map((x,k) => `<div class="casc-r"><div class="lft"><i class="fa-solid fa-hand-holding-dollar"></i><div>${x.nome}<div class="s">custo adicional manual</div></div></div><span class="v">${fmt(x.valor)} <button class="pop-x" title="Remover" onclick="rmExtra(${k})"><i class="fa-solid fa-xmark"></i></button></span></div>`).join('')}
+        <div class="casc-r add-extra"><input id="ex-nome" class="mini" placeholder="Custo adicional (ex.: aplicação)"><input id="ex-val" class="mini v-in" type="number" step="0.01" placeholder="0,00"><button class="btn sm" onclick="addExtra()"><i class="fa-solid fa-plus"></i>Adicionar</button></div>
+        <div class="casc-r tot"><div class="lft"><i class="fa-solid fa-equals"></i><div>Custo total</div></div><span class="v">${fmt(c.custo)}</span></div>
+        <div class="casc-r neg"><div class="lft"><i class="fa-solid fa-landmark"></i><div>Imposto<div class="s">${pct(P.imposto)} sobre o preço</div></div></div><span class="v">− ${fmt(c.imposto)}</span></div>
+        <div class="casc-r res"><div class="lft"><i class="fa-solid fa-sack-dollar"></i><div>Lucro</div></div><span class="v" style="color:${c.lucro<0?'var(--red)':'var(--green)'}">${fmt(c.lucro)}</span></div>
+      </div>
+      <div class="alert x" style="margin-top:10px;margin-bottom:0"><i class="fa-solid fa-credit-card"></i><div><b>Projeção na maquininha</b> (${pct(P.cartao)}, fora do custo): − ${fmt(c.taxaCartao)} → lucro <b style="color:${c.lucroCartao<0?'var(--red)':'inherit'}">${fmt(c.lucroCartao)}</b> · margem <b>${pct(c.margemCartao)}</b></div></div>`;
+  }
+  const et = etapas(e), so = setorObj(e.setor), isPardini = e.setor === 'HERMES PARDINI - NTO';
+  h += `<div class="sec-t"><i class="fa-solid fa-route"></i>Etapas do atendimento</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${Object.entries(ETAPAS).map(([k,x]) => `<button class="chip ${et[k]?'on':''}" onclick="toggleEtapa('${k}')"><i class="fa-solid ${et[k]?'fa-circle-check':'fa-circle-xmark'}"></i>${x.t}</button>`).join('')}
+    <span style="font-size:11.5px;color:var(--text-muted)">${e.fluxo ? '<i class="fa-solid fa-thumbtack"></i> ajustado neste exame' : `padrão do ${so ? 'setor' : 'sistema'}`}</span></div>`;
+  if (e.origem === 'apoio') h += `<div class="sec-t"><i class="fa-solid fa-truck-medical"></i>Laboratório de apoio</div>
+    <div class="casc">
+      <div class="casc-r"><div class="lft"><i class="fa-solid fa-link"></i><div>Código no apoio<div class="s">vínculo mnemônico LAMIC ↔ apoio</div></div></div>${e.codApoio?`<span class="v" style="color:var(--cyan)">${e.codApoio}</span>`:'<button class="btn sm"><i class="fa-solid fa-link"></i>Vincular</button>'}</div>
+      ${isPardini
+        ? (e.negociado
+          ? `<div class="casc-r"><div class="lft"><i class="fa-solid fa-handshake" style="color:var(--green)"></i><div>Preço negociado<div class="s">vem da tabela Pardini 4114 e atualiza a cada importação</div></div></div><span class="badge-s ok"><i class="fa-solid fa-lock"></i>automático</span></div>`
+          : `<div class="casc-r"><div class="lft"><i class="fa-solid fa-handshake-slash"></i><div>Sem negociação<div class="s">exame fora da tabela 4114</div></div></div><span class="badge-s off">manual</span></div>`)
+        : `<div class="casc-r"><div class="lft"><i class="fa-solid fa-handshake"></i><div>Valor negociado<div class="s">marcação manual (modelo deste apoio ainda não definido)</div></div></div><button class="switch lt ${e.negociado?'on':''}" onclick="EX[cur].negociado=!EX[cur].negociado;renderDrawer(+document.getElementById('d-preco').value||0);renderTable()"></button></div>`}
+      ${isPardini && e.negociado ? '' : `<div class="casc-r"><div class="lft"><i class="fa-solid fa-pen"></i><div>Custo manual do teste<div class="s">${isPardini ? 'preço não negociado: informado pela equipe' : 'informado pela equipe até existir importação deste apoio'}</div></div></div><div class="price-in"><span>R$</span><input type="number" step="0.01" min="0" value="${e.teste ?? ''}" placeholder="0,00" onchange="EX[cur].teste=this.value===''?null:+this.value;EX[cur].fonte='Manual (não negociado)';renderDrawer(+document.getElementById('d-preco').value||EX[cur].preco);renderTable()"></div></div>`}
+    </div>`;
+  h += `<div class="casc" style="margin-top:10px"><div class="casc-r"><div class="lft"><i class="fa-solid fa-magnifying-glass-dollar" style="color:var(--amber)"></i><div>Valor precisa ser auditado<div class="s">controle interno</div></div></div><button class="switch lt ${e.auditar?'on':''}" onclick="EX[cur].auditar=!EX[cur].auditar;renderDrawer(+document.getElementById('d-preco').value||0);renderTable()"></button></div></div>`;
+  const diverge = !c.semCusto && preco !== c.sugerido;
+  h += `<div class="sec-t"><i class="fa-solid fa-tag"></i>Preço</div><div class="prices">
+      <div class="pbox"><div class="l"><i class="fa-solid fa-wand-magic-sparkles"></i>Sugerido ${c.semCusto?'':'(alvo '+pct(c.alvo)+(alvoSetor(e.setor)!=null?' do setor':'')+')'}</div><div class="v">${c.semCusto?'—':fmt(c.sugerido)}</div><div class="m" style="color:var(--text-muted)">${c.semCusto?'precisa de custo':'mínimo viável '+fmt(c.minimo)}</div></div>
+      <div class="pbox edit"><div class="l"><i class="fa-solid fa-pen"></i>Praticado</div><input id="d-preco" type="number" step="1" value="${preco}" oninput="renderDrawer(+this.value||0)"><div class="m">${c.semCusto?'':stTag(c.status)}</div></div>
+    </div>
+    ${e.sistema!==e.preco?`<div class="alert a" style="margin-top:10px"><i class="fa-solid fa-code-compare"></i><div>Preço no sistema do laboratório: <b>${fmt(e.sistema)}</b>. Diferente do praticado — atualizar no sistema após publicar.</div></div>`:''}
+    <div class="just"><label>Justificativa ${diverge?'<span style="color:var(--red)">*</span>':''}</label><textarea id="d-just" placeholder="Obrigatória quando o praticado difere do sugerido">${e.just||''}</textarea><div class="req" id="d-req"><i class="fa-solid fa-circle-exclamation"></i> Informe a justificativa para salvar.</div></div>
+    <div class="sec-t"><i class="fa-solid fa-clock-rotate-left"></i>Histórico</div>
+    <div class="hist-i"><div class="avatar" style="width:26px;height:26px;font-size:10px">PF</div><div>Preço ${fmt(Math.round(e.preco*0.92))} → ${fmt(e.preco)}<div class="t">Pedro F. · 12/03/2026 · reajuste anual</div></div></div>
+    <div class="hist-i"><div class="avatar" style="width:26px;height:26px;font-size:10px;background:#e8913a">AM</div><div>Custo do teste atualizado<div class="t">Ana M. · ${e.origem==='apoio'?'importação tabela de apoio':'novo preço de kit'} · 08/10/2026</div></div></div>`;
+  const keep = document.activeElement?.id === 'd-preco';
+  const body = document.getElementById('d-body'); const pos = body.scrollTop;
+  const justVal = document.getElementById('d-just')?.value;
+  body.innerHTML = h; body.scrollTop = pos;
+  if (keep){ document.getElementById('d-just').value = justVal ?? ''; const inp=document.getElementById('d-preco'); inp.focus(); const v=inp.value; inp.value=''; inp.value=v; }
+}
+function propor(){
+  const just = document.getElementById('d-just'), e = EX[cur], preco = +document.getElementById('d-preco').value, c = calc(e, preco);
+  if (!c.semCusto && preco !== c.sugerido && !just.value.trim()){ document.getElementById('d-req').style.display='block'; just.focus(); return; }
+  closeDrawer(); toast(`${e.mn}: ${fmt(preco)} enviado como proposta`);
+}
+
+// ── SIMULADOR ───────────────────────────────────────
+let simTipo = 'pct';
+document.querySelectorAll('#sim-tipo .oc').forEach(b => b.onclick = () => {
+  simTipo = b.dataset.v;
+  document.querySelectorAll('#sim-tipo .oc').forEach(x => x.classList.toggle('on', x===b));
+  renderSim();
+});
+function arred(v, m){ return Math.round(Math.ceil(v/m - 1e-9)*m*100)/100; }
+function renderSim(){
+  const esc = POPS['pop-escopo'].value, m = +POPS['pop-arred'].value;
+  const p = +document.getElementById('sim-pct').value/100;
+  document.getElementById('sim-pct-v').textContent = pct(p);
+  document.getElementById('sim-pct-row').classList.toggle('off', simTipo !== 'pct');
+  const list = EX.filter(e => (!esc || e.setor===esc) && e.teste!=null);
+  let rec0=0, rec1=0, luc0=0, luc1=0, fixed=0;
+  const rows = list.map(e => {
+    const c0 = calc(e);
+    let novo = e.preco;
+    if (simTipo==='pct') novo = arred(e.preco*(1+p), m);
+    else if (simTipo==='min') novo = c0.status==='r' ? arred(c0.minimo, m) : e.preco;
+    else novo = arred(c0.sugerido, m);
+    const c1 = calc(e, novo);
+    rec0 += novo/e.preco - 1; luc0 += c0.margem; luc1 += c1.margem;
+    if (c0.status==='r' && c1.status!=='r') fixed++;
+    return `<tr><td class="mn">${e.mn}</td><td class="desc" title="${e.desc}">${e.desc}</td><td class="num">${fmt(e.preco)}</td><td class="num" style="font-weight:600">${fmt(novo)}</td><td class="num">${pct(c0.margem)}</td><td class="num">${pct(c1.margem)}</td><td>${stTag(c1.status)}</td></tr>`;
+  });
+  const k = list.length || 1, dr = rec0/k, mp0 = luc0/k, mp1 = luc1/k;
+  document.getElementById('sim-impact').innerHTML = `
+    <div class="imp"><div class="l"><i class="fa-solid fa-tags"></i>Variação média de preço</div><div class="v">${dr>=0?'+':''}${pct(dr)}</div><div class="d" style="color:var(--text-muted)"><i class="fa-solid fa-flask-vial"></i>${list.length} exames no escopo</div></div>
+    <div class="imp"><div class="l"><i class="fa-solid fa-percent"></i>Margem média</div><div class="v">${pct(mp1)}</div><div class="d ${mp1>=mp0?'up':'dn'}"><i class="fa-solid fa-clock-rotate-left"></i>antes ${pct(mp0)}</div></div>
+    <div class="imp"><div class="l"><i class="fa-solid fa-life-ring"></i>Saem do vermelho</div><div class="v">${fixed}</div><div class="d" style="color:var(--text-muted)">de ${list.filter(e=>calc(e).status==='r').length} abaixo do mínimo</div></div>`;
+  document.getElementById('sim-body').innerHTML = rows.join('') || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">Nenhum exame com custo neste escopo</td></tr>';
+}
+
+// ── PENDÊNCIAS ──────────────────────────────────────
+const PEND = [
+  {k:'custo',n:'Sem custo',ic:'fa-circle-question',total:609,d:'Exames sem reagente ou apoio vinculado. Margem desconhecida; não podem ser publicados.',
+   cols:['MN','Descrição','Setor','Ação'],rows:EX.filter(e=>e.teste==null).map(e=>[`<span class="mn">${e.mn}</span>`,e.desc,setorTag(e.setor),'<button class="btn sm"><i class="fa-solid fa-link"></i>Vincular custo</button>'])},
+  {k:'setor',n:'Sem setor',ic:'fa-tags',total:603,d:'Exames sem setor definido (linhas 663–1733 da planilha).',
+   cols:['MN','Descrição','Ação'],rows:EX.filter(e=>!e.setor).map(e=>[`<span class="mn">${e.mn}</span>`,e.desc,'<button class="btn sm"><i class="fa-solid fa-tag"></i>Definir setor</button>'])},
+  {k:'sist',n:'Fora do sistema',ic:'fa-plug-circle-xmark',total:103,d:'Mnemônico não encontrado no catálogo do sistema do laboratório (antiga coluna "X").',
+   cols:['MN','Descrição','Ação'],rows:[['<span class="mn">PV21P</span>','PAINEL VIRAL PARA DETECÇÃO DE 21 PATÓGENOS','<button class="btn sm"><i class="fa-solid fa-arrows-left-right"></i>Mapear</button>'],['<span class="mn">ENTV-PCR</span>','DIAGNÓSTICO MOLECULAR DO ENTEROVÍRUS','<button class="btn sm"><i class="fa-solid fa-arrows-left-right"></i>Mapear</button>']]},
+  {k:'div',n:'Divergência de preço',ic:'fa-code-compare',total:111,d:'Preço praticado diferente do cadastrado no sistema do laboratório.',
+   cols:['MN','Descrição','Sistema','Praticado','Ação'],rows:EX.filter(e=>e.sistema!==e.preco).map(e=>[`<span class="mn">${e.mn}</span>`,e.desc,fmt(e.sistema),fmt(e.preco),'<button class="btn sm"><i class="fa-solid fa-file-export"></i>Exportar p/ sistema</button>'])},
+  {k:'aud',n:'A auditar',ic:'fa-magnifying-glass-dollar',total:6,d:'Valores marcados para auditoria interna (antiga coluna CB).',
+   cols:['MN','Descrição','Praticado','Ação'],rows:EX.filter(e=>e.auditar).map(e=>[`<span class="mn">${e.mn}</span>`,e.desc,fmt(e.preco),`<button class="btn sm" onclick="openDrawer(${EX.indexOf(e)})"><i class="fa-solid fa-magnifying-glass-dollar"></i>Auditar</button>`])},
+  {k:'vinc',n:'Sem vínculo no apoio',ic:'fa-link-slash',total:EX.filter(e=>e.origem==='apoio'&&!e.codApoio).length,d:'Exames de apoio sem código do laboratório vinculado: o custo não atualiza na importação da tabela.',
+   cols:['MN','Descrição','Ação'],rows:EX.filter(e=>e.origem==='apoio'&&!e.codApoio).map(e=>[`<span class="mn">${e.mn}</span>`,e.desc,'<button class="btn sm"><i class="fa-solid fa-link"></i>Vincular</button>'])},
+  {k:'inv',n:'Abaixo do mínimo',ic:'fa-circle-xmark',total:46,d:`Margem abaixo de ${pct(P.margemMin)}. Revise o preço ou o custo.`,
+   cols:['MN','Descrição','Margem','Mínimo viável','Ação'],rows:EX.filter(e=>calc(e).status==='r').map(e=>{const c=calc(e);return [`<span class="mn">${e.mn}</span>`,e.desc,`<span style="color:var(--red)">${pct(c.margem)}</span>`,fmt(c.minimo),`<button class="btn sm" onclick="openDrawer(${EX.indexOf(e)})"><i class="fa-solid fa-pen-to-square"></i>Revisar</button>`]})}
+];
+let pk = 'custo';
+function renderPend(){
+  document.getElementById('ptabs').innerHTML = PEND.map(p=>`<button class="tab ${p.k===pk?'on':''}" onclick="pk='${p.k}';renderPend()"><i class="fa-solid ${p.ic}"></i>${p.n}<span class="n">${p.total}</span></button>`).join('');
+  const p = PEND.find(x=>x.k===pk);
+  document.getElementById('pdesc').innerHTML = `<i class="fa-solid fa-circle-info"></i>${p.d}`;
+  document.getElementById('phead').innerHTML = '<tr>'+p.cols.map(c=>`<th>${c}</th>`).join('')+'</tr>';
+  document.getElementById('pbody').innerHTML = p.rows.map(r=>'<tr>'+r.map((v,i)=>`<td class="${i===1?'desc':''}">${v}</td>`).join('')+'</tr>').join('');
+  document.getElementById('pcount').textContent = `Prévia: ${p.rows.length} de ${p.total}`;
+}
+
+// ═══ ETAPA 2 ════════════════════════════════════════
+const num2 = v => v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// sub-navegação genérica (Custos, Configurações)
+const SUBNAV_HOOK = {};
+document.querySelectorAll('.subnav').forEach(sn => sn.querySelectorAll('button').forEach(b => b.onclick = () => {
+  closePop();
+  sn.querySelectorAll('button').forEach(x => x.classList.toggle('on', x===b));
+  const g = sn.dataset.group;
+  document.querySelectorAll(`[id^="${g}-"].pane`).forEach(p => p.classList.toggle('on', p.id === `${g}-${b.dataset.p}`));
+  SUBNAV_HOOK[g]?.(b.dataset.p);
+}));
+
+// ── CUSTOS: reagentes ───────────────────────────────
+const REAG = [
+  {nome:'ImmunoCAP Specific IgE', forn:'Thermo Fisher', kit:1702, testes:200, perdas:0, ctrl:0, ex:['E1','D1'], total:103, atual:'07/10/2026', ic:'fa-seedling', c:'#2a9d8f'},
+  {nome:'Kit VHS (hemossedimentação)', forn:'Laborclin', kit:410, testes:22, perdas:5, ctrl:0, ex:['HEMOS'], total:1, atual:'12/06/2026', ic:'fa-droplet', c:'#e63946'},
+  {nome:'Kit PCR Adenovírus', forn:'Bio-Manguinhos', kit:12540, testes:48, perdas:0, ctrl:0, ex:['ADV-PCR'], total:1, atual:'03/09/2026', ic:'fa-dna', c:'#6366f1'},
+  {nome:'Glicose enzimática (GOD-PAP)', forn:'Labtest', kit:180, testes:500, perdas:8, ctrl:20, ex:[], total:4, atual:'21/08/2026', ic:'fa-cubes-stacked', c:'#0e7490'},
+  {nome:'Dose Abrysvo (VSR)', forn:'Pfizer', kit:1269.86, testes:1, perdas:0, ctrl:0, ex:['VAC-RSV'], total:1, atual:'15/09/2026', ic:'fa-syringe', c:'#e8913a'},
+  {nome:'Dose Hepatite A adulto', forn:'GSK', kit:126.39, testes:1, perdas:0, ctrl:0, ex:['VAC-HEAA'], total:1, atual:'15/09/2026', ic:'fa-syringe', c:'#e8913a'}
+];
+const custoTeste = r => r.kit / (r.testes * (1 - r.perdas/100) - r.ctrl);
+function renderReag(){
+  const q = (document.getElementById('q-reag').value || '').toLowerCase();
+  document.getElementById('reag-body').innerHTML = REAG.map((r,i) => ({r,i})).filter(({r}) => !q || (r.nome+' '+r.forn).toLowerCase().includes(q)).map(({r,i}) => `
+    <tr class="row" onclick="openReag(${i})"><td><div class="ucell"><span class="po-ic" style="--c:${r.c}"><i class="fa-solid ${r.ic}"></i></span><div>${r.nome}<div class="s">${r.forn}</div></div></div></td>
+    <td class="num">${fmt(r.kit)}</td><td class="num">${r.testes}</td><td class="num">${r.perdas}%</td><td class="num">${r.ctrl}</td>
+    <td class="num" style="font-weight:600">${fmt(custoTeste(r))}</td><td class="num">${r.total}</td><td style="color:var(--text-muted);font-size:12px">${r.atual}</td></tr>`).join('');
+}
+function openReag(i){
+  const r = REAG[i];
+  openPanel({ mn:r.forn, title:r.nome,
+    meta:`<span class="tag"><i class="fa-solid fa-link"></i>${r.total} exames vinculados</span><span class="tag"><i class="fa-solid fa-calendar"></i>${r.atual}</span>`,
+    body:`<div class="sec-t"><i class="fa-solid fa-box"></i>Dados do kit</div>
+      <div class="fgrid" style="padding:0;grid-template-columns:1fr 1fr">
+        ${fld('rk-kit','Preço do kit',r.kit,{pre:'R$',on:`reagCalc(${i})`})}
+        ${fld('rk-testes','Testes por kit',r.testes,{suf:'testes',on:`reagCalc(${i})`,step:1})}
+        ${fld('rk-perdas','Perdas e repetições',r.perdas,{suf:'%',on:`reagCalc(${i})`,hint:'calibração, repetição, vencimento'})}
+        ${fld('rk-ctrl','Controles por kit',r.ctrl,{suf:'testes',on:`reagCalc(${i})`,step:1,hint:'testes gastos em controle'})}
+      </div>
+      <div class="sec-t"><i class="fa-solid fa-calculator"></i>Resultado</div><div id="rk-out"></div>
+      <div class="sec-t"><i class="fa-solid fa-flask-vial"></i>Impacto nos exames</div><div id="rk-ex"></div>`,
+    foot:`<button class="btn" onclick="closeDrawer()">Cancelar</button><button class="btn pri" onclick="closeDrawer();toast('Reagente atualizado — margens recalculadas')"><i class="fa-solid fa-floppy-disk"></i>Salvar e recalcular</button>`});
+  reagCalc(i);
+}
+function reagCalc(i){
+  const r = REAG[i], v = id => +document.getElementById(id).value || 0;
+  const n = {kit:v('rk-kit'), testes:v('rk-testes'), perdas:v('rk-perdas'), ctrl:v('rk-ctrl')};
+  const uteis = n.testes * (1 - n.perdas/100) - n.ctrl, novo = uteis > 0 ? n.kit/uteis : null, atual = custoTeste(r);
+  const d = novo != null ? (novo/atual - 1) : 0;
+  document.getElementById('rk-out').innerHTML = `<div class="casc">
+    <div class="casc-r"><div class="lft"><i class="fa-solid fa-vial"></i><div>Testes úteis<div class="s">${n.testes} × (1 − ${n.perdas}%) − ${n.ctrl}</div></div></div><span class="v">${uteis.toLocaleString('pt-BR',{maximumFractionDigits:1})}</span></div>
+    <div class="casc-r tot"><div class="lft"><i class="fa-solid fa-equals"></i><div>Custo por teste<div class="s">atual ${fmt(atual)}</div></div></div><span class="v">${novo==null?'<span style="color:var(--red)">inválido</span>':fmt(novo)} ${Math.abs(d)>.0005?`<span class="${d>0?'delta-up':'delta-dn'}" style="font-size:11px">${d>0?'+':''}${pct(d)}</span>`:''}</span></div></div>`;
+  const ex = r.ex.map(mn => EX.find(e => e.mn === mn)).filter(Boolean);
+  document.getElementById('rk-ex').innerHTML = !ex.length ? `<div class="alert x"><i class="fa-solid fa-circle-info"></i><div>${r.total} exames vinculados fora da amostra da prévia.</div></div>` :
+    `<div class="casc">${ex.map(e => { const c0 = calc(e), c1 = calc({...e, teste: novo ?? e.teste});
+      return `<div class="casc-r"><div class="lft"><span class="mn">${e.mn}</span><div class="s">${pct(c0.margem)} → <b style="color:${ST[c1.status].c}">${pct(c1.margem)}</b></div></div>${stTag(c1.status)}</div>`; }).join('')}</div>
+     ${r.total > ex.length ? `<div class="hint" style="font-size:11.5px;color:var(--text-muted);margin-top:8px">+ ${r.total - ex.length} exames fora da amostra</div>` : ''}`;
+}
+
+// ── CUSTOS: fixos ───────────────────────────────────
+function setCobranca(i, t){
+  FIXOS[i].tipo = t; renderFixos(); renderTable(); renderSim();
+  toast(`${FIXOS[i].nome}: ${t==='exame'?'linear (valor cheio por exame)':'rateado por atendimento'}`);
+}
+function renderFixos(){
+  const sum = fs => fs.reduce((s,f)=>s+f.valor,0);
+  const atend = sum(FIXOS.filter(f=>f.tipo==='atend')), porEx = sum(FIXOS.filter(f=>f.tipo==='exame')), cond = sum(FIXOS.filter(f=>f.etapa));
+  document.getElementById('fixos-kpis').innerHTML = `
+    <div class="card kpi"><div class="kpi-l"><span class="ic" style="background:var(--green-bg);color:var(--green)"><i class="fa-solid fa-equals"></i></span>Lineares</div><div class="kpi-v">${fmt(porEx)}</div><div class="kpi-s">valor cheio em cada exame</div></div>
+    <div class="card kpi"><div class="kpi-l"><span class="ic" style="background:var(--cyan-light);color:var(--cyan)"><i class="fa-solid fa-divide"></i></span>Rateados</div><div class="kpi-v">${fmt(atend)}</div><div class="kpi-s">${atend ? `${fmt(atend/P.examesPorAtend)} por exame (÷ ${P.examesPorAtend})` : 'nenhum custo rateado'}</div></div>
+    <div class="card kpi"><div class="kpi-l"><span class="ic" style="background:var(--amber-bg);color:var(--amber)"><i class="fa-solid fa-route"></i></span>Dependem de etapa</div><div class="kpi-v">${fmt(cond)}</div><div class="kpi-s">coleta e triagem: só se o exame passa por elas</div></div>`;
+  document.getElementById('fixos-body').innerHTML = FIXOS.map((f,i) => `<tr>
+    <td><div class="ucell"><span class="po-ic" style="--c:var(--text-secondary)"><i class="fa-solid ${f.ic}"></i></span>${f.nome}</div></td>
+    <td><span class="tag">coluna ${f.col}</span></td>
+    <td><div class="seg"><button class="${f.tipo==='exame'?'on':''}" onclick="setCobranca(${i},'exame')" title="Valor cheio em cada exame"><i class="fa-solid fa-equals"></i>Linear</button><button class="${f.tipo==='atend'?'on':''}" onclick="setCobranca(${i},'atend')" title="Dividido pelos exames do atendimento"><i class="fa-solid fa-divide"></i>Rateado</button></div></td>
+    <td>${f.etapa?`<span class="badge-s warn"><i class="fa-solid ${ETAPAS[f.etapa].ic}"></i>Só com ${ETAPAS[f.etapa].t.toLowerCase()}</span>`:'<span class="badge-s ok"><i class="fa-solid fa-check"></i>Todos</span>'}</td>
+    <td class="num">${fmt(f.valor)}</td><td class="num">${fmt(f.tipo==='atend'?f.valor/P.examesPorAtend:f.valor)}</td>
+    <td><button class="btn sm" onclick="toast('Edição de custo fixo (simulação)')"><i class="fa-solid fa-pen"></i></button></td></tr>`).join('');
+}
+
+// ── CUSTOS: apoio ───────────────────────────────────
+const APOIOS = [
+  {nome:'Hermes Pardini', s:'NTO · tabela 4114', ver:'24/09/2026', data:'09/10/2026', itens:1060, ex:675, m:.447, c:'#0e7490', pend:true},
+  {nome:'Alvaro', s:'Dasa', ver:'2026-09', data:'02/09/2026', itens:1840, ex:65, m:.473, c:'#00a8cc'},
+  {nome:'Diagnóstico Brasil', s:'DB', ver:'2026-05', data:'20/05/2026', itens:2210, ex:13, m:.474, c:'#6366f1', velha:true},
+  {nome:'Yatros Patologia', s:'Yatros', ver:'2026-08', data:'11/08/2026', itens:142, ex:17, m:.470, c:'#e8913a'}
+];
+function renderApoio(){
+  document.getElementById('apoio-cards').innerHTML = APOIOS.map(a => `
+    <div class="card tcard"><div class="tc-h"><span class="tc-ic" style="--c:${a.c}"><i class="fa-solid fa-building"></i></span><div><div class="tc-n">${a.nome}</div><div class="tc-s">${a.s} · vigência ${a.ver}</div></div>
+      ${a.pend?'<span class="badge-s warn"><i class="fa-solid fa-file-arrow-up"></i>nova versão</span>':a.velha?'<span class="badge-s bad"><i class="fa-solid fa-clock"></i>+ de 4 meses</span>':'<span class="badge-s ok"><i class="fa-solid fa-check"></i>em dia</span>'}</div>
+      <div class="tc-stats"><div><b>${a.itens.toLocaleString('pt-BR')}</b><span>itens tabela</span></div><div><b>${a.ex}</b><span>exames LAMIC</span></div><div><b>${pct(a.m)}</b><span>margem média</span></div></div>
+      <div class="tc-f"><span><i class="fa-solid fa-calendar"></i> ${a.data}</span><button class="btn sm" onclick="event.stopPropagation();go('importar');wzSet(0,'apoio')"><i class="fa-solid fa-file-import"></i>Importar tabela</button></div></div>`).join('');
+  // dados reais: custo atual (planilha, coluna N) → preço Pardini 4114 (vigência 24/09/2026)
+  const IMP = [['VZVPCR','VARICELA ZOSTER VÍRUS, PCR',223.48,239.12,350],['AA-ERI','ANTICORPOS ANTI ERITROPOETINA',566.79,606.47,860],['ASPERG','ANTI ASPERGILLUS SP.',207.58,233.22,350],
+    ['EXOMA','EXOMA COM ANÁLISE DE CNV E DNA MITOCONDRIAL',2000,2140,4000],['PC-RQ','PROTEINA C REATIVA - FLUIDOS BIOLÓGICOS',48.89,52.31,80],['APA','APOLIPOPROTEÍNA A-1',9.12,10.35,56],['dihi','1,25-DIHIDROXIVITAMINA D',60.21,64.42,193]];
+  document.getElementById('imp-body').innerHTML = IMP.map(([mn,d,a,b,preco]) => {
+    const e = {...(EX.find(x=>x.mn===mn) || {mn, setor:'HERMES PARDINI - NTO', origem:'apoio'}), preco};
+    const c0 = calc({...e,teste:a}), c1 = calc({...e,teste:b}), dv = b/a-1;
+    return `<tr><td class="mn">${mn}</td><td class="desc" title="${d}">${d}</td><td class="num">${fmt(a)}</td><td class="num" style="font-weight:600">${fmt(b)}</td>
+      <td class="num ${dv>0?'delta-up':'delta-dn'}">${dv>0?'+':''}${pct(dv)}</td><td class="num">${pct(c0.margem)} → ${pct(c1.margem)}</td><td>${stTag(c1.status)}</td></tr>`;
+  }).join('');
+}
+// vínculos LAMIC ↔ apoio — dados reais da tabela Pardini 4114 (vigência 24/09/2026)
+// st: auto (MN e descrição batem) | mat (código repetido: material escolhido pela descrição)
+//     sug (MN diferente, descrição bate) | conf (MN igual, exame diferente) | none
+const VINC = {
+  'HERMES PARDINI - NTO': [
+    {mn:'EXOMA', d:'EXOMA COM ANÁLISE DE CNV E DNA MITOCONDRIAL', cod:'EXOMA', mat:'DIV', da:'EXOMA COM ANÁLISE DE CNV E DNA MITOCONDRIAL', vig:'24/09/2026', v:2140.00, st:'auto', sc:100},
+    {mn:'PC-RQ', d:'PROTEINA C REATIVA - FLUIDOS BIOLÓGICOS', cod:'PC-RQ', mat:'DIV', da:'PROTEÍNA C REATIVA - FLUIDOS BIOLÓGICOS', vig:'24/09/2026', v:52.31, st:'mat', sc:100, alt:'PC-RQ (S) · PCR ALTA SENSIBILIDADE · R$ 15,11'},
+    {mn:'17PG', d:'17 ALFA HIDROXIPROGESTERONA', cod:'17-PG', mat:'S', da:'17 ALFA HIDROXIPROGESTERONA', vig:'24/09/2026', v:10.97, st:'sug', sc:100},
+    {mn:'dihi', d:'1,25-DIHIDROXIVITAMINA D', cod:'VIT-D3', mat:'S', da:'1,25-DIHIDROXIVITAMINA D', vig:'24/09/2026', v:64.42, st:'sug', sc:100},
+    {mn:'APA', d:'APOLIPOPROTEÍNA A-1', cod:'APOA', mat:'S', da:'APOLIPOPROTEÍNA A-1', vig:'24/09/2026', v:10.35, st:'sug', sc:100},
+    {mn:'HOMO', d:'HOMOCISTEÍNA', cod:'HOMO', mat:'U-24', da:'ÁCIDO HOMOVANÍLICO', vig:'24/09/2026', v:91.73, st:'conf', sc:33},
+    {mn:'HEMO', d:'HEMOCULTURA COM ANTIBIOGRAMA', cod:'HEMO', mat:'U', da:'HEMOSSIDERINA', vig:'24/09/2026', v:69.19, st:'conf', sc:33},
+    {mn:'IGD', d:'IGD - IMUNOGLOBULINA D', cod:null, st:'none'},
+    {mn:'17-KS', d:'17 CETOSTERÓIDES NEUTROS TOTAIS - 17 KS', cod:null, st:'none'}
+  ]
+};
+const VST = {
+  auto:{t:'Automático', c:'ok', ic:'fa-link', h:'mnemônico e descrição iguais'},
+  mat: {t:'Automático', c:'ok', ic:'fa-link', h:'código repetido por material: escolhido pela descrição'},
+  sug: {t:'Sugestão', c:'base', ic:'fa-wand-magic-sparkles', h:'mnemônico diferente, descrição igual'},
+  conf:{t:'Conferir', c:'bad', ic:'fa-triangle-exclamation', h:'mesmo mnemônico, exame diferente: NÃO vincular automático'},
+  none:{t:'Sem vínculo', c:'off', ic:'fa-link-slash', h:'não encontrado na tabela'}
+};
+Pop('pop-vlab', { label:'Laboratório', title:'Laboratório de apoio', icon:'fa-building', def:'HERMES PARDINI - NTO',
+  options: () => SETORES.filter(s=>s.cat==='apoio').map(s => ({value:s.nome, label:s.nome, icon:s.icon, color:s.c, count:(VINC[s.nome]||[]).length})),
+  onChange: renderVinc });
+function renderVinc(){
+  const lab = POPS['pop-vlab'].value, rows = VINC[lab] || [];
+  document.getElementById('vinc-sum').innerHTML = lab === 'HERMES PARDINI - NTO'
+    ? `<span class="badge-s ok"><i class="fa-solid fa-link"></i>386 automáticos</span><span class="badge-s base"><i class="fa-solid fa-wand-magic-sparkles"></i>116 sugestões fortes · 104 fracas</span><span class="badge-s bad"><i class="fa-solid fa-triangle-exclamation"></i>37 conferir</span><span class="badge-s off"><i class="fa-solid fa-link-slash"></i>32 sem vínculo</span>`
+    : '<span class="badge-s off">aguardando modelo</span>';
+  const confirmar = `<button class="btn sm" onclick="this.closest('td').innerHTML='<span class=&quot;badge-s ok&quot;><i class=&quot;fa-solid fa-link&quot;></i>Vinculado</span>'"><i class="fa-solid fa-check"></i>Confirmar</button>`;
+  document.getElementById('vinc-body').innerHTML = rows.map(r => { const s = VST[r.st]; return `<tr>
+    <td class="mn">${r.mn}</td><td class="desc" title="${r.d}">${r.d}</td><td style="color:var(--text-muted)"><i class="fa-solid fa-arrows-left-right"></i></td>
+    <td>${r.cod?`<span class="mn">${r.cod}</span> <span class="tag" title="material">${r.mat}</span>`:'—'}</td>
+    <td class="desc" title="${r.da||''}${r.alt?' — outro item: '+r.alt:''}">${r.da ? (r.st==='conf' ? `<span style="color:var(--red)">${r.da}</span>` : r.da) : '<span style="color:var(--text-muted)">não encontrado na tabela</span>'}${r.alt?' <i class="fa-solid fa-layer-group" style="color:var(--text-muted);font-size:11px" title="Outro item com o mesmo código: '+r.alt+'"></i>':''}</td>
+    <td style="font-size:12px;color:var(--text-muted)">${r.vig||'—'}</td>
+    <td class="num">${r.v!=null?fmt(r.v):'—'}</td>
+    <td><span class="badge-s ${s.c}" title="${s.h}"><i class="fa-solid ${s.ic}"></i>${s.t}${r.st==='sug'||r.st==='conf'?` ${r.sc}%`:''}</span>
+      ${r.st==='sug'?confirmar:r.st==='conf'?'<button class="btn sm"><i class="fa-solid fa-magnifying-glass"></i>Escolher</button>':r.st==='none'?'<button class="btn sm"><i class="fa-solid fa-magnifying-glass"></i>Buscar</button>':'<button class="btn sm" title="Vincular outro exame LAMIC a este código"><i class="fa-solid fa-plus"></i></button>'}</td></tr>`; }).join('')
+    || '<tr><td colspan="8" style="text-align:center;padding:26px;color:var(--text-muted)"><i class="fa-solid fa-file-excel"></i> Aguardando modelo de tabela deste apoio</td></tr>';
+}
+const CUSTOS_BTN = {reag:['fa-plus','Novo reagente'], fixos:['fa-plus','Novo custo fixo'], apoio:['fa-file-import','Importar tabela de apoio']};
+SUBNAV_HOOK.custos = p => { const [ic,t] = CUSTOS_BTN[p]; document.getElementById('custos-add').innerHTML = `<i class="fa-solid ${ic}"></i><span>${t}</span>`; };
+
+// ── TABELAS DE PREÇO ────────────────────────────────
+const TABS = [
+  {nome:'Particular', base:true, ic:'fa-user', c:'#00a8cc', exames:1876, desc:0, piso:P.margemMin, exc:{}},
+  {nome:'Cartões de Desconto', ic:'fa-id-card', c:'#6366f1', exames:1820, desc:25, piso:15, exc:{D1:40,E1:42}},
+  {nome:'Funerária Vida', ic:'fa-hands-holding', c:'#2a9d8f', exames:1790, desc:20, piso:20, exc:{}},
+  {nome:'AFAGU', ic:'fa-people-group', c:'#e8913a', exames:1655, desc:22, piso:18, exc:{HEMOS:26}},
+  {nome:'LAMIC VIVA+', ic:'fa-heart-pulse', c:'#e63946', exames:1876, desc:30, piso:15, exc:{}},
+  {nome:'Particular 02', ic:'fa-user-tag', c:'#0e7490', exames:1402, desc:10, piso:20, exc:{}}
+];
+let tabSel = 1;
+function tabRows(t){
+  return EX.filter(e => e.teste != null).map(e => {
+    const fin = t.exc[e.mn] ?? (t.base ? e.preco : Math.round(e.preco * (1 - t.desc/100)));
+    const c = calc(e, fin);
+    return {e, fin, c, exc: t.exc[e.mn] != null, abaixo: c.margem < t.piso/ (t.base?1:100)};
+  });
+}
+function renderTabCards(){
+  document.getElementById('tab-cards').innerHTML = TABS.map((t,i) => {
+    const rows = tabRows(t), ab = rows.filter(r=>r.abaixo).length, mp = rows.reduce((s,r)=>s+r.c.margem,0)/rows.length;
+    return `<button class="card tcard ${i===tabSel?'on':''}" onclick="tabSel=${i};tabSelRows.clear();tabQ='';renderTabCards();renderTabDetail()">
+      <div class="tc-h"><span class="tc-ic" style="--c:${t.c}"><i class="fa-solid ${t.ic}"></i></span><div><div class="tc-n">${t.nome}</div><div class="tc-s">${t.base?'Tabela base':`Particular − ${t.desc}% · piso ${t.piso}%`}</div>
+      <div class="tc-b">${t.base?'<span class="badge-s base"><i class="fa-solid fa-star"></i>base</span>':t.inativa?'<span class="badge-s off">inativa</span>':ab?`<span class="badge-s bad"><i class="fa-solid fa-circle-xmark"></i>${ab} abaixo do piso</span>`:'<span class="badge-s ok"><i class="fa-solid fa-check"></i>ok</span>'}</div></div></div>
+      <div class="tc-stats"><div><b>${t.exames.toLocaleString('pt-BR')}</b><span>exames</span></div><div><b>${Object.keys(t.exc).length}</b><span>exceções</span></div><div><b>${pct(mp)}</b><span>margem (amostra)</span></div></div></button>`;
+  }).join('');
+}
+// ── ambiente comercial: edição manual dos preços da tabela ──
+// Alterações ficam em rascunho até "Salvar como proposta".
+// Particular: grava o preço praticado. Derivadas: grava exceção (ou remove se voltar à regra).
+const TAB_DRAFT = {};                 // índice da tabela → {mn: preço}
+let tabSelRows = new Set(), tabQ = '';
+const regraPreco = (e, t) => t.base ? e.preco : Math.round(e.preco * (1 - t.desc / 100));
+const salvoPreco = (e, t) => t.base ? e.preco : (t.exc[e.mn] ?? regraPreco(e, t));
+const draftOf = () => TAB_DRAFT[tabSel] ??= {};
+const atualPreco = (e, t) => draftOf()[e.mn] ?? salvoPreco(e, t);
+const pisoTab = t => t.base ? P.margemMin : t.piso / 100;
+function rowState(e, t, preco = atualPreco(e, t)){
+  const c = calc(e, preco);
+  const st = c.semCusto ? 'x' : t.base ? c.status : (c.margem < pisoTab(t) ? 'r' : 'g');
+  return { fin: preco, c, st };
+}
+const tabStTag = (st, t) => t.base || st === 'x' ? stTag(st)
+  : st === 'r' ? '<span class="st r"><i class="fa-solid fa-circle-xmark"></i>Abaixo do piso</span>' : '<span class="st g"><i class="fa-solid fa-circle-check"></i>OK</span>';
+const precoAlvo = (e, t, m) => { const c = calc(e); return c.semCusto ? null : Math.ceil(c.custo / (1 - P.imposto - m)); };
+const rowSel = mn => `tr[data-mn="${CSS.escape(mn)}"]`;
+
+function renderTabDetail(){
+  const t = TABS[tabSel], el = document.getElementById('tab-detail');
+  const q = tabQ.toLowerCase(), list = EX.filter(e => !q || (e.mn + ' ' + e.desc).toLowerCase().includes(q));
+  const allSel = list.length > 0 && list.every(e => tabSelRows.has(e.mn));
+  el.innerHTML = `
+    <div class="sec-card-h"><span class="tc-ic" style="--c:${t.c}"><i class="fa-solid ${t.ic}"></i></span><div><h3>${t.nome}</h3><div class="sub">${t.base ? 'Tabela base: o valor editado aqui é o preço praticado do exame.' : 'Regra: Particular − desconto. Valor editado vira exceção da tabela.'}</div></div>
+      <div class="rt"><button class="btn sm" onclick="toast('PDF da tabela (simulação)')"><i class="fa-solid fa-file-pdf"></i>PDF</button><button class="btn sm" onclick="expTab=${tabSel};openExportSys()"><i class="fa-solid fa-file-csv"></i>Exportar p/ sistema</button></div></div>
+    ${t.base ? '' : `<div class="fgrid" style="padding-bottom:4px">
+      ${fld('tb-desc', 'Desconto sobre Particular', t.desc, {suf:'%', icon:'fa-percent', on:'tabParam()'})}
+      ${fld('tb-piso', 'Piso de margem', t.piso, {suf:'%', icon:'fa-shield-halved', on:'tabParam()', hint:'abaixo disso o exame é sinalizado'})}
+    </div>`}
+    <div class="toolbar" style="${t.base ? '' : 'border-top:1px solid var(--border)'}">
+      <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="tab-q" value="${tabQ}" placeholder="Buscar exame na tabela…" oninput="tabQ=this.value;renderTabDetail();const i=document.getElementById('tab-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)"></div>
+      <span style="font-size:12px;color:var(--text-muted)"><i class="fa-solid fa-keyboard"></i> Enter / ↑ ↓ navegam entre preços</span>
+    </div>
+    <div class="bulk ${tabSelRows.size ? 'on' : ''}">
+      <b>${tabSelRows.size} selecionado(s)</b>
+      <div class="inp" style="width:120px"><input id="bulk-pct" type="number" step="0.5" value="5"><span class="suf">%</span></div>
+      <button class="btn sm" onclick="tabBulk('pct')"><i class="fa-solid fa-percent"></i>Reajustar</button>
+      <button class="btn sm" onclick="tabBulk('sug')"><i class="fa-solid fa-wand-magic-sparkles"></i>Sugerido</button>
+      <button class="btn sm" onclick="tabBulk('min')"><i class="fa-solid fa-arrow-up"></i>${t.base ? 'Mínimo' : 'Piso'}</button>
+      <button class="btn sm" onclick="tabBulk('arr')"><i class="fa-solid fa-coins"></i>Arredondar</button>
+      ${t.base ? '' : '<button class="btn sm" onclick="tabBulk(\'regra\')"><i class="fa-solid fa-rotate-left"></i>Voltar à regra</button>'}
+      <button class="btn sm" style="margin-left:auto" onclick="tabSelRows.clear();renderTabDetail()"><i class="fa-solid fa-xmark"></i>Limpar seleção</button>
+    </div>
+    <div class="tbl-wrap"><table class="tab-edit"><thead><tr>
+      <th style="width:40px"><button class="cb ${allSel ? 'on' : ''}" onclick="tabSelAll(${!allSel})"><i class="fa-solid fa-check"></i></button></th>
+      <th>MN</th><th>Descrição</th><th class="num">Custo</th>${t.base ? '' : '<th class="num">Particular</th><th class="num">Pela regra</th>'}
+      <th class="num">Preço na tabela</th><th class="num">Margem</th><th>Situação</th><th style="text-align:right">Ações</th></tr></thead>
+      <tbody>${list.map(e => tabRowHTML(e, t)).join('') || '<tr><td colspan="10" style="text-align:center;padding:26px;color:var(--text-muted)">Nenhum exame</td></tr>'}</tbody></table></div>
+    <div class="draft-bar" id="tab-draftbar"></div>`;
+  renderDraftBar();
+}
+function tabRowHTML(e, t){
+  const { fin, c, st } = rowState(e, t), dr = draftOf(), edited = dr[e.mn] != null;
+  const exc = !t.base && t.exc[e.mn] != null;
+  const delta = fin - salvoPreco(e, t);
+  return `<tr data-mn="${e.mn}" class="${edited ? 'edited' : ''}">
+    <td><button class="cb ${tabSelRows.has(e.mn) ? 'on' : ''}" onclick="tabToggleSel('${e.mn}')"><i class="fa-solid fa-check"></i></button></td>
+    <td class="mn">${e.mn}</td><td class="desc" title="${e.desc}">${e.desc}</td>
+    <td class="num" style="color:var(--text-muted)">${c.semCusto ? '—' : fmt(c.custo)}</td>
+    ${t.base ? '' : `<td class="num" style="color:var(--text-muted)">${fmt(e.preco)}</td><td class="num" style="color:var(--text-muted)">${fmt(regraPreco(e, t))}</td>`}
+    <td class="num"><div class="price-in ${edited ? 'on' : ''}"><span>R$</span><input type="number" step="0.01" min="0" value="${+fin.toFixed(2)}" data-mn="${e.mn}" oninput="tabEdit('${e.mn}', this.value)" onkeydown="tabKey(event)" onfocus="this.select()">
+      ${exc && !edited ? '<i class="fa-solid fa-thumbtack" title="Exceção salva nesta tabela"></i>' : ''}</div>
+      <div class="delta">${edited && Math.abs(delta) > .004 ? `<span class="${delta > 0 ? 'delta-dn' : 'delta-up'}">${delta > 0 ? '+' : ''}${fmt(delta)} (${delta > 0 ? '+' : ''}${pct(delta / salvoPreco(e, t))})</span>` : ''}</div></td>
+    <td class="num" style="color:${st === 'r' ? 'var(--red)' : 'inherit'}">${c.semCusto ? '—' : pct(c.margem)}</td>
+    <td>${tabStTag(st, t)}</td>
+    <td class="acts">
+      <button title="Preço sugerido (alvo ${pct(alvoSetor(e.setor) ?? P.margemAlvo)})" ${c.semCusto ? 'disabled' : ''} onclick="tabSet('${e.mn}', precoAlvo(EX.find(x=>x.mn==='${e.mn}'), TABS[tabSel], alvoSetor(EX.find(x=>x.mn==='${e.mn}').setor) ?? P.margemAlvo))"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+      <button title="Levar ao ${t.base ? 'mínimo' : 'piso'}" ${c.semCusto ? 'disabled' : ''} onclick="tabSet('${e.mn}', precoAlvo(EX.find(x=>x.mn==='${e.mn}'), TABS[tabSel], pisoTab(TABS[tabSel])))"><i class="fa-solid fa-arrow-up"></i></button>
+      <button title="${t.base ? 'Desfazer' : 'Voltar à regra'}" onclick="tabReset('${e.mn}')"><i class="fa-solid fa-rotate-left"></i></button>
+    </td></tr>`;
+}
+function tabRefreshRow(mn, keepFocus){
+  const tr = document.querySelector('#tab-detail ' + rowSel(mn)); if (!tr) return;
+  const e = EX.find(x => x.mn === mn), t = TABS[tabSel];
+  if (keepFocus){                    // digitando: atualiza só margem/situação/delta, sem recriar o input
+    const tmp = document.createElement('tbody'); tmp.innerHTML = tabRowHTML(e, t);
+    const nt = tmp.firstElementChild, cells = tr.children, ncells = nt.children;
+    tr.className = nt.className;
+    for (let i = 0; i < cells.length; i++){
+      const inp = cells[i].querySelector('input[data-mn]');
+      if (inp){ cells[i].querySelector('.price-in').classList.toggle('on', !!draftOf()[mn]); cells[i].querySelector('.delta').innerHTML = ncells[i].querySelector('.delta').innerHTML; }
+      else if (i > 0) cells[i].innerHTML = ncells[i].innerHTML;
+    }
+  } else tr.outerHTML = tabRowHTML(e, t);
+  renderDraftBar();
+}
+function tabEdit(mn, v){
+  const e = EX.find(x => x.mn === mn), t = TABS[tabSel], dr = draftOf(), n = parseFloat(v);
+  if (isNaN(n) || Math.abs(n - salvoPreco(e, t)) < .005) delete dr[mn]; else dr[mn] = Math.round(n * 100) / 100;
+  tabRefreshRow(mn, true);
+}
+function tabSet(mn, v){
+  if (v == null) return;
+  const e = EX.find(x => x.mn === mn), t = TABS[tabSel], dr = draftOf();
+  if (Math.abs(v - salvoPreco(e, t)) < .005) delete dr[mn]; else dr[mn] = Math.round(v * 100) / 100;
+  tabRefreshRow(mn, false);
+}
+function tabReset(mn){
+  const e = EX.find(x => x.mn === mn), t = TABS[tabSel], dr = draftOf();
+  if (dr[mn] != null && (t.base || t.exc[mn] == null)) { delete dr[mn]; tabRefreshRow(mn, false); }
+  else tabSet(mn, regraPreco(e, t));          // derivada com exceção salva: rascunho volta à regra
+}
+function tabKey(ev){
+  if (!['Enter', 'ArrowDown', 'ArrowUp'].includes(ev.key)) return;
+  ev.preventDefault();
+  const ins = [...document.querySelectorAll('#tab-detail input[data-mn]')], i = ins.indexOf(ev.target);
+  const nx = ins[ev.key === 'ArrowUp' ? i - 1 : i + 1]; if (nx) nx.focus();
+}
+function tabToggleSel(mn){ tabSelRows.has(mn) ? tabSelRows.delete(mn) : tabSelRows.add(mn); renderTabDetail(); }
+function tabSelAll(on){
+  const q = tabQ.toLowerCase();
+  EX.filter(e => !q || (e.mn + ' ' + e.desc).toLowerCase().includes(q)).forEach(e => on ? tabSelRows.add(e.mn) : tabSelRows.delete(e.mn));
+  renderTabDetail();
+}
+function tabBulk(acao){
+  const t = TABS[tabSel], dr = draftOf(), p = (+document.getElementById('bulk-pct').value || 0) / 100;
+  let n = 0;
+  tabSelRows.forEach(mn => {
+    const e = EX.find(x => x.mn === mn); if (!e) return;
+    let v = null;
+    if (acao === 'pct') v = Math.round(atualPreco(e, t) * (1 + p));
+    if (acao === 'sug') v = precoAlvo(e, t, alvoSetor(e.setor) ?? P.margemAlvo);
+    if (acao === 'min') { const s = rowState(e, t); v = s.st === 'r' ? precoAlvo(e, t, pisoTab(t)) : null; }
+    if (acao === 'arr') v = Math.ceil(atualPreco(e, t));
+    if (acao === 'regra') v = regraPreco(e, t);
+    if (v == null) return;
+    if (Math.abs(v - salvoPreco(e, t)) < .005) delete dr[mn]; else dr[mn] = v;
+    n++;
+  });
+  renderTabDetail(); toast(`${n} preço(s) ajustado(s) no rascunho`);
+}
+function renderDraftBar(){
+  const t = TABS[tabSel], dr = draftOf(), mns = Object.keys(dr), bar = document.getElementById('tab-draftbar');
+  if (!bar) return;
+  bar.classList.toggle('on', mns.length > 0);
+  if (!mns.length) { bar.innerHTML = ''; return; }
+  let m0 = 0, m1 = 0, k = 0, abaixo = 0;
+  mns.forEach(mn => {
+    const e = EX.find(x => x.mn === mn), a = rowState(e, t, salvoPreco(e, t)), b = rowState(e, t);
+    if (b.st === 'r') abaixo++;
+    if (!a.c.semCusto) { m0 += a.c.margem; m1 += b.c.margem; k++; }
+  });
+  bar.innerHTML = `<i class="fa-solid fa-pen-to-square"></i><div><b>${mns.length} alteração(ões) em rascunho</b>
+      <div class="s">${k ? `margem média dos alterados ${pct(m0 / k)} → <b>${pct(m1 / k)}</b>` : 'exames sem custo'}${abaixo ? ` · <span style="color:var(--red)">${abaixo} abaixo do ${t.base ? 'mínimo' : 'piso'}</span>` : ''}</div></div>
+    <div style="margin-left:auto;display:flex;gap:8px"><button class="btn" onclick="tabDescartar()"><i class="fa-solid fa-trash-can"></i>Descartar</button>
+    <button class="btn pri" onclick="tabSalvar()"><i class="fa-solid fa-paper-plane"></i>Salvar como proposta</button></div>`;
+}
+function tabDescartar(){ TAB_DRAFT[tabSel] = {}; renderTabDetail(); toast('Rascunho descartado'); }
+function tabSalvar(){
+  const t = TABS[tabSel], dr = draftOf(), n = Object.keys(dr).length;
+  Object.entries(dr).forEach(([mn, v]) => {
+    const e = EX.find(x => x.mn === mn);
+    if (t.base) e.preco = v;
+    else if (v === regraPreco(e, t)) delete t.exc[mn]; else t.exc[mn] = v;
+  });
+  TAB_DRAFT[tabSel] = {};
+  renderTabCards(); renderTabDetail(); renderTable(); renderSim();
+  toast(`${n} preço(s) de ${t.nome} enviados para aprovação`);
+}
+
+function tabParam(){
+  const t = TABS[tabSel];
+  t.desc = +document.getElementById('tb-desc').value || 0; t.piso = +document.getElementById('tb-piso').value || 0;
+  const f = document.activeElement.id; renderTabCards(); renderTabDetail();
+  const inp = document.getElementById(f); if (inp){ inp.focus(); const v = inp.value; inp.value=''; inp.value=v; }
+}
+
+// ── IMPORTAR / EXPORTAR ─────────────────────────────
+const WZ_STEPS = ['Tipo','Arquivo','Mapear colunas','Conferir','Concluir'];
+const WZ_TIPOS = [
+  {v:'planilha', t:'Planilha completa', d:'Migração inicial: aba PARTICULAR', ic:'fa-file-excel', c:'#1d7044'},
+  {v:'sistema', t:'Tabela do sistema (CSV)', d:'PARTICULAR.csv e demais tabelas no formato do sistema', ic:'fa-file-csv', c:'#6366f1'},
+  {v:'bd', t:'Catálogo do sistema', d:'Mnemônicos, material e prazo (aba BD)', ic:'fa-database', c:'#0e7490'},
+  {v:'apoio', t:'Tabela de apoio', d:'Hermes Pardini: tabela 4114 (preços negociados)', ic:'fa-truck-medical', c:'#00a8cc'}
+];
+let wz = 0, wzTipo = 'planilha', wzFile = false;
+function wzSet(step, tipo){ wz = step; if (tipo) wzTipo = tipo; if (step === 0) wzFile = false; renderWz(); }
+function renderWz(){
+  document.getElementById('wz-steps').innerHTML = WZ_STEPS.map((s,i) => `<div class="step ${i<wz?'done':i===wz?'cur':''}"><span class="c">${i<wz?'<i class="fa-solid fa-check"></i>':i+1}</span>${s}</div>`).join('');
+  const T = WZ_TIPOS.find(x=>x.v===wzTipo); let b = '';
+  if (wz === 0) b = `<div class="choice">${WZ_TIPOS.map(x => `<button class="oc ${x.v===wzTipo?'on':''}" onclick="wzTipo='${x.v}';renderWz()"><span class="po-ic" style="--c:${x.c}"><i class="fa-solid ${x.ic}"></i></span><span><b>${x.t}</b><small>${x.d}</small></span><i class="fa-solid fa-circle-check ck"></i></button>`).join('')}</div>`;
+  if (wz === 1) b = `<div class="drop" onclick="wzFile=true;renderWz()"><i class="fa-solid fa-cloud-arrow-up"></i><b>Arraste o arquivo aqui</b> ou clique para escolher<div style="font-size:12px;margin-top:6px">.xlsx, .csv · ${T.t}</div></div>
+    ${wzFile?`<div class="file-ok"><i class="fa-solid fa-file-excel"></i><div style="flex:1"><b style="font-size:13px">${wzTipo==='apoio'?'4114_tabela_preços.xlsx':wzTipo==='sistema'?'PARTICULAR.csv':wzTipo==='bd'?'Catalogo sistema.xlsx':'LAMIC - Comercial - Preços.xlsx'}</b><div style="font-size:12px;color:var(--text-muted)">${wzTipo==='apoio'?'Hermes Pardini · 1.060 exames · cabeçalho na linha 4':wzTipo==='sistema'?'ISO-8859-1 · separador ; · 3.366 linhas · 8 colunas · formato reconhecido':wzTipo==='bd'?'2.391 linhas · 5 colunas':'aba PARTICULAR · 1.876 linhas · 64 colunas'}</div></div><span class="badge-s ok"><i class="fa-solid fa-check"></i>lido</span></div>`:''}`;
+  if (wz === 2) {
+    const MAP = wzTipo === 'apoio'
+      ? [['B','Mnemônico','Código no apoio → mnemônico LAMIC','vinc'],['F','Início Vigência','Vigência do custo','auto'],['G','Preço Exame(R$)','Custo do teste','auto'],['A','Material','Desempate: mesmo código em materiais diferentes','aux'],['C','Descrição Exame','Conferência do vínculo (não grava)','aux']]
+      : wzTipo === 'sistema'
+      ? [['F','mnemonico','Mnemônico (chave do exame)','auto'],['D','ch','Preço da tabela de destino (decimal com vírgula)','auto'],['G','efetua','Ativo nesta tabela (S/N)','auto'],['C','porte','UNIL quando efetua = S','sys'],['H','vlrporte','1 quando efetua = S','sys'],['A','código','Constante: vazio','keep'],['B','índice','Constante: 0 (só planos de saúde)','keep'],['E','filme','Constante: 0 (só planos de saúde)','keep']]
+      : wzTipo === 'bd'
+      ? [['A','Mnemônico','Mnemônico','auto'],['B','Material Biológico','Material','auto'],['C','Nome do Exame','Descrição','auto'],['E','Prazo','Prazo de entrega','auto']]
+      : [['C','MNEMÔNICO','Mnemônico','auto'],['D','DESCRIÇÃO','Descrição','auto'],['B','SETOR','Setor','auto'],['G','FINAL','Preço praticado','auto'],['F','PART','Preço no sistema','auto'],['N','Teste','Custo do teste','auto'],['A','Neg','Negociado (valor invertido)','inv'],['H','CB','A auditar','auto'],['J–M','Fases','Atendimento · Sistemas · Coleta · Triagem','auto'],['X','..','Fora do sistema','auto']];
+    const BADGE = { auto:'<span class="badge-s ok"><i class="fa-solid fa-check"></i>automático</span>', inv:'<span class="badge-s base"><i class="fa-solid fa-arrow-right-arrow-left"></i>invertido</span>', vinc:'<span class="badge-s warn"><i class="fa-solid fa-link"></i>por vínculo</span>', aux:'<span class="badge-s off"><i class="fa-solid fa-magnifying-glass"></i>só conferência</span>',
+      sys:'<span class="badge-s base"><i class="fa-solid fa-gears"></i>derivado</span>', keep:'<span class="badge-s off"><i class="fa-solid fa-lock"></i>constante</span>' };
+    b = `<div class="alert x"><i class="fa-solid fa-wand-magic-sparkles"></i><div>${wzTipo==='apoio' ? 'O mnemônico do apoio é diferente do nosso: cada código é ligado a um exame LAMIC pela tabela de vínculos (sugestão automática por nome, confirmada uma vez e reaproveitada nas próximas importações). Mesmo mnemônico só vincula sozinho se a descrição também bater. <b>Tabela 4114 = preços negociados:</b> exames vinculados ficam marcados como negociados; exames Pardini fora dela ficam com custo manual. Modelo exclusivo da Pardini (Alvaro, DB e Yatros terão modelos próprios).' : 'Colunas reconhecidas automaticamente pelo cabeçalho. Ajuste o que estiver errado.'}</div></div>` +
+      MAP.map(([c,h,f,s]) => `<div class="map-r"><span class="col"><b>${c}</b>${h}</span><i class="fa-solid fa-arrow-right"></i><span>${f}</span>${BADGE[s]}</div>`).join('');
+  }
+  if (wz === 3 && wzTipo === 'apoio') b = `<div class="sumgrid">
+      <div class="imp"><div class="l"><i class="fa-solid fa-list"></i>Exames na tabela</div><div class="v">1.060</div><div class="d" style="color:var(--text-muted)">20 com vigência após 24/09</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-link" style="color:var(--green)"></i>Automáticos</div><div class="v">386</div><div class="d" style="color:var(--text-muted)">de 675 exames Pardini</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--cyan)"></i>Sugestões</div><div class="v">220</div><div class="d" style="color:var(--text-muted)">116 fortes · 104 fracas</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i>Conferir</div><div class="v">37</div><div class="d" style="color:var(--text-muted)">mesmo MN, descrição diferente</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-link-slash" style="color:var(--amber)"></i>Sem vínculo</div><div class="v">32</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-arrow-trend-up" style="color:var(--red)"></i>Custos sobem</div><div class="v">365</div><div class="d" style="color:var(--text-muted)">mediana +7,0%</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-circle-xmark" style="color:var(--red)"></i>Caem abaixo do mínimo</div><div class="v">41</div></div></div>
+    <div class="alert a"><i class="fa-solid fa-circle-info"></i><div>Itens do apoio que não oferecemos são ignorados. Vigência futura fica <b>agendada</b> e só vale a partir da data. Exames LAMIC sem vínculo vão para <b>Pendências</b>.</div></div>`;
+  else if (wz === 3 && wzTipo === 'sistema') b = `<div class="sumgrid">
+      <div class="imp"><div class="l"><i class="fa-solid fa-list"></i>Linhas</div><div class="v">3.366</div><div class="d" style="color:var(--text-muted)">catálogo completo do sistema</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-circle-check" style="color:var(--green)"></i>Efetua S</div><div class="v">2.822</div><div class="d" style="color:var(--text-muted)">544 N (inativos na tabela)</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-equals" style="color:var(--green)"></i>Já cadastrados</div><div class="v">1.863</div><div class="d" style="color:var(--text-muted)">preço igual em 1.841</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-plus" style="color:var(--cyan)"></i>Novos</div><div class="v">1.503</div><div class="d" style="color:var(--text-muted)">966 com preço, sem custo</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-code-compare" style="color:var(--amber)"></i>Preço divergente</div><div class="v">15</div><div class="d" style="color:var(--text-muted)">ex.: IMHE 850 × 964</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i>Inconsistências</div><div class="v">5</div><div class="d" style="color:var(--text-muted)">ex.: VAC-INFL R$ 135 com efetua N</div></div></div>
+    <div class="alert a"><i class="fa-solid fa-circle-info"></i><div>Divergências: você escolhe por exame se vale o preço do sistema ou o do LAMIC. Os 966 exames novos com preço entram como <b>⚪ sem custo</b> e vão para Pendências.</div></div>`;
+  else if (wz === 3) b = `<div class="sumgrid">
+      <div class="imp"><div class="l"><i class="fa-solid fa-list"></i>Linhas lidas</div><div class="v">1.876</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-circle-check" style="color:var(--green)"></i>Com custo</div><div class="v">1.267</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-circle-question" style="color:var(--gray)"></i>Sem custo</div><div class="v">609</div><div class="d" style="color:var(--text-muted)">entram como ⚪</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-tags" style="color:var(--amber)"></i>Sem setor</div><div class="v">603</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-code-compare" style="color:var(--amber)"></i>Divergências</div><div class="v">111</div></div>
+      <div class="imp"><div class="l"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i>Erros</div><div class="v">0</div></div></div>
+    <div class="alert a"><i class="fa-solid fa-circle-info"></i><div>Nada é perdido: itens incompletos entram e vão para <b>Pendências</b>.</div></div>`;
+  if (wz === 4) b = `<div class="done-box"><i class="fa-solid fa-circle-check"></i><h3>Importação concluída</h3><p>${wzTipo==='apoio'?'Custos Pardini atualizados · vigência 24/09/2026 · vínculos salvos':wzTipo==='sistema'?'3.366 exames sincronizados com a tabela PARTICULAR · 15 divergências resolvidas':'1.876 exames gravados · 1.323 pendências geradas'} · registrado no histórico</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:18px"><button class="btn" onclick="go('pendencias')"><i class="fa-solid fa-triangle-exclamation"></i>Ver pendências</button><button class="btn pri" onclick="go('exames')"><i class="fa-solid fa-flask-vial"></i>Ir para exames</button></div></div>`;
+  document.getElementById('wz-body').innerHTML = b;
+  const canNext = wz !== 1 || wzFile;
+  document.getElementById('wz-foot').innerHTML = wz === 4 ? `<button class="btn" onclick="wzSet(0)"><i class="fa-solid fa-rotate-left"></i>Nova importação</button><span></span>` :
+    `<button class="btn" ${wz===0?'style="visibility:hidden"':''} onclick="wzSet(${wz-1})"><i class="fa-solid fa-arrow-left"></i>Voltar</button>
+     <button class="btn pri" ${canNext?'':'disabled style="opacity:.5;cursor:not-allowed"'} onclick="wzSet(${wz+1})">${wz===3?'<i class="fa-solid fa-check"></i>Confirmar importação':'Continuar<i class="fa-solid fa-arrow-right"></i>'}</button>`;
+}
+document.getElementById('exp-cards').innerHTML = [
+  ['fa-file-pdf','#e63946','Tabela em PDF','Para balcão e convênios, com logo e data'],
+  ['fa-file-excel','#1d7044','Excel / CSV','Exames, custos e margens com filtros aplicados'],
+  ['fa-file-csv','#6366f1','Formato do sistema','CSV no layout do PARTICULAR.csv, por tabela','openExportSys()'],
+  ['fa-database','#0e7490','Backup completo','JSON com todos os dados e histórico']
+].map(([ic,c,t,d,fn]) => `<button class="card tcard" onclick="${fn || `toast('${t}: exportação gerada (simulação)')`}"><div class="tc-h"><span class="tc-ic" style="--c:${c}"><i class="fa-solid ${ic}"></i></span><div><div class="tc-n">${t}</div><div class="tc-s">${d}</div></div><i class="fa-solid fa-download" style="margin-left:auto;color:var(--text-muted)"></i></div></button>`).join('');
+
+// ── EXPORTAÇÃO NO FORMATO DO SISTEMA ────────────────
+// Layout idêntico ao PARTICULAR.csv: ISO-8859-1, ";", CRLF, decimal com vírgula sem zeros à direita,
+// ordem alfabética (sem diferenciar maiúsculas), efetua S → porte UNIL / vlrporte 1, N → vazio / 0 / 0.
+const SYS_HEADER = 'código;índice;porte;ch;filme;mnemonico;efetua;vlrporte';
+const sysNum = v => String(Math.round(v * 100) / 100).replace('.', ',');
+const precoTabela = (e, t) => t.base ? e.preco : (t.exc[e.mn] ?? Math.round(e.preco * (1 - t.desc / 100)));
+const nomeArq = t => t.nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '_') + '.csv';
+let expTab = 0, expN = true;
+function sysCSV(){
+  const t = TABS[expTab];
+  const linhas = EX.filter(e => expN || e.ativo !== false)
+    .slice().sort((a, b) => a.mn.toUpperCase() < b.mn.toUpperCase() ? -1 : 1)
+    .map(e => {
+      const ef = e.ativo !== false;   // código, índice e filme: constantes (só têm uso em planos de saúde)
+      return ['', 0, ef ? 'UNIL' : '', ef ? sysNum(precoTabela(e, t)) : 0, 0, e.mn, ef ? 'S' : 'N', ef ? 1 : 0].join(';');
+    });
+  return [SYS_HEADER, ...linhas].join('\r\n') + '\r\n';
+}
+function openExportSys(){
+  openPanel({ mn:'Exportar', title:'Tabela no formato do sistema',
+    meta:'<span class="tag"><i class="fa-solid fa-font"></i>ISO-8859-1</span><span class="tag">separador ;</span><span class="tag">CRLF</span><span class="tag">decimal com vírgula</span>',
+    body:'<div id="exp-sys"></div>',
+    foot:`<button class="btn" onclick="closeDrawer()">Fechar</button><button class="btn pri" onclick="baixarSys()"><i class="fa-solid fa-download"></i>Baixar CSV</button>` });
+  renderExpSys();
+}
+function renderExpSys(){
+  const t = TABS[expTab];
+  document.getElementById('exp-sys').innerHTML = `
+    <div class="sec-t"><i class="fa-solid fa-table-list"></i>Tabela</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${TABS.map((x,i) => `<button class="chip ${i===expTab?'on':''}" onclick="expTab=${i};renderExpSys()"><i class="fa-solid ${x.ic}"></i>${x.nome}</button>`).join('')}</div>
+    <div class="sec-t"><i class="fa-solid fa-sliders"></i>Conteúdo</div>
+    <div class="casc"><div class="casc-r"><div class="lft"><i class="fa-solid fa-list"></i><div>Incluir exames não efetuados (N)<div class="s">o sistema trabalha com o catálogo completo</div></div></div><button class="switch lt ${expN?'on':''}" onclick="expN=!expN;renderExpSys()"></button></div></div>
+    <div class="sec-t"><i class="fa-solid fa-file-csv"></i>Prévia · ${nomeArq(t)}</div>
+    <pre class="csv-prev">${sysCSV().replace(/</g,'&lt;')}</pre>
+    <div class="alert x" style="margin-top:10px"><i class="fa-solid fa-circle-info"></i><div>Mesmo layout para todas as tabelas. <b>código</b> (vazio), <b>índice</b> (0) e <b>filme</b> (0) são constantes: só têm uso em planos de saúde.</div></div>`;
+}
+function baixarSys(){
+  const s = sysCSV(), bytes = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i) & 0xFF;   // ISO-8859-1
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([bytes], {type:'text/csv;charset=iso-8859-1'}));
+  a.download = nomeArq(TABS[expTab]); a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(`${a.download} gerado (prévia com ${EX.length} exames)`);
+}
+
+// ── CONFIG: usuários ────────────────────────────────
+const GROUPS = {
+  admin:    {n:'Admin', ic:'fa-crown', c:'#e8913a', d:'Acesso total', lock:true},
+  comercial:{n:'Comercial', ic:'fa-briefcase', c:'#00a8cc', d:'Preços, tabelas e simulações'},
+  custos:   {n:'Custos / Financeiro', ic:'fa-coins', c:'#2a9d8f', d:'Custos, parâmetros e aprovação', def:false},
+  tecnico:  {n:'Técnico de setor', ic:'fa-microscope', c:'#6366f1', d:'Custos do próprio setor'},
+  visual:   {n:'Visualizador', ic:'fa-eye', c:'#94a3b8', d:'Somente consulta', def:true}
+};
+const USERS = [
+  {n:'Pedro Fellipe', u:'pedro', cargo:'Gerente Comercial', g:'admin', set:'Todos', ativo:true, ult:'hoje 09:42', c:'#2a9d8f'},
+  {n:'Ana Martins', u:'ana.m', cargo:'Analista de Custos', g:'custos', set:'Todos', ativo:true, ult:'ontem 16:10', c:'#e8913a'},
+  {n:'Rafael Costa', u:'rafael', cargo:'Bioquímico RT', g:'tecnico', set:'Alérgenos, Imuno-hormônios', ativo:true, ult:'07/10/2026', c:'#6366f1'},
+  {n:'Juliana Souza', u:'ju.souza', cargo:'Atendimento', g:'visual', set:'Todos', ativo:true, ult:'05/10/2026', c:'#00a8cc'},
+  {n:'Marcos Lima', u:'marcos', cargo:'Representante Comercial', g:'comercial', set:'Todos', ativo:false, ult:'12/08/2026', c:'#94a3b8'}
+];
+const ini = n => n.split(' ').map(x=>x[0]).slice(0,2).join('');
+const grpTag = g => `<span class="tag"><i class="fa-solid ${GROUPS[g].ic}" style="color:${GROUPS[g].c}"></i>${GROUPS[g].n}</span>`;
+Pop('pop-ugrupo', { label:'Grupo', title:'Filtrar por grupo', icon:'fa-user-shield', clearable:true,
+  options: () => [{value:'', label:'Todos os grupos', icon:'fa-layer-group', count:USERS.length},
+    ...Object.entries(GROUPS).map(([k,g]) => ({value:k, label:g.n, icon:g.ic, color:g.c, desc:g.d, count:USERS.filter(u=>u.g===k).length}))],
+  onChange: renderUsers });
+function renderUsers(){
+  const q = document.getElementById('q-user').value.toLowerCase(), g = POPS['pop-ugrupo'].value;
+  document.getElementById('users-body').innerHTML = USERS.map((u,i)=>({u,i})).filter(({u}) => (!g || u.g===g) && (!q || (u.n+' '+u.u).toLowerCase().includes(q))).map(({u,i}) => `
+    <tr class="row" onclick="openUser(${i})"><td><div class="ucell"><div class="avatar" style="background:${u.c}">${ini(u.n)}</div><div>${u.n}<div class="s">@${u.u}</div></div></div></td>
+    <td>${u.cargo}</td><td>${grpTag(u.g)}</td><td style="font-size:12.5px;color:var(--text-secondary)">${u.set}</td>
+    <td>${u.ativo?'<span class="badge-s ok"><i class="fa-solid fa-circle" style="font-size:6px"></i>Ativo</span>':'<span class="badge-s off"><i class="fa-solid fa-circle" style="font-size:6px"></i>Inativo</span>'}</td>
+    <td style="font-size:12px;color:var(--text-muted)">${u.ult}</td><td><i class="fa-solid fa-chevron-right" style="color:var(--text-muted)"></i></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">Nenhum usuário</td></tr>';
+}
+function openUser(i){
+  const u = USERS[i];
+  openPanel({ mn:'@'+u.u, title:u.n, meta:`${grpTag(u.g)}<span class="tag"><i class="fa-solid fa-id-badge"></i>${u.cargo}</span>`,
+    body:`<div class="sec-t"><i class="fa-solid fa-user-shield"></i>Grupo</div>
+      <div class="opt-cards">${Object.entries(GROUPS).map(([k,g]) => `<button class="oc ${k===u.g?'on':''}" onclick="this.parentNode.querySelectorAll('.oc').forEach(x=>x.classList.remove('on'));this.classList.add('on')"><span class="po-ic" style="--c:${g.c}"><i class="fa-solid ${g.ic}"></i></span><span><b>${g.n}</b><small>${g.d}</small></span><i class="fa-solid fa-circle-check ck"></i></button>`).join('')}</div>
+      <div class="sec-t"><i class="fa-solid fa-sitemap"></i>Setores visíveis</div><div style="display:flex;gap:6px;flex-wrap:wrap">${u.set==='Todos'?'<span class="tag"><i class="fa-solid fa-layer-group"></i>Todos os setores</span>':u.set.split(', ').map(s=>`<span class="tag">${s}</span>`).join('')}<button class="btn sm"><i class="fa-solid fa-pen"></i>Alterar</button></div>
+      <div class="sec-t"><i class="fa-solid fa-toggle-on"></i>Situação</div>
+      <div class="toggle-row" style="color:var(--text-primary);padding:0">Usuário ativo <button class="switch lt ${u.ativo?'on':''}" onclick="this.classList.toggle('on')"></button></div>
+      <div class="sec-t"><i class="fa-solid fa-key"></i>Senha</div><button class="btn"><i class="fa-solid fa-rotate"></i>Redefinir senha</button>
+      <div class="alert x" style="margin-top:12px"><i class="fa-solid fa-circle-info"></i><div>Segurança do login (Firebase Auth) fica para a etapa final do projeto.</div></div>`});
+}
+
+// ── CONFIG: grupos e permissões ─────────────────────
+const MODS = [['exames','Exames','fa-flask-vial',['ver','criar','editar','excluir','aprovar','exportar']],['custos','Custos','fa-boxes-stacked',['ver','criar','editar','excluir','importar']],['tabelas','Tabelas de Preço','fa-table-list',['ver','criar','editar','excluir','aprovar','exportar']],['simulador','Simulador','fa-chart-line',['ver','criar','aprovar']],['pendencias','Pendências','fa-triangle-exclamation',['ver','editar']],['importar','Importar / Exportar','fa-file-import',['ver','importar','exportar']],['params','Parâmetros','fa-sliders',['ver','editar','aprovar']],['usuarios','Usuários e grupos','fa-users',['ver','criar','editar','excluir']]];
+const ACTS = [['ver','Ver','fa-eye'],['criar','Criar','fa-plus'],['editar','Editar','fa-pen'],['excluir','Excluir','fa-trash'],['aprovar','Aprovar','fa-stamp'],['importar','Importar','fa-file-import'],['exportar','Exportar','fa-file-export']];
+const PERMS = {
+  comercial:{exames:['ver','criar','editar','exportar'],custos:['ver'],tabelas:['ver','criar','editar','exportar'],simulador:['ver','criar'],pendencias:['ver','editar'],importar:['ver','exportar'],params:['ver']},
+  custos:{exames:['ver','editar','aprovar'],custos:['ver','criar','editar','excluir','importar'],tabelas:['ver','aprovar'],simulador:['ver','criar','aprovar'],pendencias:['ver','editar'],importar:['ver','importar','exportar'],params:['ver','editar','aprovar']},
+  tecnico:{exames:['ver'],custos:['ver','editar'],pendencias:['ver']},
+  visual:{exames:['ver'],tabelas:['ver'],simulador:['ver'],pendencias:['ver']}
+};
+let gSel = 'comercial';
+function renderGroups(){
+  document.getElementById('glist').innerHTML = Object.entries(GROUPS).map(([k,g]) => `<div class="gitem ${k===gSel?'on':''}" onclick="gSel='${k}';renderGroups()"><span class="po-ic" style="--c:${g.c}"><i class="fa-solid ${g.ic}"></i></span><div style="flex:1"><div class="n">${g.n}</div><div class="s">${USERS.filter(u=>u.g===k).length} usuário(s)</div></div>${g.def?'<span class="badge-s base">padrão</span>':''}</div>`).join('');
+  const g = GROUPS[gSel], has = (m,a) => g.lock || (PERMS[gSel]?.[m] || []).includes(a);
+  document.getElementById('gperm').innerHTML = `<div class="sec-card-h"><span class="tc-ic" style="--c:${g.c}"><i class="fa-solid ${g.ic}"></i></span><div><h3>${g.n}</h3><div class="sub">${g.d}</div></div>
+      <div class="rt"><div class="toggle-row" style="color:var(--text-secondary)">Grupo padrão p/ novos <button class="switch lt ${g.def?'on':''}" ${g.lock?'disabled':''} onclick="Object.values(GROUPS).forEach(x=>x.def=false);GROUPS['${gSel}'].def=true;renderGroups()"></button></div></div></div>
+    ${g.lock?'<div style="padding:14px 18px 0"><div class="alert a" style="margin:0"><i class="fa-solid fa-lock"></i><div>Admin tem acesso total e não pode ser alterado.</div></div></div>':''}
+    <div class="tbl-wrap"><table class="perm"><thead><tr><th>Módulo</th>${ACTS.map(([,t,ic])=>`<th title="${t}"><i class="fa-solid ${ic}"></i><div style="margin-top:4px">${t}</div></th>`).join('')}</tr></thead><tbody>
+    ${MODS.map(([m,t,ic,ap]) => `<tr><td><i class="fa-solid ${ic}"></i>${t}</td>${ACTS.map(([a]) => ap.includes(a) ? `<td><button class="cb ${has(m,a)?'on':''}" ${g.lock?'disabled':''} onclick="togglePerm('${m}','${a}')"><i class="fa-solid fa-check"></i></button></td>` : '<td><span class="na">—</span></td>').join('')}</tr>`).join('')}
+    </tbody></table></div>
+    <div class="foot"><span><i class="fa-solid fa-circle-info"></i> "Aprovar" libera publicar preços e parâmetros propostos por outros</span><span></span></div>`;
+}
+function togglePerm(m, a){
+  const p = PERMS[gSel] ??= {}; const l = p[m] ??= [];
+  const i = l.indexOf(a); i >= 0 ? l.splice(i,1) : l.push(a);
+  if (a === 'ver' && i >= 0) p[m] = [];            // sem "ver", nenhuma outra ação
+  else if (a !== 'ver' && i < 0 && !l.includes('ver')) l.push('ver');
+  renderGroups();
+}
+
+// ── CONFIG: parâmetros ──────────────────────────────
+const PF = [['pf-imp','Imposto sobre faturamento','imposto','fa-landmark','% do preço (Simples/ISS)'],['pf-cart','Taxa da maquininha','cartao','fa-credit-card','só projeção: não entra no custo'],['pf-min','Margem mínima','margemMin','fa-shield-halved','abaixo disso: 🔴'],['pf-alvo','Margem alvo','margemAlvo','fa-bullseye','base do preço sugerido'],['pf-epa','Exames por atendimento','examesPorAtend','fa-divide','média; divide o custo pré-analítico']];
+P.cartao = .0229;
+function renderParams(){
+  document.getElementById('params-form').innerHTML = PF.map(([id,l,k,ic,h]) => fld(id, l, k==='examesPorAtend' ? P[k] : +(P[k]*100).toFixed(2), {suf: k==='examesPorAtend'?'exames':'%', icon:ic, hint:h, on:'paramsImpact()'})).join('');
+  paramsImpact();
+}
+function readParams(){
+  const v = id => +document.getElementById(id).value || 0;
+  return {imposto:v('pf-imp')/100, cartao:v('pf-cart')/100, margemMin:v('pf-min')/100, margemAlvo:v('pf-alvo')/100, examesPorAtend:Math.max(1,v('pf-epa'))};
+}
+function paramsImpact(){
+  const n = readParams(), old = {...P}; Object.assign(P, n);
+  EX.forEach(e => { if (e.cartao) e.cartao = n.cartao; });
+  const st = EX.filter(e=>e.teste!=null).map(e=>calc(e).status), r = st.filter(s=>s==='r').length, g = st.filter(s=>s==='g').length;
+  Object.assign(P, old); EX.forEach(e => { if (e.cartao) e.cartao = old.cartao; });
+  document.getElementById('params-impact').innerHTML = `<i class="fa-solid fa-chart-simple"></i><div><b>Impacto na amostra:</b> ${r} abaixo do mínimo · ${g} saudáveis · ${st.length-r-g} abaixo do alvo · custos por atendimento rateados: ${fmt(FIXOS.filter(f=>f.tipo==='atend').reduce((s,f)=>s+f.valor,0)/n.examesPorAtend)} por exame</div>`;
+}
+function saveParams(){
+  const n = readParams(); Object.assign(P, n); EX.forEach(e => { if (e.cartao) e.cartao = n.cartao; });
+  renderTable(); renderSim(); renderFixos(); renderTabCards(); renderTabDetail(); renderSetores();
+  toast('Parâmetros enviados para aprovação (prévia já recalculada)');
+}
+
+// ── CONFIG: setores ─────────────────────────────────
+const catBadge = k => `<span class="badge-s" style="background:color-mix(in srgb,${CATS[k].c} 14%,transparent);color:${CATS[k].c}"><i class="fa-solid ${CATS[k].ic}"></i>${CATS[k].t}</span>`;
+Pop('pop-scat', { label:'Categoria', title:'Filtrar por categoria', icon:'fa-shapes', clearable:true,
+  options: () => [{value:'', label:'Todas', icon:'fa-layer-group', count:SETORES.length},
+    ...Object.entries(CATS).map(([k,c]) => ({value:k, label:c.t, desc:c.d, icon:c.ic, color:c.c, count:SETORES.filter(s=>s.cat===k).length}))],
+  onChange: renderSetores });
+function renderSetores(){
+  const q = (document.getElementById('q-set').value || '').toLowerCase(), fc = POPS['pop-scat'].value;
+  const list = SETORES.map((s,i)=>({s,i})).filter(({s}) => (!fc || s.cat===fc) && (!q || s.nome.toLowerCase().includes(q)))
+    .sort((a,b) => Object.keys(CATS).indexOf(a.s.cat) - Object.keys(CATS).indexOf(b.s.cat) || a.s.nome.localeCompare(b.s.nome));
+  document.getElementById('setores-body').innerHTML = list.map(({s,i}) => `<tr class="row" onclick="openSetor(${i})">
+    <td><div class="ucell"><span class="po-ic" style="--c:${s.c}"><i class="fa-solid ${s.icon}"></i></span><b style="font-weight:500">${s.nome}</b></div></td>
+    <td>${catBadge(s.cat)}</td>
+    <td>${Object.entries(ETAPAS).map(([k,x]) => s[k]===false ? `<span class="tag" style="opacity:.55;text-decoration:line-through"><i class="fa-solid ${x.ic}"></i>${x.t}</span>` : `<span class="tag"><i class="fa-solid ${x.ic}"></i>${x.t}</span>`).join(' ')}</td>
+    <td class="num">${s.n ?? 0}</td>
+    <td class="num">${s.alvo!=null?`<b>${pct(s.alvo)}</b> <span class="badge-s warn">próprio</span>`:`<span style="color:var(--text-muted)">${pct(P.margemAlvo)} global</span>`}</td>
+    <td><i class="fa-solid fa-chevron-right" style="color:var(--text-muted)"></i></td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">Nenhum setor</td></tr>';
+  document.getElementById('set-count').textContent = `${list.length} de ${SETORES.length} setores`;
+}
+
+// ── editor de setor: nome, categoria, cor, ícone, etapas, alvo ──
+const PALETA = ['#00a8cc','#0e7490','#2a9d8f','#16a34a','#6366f1','#8b5cf6','#ec4899','#e63946','#e8913a','#eab308','#a16207','#64748b'];
+const ICONES = [
+  ['fa-vial','tubo amostra'],['fa-vials','tubos bioquímica'],['fa-flask','frasco hormônio'],['fa-flask-vial','frasco tubo'],['fa-microscope','microscópio citologia'],
+  ['fa-dna','dna molecular genética'],['fa-droplet','sangue gota hematologia'],['fa-hand-holding-droplet','líquido fluido'],['fa-syringe','seringa vacina coleta'],['fa-seedling','alergia planta'],
+  ['fa-bacteria','bactéria bacteriologia'],['fa-virus','vírus'],['fa-viruses','vírus'],['fa-disease','fungo micologia'],['fa-shield-virus','imunologia defesa'],
+  ['fa-lungs','pulmão baciloscopia'],['fa-lungs-virus','pulmão vírus'],['fa-heart-pulse','coração coagulação'],['fa-brain','cérebro neuro'],['fa-bone','osso'],
+  ['fa-baby','bebê pezinho neonatal'],['fa-person-pregnant','gestante gravidez'],['fa-venus','feminino'],['fa-mars','masculino espermograma'],['fa-toilet','urina uroanálise'],
+  ['fa-poop','fezes parasitologia'],['fa-worm','parasita verme'],['fa-bug','inseto parasita'],['fa-tooth','dente'],['fa-eye','olho'],
+  ['fa-bolt','íons eletrólitos'],['fa-cubes-stacked','glicose açúcar'],['fa-temperature-half','temperatura'],['fa-pills','medicamento droga'],['fa-capsules','cápsula toxicologia'],
+  ['fa-prescription-bottle-medical','frasco remédio'],['fa-kit-medical','kit'],['fa-stethoscope','estetoscópio'],['fa-weight-scale','peso'],['fa-biohazard','risco biológico'],
+  ['fa-radiation','radiação'],['fa-magnet','magnético'],['fa-file-medical','laudo'],['fa-notes-medical','prontuário'],['fa-id-card','concurso admissional'],
+  ['fa-briefcase-medical','ocupacional'],['fa-user-doctor','médico'],['fa-hand-holding-medical','procedimento serviço'],['fa-building','laboratório apoio'],['fa-hospital','hospital'],
+  ['fa-truck-medical','transporte apoio'],['fa-staff-snake','saúde']
+];
+let setEd = null, setIdx = -1, icoQ = '';
+function openSetor(i){
+  setIdx = i; icoQ = '';
+  setEd = i >= 0 ? {...SETORES[i]} : {nome:'', cat:'interno', icon:'fa-vial', c:'#00a8cc', n:0};
+  openPanel({ mn: i >= 0 ? 'Editar setor' : 'Novo setor', title: i >= 0 ? setEd.nome : 'Cadastrar setor', body:'<div id="set-ed"></div>',
+    foot:`${i>=0?`<button class="btn" style="margin-right:auto;color:var(--red)" onclick="delSetor()"><i class="fa-solid fa-trash"></i>Excluir</button>`:''}<button class="btn" onclick="closeDrawer()">Cancelar</button><button class="btn pri" onclick="saveSetor()"><i class="fa-solid fa-floppy-disk"></i>Salvar setor</button>` });
+  renderSetorEd();
+}
+function setPrev(){
+  document.getElementById('set-prev').innerHTML = `<span class="tc-ic" style="--c:${setEd.c};width:46px;height:46px;font-size:19px"><i class="fa-solid ${setEd.icon}"></i></span>
+    <div><div style="font-weight:600">${setEd.nome || '<span style="color:var(--text-muted)">Nome do setor</span>'}</div><div style="margin-top:4px">${catBadge(setEd.cat)}</div></div>
+    <span class="tag" style="margin-left:auto"><i class="fa-solid ${setEd.icon}" style="color:${setEd.c}"></i>${setEd.nome || 'SETOR'}</span>`;
+}
+function renderSetorEd(){
+  document.getElementById('set-ed').innerHTML = `
+    <div class="set-prev" id="set-prev"></div>
+    <div class="sec-t"><i class="fa-solid fa-font"></i>Nome</div>
+    <div class="inp"><input class="txt" id="se-nome" value="${setEd.nome}" placeholder="Ex.: IMUNOLOGIA" oninput="setEd.nome=this.value.toUpperCase();setPrev()" style="text-transform:uppercase"></div>
+    <div class="sec-t"><i class="fa-solid fa-shapes"></i>Categoria</div>
+    <div class="opt-cards">${Object.entries(CATS).map(([k,c]) => `<button class="oc ${setEd.cat===k?'on':''}" onclick="setEd.cat='${k}';if('${k}'==='servico'){setEd.coleta=false;setEd.triagem=false}renderSetorEd()"><span class="po-ic" style="--c:${c.c}"><i class="fa-solid ${c.ic}"></i></span><span><b>${c.t}</b><small>${c.d}</small></span><i class="fa-solid fa-circle-check ck"></i></button>`).join('')}</div>
+    <div class="sec-t"><i class="fa-solid fa-palette"></i>Cor</div>
+    <div class="swatches">${PALETA.map(c => `<button class="sw ${setEd.c===c?'on':''}" style="--c:${c}" title="${c}" onclick="setEd.c='${c}';renderSetorEd()"></button>`).join('')}
+      <label class="sw sw-custom ${PALETA.includes(setEd.c)?'':'on'}" title="Cor personalizada" style="--c:${setEd.c}"><input type="color" value="${setEd.c}" oninput="setEd.c=this.value;setPrev();document.querySelectorAll('.ig.on').forEach(x=>x.style.setProperty('--c',this.value))" onchange="renderSetorEd()"><i class="fa-solid fa-eye-dropper"></i></label></div>
+    <div class="sec-t"><i class="fa-solid fa-icons"></i>Ícone</div>
+    <div class="pop-search" style="margin:0 0 8px"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Buscar ícone (ex.: sangue, urina, vírus)…" value="${icoQ}" oninput="icoQ=this.value;renderIcoGrid()"></div>
+    <div class="icon-grid" id="ico-grid"></div>
+    <div class="sec-t"><i class="fa-solid fa-route"></i>Etapas padrão dos exames</div>
+    <div class="casc">${Object.entries(ETAPAS).map(([k,x]) => `<div class="casc-r"><div class="lft"><i class="fa-solid ${x.ic}"></i><div>Passa por ${x.t.toLowerCase()}<div class="s">custo de ${x.t.toLowerCase()} entra no preço</div></div></div><button class="switch lt ${setEd[k]!==false?'on':''}" onclick="setEd['${k}']=!(setEd['${k}']!==false);this.classList.toggle('on')"></button></div>`).join('')}</div>
+    <div class="sec-t"><i class="fa-solid fa-bullseye"></i>Margem alvo</div>
+    <div class="casc"><div class="casc-r"><div class="lft"><i class="fa-solid fa-sliders"></i><div>Usar alvo próprio<div class="s">senão usa o global (${pct(P.margemAlvo)})</div></div></div><button class="switch lt ${setEd.alvo!=null?'on':''}" onclick="setEd.alvo = setEd.alvo!=null ? undefined : P.margemAlvo; renderSetorEd()"></button></div></div>
+    ${setEd.alvo!=null?`<div style="margin-top:10px">${fld('se-alvo','Margem alvo do setor',+(setEd.alvo*100).toFixed(1),{suf:'%',on:'setEd.alvo=(+this.value||0)/100'})}</div>`:''}`;
+  setPrev(); renderIcoGrid();
+}
+function renderIcoGrid(){
+  const q = icoQ.toLowerCase().trim();
+  const list = ICONES.filter(([ic,k]) => !q || (ic+' '+k).toLowerCase().includes(q));
+  document.getElementById('ico-grid').innerHTML = list.map(([ic,k]) => `<button class="ig ${setEd.icon===ic?'on':''}" style="--c:${setEd.c}" title="${k}" onclick="setEd.icon='${ic}';document.querySelectorAll('.ig').forEach(x=>x.classList.remove('on'));this.classList.add('on');setPrev()"><i class="fa-solid ${ic}"></i></button>`).join('')
+    || '<div class="pop-empty" style="grid-column:1/-1"><i class="fa-solid fa-icons"></i>Nenhum ícone encontrado</div>';
+}
+function saveSetor(){
+  const nome = (setEd.nome || '').trim();
+  if (!nome){ document.getElementById('se-nome').focus(); toast('Informe o nome do setor'); return; }
+  if (SETORES.some((s,i) => s.nome === nome && i !== setIdx)){ toast('Já existe um setor com esse nome'); return; }
+  const old = setIdx >= 0 ? SETORES[setIdx].nome : null;
+  setEd.nome = nome;
+  if (setIdx >= 0) SETORES[setIdx] = setEd; else SETORES.push(setEd);
+  if (old && old !== nome) EX.forEach(e => { if (e.setor === old) e.setor = nome; });
+  closeDrawer(); renderSetores(); renderTable(); renderSim(); renderPend();
+  toast(`Setor ${nome} ${setIdx >= 0 ? 'atualizado' : 'criado'}`);
+}
+function delSetor(){
+  const s = SETORES[setIdx], uso = EX.filter(e => e.setor === s.nome).length;
+  if (uso || s.n){ toast(`${s.nome} tem exames vinculados: mova-os antes de excluir`); return; }
+  SETORES.splice(setIdx, 1); closeDrawer(); renderSetores(); toast('Setor excluído');
+}
+
+renderReag(); renderFixos(); renderApoio(); renderVinc(); renderTabCards(); renderTabDetail(); renderWz(); renderUsers(); renderGroups(); renderParams(); renderSetores();
+renderTable(); renderSim(); renderPend();
+</script>
+</body>
+</html>

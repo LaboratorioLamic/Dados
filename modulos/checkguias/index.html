@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist de Guias</title>
+    <!-- Bootstrap CSS for elegant layout -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background-color: #162036; /* Navy blue */
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header .unit-name {
+            font-size: 0.9rem;
+            font-weight: 300;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+        .change-unit-btn {
+            background-color: #ffffff; /* White */
+            border: 1px solid #ffffff;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #001f3f; /* Navy blue text */
+            display: inline-block;
+        }
+        .change-unit-btn:hover {
+            background-color: #e6e6e6;
+            border-color: #e6e6e6;
+            color: #001f3f;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .form-horizontal .form-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: center;
+            vertical-align: middle;
+            background-color: white;
+        }
+        .icons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .icons i {
+            cursor: pointer;
+            color: #6c757d;
+            transition: color 0.2s;
+        }
+        .icons i:hover {
+            color: #001f3f; /* Navy blue */
+        }
+        .pagination {
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination .page-link {
+            color: #001f3f; /* Navy blue */
+            border: none;
+            padding: 10px 15px;
+            margin: 0 5px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #162036; /* Navy blue */
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .pagination .page-link:hover {
+            background-color: #003087; /* Slightly lighter navy */
+            color: white;
+        }
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background-color: #162036; /* Navy blue */
+            border-color: #001f3f;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background-color: #003087; /* Slightly lighter navy */
+            border-color: #003087;
+        }
+        /* Custom checkbox styling */
+        .custom-checkbox {
+            position: relative;
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+        }
+        .custom-checkbox input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .custom-checkbox .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 24px;
+            width: 24px;
+            background-color: #fff;
+            border: 2px solid #001f3f; /* Navy blue */
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .custom-checkbox input:checked ~ .checkmark {
+            background-color: #162036; /* Navy blue */
+        }
+        .custom-checkbox .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+        .custom-checkbox input:checked ~ .checkmark:after {
+            display: block;
+        }
+        .custom-checkbox .checkmark:after {
+            left: 8px;
+            top: 4px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        /* Editable fields styling */
+        .editable-field {
+            background: none;
+            border: none;
+            text-align: center;
+            width: 100%;
+            padding: 0;
+            font-size: 16px;
+        }
+        
+        .editable-field:focus {
+            outline: none;
+            border-bottom: 1px solid #001f3f;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            display: none;
+            margin-top: 10px;
+        }
+        /* Modal styling */
+        .modal-content {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .modal-header {
+            background-color: #162036; /* Navy blue */
+            color: white;
+            border-radius: 10px 10px 0 0;
+        }
+        .modal-footer .btn-primary {
+            background-color: #162036;
+            border-color: #001f3f;
+        }
+        .modal-footer .btn-primary:hover {
+            background-color: #003087;
+            border-color: #003087;
+        }
+        #nome {
+    width: 500px;
+    font-size: 16px;
+    padding: 10px;
+}
+    </style>
+</head>
+<body>
+    <!-- Unit selection modal -->
+    <div class="modal fade" id="unitModal" tabindex="-1" aria-labelledby="unitModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="unitModalLabel">Selecionar Unidade</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <select id="unitSelect" class="form-select">
+                        <option value="">Selecione uma Unidade</option>
+                        <option value="01 - Unidade NTO">01 - Unidade NTO</option>
+                        <option value="03 - Unidade Crato">03 - Unidade Crato</option>
+                        <option value="04 - Unidade Vacinas">04 - Unidade Vacinas</option>
+                        <option value="05 - Unidade Novo Juazeiro">05 - Unidade Novo Juazeiro</option>
+                        <option value="06 - Unidade Milagres">06 - Unidade Milagres</option>
+                        <option value="09 - Unidade Barro">09 - Unidade Barro</option>
+                        <option value="10 - Unidade Office Cariri">10 - Unidade Office Cariri</option>
+                        <option value="11 - Unidade Canal do Cliente">11 - Unidade Canal do Cliente</option>
+                        <option value="12 - Unidade Caririaçu">12 - Unidade Caririaçu</option>
+                        <option value="13 - Unidade Campos Sales">13 - Unidade Campos Sales</option>
+                        <option value="14 - Unidade Nova Olinda">14 - Unidade Nova Olinda</option>
+                        <option value="16 - Unidade Araripe">16 - Unidade Araripe</option>
+                        <option value="23 - Unidade Salesianos">23 - Unidade Salesianos</option>
+                        <option value="62 - Unidade Clemir Arrais">62 - Unidade Clemir Arrais</option>
+                        <option value="88 - Unidade Unicardio">88 - Unidade Unicardio</option>
+                        <option value="97 - Unidade Endoclinic">97 - Unidade Endoclinic</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="selectUnit()">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Checklist de Guias</h1>
+            <div id="unitName" class="unit-name"></div>
+            <button class="btn change-unit-btn" onclick="showUnitModal()">Alterar Unidade</button>
+        </div>
+
+        <!-- Form to add new entry -->
+        <div class="form-container" id="formContainer" style="display: none;">
+            <form id="addForm" class="form-horizontal">
+                <div class="form-group mb-3">
+                    <div>
+                        <label for="datetime">Data/Hora</label>
+                        <input type="text" id="datetime" class="form-control" placeholder="Data/Hora" disabled>
+                    </div>
+                    <div>
+                        <label for="convenio">Convênio</label>
+                        <select id="convenio" class="form-select">
+                            <option value="">Selecione Convênio</option>
+                            <option value="Unimed">Unimed</option>
+                            <option value="Afagu">Afagu</option>
+                            <option value="Issec">Issec</option>
+                            <option value="Cassi">Cassi</option>
+                            <option value="Bradesco">Bradesco</option>
+                            <option value="Hapvida">Hapvida</option>
+                            <option value="Caixa">Caixa</option>
+                            <option value="Sulamerica">Sulamerica</option>
+                            <option value="Acefaz">Acefaz</option>
+                            <option value="Cafaz">Cafaz</option>
+                            <option value="Camed">Camed</option>
+                            <option value="Faschesf">Faschesf</option>
+                            <option value="Famed">Famed</option>
+                            <option value="Geap">Geap</option>
+                            <option value="Amil">Amil</option>
+                            <option value="Postal Saúde">Postal Saúde</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="nome">Nome</label>
+                        <input type="text" id="nome" class="form-control" placeholder="Nome">
+                    </div>
+                    <div>
+                        <label for="nascimento">Data de Nascimento</label>
+                        <input type="date" id="nascimento" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-4">Adicionar</button>
+                </div>
+                <div id="errorMessage" class="error-message">Por favor, preencha todos os campos.</div>
+            </form>
+        </div>
+
+        <!-- List of cards -->
+        <div id="cardList" class="row" style="display: none;"></div>
+
+        <!-- Pagination -->
+        <nav style="display: none;">
+            <ul id="pagination" class="pagination"></ul>
+        </nav>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        const ITEMS_PER_PAGE = 10;
+        let currentPage = 1;
+        let currentUnit = '';
+        let entries = {};
+        const API_KEY = '$2a$10$QGwZoi2jshSJxqoZ3yTH4eWuBTwjUnC5iiMaF/98AiPI8tu6pMPiO';
+        const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
+        const binId = '68c083f2ae596e708fe8a2f3';
+        let useLocalStorage = false;
+
+        // Show unit selection modal on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const modal = new bootstrap.Modal(document.getElementById('unitModal'), { backdrop: 'static', keyboard: false });
+            modal.show();
+        });
+
+        // Show unit selection modal
+        function showUnitModal() {
+            const modal = new bootstrap.Modal(document.getElementById('unitModal'), { backdrop: 'static', keyboard: false });
+            document.getElementById('unitSelect').value = '';
+            modal.show();
+        }
+
+        // Fetch entries from jsonbin.io or localStorage
+        async function fetchEntries() {
+            if (useLocalStorage) {
+                entries = JSON.parse(localStorage.getItem('checklistEntries')) || {};
+                return;
+            }
+
+            try {
+                const response = await fetch(`${JSONBIN_URL}/${binId}/latest`, {
+                    headers: {
+                        'X-Master-Key': API_KEY
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                entries = data.record || {};
+            } catch (error) {
+                console.error('Error fetching entries:', error);
+                alert(`Erro ao carregar os dados: ${error.message}. Usando armazenamento local.`);
+                useLocalStorage = true;
+                entries = JSON.parse(localStorage.getItem('checklistEntries')) || {};
+            }
+        }
+
+        // Save entries to jsonbin.io or localStorage
+        async function saveEntries() {
+            if (useLocalStorage) {
+                localStorage.setItem('checklistEntries', JSON.stringify(entries));
+                return;
+            }
+
+            try {
+                const response = await fetch(`${JSONBIN_URL}/${binId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify(entries)
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error saving entries:', error);
+                alert(`Erro ao salvar os dados: ${error.message}. Usando armazenamento local.`);
+                useLocalStorage = true;
+                localStorage.setItem('checklistEntries', JSON.stringify(entries));
+            }
+        }
+
+        // Select unit and load checklist
+        async function selectUnit() {
+            const unitSelect = document.getElementById('unitSelect');
+            currentUnit = unitSelect.value;
+            if (currentUnit) {
+                await fetchEntries();
+                document.getElementById('unitName').textContent = currentUnit;
+                document.getElementById('formContainer').style.display = 'block';
+                document.getElementById('cardList').style.display = 'block';
+                document.querySelector('nav').style.display = 'block';
+                bootstrap.Modal.getInstance(document.getElementById('unitModal')).hide();
+                currentPage = 1; // Reset to first page when changing unit
+                renderCards();
+                document.getElementById('datetime').value = getCurrentDatetime();
+            }
+        }
+
+        // Function to get current datetime
+        function getCurrentDatetime() {
+            const now = new Date();
+            return now.toLocaleString('pt-BR');
+        }
+
+        // Render cards for current page and unit
+        function renderCards() {
+            const cardList = document.getElementById('cardList');
+            cardList.innerHTML = '';
+
+            // Get entries for the current unit
+            const unitEntries = entries[currentUnit] || [];
+            unitEntries.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+            const start = (currentPage - 1) * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            const paginatedEntries = unitEntries.slice(start, end);
+
+            paginatedEntries.forEach((entry, index) => {
+                const globalIndex = start + index;
+                const card = document.createElement('div');
+                card.className = 'col-md-12 mb-3';
+                card.innerHTML = `
+                    <div class="card">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" class="editable-field" value="${entry.datetime}" readonly></td>
+                                    <td>
+                                        <select class="editable-field convenio-select" onchange="updateEntry(${globalIndex}, 'convenio', this.value)">
+                                            <option value="Unimed" ${entry.convenio === 'Unimed' ? 'selected' : ''}>Unimed</option>
+                                            <option value="Afagu" ${entry.convenio === 'Afagu' ? 'selected' : ''}>Afagu</option>
+                                            <option value="Issec" ${entry.convenio === 'Issec' ? 'selected' : ''}>Issec</option>
+                                            <option value="Cassi" ${entry.convenio === 'Cassi' ? 'selected' : ''}>Cassi</option>
+                                            <option value="Bradesco" ${entry.convenio === 'Bradesco' ? 'selected' : ''}>Bradesco</option>
+                                            <option value="Hapvida" ${entry.convenio === 'Hapvida' ? 'selected' : ''}>Hapvida</option>
+                                            <option value="Caixa" ${entry.convenio === 'Caixa' ? 'selected' : ''}>Caixa</option>
+                                            <option value="Sulamerica" ${entry.convenio === 'Sulamerica' ? 'selected' : ''}>Sulamerica</option>
+                                            <option value="Acefaz" ${entry.convenio === 'Acefaz' ? 'selected' : ''}>Acefaz</option>
+                                            <option value="Cafaz" ${entry.convenio === 'Cafaz' ? 'selected' : ''}>Cafaz</option>
+                                            <option value="Camed" ${entry.convenio === 'Camed' ? 'selected' : ''}>Camed</option>
+                                            <option value="Faschesf" ${entry.convenio === 'Faschesf' ? 'selected' : ''}>Faschesf</option>
+                                            <option value="Famed" ${entry.convenio === 'Famed' ? 'selected' : ''}>Famed</option>
+                                            <option value="Geap" ${entry.convenio === 'Geap' ? 'selected' : ''}>Geap</option>
+                                            <option value="Amil" ${entry.convenio === 'Amil' ? 'selected' : ''}>Amil</option>
+                                            <option value="Postal Saúde" ${entry.convenio === 'Postal Saúde' ? 'selected' : ''}>Postal Saúde</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="text" class="editable-field" value="${entry.nome}" onblur="updateEntry(${globalIndex}, 'nome', this.value)"></td>
+                                    <td><input type="date" class="editable-field" value="${entry.nascimento}" onblur="updateEntry(${globalIndex}, 'nascimento', this.value)"></td>
+                                    <td>
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" ${entry.checkbox ? 'checked' : ''} onchange="updateEntry(${globalIndex}, 'checkbox', this.checked)">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                    <td class="icons">
+                                        <i class="fas fa-trash" onclick="deleteEntry(${globalIndex})"></i>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                cardList.appendChild(card);
+            });
+
+            renderPagination();
+        }
+
+        // Render pagination
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            const unitEntries = entries[currentUnit] || [];
+            const totalPages = Math.ceil(unitEntries.length / ITEMS_PER_PAGE);
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+            // Adjust startPage if endPage reaches totalPages
+            if (endPage === totalPages) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})">&laquo;</a>`;
+            pagination.appendChild(prevLi);
+
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+
+            // Last page button
+            if (endPage < totalPages) {
+                const lastLi = document.createElement('li');
+                lastLi.className = 'page-item';
+                lastLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${totalPages})">Última</a>`;
+                pagination.appendChild(lastLi);
+            }
+
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})">&raquo;</a>`;
+            pagination.appendChild(nextLi);
+        }
+
+        // Change page
+        function changePage(page) {
+            const unitEntries = entries[currentUnit] || [];
+            const totalPages = Math.ceil(unitEntries.length / ITEMS_PER_PAGE);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                renderCards();
+            }
+        }
+
+        // Add new entry
+        document.getElementById('addForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const convenio = document.getElementById('convenio').value;
+            const nome = document.getElementById('nome').value;
+            const nascimento = document.getElementById('nascimento').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Validate all fields
+            if (!convenio || !nome || !nascimento) {
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            errorMessage.style.display = 'none';
+
+            const datetime = getCurrentDatetime();
+            const checkbox = false; // Checkbox starts unchecked
+
+            if (!entries[currentUnit]) {
+                entries[currentUnit] = [];
+            }
+            entries[currentUnit].push({ datetime, convenio, nome, nascimento, checkbox });
+            await saveEntries();
+            clearForm();
+            renderCards();
+        });
+
+        // Update entry
+        async function updateEntry(index, field, value) {
+            if (field === 'nome' && !value.trim()) return; // Prevent empty name
+            if (field === 'nascimento' && !value) return; // Prevent empty date
+            entries[currentUnit][index][field] = value;
+            await saveEntries();
+            renderCards();
+        }
+
+        // Delete entry
+        async function deleteEntry(index) {
+            if (confirm('Tem certeza que deseja excluir?')) {
+                entries[currentUnit].splice(index, 1);
+                await saveEntries();
+                renderCards();
+            }
+        }
+
+        // Clear form (keep convenio)
+        function clearForm() {
+            document.getElementById('nome').value = '';
+            document.getElementById('nascimento').value = '';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('datetime').value = getCurrentDatetime();
+        }
+    </script>
+</body>
+</html>
