@@ -751,8 +751,23 @@ function updateSuggestedDate() {
     const sugDiv = document.getElementById('sugestao-data');
 
     sugDiv.classList.add('hidden');
-    document.getElementById('reg-data').removeAttribute('min');
+    // Recalcula o `min` sem tirá-lo antes: este código roda no `change` da própria
+    // data, e no Chrome mexer no `min` de um input de data em edição zera os
+    // segmentos (o ano some enquanto o usuário digita). Só toca se mudar de fato.
+    const dataEl = document.getElementById('reg-data');
+    _regDataMinNovo = '';
+    try { _updateSuggestedDateCore(patId, vId, dose); }
+    finally {
+        if ((dataEl.getAttribute('min') || '') !== _regDataMinNovo) {
+            if (_regDataMinNovo) dataEl.min = _regDataMinNovo;
+            else dataEl.removeAttribute('min');
+        }
+    }
+}
 
+let _regDataMinNovo = '';
+
+function _updateSuggestedDateCore(patId, vId, dose) {
     if (!patId || !vId || !dose || dose.includes('1ª') || dose === 'Dose Zero') return;
 
     const v = vaccines.find(x => String(x.id) === String(vId));
@@ -867,7 +882,7 @@ function _setSuggestedDate(isoDate) {
     spanEl.innerText = isoDate.split('-').reverse().join('/');
     spanEl.setAttribute('data-iso', isoDate);
     document.getElementById('span-sugestao-excepcional').innerText = excIso.split('-').reverse().join('/');
-    document.getElementById('reg-data').min = excIso;
+    _regDataMinNovo = excIso;
     document.getElementById('sugestao-data').classList.remove('hidden');
 }
 
@@ -2460,4 +2475,18 @@ function saveRecord(e) {
     const _oppElSave = document.getElementById('agendaview-oportunidades');
     if (_oppElSave && !_oppElSave.classList.contains('hidden') && typeof renderOportunidades === 'function') renderOportunidades();
     showNotification('Agendamento salvo com sucesso!', 'success');
+}
+
+// "Data Agendada": o `change` do input de data dispara a cada segmento digitado,
+// inclusive com valor vazio ou ano parcial (ex.: "0002" ao digitar "0"). Recalcular
+// nesses momentos mexe no campo e zera a digitação. Só reage a data completa e
+// plausível; no blur, roda uma vez com o valor final.
+let _regDataUltimo = null;
+function onRegDataChange(el, final) {
+    const v = el.value || '';
+    const ano = Number(v.slice(0, 4));
+    if (!v || ano < 1900) return;
+    if (final && v === _regDataUltimo) return;
+    _regDataUltimo = v;
+    updateIdadeField(); autoFillVaccine(true); onLoteChange();
 }

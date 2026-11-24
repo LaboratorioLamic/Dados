@@ -301,8 +301,10 @@ function selecionarLocalAplicacao(valor) {
 // fecha junto para nunca ficar deslocado do botão. Captura na fase de captura
 // para pegar o scroll do corpo do modal, que não borbulha até window.
 ['scroll', 'resize'].forEach(evt =>
-    window.addEventListener(evt, () => {
-        document.querySelectorAll('[id$="-local-pop"]').forEach(p => p.classList.add('hidden'));
+    window.addEventListener(evt, (e) => {
+        // Rolar a própria lista do popover não conta.
+        if (e.target && e.target.closest && e.target.closest('[id$="-local-pop"], [id$="-unidade-pop"]')) return;
+        document.querySelectorAll('[id$="-local-pop"], [id$="-unidade-pop"]').forEach(p => p.classList.add('hidden'));
     }, true)
 );
 
@@ -316,7 +318,10 @@ function getUnidadeAplicacao() {
     // Só vale quando o local pede unidade; Domiciliar nunca grava unidade.
     if (!localAplicacaoExigeUnidade(getLocalAplicacao())) return null;
     const v = _unidadeEl()?.value || '';
-    return v ? Number(v) : null;
+    if (!v) return null;
+    // Ids do RH são chaves de texto (ex.: "-Nx..."); Number() viraria NaN e a
+    // unidade escolhida sumiria. Só ids antigos, puramente numéricos, viram número.
+    return /^\d+$/.test(v) ? Number(v) : v;
 }
 
 function setUnidadeAplicacao(id) {
@@ -326,6 +331,93 @@ function setUnidadeAplicacao(id) {
     // opção na lista, o select cairia para vazio silenciosamente.
     if (typeof populateUnidadeSelects === 'function') populateUnidadeSelects(id);
     el.value = id != null && id !== '' ? String(id) : '';
+    _renderUnidadeBotao();
+}
+
+// ── Popover da unidade: o <select> oculto guarda o valor; o botão só exibe ──
+function _renderUnidadeBotao(prefixo) {
+    const p = prefixo || _endPrefixo;
+    const sel = document.getElementById(p + '-unidade');
+    const txt = document.getElementById(p + '-unidade-btn-texto');
+    const ico = document.getElementById(p + '-unidade-btn-icone');
+    if (!sel || !txt) return;
+    const opt = sel.value ? sel.options[sel.selectedIndex] : null;
+    txt.textContent = opt ? opt.textContent : (sel.options[0]?.textContent || 'Selecione a unidade...');
+    txt.className = 'flex-1 font-bold truncate ' + (opt ? 'text-navy-900' : 'text-slate-400');
+    if (ico) ico.className = 'fas fa-hospital text-sm w-4 text-center shrink-0 ' + (opt ? 'text-clinic-600' : 'text-slate-300');
+}
+
+function _renderUnidadeOpcoes() {
+    const pop = document.getElementById(_endPrefixo + '-unidade-pop');
+    const sel = _unidadeEl();
+    if (!pop || !sel) return;
+    const opts = Array.from(sel.options).filter(o => o.value);
+    if (!opts.length) {
+        pop.innerHTML = `<div class="px-4 py-6 text-center text-[11px] font-bold text-slate-400">
+            <i class="fas fa-hospital text-slate-300 text-lg mb-1 block"></i>Nenhuma unidade cadastrada</div>`;
+        return;
+    }
+    const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    pop.innerHTML = `<div class="max-h-72 overflow-y-auto overscroll-contain">` + opts.map(o => {
+        const ativo = o.value === sel.value;
+        const m = o.textContent.match(/^\s*(\d+)\s*[-–.]\s*(.*)$/);
+        const num = m ? m[1] : '';
+        const nome = (m ? m[2] : o.textContent).replace(/^unidade\s+/i, '');
+        return `<button type="button" data-id="${esc(o.value)}" onmousedown="event.preventDefault()" onclick="selecionarUnidade(this.dataset.id)"
+            class="w-full flex items-center gap-3 px-3 py-2 text-left transition border-b border-slate-100 last:border-0 ${ativo ? 'bg-clinic-50' : 'hover:bg-slate-50'}">
+            <span class="h-8 w-8 rounded-lg ${ativo ? 'bg-clinic-600 text-white' : 'bg-slate-100 text-slate-500'} flex items-center justify-center shrink-0 text-[11px] font-black">
+                ${num ? esc(num) : '<i class="fas fa-hospital text-xs"></i>'}
+            </span>
+            <span class="flex-1 min-w-0 text-[12px] font-black text-navy-900 truncate">${esc(nome)}</span>
+            ${ativo ? '<i class="fas fa-check text-clinic-600 text-xs shrink-0"></i>' : ''}
+        </button>`;
+    }).join('') + `</div>`;
+}
+
+function _posicionarUnidadePop() {
+    const pop = document.getElementById(_endPrefixo + '-unidade-pop');
+    const btn = document.getElementById(_endPrefixo + '-unidade-btn');
+    if (!pop || !btn) return;
+    // Vai para o <body>: dentro do modal (transform/overflow) o `fixed` fica
+    // relativo ao card e o popover nasce deslocado/cortado.
+    if (pop.parentElement !== document.body) document.body.appendChild(pop);
+    // Clicar na barra de rolagem não pode tirar o foco do botão (o blur fecharia).
+    pop.onmousedown = e => e.preventDefault();
+    const r = btn.getBoundingClientRect();
+    const margem = 8;
+    const lista = pop.firstElementChild;
+    if (lista) lista.style.maxHeight = '';
+    const natural = pop.scrollHeight;
+    const espAbaixo = window.innerHeight - r.bottom - 4 - margem;
+    const espAcima = r.top - 4 - margem;
+    // Abre embaixo se couber; senão, no lado com mais espaço, limitando a altura.
+    const abaixo = natural <= espAbaixo || espAbaixo >= espAcima;
+    const alt = Math.min(natural, Math.max(120, abaixo ? espAbaixo : espAcima));
+    if (lista) lista.style.maxHeight = `${alt}px`;
+    pop.style.left  = `${r.left}px`;
+    pop.style.width = `${r.width}px`;
+    pop.style.top   = abaixo ? `${r.bottom + 4}px` : `${Math.max(margem, r.top - 4 - alt)}px`;
+}
+
+function toggleUnidadePop() {
+    const pop = document.getElementById(_endPrefixo + '-unidade-pop');
+    if (!pop) return;
+    if (pop.classList.contains('hidden')) {
+        _renderUnidadeOpcoes();
+        pop.classList.remove('hidden');
+        _posicionarUnidadePop();
+    } else pop.classList.add('hidden');
+}
+
+function fecharUnidadePop() {
+    document.getElementById(_endPrefixo + '-unidade-pop')?.classList.add('hidden');
+}
+
+function selecionarUnidade(id) {
+    const el = _unidadeEl();
+    if (el) el.value = id;
+    _renderUnidadeBotao();
+    fecharUnidadePop();
 }
 
 // Mostra/esconde os campos de endereço conforme o local. Enquanto nada foi
@@ -340,6 +432,7 @@ function aplicarLocalAplicacao() {
     const pedeUnidade = localAplicacaoExigeUnidade(getLocalAplicacao());
     if (unidadeWrap) unidadeWrap.classList.toggle('hidden', !pedeUnidade);
     if (!pedeUnidade && _unidadeEl()) _unidadeEl().value = '';
+    _renderUnidadeBotao();
     // Taxa de deslocamento só na visita domiciliar. Saindo dela o valor é
     // zerado (não só oculto) para não sobrar cobrança de uma escolha desfeita.
     const taxaWrap = document.getElementById(_endPrefixo + '-taxa-wrap');
@@ -734,7 +827,7 @@ function validarEnderecoObrigatorio(status) {
     if (!localAplicacaoExigeEndereco(local)) {
         if (localAplicacaoExigeUnidade(local) && !getUnidadeAplicacao()) {
             showNotification('Selecione a <b>Unidade de Coleta</b> onde a vacina será aplicada.', 'error');
-            _unidadeEl()?.focus();
+            document.getElementById(_endPrefixo + '-unidade-btn')?.focus();
             return false;
         }
         return true;

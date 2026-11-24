@@ -2043,7 +2043,7 @@
                 <!-- Linha 2: 4 campos -->
                 <div class="col-span-1 md:col-span-1">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Data Agendada *</label>
-                    <input type="date" id="reg-data" required onchange="updateIdadeField(); autoFillVaccine(true); onLoteChange();" class="w-full border border-clinic-300 rounded-lg py-2 px-3 ring-2 ring-clinic-100 focus:ring-clinic-500 outline-none font-bold text-sm">
+                    <input type="date" id="reg-data" required onchange="onRegDataChange(this)" onblur="onRegDataChange(this, true)" class="w-full border border-clinic-300 rounded-lg py-2 px-3 ring-2 ring-clinic-100 focus:ring-clinic-500 outline-none font-bold text-sm">
                     <p id="sugestao-data" class="text-[9px] text-clinic-600 mt-1 hidden"><i class="fas fa-magic"></i> Aprazamento sugerido: <span id="span-sugestao-data" class="font-bold cursor-pointer underline" onclick="applySuggestedDate()"></span><span class="block text-amber-600"><i class="fas fa-hourglass-half"></i> Validade excepcional a partir de: <span id="span-sugestao-excepcional" class="font-bold"></span></span></p>
                 </div>
                 <div class="col-span-1 md:col-span-1">
@@ -2198,9 +2198,16 @@
                         <!-- Unidade de coleta: só existe quando a aplicação é no laboratório -->
                         <div class="col-span-1 md:col-span-2 hidden" id="reg-unidade-wrap">
                             <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Unidade de Coleta <span class="text-amber-500" title="Obrigatorio para o status Agendado">*</span></label>
-                            <select id="reg-unidade" class="w-full border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-clinic-500 outline-none font-bold text-sm">
+                            <select id="reg-unidade" class="hidden" tabindex="-1" aria-hidden="true">
                                 <option value="">Selecione a unidade...</option>
                             </select>
+                            <button type="button" id="reg-unidade-btn" onclick="toggleUnidadePop()" onblur="setTimeout(fecharUnidadePop, 150)"
+                                class="w-full flex items-center gap-2.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg py-2 px-3 text-sm text-left transition focus:ring-2 focus:ring-clinic-500 outline-none">
+                                <i id="reg-unidade-btn-icone" class="fas fa-hospital text-slate-300 text-sm w-4 text-center shrink-0"></i>
+                                <span id="reg-unidade-btn-texto" class="flex-1 font-bold truncate text-slate-400">Selecione a unidade...</span>
+                                <i class="fas fa-chevron-down text-slate-300 text-[10px] shrink-0"></i>
+                            </button>
+                            <div id="reg-unidade-pop" class="hidden fixed z-[500] bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden"></div>
                             <p class="text-[9px] text-slate-400 font-bold mt-1"><i class="fas fa-hospital mr-1"></i>Define em qual unidade a vacina será aplicada.</p>
                         </div>
                         <!-- Taxa de deslocamento: só existe na visita domiciliar -->
@@ -2888,9 +2895,16 @@
                     <!-- Unidade de coleta: só existe quando a aplicação é no laboratório -->
                     <div class="col-span-1 md:col-span-2 hidden" id="grpend-unidade-wrap">
                         <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Unidade de Coleta <span class="text-amber-500" title="Obrigatorio para o status Agendado">*</span></label>
-                        <select id="grpend-unidade" class="w-full border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-clinic-500 outline-none font-bold text-sm">
+                        <select id="grpend-unidade" class="hidden" tabindex="-1" aria-hidden="true">
                             <option value="">Selecione a unidade...</option>
                         </select>
+                        <button type="button" id="grpend-unidade-btn" onclick="toggleUnidadePop()" onblur="setTimeout(fecharUnidadePop, 150)"
+                            class="w-full flex items-center gap-2.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg py-2 px-3 text-sm text-left transition focus:ring-2 focus:ring-clinic-500 outline-none">
+                            <i id="grpend-unidade-btn-icone" class="fas fa-hospital text-slate-300 text-sm w-4 text-center shrink-0"></i>
+                            <span id="grpend-unidade-btn-texto" class="flex-1 font-bold truncate text-slate-400">Selecione a unidade...</span>
+                            <i class="fas fa-chevron-down text-slate-300 text-[10px] shrink-0"></i>
+                        </button>
+                        <div id="grpend-unidade-pop" class="hidden fixed z-[500] bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden"></div>
                         <p class="text-[9px] text-slate-400 font-bold mt-1"><i class="fas fa-hospital mr-1"></i>Vale para todas as vacinas do grupo.</p>
                     </div>
                     <!-- Taxa de deslocamento: cobrada uma vez pela visita -->

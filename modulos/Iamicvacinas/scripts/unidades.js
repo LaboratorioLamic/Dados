@@ -100,6 +100,7 @@ function populateUnidadeSelects(incluirId) {
         // Restaura a escolha anterior quando ela ainda existe na lista.
         if (anterior && lista.some(u => String(u.id) === String(anterior))) sel.value = anterior;
         else if (doRh && String(anterior) === String(incluirId)) sel.value = doRh;
+        if (typeof _renderUnidadeBotao === 'function') _renderUnidadeBotao(selId.replace(/-unidade$/, ''));
     });
 }
 
