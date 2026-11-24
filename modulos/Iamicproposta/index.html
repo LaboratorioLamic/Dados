@@ -433,6 +433,7 @@
   <!-- Firebase (compat) — mesmo banco do COMERCIAL LAMIC e do L2L -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
@@ -445,28 +446,32 @@
     //   grava propostasCliente/{id}   propostas salvas
     //         config/propostaTexto    texto de apresentação padrão do PDF
     // O acesso é controlado pela tela principal (Dados): não há senha aqui.
+    // Banco: applamic, nó /comercial. Custos e gravação exigem a permissão do Comercial no Dados.
     // O custo segue a mesma regra do Comercial (comercial/script/calc.js):
     //   custo = custo do teste (apoio > reagente > manual) + fixos + extras
     // ═══════════════════════════════════════════════════════════════
 
     const firebaseConfig = {
-      apiKey: 'AIzaSyBD7XDmLJoc-_0Kb_53emSK7AHRl9W3C_s',
-      authDomain: 'precificacao-73fc3.firebaseapp.com',
-      databaseURL: 'https://precificacao-73fc3-default-rtdb.firebaseio.com',
-      projectId: 'precificacao-73fc3',
-      storageBucket: 'precificacao-73fc3.firebasestorage.app',
-      messagingSenderId: '432300497351',
-      appId: '1:432300497351:web:4d23dac46edd141724e1e2'
+      apiKey: 'AIzaSyD38STN_vG08tlYJBXFtRUWtlcyRexw7Mc',
+      authDomain: 'applamic.firebaseapp.com',
+      databaseURL: 'https://applamic-default-rtdb.firebaseio.com',
+      projectId: 'applamic'
     };
     firebase.initializeApp(firebaseConfig);
     const _db = firebase.database();
+    // Banco unificado: o Comercial vive no projeto do Dados LAMIC (applamic), no nó /comercial.
+    const _r = caminho => _db.ref(`comercial/${caminho}`);
     const DB = {
-      ler: async caminho => (await _db.ref(caminho).get()).val(),
-      gravar: (caminho, valor) => _db.ref(caminho).set(valor),
-      ouvir: (caminho, cb) => _db.ref(caminho).on('value', s => cb(s.val())),
-      novaChave: caminho => _db.ref(caminho).push().key,
+      // sem permissão: segue com vazio (custos e propostas exigem acesso ao Comercial)
+      ler: async caminho => { try { return (await _r(caminho).get()).val(); } catch (e) { console.warn(`Sem acesso a ${caminho}:`, e.message); SEM_ACESSO.add(caminho); return null; } },
+      gravar: (caminho, valor) => _r(caminho).set(valor),
+      ouvir: (caminho, cb) => _r(caminho).on('value', s => cb(s.val()), e => { console.warn(`Sem acesso a ${caminho}:`, e.message); cb(null); }),
+      novaChave: caminho => _r(caminho).push().key,
       agora: () => firebase.database.ServerValue.TIMESTAMP
     };
+    const SEM_ACESSO = new Set();
+    // Sessão do Dados LAMIC (mesmo endereço): espera o Firebase Auth restaurar o login
+    const sessaoPronta = () => new Promise(ok => { const fim = firebase.auth().onAuthStateChanged(u => { fim(); ok(u); }); });
 
     // ── Funções auxiliares ────────────────────────────────────────
     const $ = id => document.getElementById(id);
@@ -1058,7 +1063,7 @@ Laboratório LAMIC`;
       temaInicial();
       showLoading();
       const limite = setTimeout(() => telaErro(), 20000);
-      try { await carregar(); } catch (e) { console.error(e); clearTimeout(limite); return telaErro(); }
+      try { await sessaoPronta(); await carregar(); } catch (e) { console.error(e); clearTimeout(limite); return telaErro(); }
       clearTimeout(limite);
       lerRascunho();
       if (P.base !== 'particular' && !BANCO.tabelas[P.base]) P.base = 'particular';
@@ -1086,6 +1091,7 @@ Laboratório LAMIC`;
       hideLoading();
       render();
       const perdidos = Object.keys(P.itens).filter(k => !LINHAS[k]).length;
+      if (SEM_ACESSO.size) toast('Sem acesso aos custos do Comercial: peça a permissão "Comercial" no Dados', 'erro');
       if (perdidos) toast(`${perdidos} exame(s) da proposta não existem mais no Comercial`, 'erro');
     }
     window.addEventListener('beforeunload', e => { if (P._sujo && P.id) { e.preventDefault(); e.returnValue = ''; } });

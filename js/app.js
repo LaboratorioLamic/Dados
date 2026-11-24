@@ -64,12 +64,18 @@
   // que vai no GitHub Pages do Dados. Publicado: abre modulos/{repo}/; local: seeds/{repo}/.
   // Links antigos para laboratoriolamic.github.io/{repo}/ também caem na cópia do Dados.
   const SEEDS = ['Iamicproposta', 'Iamicvacinas', 'L2L', 'Planilhas', 'Pops', 'Protocolos', 'TabeIasIamic', 'Temperatura', 'Termos', 'Treinamentos',
-    'auditoriaIamic', 'checkguias', 'comercial', 'conveniosIamic', 'curricuIoIamic', 'docadmin', 'manutencao', 'propagandismolamic', 'respIamic', 'wpp'];
+    'auditoriaIamic', 'checkguias', 'comercial', 'conveniosIamic', 'curricuIoIamic', 'docadmin', 'manutencao', 'propagandismolamic', 'respIamic', 'valor', 'wpp'];
   const PUBLICADO = /\.github\.io$/.test(location.hostname);
-  const urlLink = (u) => {
-    const sd = /^seeds\/([^/?#]+)\/?(index\.html)?$/.exec(u || '');
+  // nomes de repo trocam "l" por "I" maiúsculo (TabeIasIamic); compara ignorando essa troca
+  const chaveRepo = (s) => String(s || '').replace(/I/g, 'l').toLowerCase();
+  const repoDe = (u, soGithub = false) => {
+    const sd = soGithub ? null : /^seeds\/([^/?#]+)\/?(index\.html)?$/.exec(u || '');
     const gh = /^https:\/\/laboratoriolamic\.github\.io\/([^/?#]+)\/?(index\.html)?$/i.exec(u || '');
-    const repo = SEEDS.find((r) => r.toLowerCase() === String((sd || gh)?.[1] || '').toLowerCase());
+    const nome = (sd || gh)?.[1];
+    return nome ? SEEDS.find((r) => chaveRepo(r) === chaveRepo(nome)) : undefined;
+  };
+  const urlLink = (u) => {
+    const repo = repoDe(u);
     if (!repo) return u;
     return PUBLICADO ? `modulos/${repo}/index.html` : `seeds/${repo}/index.html`;
   };
@@ -2823,6 +2829,13 @@
 
   async function admModulos(el) {
     const mods = lista(await ler('modulos')).sort(porOrdem);
+    // migra links antigos laboratoriolamic.github.io/{repo}/ para seeds/{repo}/ (abre o index do módulo)
+    const mig = {};
+    mods.forEach((m) => Object.entries(m.links || {}).forEach(([lid, l]) => {
+      const repo = repoDe(l?.url, true);
+      if (repo) { mig[`${m.id}/links/${lid}/url`] = `seeds/${repo}/`; l.url = `seeds/${repo}/`; }
+    }));
+    if (Object.keys(mig).length) await ref('modulos').update(mig).catch((e) => toast(traduz(e)));
     el.innerHTML = `<div class="card"><p style="font-size:13px;color:var(--txt-2)">Quem vê cada link é definido em <a href="#admin/grupos">Grupos e permissões</a>. Link novo começa oculto para todos os grupos (exceto Administradores).</p></div>
       ${mods.map((m, i) => `<div class="card" style="margin-top:16px"><h3 style="color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="${esc(m.icone)}"></i> ${esc(m.nome)}
           <span style="margin-left:auto;display:flex;gap:4px"><button class="btn sm ghost" data-mover="-1" data-i="${i}" title="Subir no menu" ${i ? '' : 'disabled'}><i class="fas fa-arrow-up"></i></button><button class="btn sm ghost" data-mover="1" data-i="${i}" title="Descer no menu" ${i < mods.length - 1 ? '' : 'disabled'}><i class="fas fa-arrow-down"></i></button></span></h3>

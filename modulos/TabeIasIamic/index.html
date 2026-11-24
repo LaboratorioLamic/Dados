@@ -1,464 +1,851 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#001f3f">
-    <title>Lamic Tabelas</title>
-    <link rel="icon" href="https://i.imgur.com/CMQ2kVH.png" type="image/png">
-    <link rel="apple-touch-icon" href="https://i.imgur.com/CMQ2kVH.png">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        body {
-            font-family: 'Roboto Slab', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7fa;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 95vh;
-            height: auto;
-            overflow-y: scroll;
-        }
-        html {
-            overflow-y: scroll;
-            height: auto;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: clamp(0.5rem, 3vw, 1rem);
-            font-weight: normal;
-        }
-        #userName {
-            font-size: clamp(1.5rem, 5vw, 2rem);
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .search-container {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        #searchInput {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .download-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #1a2b5f;
-            font-size: 18px;
-            z-index: 5;
-        }
-        .download-icon:hover {
-            color: #2c3e50;
-        }
-        .loading-download {
-            position: absolute;
-            right: 15px;
-            top: 30%;
-            transform: translateY(-50%);
-            color: #1a2b5f;
-            font-size: 18px;
-            z-index: 5;
-            display: none;
-            animation: spin 1s linear infinite;
-        }
-        table {
-            width: 100%;
-            max-width: 1200px;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: visible;
-            display: none;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-            word-wrap: break-word;
-        }
-        th {
-            background-color: #1a2b5f;
-            color: white;
-        }
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .loading-icon {
-            font-size: 64px;
-            color: #2c3e50;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .logo-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            display: none;
-        }
-        .logo-container img {
-            width: 200px;
-            height: auto;
-        }
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1002;
-        }
-        .login-box {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            text-align: center;
-            max-width: 300px;
-            width: 90%;
-            border: 2px solid #332a8a;
-        }
-        .login-box select {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .login-box button {
-            background-color: #1a2b5f;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .login-box button:hover {
-            background-color: #2c3e50;
-        }
-        .login-box button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .login-box .loading-icon {
-            font-size: 24px;
-            color: #2c3e50;
-            animation: spin 1s linear infinite;
-            display: none;
-            margin: 10px auto;
-        }
-        #changeTableButton {
-            background-color: #1a2b5f;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        #changeTableButton:hover {
-            background-color: #2c3e50;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-        .modal-content-presentation {
-            background: #e6f0fa;
-            padding: 20px;
-            border: 2px solid #1a2b5f;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 700px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-            animation: fadeIn 0.3s ease-in-out;
-            font-family: 'Inter', sans-serif;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .modal-content-presentation h2 {
-            font-size: clamp(1.4em, 2.5vw, 1.8em);
-            font-weight: 700;
-            color: #1a2b5f;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .modal-content-presentation textarea {
-            width: 94%;
-            height: 350px;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: clamp(0.9em, 2vw, 1em);
-            margin-bottom: 20px;
-            font-family: 'Inter', sans-serif;
-            resize: vertical;
-            background: #ffffff;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        .modal-content-presentation button {
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: clamp(0.9em, 2vw, 1em);
-            font-weight: 600;
-            width: 48%;
-            margin: 1%;
-            transition: background-color 0.3s ease;
-            color: white;
-        }
-        .modal-content-presentation button.cancel {
-            background-color: #dc3545;
-            color: white;
-        }
-        .modal-content-presentation button.cancel:hover {
-            background-color: #c82333;
-            color: white;
-        }
-        .modal-content-presentation button.download {
-            background-color: #1a2b5f;
-            color: white;
-        }
-        .modal-content-presentation button.download:hover {
-            background-color: #2c3e50;
-            color: white;
-        }
-        /* Instrução Tooltip Styles - Corrigido */
-        .instruction-cell {
-            position: relative;
-            text-align: center;
-            cursor: pointer;
-            color: #1a2b5f;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0e1628">
+  <title>LAMIC Tabelas</title>
+  <link rel="icon" href="https://i.imgur.com/0CfbOl5.png" type="image/png">
+  <link rel="apple-touch-icon" href="https://i.imgur.com/0CfbOl5.png">
 
-        .instruction-tooltip {
-            display: none;
-            position: absolute;
-            right: 130%; /* Distância do ícone */
-            top: 50%;
-            transform: translateY(-50%);
-            background: #ffffff;
-            border: 2px solid #1a2b5f;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: -5px 5px 15px rgba(0,0,0,0.2);
-            z-index: 100;
-            
-            /* Largura aumentada conforme solicitado */
-            width: 450px;
-            min-width: 150px;
-            
-            color: #333;
-            text-align: left;
-            
-            /* Respeita quebras de linha da planilha */
-            white-space: pre-wrap; 
-            word-wrap: break-word;
-            
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            font-weight: normal;
-            line-height: 1.5;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-        /* DESIGN MODERNIZADO DO HYPERLINK DENTRO DO TOOLTIP */
-        .instruction-tooltip a {
-            display: inline-flex;
-            align-items: center;
-            color: #1a2b5f;
-            text-decoration: none;
-            font-weight: 700;
-            background: rgba(26, 43, 95, 0.08);
-            padding: 4px 10px;
-            border-radius: 6px;
-            margin: 2px 0;
-            transition: all 0.3s ease;
-            border: 1px solid transparent;
-        }
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       LAMIC Tabelas — mesma identidade visual do COMERCIAL LAMIC e do L2L
+       ═══════════════════════════════════════════════════════════════ */
 
-        .instruction-tooltip a:hover {
-            background: #1a2b5f;
-            color: #ffffff;
-            box-shadow: 0 4px 8px rgba(26, 43, 95, 0.3);
-            transform: translateY(-1px);
-        }
+    /* ── Cores, tipografia e reset ── */
+    :root {
+      --night: #162036; --night-mid: #162036; --night-light: #1e2d4a;
+      --cyan: #00a8cc; --cyan-hover: #0090b0; --cyan-light: rgba(0, 168, 204, .12);
+      --bg: #f4f7f6; --bg-card: #fff; --bg-soft: #f8fafc;
+      --text-primary: #0e1628; --text-secondary: #4a5568; --text-muted: #718096;
+      --border: #e2e8f0; --border-hover: #b6c3d4;
+      --red: #e63946;   --red-bg: rgba(230, 57, 70, .1);
+      --amber: #e8913a; --amber-bg: rgba(244, 162, 97, .16);
+      --green: #2a9d8f; --green-bg: rgba(42, 157, 143, .12);
+      --gray: #94a3b8;  --gray-bg: rgba(148, 163, 184, .16);
+      --topbar-h: 60px;
+      --shadow-sm: 0 1px 3px rgba(14, 22, 40, .08);
+      --shadow-md: 0 4px 16px rgba(14, 22, 40, .12);
+      --shadow-lg: 0 12px 40px rgba(14, 22, 40, .18);
+      --radius: 8px; --radius-lg: 12px;
+      --t: all .18s ease;
+    }
+    :root[data-theme="dark"] {
+      --bg: #0b1220; --bg-card: #121c30; --bg-soft: #16223a;
+      --text-primary: #e6edf7; --text-secondary: #a9b6cc; --text-muted: #7c8aa3;
+      --border: #22314f; --border-hover: #36486b;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, .45);
+      --shadow-lg: 0 12px 40px rgba(0, 0, 0, .6);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "DM Sans", system-ui, sans-serif; background: var(--bg); color: var(--text-primary); font-size: 14px; -webkit-font-smoothing: antialiased; }
+    button { font-family: inherit; cursor: pointer; }
+    button:disabled { cursor: not-allowed; }
+    input, textarea { font-family: inherit; font-size: 14px; }
+    .fa-solid { line-height: 1; }
+    * { scrollbar-width: thin; scrollbar-color: var(--border-hover) transparent; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
+    .mono { font-family: "DM Mono", monospace; }
+    .muted { color: var(--text-muted); }
+    .oculto { display: none !important; }
 
-        .instruction-tooltip a::after {
-            content: "\f35d"; /* FontAwesome external link icon */
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            margin-left: 8px;
-            font-size: 12px;
-        }
+    /* ── Marca ── */
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-ico { width: 36px; height: 36px; border-radius: 9px; background: var(--cyan); color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0, 168, 204, .4); flex-shrink: 0; }
+    .brand-name { font-weight: 600; font-size: 14px; color: #fff; }
+    .brand-sub { font-size: 10px; letter-spacing: .08em; color: #8fa1bf; text-transform: uppercase; margin-top: 2px; }
 
-        /* Seta da janela */
-        .instruction-tooltip::after {
-            content: "";
-            position: absolute;
-            top: 20%;
-            left: 100%;
-            margin-top: -8px;
-            border-width: 8px;
-            border-style: solid;
-            border-color: transparent transparent transparent #1a2b5f;
-        }
+    /* ── Tela de acesso ── */
+    .auth { position: fixed; inset: 0; background: var(--night); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; overflow-y: auto; }
+    .auth.hide { display: none; }
+    .auth-card { width: 100%; max-width: 360px; background: var(--night-light); border: 1px solid rgba(255, 255, 255, .08); border-radius: 14px; padding: 32px; box-shadow: var(--shadow-lg); color: #fff; margin: auto; }
+    .auth-card .brand { margin-bottom: 28px; }
+    .auth-card.shake { animation: tremer .45s; }
+    @keyframes tremer { 0%, 100% { transform: none; } 20%, 60% { transform: translateX(-9px); } 40%, 80% { transform: translateX(9px); } }
+    .auth h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+    .auth p { font-size: 12.5px; color: #8fa1bf; margin-bottom: 18px; line-height: 1.5; }
+    .auth label { display: block; font-size: 11.5px; font-weight: 600; color: #a9b6cc; margin: 14px 0 6px; }
+    .inp-auth { position: relative; }
+    .inp-auth > i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #5f7090; font-size: 13px; }
+    .inp-auth input { width: 100%; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); border-radius: var(--radius); padding: 10px 40px 10px 36px; color: #fff; outline: none; transition: var(--t); }
+    .inp-auth input::placeholder { color: #5f7090; }
+    .inp-auth input:focus { border-color: var(--cyan); background: rgba(0, 168, 204, .08); }
+    .inp-auth input:disabled { opacity: .5; }
+    .ver-senha { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border: 0; background: none; color: #5f7090; border-radius: 6px; }
+    .ver-senha:hover { color: #fff; }
+    .btn-primary { width: 100%; margin-top: 22px; background: var(--cyan); color: #fff; border: 0; border-radius: var(--radius); padding: 11px; font-weight: 600; font-size: 14px; display: flex; gap: 9px; align-items: center; justify-content: center; transition: var(--t); }
+    .btn-primary:hover:not(:disabled) { background: var(--cyan-hover); }
+    .btn-primary:disabled { opacity: .5; }
+    .auth-erro { background: rgba(230, 57, 70, .15); color: #ff8a93; border-radius: var(--radius); padding: 9px 12px; font-size: 12.5px; display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+    .auth-erro:empty { display: none; }
+    .auth-load { display: flex; flex-direction: column; align-items: center; gap: 14px; color: #8fa1bf; font-size: 13px; padding: 20px 0 6px; text-align: center; }
+    .auth-load i { font-size: 26px; color: var(--cyan); }
+    .auth-espera { margin-top: 14px; font-size: 12px; color: var(--amber); display: none; }
+    .auth-espera .barra { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; margin-top: 8px; }
+    .auth-espera .barra div { height: 100%; width: 0; background: var(--amber); transition: width 1s linear; }
+    .auth-rodape { margin-top: 20px; font-size: 11.5px; color: #5f7090; text-align: center; line-height: 1.5; }
+    /* seletor do laboratório dentro do cartão escuro */
+    .auth .pop-btn { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .1); color: #fff; padding: 7px 12px 7px 8px; }
+    .auth .pop-btn:hover { border-color: rgba(255, 255, 255, .25); }
+    .auth .pop-wrap.open .pop-btn { border-color: var(--cyan); background: rgba(0, 168, 204, .08); box-shadow: none; }
+    .auth .pb-ic { background: rgba(255, 255, 255, .08); color: #a9b6cc; }
+    .auth .pb-l { color: #8fa1bf; }
+    .auth .pb-chev { color: #5f7090; }
+    .auth .pop { width: 100%; color: var(--text-primary); }
 
-        /* Animação e Exibição */
-        .instruction-cell.active .instruction-tooltip {
-            display: block;
-            animation: slideInLeft 0.3s ease-out forwards;
-        }
+    /* ── Barra superior e página ── */
+    #app { min-height: 100vh; overflow-x: clip; }
+    .topbar { height: var(--topbar-h); background: var(--night); display: flex; align-items: center; gap: 14px; padding: 0 24px; position: sticky; top: 0; z-index: 30; box-shadow: var(--shadow-md); }
+    .tb-right { margin-left: auto; display: flex; gap: 8px; align-items: center; min-width: 0; }
+    .user { display: flex; align-items: center; gap: 10px; padding-right: 8px; min-width: 0; }
+    .user-txt { min-width: 0; text-align: right; }
+    .user-n { font-size: 13px; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+    .user-g { font-size: 11px; color: #7c8aa3; white-space: nowrap; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 600; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .page { padding: 24px; max-width: 1240px; margin: 0 auto; }
+    .h-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+    .h-row h2 { font-size: 20px; font-weight: 600; }
+    .h-row p { color: var(--text-muted); font-size: 13px; margin-top: 3px; }
+    .h-row .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateY(-20%) translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(-20%) translateX(0);
-            }
-        }
+    /* ── Botões ── */
+    .btn { border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); border-radius: var(--radius); padding: 8px 14px; font-weight: 500; font-size: 13px; display: inline-flex; gap: 8px; align-items: center; transition: var(--t); white-space: nowrap; }
+    .btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+    .btn.pri { background: var(--cyan); border-color: var(--cyan); color: #fff; }
+    .btn.pri:hover:not(:disabled) { background: var(--cyan-hover); color: #fff; }
+    .btn:disabled { opacity: .5; }
+    .icon-btn { width: 36px; height: 36px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 14px; transition: var(--t); flex-shrink: 0; }
+    .icon-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+    .topbar .icon-btn { background: transparent; border-color: rgba(255, 255, 255, .12); color: #b3c0d6; }
+    .topbar .icon-btn:hover { border-color: var(--cyan); color: #fff; background: var(--cyan-light); }
 
-        /* Ajuste para telas menores */
-        @media (max-width: 768px) {
-            table {
-                font-size: 14px;
-            }
-            .loading-icon {
-                font-size: 48px;
-            }
-            .logo-container {
-                position: relative;
-                left: auto;
-                top: auto;
-                display: flex;
-                justify-content: center;
-                margin-bottom: 20px;
-            }
-            .logo-container img {
-                width: 200px;
-            }
-            .modal-content-presentation {
-                max-width: 90%;
-            }
-            .modal-content-presentation textarea {
-                height: 250px;
-            }
-            .instruction-tooltip {
-                width: 250px;
-                right: 0;
-                top: 100%;
-                transform: none;
-            }
-            .instruction-tooltip::after {
-                display: none;
-            }
-        }
-    </style>
+    /* ── Cartão, busca e tabela ── */
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+    .toolbar { display: flex; gap: 10px; padding: 14px 18px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--border); }
+    .search { flex: 1; min-width: 200px; display: flex; align-items: center; gap: 9px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 12px; background: var(--bg-soft); color: var(--text-muted); height: 44px; }
+    .search:focus-within { border-color: var(--cyan); }
+    .search input { border: 0; background: transparent; outline: none; color: var(--text-primary); width: 100%; }
+    .search .limpar { border: 0; background: none; color: var(--text-muted); width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+    .search .limpar:hover { background: var(--border); color: var(--text-primary); }
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--bg-card); }
+    th:first-child, td:first-child { padding-left: 18px; }
+    th:last-child, td:last-child { padding-right: 18px; }
+    td { padding: 10px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tr.row { cursor: pointer; }
+    tr.row:hover td { background: var(--bg-soft); }
+    td.num, th.num { text-align: right; font-family: "DM Mono", monospace; }
+    td.num b { font-weight: 500; font-size: 13px; }
+    .mn { font-family: "DM Mono", monospace; font-weight: 500; color: var(--cyan); }
+    td.desc { width: 100%; max-width: 0; min-width: 130px; }
+    td.desc .nome { overflow: hidden; text-overflow: ellipsis; font-weight: 500; font-size: 13px; }
+    td.desc .sub-m { display: none; font-size: 11.5px; color: var(--text-muted); margin-top: 3px; white-space: normal; }
+    td.ic { color: var(--text-muted); text-align: right; }
+    td.ic i { margin-left: 8px; font-size: 12px; }
+    td.ic .fa-chevron-right { font-size: 10px; opacity: .6; }
+    .neg { color: var(--green); font-size: 11px; margin-left: 7px; }
+    th.ord { cursor: pointer; user-select: none; }
+    th.ord i { font-size: 9px; opacity: .45; margin-left: 3px; }
+    th.ord.on { color: var(--cyan); }
+    th.ord.on i { opacity: 1; }
+    .foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .pgs { display: flex; gap: 4px; align-items: center; }
+    .pg { min-width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); font-size: 12px; padding: 0 8px; }
+    .pg:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+    .pg.on { background: var(--cyan); border-color: var(--cyan); color: #fff; }
+    .pg:disabled { opacity: .4; }
+    .pg-gap { color: var(--text-muted); padding: 0 2px; }
+    .vazio { padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px; line-height: 1.6; white-space: normal; }
+    .vazio > i { font-size: 30px; color: var(--cyan); margin-bottom: 10px; display: block; }
+    .vazio b { color: var(--text-primary); }
+
+    /* ── Etiquetas e chips ── */
+    .tag { display: inline-flex; gap: 6px; align-items: center; font-size: 11px; padding: 2px 8px; border-radius: 5px; background: var(--bg-soft); color: var(--text-secondary); border: 1px solid var(--border); white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+    .tag i { font-size: 10px; }
+    .badge-s { font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
+    .badge-s.ok { background: var(--green-bg); color: var(--green); }
+    .po-ic { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); flex-shrink: 0; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 18px 0; }
+    .chip { border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; transition: var(--t); }
+    .chip:hover { border-color: var(--cyan); }
+    .chip.on { border-color: var(--cyan); background: var(--cyan-light); color: var(--cyan); }
+
+    /* ── Seletores em popover (substituem <select>) ── */
+    .pop-wrap { position: relative; display: inline-block; }
+    .pop-wrap.block { display: block; }
+    .pop-wrap.open { z-index: 56; }
+    .pop-btn { display: flex; align-items: center; gap: 10px; min-width: 180px; width: 100%; padding: 6px 12px 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); color: var(--text-primary); text-align: left; transition: var(--t); }
+    .pop-btn:hover { border-color: var(--border-hover); }
+    .pop-wrap.open .pop-btn { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-light); }
+    .pop-btn.set { border-color: var(--cyan); background: var(--cyan-light); }
+    .pb-ic { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; background: var(--bg-soft); color: var(--text-secondary); flex-shrink: 0; }
+    .pop-btn.set .pb-ic { background: var(--cyan); color: #fff; }
+    .pb-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .pb-l { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); font-weight: 600; }
+    .pb-v { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pb-chev { font-size: 10px; color: var(--text-muted); transition: transform .2s; }
+    .pop-wrap.open .pb-chev { transform: rotate(180deg); color: var(--cyan); }
+    .pb-clear { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--cyan); }
+    .pb-clear:hover { background: var(--cyan); color: #fff; }
+    .pop { position: absolute; top: calc(100% + 8px); left: 0; width: 320px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s ease, transform .16s ease; overflow: hidden; outline: none; }
+    .pop.right { left: auto; right: 0; transform-origin: top right; }
+    .pop.up { top: auto; bottom: calc(100% + 8px); transform: translateY(6px) scale(.98); transform-origin: bottom left; }
+    .pop-wrap.open .pop { opacity: 1; transform: none; pointer-events: auto; }
+    .pop-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 8px; }
+    .pop-head span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--text-muted); }
+    .pop-x { border: 0; background: none; color: var(--text-muted); width: 24px; height: 24px; border-radius: 6px; }
+    .pop-x:hover { background: var(--bg-soft); color: var(--text-primary); }
+    .pop-search { margin: 0 10px 6px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-soft); color: var(--text-muted); font-size: 12px; }
+    .pop-search:focus-within { border-color: var(--cyan); }
+    .pop-search input { border: 0; outline: none; background: transparent; padding: 8px 0; width: 100%; color: var(--text-primary); font-size: 13px; }
+    .pop-list { max-height: 300px; overflow-y: auto; padding: 4px 6px 8px; position: relative; }
+    .pop-opt { display: flex; align-items: center; gap: 11px; width: 100%; padding: 8px 10px; border: 0; background: none; border-radius: var(--radius); text-align: left; color: var(--text-primary); transition: background .12s; }
+    .pop-opt:hover, .pop-opt.hi { background: var(--bg-soft); }
+    .po-txt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .po-l { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .po-d { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+    .po-n { font-family: "DM Mono", monospace; font-size: 11px; color: var(--text-muted); background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 1px 7px; }
+    .po-ck { font-size: 12px; color: var(--cyan); width: 14px; opacity: 0; }
+    .pop-opt.sel .po-l { font-weight: 600; }
+    .pop-opt.sel .po-ck { opacity: 1; }
+    .pop-empty { padding: 22px 10px; text-align: center; color: var(--text-muted); font-size: 12.5px; }
+    .pop-empty i { display: block; font-size: 20px; margin-bottom: 8px; opacity: .6; }
+    .pop-foot { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); }
+    .pop-foot kbd { font-family: "DM Mono", monospace; font-size: 10px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--bg-soft); }
+    .pop-foot button { border: 0; background: none; color: var(--cyan); font-size: 12px; font-weight: 600; }
+
+    /* ── Gaveta lateral (detalhes do exame) ── */
+    .backdrop { position: fixed; inset: 0; background: rgba(14, 22, 40, .45); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60; }
+    .backdrop.open { opacity: 1; pointer-events: auto; }
+    .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 500px; max-width: 100%; background: var(--bg-card); z-index: 70; transform: translateX(100%); transition: transform .25s ease; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+    .drawer.open { transform: none; }
+    .dr-h { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-start; }
+    .dr-h .mn { font-size: 13px; }
+    .dr-h h3 { font-size: 16px; font-weight: 600; margin-top: 4px; line-height: 1.3; }
+    .dr-h .meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .dr-h .meta:empty { display: none; }
+    .dr-b { flex: 1; overflow-y: auto; padding: 18px 22px; }
+    .dr-f { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .sec-t { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin: 20px 0 10px; display: flex; gap: 7px; align-items: center; }
+    .valor-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-soft); }
+    .valor-box .l { font-size: 12px; color: var(--text-muted); }
+    .valor-box .v { font-family: "DM Mono", monospace; font-size: 22px; font-weight: 500; letter-spacing: -.02em; margin-top: 2px; }
+    .ins-txt { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.6; color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+    .secs { display: flex; flex-direction: column; gap: 10px; }
+    .sec { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-card); }
+    .sec-h { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: color-mix(in srgb, var(--c) 7%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--c) 16%, transparent); }
+    .sec-h b { flex: 1; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .sec-ic { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; background: var(--c); }
+    .sec-cp { width: 28px; height: 28px; border: 0; border-radius: 7px; background: none; color: var(--text-muted); font-size: 12.5px; transition: var(--t); }
+    .sec-cp:hover { color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+    .sec-b { padding: 11px 14px 12px; font-size: 13px; line-height: 1.6; color: var(--text-secondary); overflow-wrap: anywhere; }
+    .sec-b p { margin: 0 0 6px; }
+    .sec-b p:last-child { margin-bottom: 0; }
+    .sec-b p.sub { font-weight: 600; color: var(--text-primary); margin-top: 8px; }
+    .sec-b p.sub:first-child { margin-top: 0; }
+    .sec-b ul { margin: 0 0 6px; padding: 0; list-style: none; }
+    .sec-b ul:last-child { margin-bottom: 0; }
+    .sec-b li { position: relative; padding-left: 15px; margin-bottom: 3px; }
+    .sec-b li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 5px; height: 5px; border-radius: 50%; background: var(--c); }
+    /* campo longo abre recolhido: "Ver mais" mostra o restante */
+    .sec.corta:not(.aberta) .sec-tx { max-height: 64px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 45%, transparent); mask-image: linear-gradient(#000 45%, transparent); }
+    .sec-mais { display: none; width: 100%; border: 0; border-top: 1px solid var(--border); background: none; padding: 7px 14px; font-size: 12px; font-weight: 600; color: var(--c); gap: 6px; align-items: center; justify-content: center; transition: var(--t); }
+    .sec.corta .sec-mais { display: flex; }
+    .sec-mais:hover { background: color-mix(in srgb, var(--c) 8%, transparent); }
+    .sec-mais i { font-size: 10px; transition: transform .2s; }
+    .sec.aberta .sec-mais i { transform: rotate(180deg); }
+    .anexos { display: flex; flex-direction: column; gap: 6px; }
+    .anexo { display: flex; gap: 11px; align-items: center; padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); text-decoration: none; transition: var(--t); }
+    .anexo:hover { border-color: var(--cyan); background: var(--cyan-light); }
+    .anexo .po-ic { --c: var(--cyan); }
+    .anexo .tx { flex: 1; min-width: 0; }
+    .anexo b { font-size: 13px; font-weight: 600; display: block; overflow-wrap: anywhere; }
+    .anexo small { font-size: 11.5px; color: var(--text-muted); }
+    .anexo > i { color: var(--text-muted); font-size: 12px; }
+    .anexo:hover > i { color: var(--cyan); }
+
+    /* ── Janela (texto da proposta) e toast ── */
+    .modal { position: fixed; inset: 0; background: rgba(14, 22, 40, .5); z-index: 150; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal.open { display: flex; }
+    .modal-card { background: var(--bg-card); border-radius: 14px; padding: 24px; width: 100%; max-width: 680px; box-shadow: var(--shadow-lg); animation: surgir .16s ease; max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
+    .modal-card h3 { font-size: 16px; margin-bottom: 4px; }
+    .modal-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+    .modal-acoes { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .txt-grande { width: 100%; min-height: 320px; flex: 1; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--bg-soft); color: var(--text-primary); outline: none; font-size: 13px; line-height: 1.5; resize: vertical; }
+    .txt-grande:focus { border-color: var(--cyan); background: var(--bg-card); }
+    @keyframes surgir { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(90px); background: var(--night); color: #fff; padding: 11px 18px; border-radius: var(--radius); font-size: 13px; box-shadow: var(--shadow-lg); transition: transform .25s; z-index: 200; display: flex; gap: 9px; align-items: center; max-width: calc(100% - 32px); }
+    .toast i { color: var(--cyan); }
+    .toast.erro i { color: #ff6b76; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Celular ── */
+    @media (max-width: 768px) {
+      .page { padding: 16px; }
+      .topbar { padding: 0 16px; }
+      .user-txt { display: none; }
+      .drawer { width: 100%; }
+      .toolbar .pop-wrap { flex: 1 1 140px; }
+      .pop-btn { min-width: 0; }
+      /* painel vira bottom sheet; a sombra larga escurece o fundo */
+      .pop, .pop.right, .pop.up, .auth .pop { position: fixed; left: 0; right: 0; top: auto; bottom: 0; width: 100%; border-radius: 16px 16px 0 0; transform: translateY(100%); transition: transform .22s ease, opacity .1s; }
+      .pop-wrap.open .pop { box-shadow: 0 0 0 100vmax rgba(14, 22, 40, .45); }
+      .pop::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 8px auto 0; }
+      .pop-list { max-height: 55vh; }
+      .pop-foot .keys { display: none; }
+      .col-mn, .col-mat, .col-prazo { display: none; }
+      .col-mn + th, .col-mn + td { padding-left: 16px; }
+      td.desc .nome { white-space: normal; }
+      td.desc .sub-m { display: block; }
+      td.ic .fa-chevron-right { display: none; }
+    }
+    @media (max-width: 420px) {
+      .brand-sub { display: none; }
+      .auth-card { padding: 26px 22px; }
+    }
+    /* ── Carregando (padrão dos módulos) ── */
+    .loading-overlay { position: fixed; inset: 0; background: rgba(244,248,252,.92); display: flex; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(6px); }
+    :root[data-theme="dark"] .loading-overlay { background: rgba(11,18,32,.92); }
+    .loading-inner { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .spinner { border: 3px solid #E2E9F1; border-top: 3px solid #162036; border-radius: 50%; width: 42px; height: 42px; animation: spin .75s linear infinite; }
+    :root[data-theme="dark"] .spinner { border-color: #22314f; border-top-color: var(--cyan); }
+    .loading-text { font-size: .83rem; color: var(--text-secondary); font-weight: 500; letter-spacing: .01em; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .h-row .pop-btn { min-width: 240px; }
+    .auth.hide { display: none; }
+  </style>
 </head>
 <body>
-    <div class="login-overlay" id="loginOverlay">
-        <div class="login-box" id="loginBox">
-            <h2>Selecionar Tabela</h2>
-            <select id="userSelect">
-                <option value="">Selecione uma tabela</option>
-            </select>
-            <i class="fas fa-spinner loading-icon" id="loadingTableIcon"></i>
-            <button id="loginButton" disabled>Entrar</button>
-        </div>
-    </div>
 
-    <div class="modal" id="presentation-modal">
-        <div class="modal-content-presentation">
-            <h2>Editar Texto de Apresentação</h2>
-            <textarea id="presentationText"></textarea>
-            <button class="cancel" id="cancel-presentation">Cancelar</button><button class="download" id="download-presentation">Baixar</button>
-        </div>
-    </div>
+  <!-- Tela de acesso -->
+  <div class="auth hide" id="auth"></div>
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-inner"><div class="spinner"></div><span class="loading-text">Carregando tabelas de preço…</span></div>
+  </div>
 
-    <div class="logo-container">
-        <img src="https://i.imgur.com/qVfGMyc.png" alt="Logo" id="mainLogo">
-    </div>
-    <p id="userName" style="display: none;">Tabela selecionada</p>
-    <button id="changeTableButton" style="display: none;">Trocar Tabela</button>
-    <h1>Lista de Exames</h1>
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Busque por nome do exame...">
-        <i class="fas fa-download download-icon" id="downloadIcon" style="display: none;"></i>
-        <i class="fas fa-spinner loading-download" id="loadingDownloadIcon"></i>
-    </div>
-    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
-        <i class="fas fa-spinner loading-icon"></i>
-    </div>
-    <table id="comparisonTable">
-        <thead id="tableHeader"></thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+  <!-- Aplicação -->
+  <div class="oculto" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-ico"><i class="fa-solid fa-table-list"></i></div>
+        <div><div class="brand-name">LAMIC TABELAS</div><div class="brand-sub">Tabelas de preço</div></div>
+      </div>
+      <div class="tb-right">
+        <button class="icon-btn" id="bt-tema" title="Modo noturno" onclick="alternarTema()"><i class="fa-solid fa-moon"></i></button>
+      </div>
+    </header>
+    <main class="page" id="page"></main>
+  </div>
 
-    <script>
-        const sheetsUrl = 'https://script.google.com/macros/s/AKfycbySlCz5a0ub1J5xHYxeeNZTI-lQzI5GiGdoyvsAqffVxHOhEwLCKBBKIy3e6qD_mSk/exec';
-        const testData = [
-            { Tabela: 'Nenhuma Tabela', Exame: 'Nenhum Exame Carregado', Valor: null, Material: '-', Prazo: '-', Descricao: '' },
-        ];
-        let examsData = {};
-        let currentTable = '';
+  <!-- Gaveta lateral -->
+  <div class="backdrop" id="gaveta-fundo" onclick="fecharGaveta()"></div>
+  <aside class="drawer" id="gaveta" aria-label="Detalhes do exame">
+    <div class="dr-h">
+      <div style="flex:1;min-width:0"><span class="mn" id="g-sobre"></span><h3 id="g-titulo"></h3><div class="meta" id="g-meta"></div></div>
+      <button class="icon-btn" onclick="fecharGaveta()" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="dr-b" id="g-corpo"></div>
+    <div class="dr-f" id="g-rodape"></div>
+  </aside>
 
-        // Texto padrão para a apresentação
-        const defaultPresentationText = `Ao (Nome fantasia e CNPJ)
-        
+  <div class="modal" id="modal"></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase (compat) — mesmo banco do COMERCIAL LAMIC e do L2L -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    // LAMIC Tabelas — consulta das tabelas de preço do laboratório.
+    // Tudo vem do banco do COMERCIAL LAMIC (somente leitura):
+    //   exames                 mn, descricao, ativo, precoPraticado (tabela Particular)
+    //   tabelas/{id}           nome, ativa, cor, icone e precos (demais tabelas)
+    //   catalogo               nome, material, prazo, instrução e anexos
+    // O acesso é controlado pela tela principal (Dados): não há senha aqui.
+    // ═══════════════════════════════════════════════════════════════
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyD38STN_vG08tlYJBXFtRUWtlcyRexw7Mc',
+      authDomain: 'applamic.firebaseapp.com',
+      databaseURL: 'https://applamic-default-rtdb.firebaseio.com',
+      projectId: 'applamic'
+    };
+    firebase.initializeApp(firebaseConfig);
+    const _db = firebase.database();
+    // Mesmo banco do Comercial: projeto applamic, nó /comercial.
+    const _r = caminho => _db.ref(`comercial/${caminho}`);
+    const DB = {
+      ler: async caminho => (await _r(caminho).get()).val(),
+      gravar: (caminho, valor) => _r(caminho).set(valor),
+      ouvir: (caminho, cb) => _r(caminho).on('value', s => cb(s.val())),
+      agora: () => firebase.database.ServerValue.TIMESTAMP
+    };
+
+    // ── Funções auxiliares ────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const fmt = v => v == null || isNaN(v) ? '—' : 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const semAcento = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+    // Busca: ignora acentos, pontuação e espaços ("vit. b-12" acha "VITAMINA B12")
+    const soLetras = s => semAcento(s).replace(/[^a-z0-9]/g, '');
+    const contem = (texto, busca) => !busca || semAcento(texto).includes(semAcento(busca));
+    const iniciais = nome => String(nome || '?').replace(/^lab(orat[oó]rio)?\.?\s+/i, '').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+    const CORES_AVATAR = ['#2a9d8f', '#e8913a', '#6366f1', '#00a8cc', '#ec4899', '#0e7490', '#8b5cf6', '#16a34a'];
+    const corAvatar = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return CORES_AVATAR[h % CORES_AVATAR.length]; };
+    // Prazo de liberação em dias → texto (0 = 24 Horas)
+    const prazoTexto = dias => dias == null || dias === '' || isNaN(dias) ? '' : +dias <= 0 ? '24 Horas' : +dias === 1 ? '1 dia' : `${+dias} dias`;
+    // Texto antigo: "24 H" → 0 · "48h" → 2 · "4 Dias" → 4 · "N/A" → null
+    function diasDoTexto(t) {
+      let m = String(t || '').match(/(\d+)\s*h/i);
+      if (m) return +m[1] <= 24 ? 0 : Math.ceil(+m[1] / 24);
+      m = String(t || '').match(/(\d+)\s*d/i);
+      return m ? +m[1] : null;
+    }
+    const vazio = (icone, texto) => `<div class="vazio"><i class="fa-solid ${icone}"></i><p>${texto}</p></div>`;
+
+    // ── Toast ─────────────────────────────────────────────────────
+    let _toastTimer = null;
+    function toast(texto, tipo = 'ok') {
+      const el = $('toast');
+      el.className = 'toast ' + tipo;
+      el.innerHTML = `<i class="fa-solid ${tipo === 'erro' ? 'fa-circle-xmark' : 'fa-circle-check'}"></i><span>${esc(texto)}</span>`;
+      requestAnimationFrame(() => el.classList.add('show'));
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    // ── Gaveta lateral ────────────────────────────────────────────
+    function abrirGaveta({ sobre = '', titulo = '', meta = '', corpo = '', rodape = '' }) {
+      fecharPop();
+      $('g-sobre').textContent = sobre;
+      $('g-titulo').textContent = titulo;
+      $('g-meta').innerHTML = meta;
+      const c = $('g-corpo');
+      c.innerHTML = corpo; c.scrollTop = 0;
+      $('g-rodape').innerHTML = rodape;
+      $('gaveta').classList.add('open');
+      $('gaveta-fundo').classList.add('open');
+    }
+    function fecharGaveta() {
+      $('gaveta').classList.remove('open');
+      $('gaveta-fundo').classList.remove('open');
+    }
+
+    // ── Popover (substitui <select>) ──────────────────────────────
+    // criarPop('id-do-container', { rotulo, titulo, icone, padrao, busca, limpavel, semValor,
+    //   opcoes: [{ valor, rotulo, icone, cor, desc, qtd }] | () => [...], aoMudar })
+    const POPS = {};
+    let popAberto = null;
+    function criarPop(id, cfg) {
+      const wrap = $(id);
+      if (!wrap) return null;
+      const st = Object.assign({ valor: cfg.padrao ?? '' }, cfg, { id, wrap });
+      if (POPS[id]) st.valor = POPS[id].valor;           // mantém a escolha ao recriar
+      POPS[id] = st;
+      wrap.classList.add('pop-wrap');
+      wrap.innerHTML = `<button type="button" class="pop-btn" aria-haspopup="listbox" aria-expanded="false"></button><div class="pop" role="listbox" tabindex="-1"></div>`;
+      st.btn = wrap.querySelector('.pop-btn');
+      st.painel = wrap.querySelector('.pop');
+      st.btn.onclick = () => popAberto === id ? fecharPop() : abrirPop(id);
+      desenharBotaoPop(id);
+      return st;
+    }
+    const opcoesPop = st => typeof st.opcoes === 'function' ? st.opcoes() : st.opcoes;
+    const valorPop = id => POPS[id]?.valor ?? '';
+    function desenharBotaoPop(id) {
+      const st = POPS[id], o = opcoesPop(st).find(x => x.valor === st.valor);
+      const marcado = !!o && st.valor !== (st.padrao ?? '');
+      st.btn.classList.toggle('set', marcado && !!st.limpavel);
+      st.btn.innerHTML = `<span class="pb-ic"><i class="fa-solid ${marcado && o.icone ? o.icone : st.icone}"></i></span>
+        <span class="pb-txt"><span class="pb-l">${esc(st.rotulo)}</span><span class="pb-v">${esc(o ? o.rotulo : st.semValor || '—')}</span></span>
+        ${marcado && st.limpavel ? `<span class="pb-clear" title="Limpar" onclick="event.stopPropagation();definirPop('${id}','${esc(st.padrao ?? '')}')"><i class="fa-solid fa-xmark"></i></span>` : ''}
+        <i class="fa-solid fa-chevron-down pb-chev"></i>`;
+    }
+    function abrirPop(id) {
+      fecharPop();
+      const st = POPS[id];
+      popAberto = id; st.q = '';
+      st.wrap.classList.add('open');
+      st.btn.setAttribute('aria-expanded', 'true');
+      st.painel.classList.toggle('right', st.wrap.getBoundingClientRect().left + 330 > window.innerWidth);
+      desenharPainelPop(id);
+      const wr = st.wrap.getBoundingClientRect(), ph = st.painel.offsetHeight;
+      st.painel.classList.toggle('up', wr.bottom + ph + 12 > window.innerHeight && wr.top > window.innerHeight - wr.bottom);
+      st.hi = Math.max(0, st.vis.findIndex(o => o.valor === st.valor));
+      desenharListaPop(id);
+      const busca = st.painel.querySelector('.pop-search input');
+      (busca && window.innerWidth > 768 ? busca : st.painel).focus({ preventScroll: true });
+    }
+    function fecharPop() {
+      if (!popAberto) return;
+      const st = POPS[popAberto];
+      if (st) { st.wrap.classList.remove('open'); st.btn.setAttribute('aria-expanded', 'false'); }
+      popAberto = null;
+    }
+    function desenharPainelPop(id) {
+      const st = POPS[id];
+      st.painel.innerHTML = `
+        <div class="pop-head"><span>${esc(st.titulo || st.rotulo)}</span><button type="button" class="pop-x" onclick="fecharPop()"><i class="fa-solid fa-xmark"></i></button></div>
+        ${st.busca ? `<div class="pop-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="${esc(st.busca)}" oninput="POPS['${id}'].q=this.value;POPS['${id}'].hi=0;desenharListaPop('${id}')"></div>` : ''}
+        <div class="pop-list"></div>
+        <div class="pop-foot"><span class="keys"><kbd>↑↓</kbd> navegar · <kbd>Enter</kbd> · <kbd>Esc</kbd></span>
+          ${st.limpavel ? `<button type="button" onclick="definirPop('${id}','${esc(st.padrao ?? '')}')"><i class="fa-solid fa-rotate-left"></i> Limpar</button>` : ''}</div>`;
+      desenharListaPop(id);
+    }
+    function desenharListaPop(id) {
+      const st = POPS[id];
+      st.vis = opcoesPop(st).filter(o => contem(o.rotulo + ' ' + (o.desc || ''), st.q));
+      st.painel.querySelector('.pop-list').innerHTML = st.vis.map((o, i) => {
+        const sel = o.valor === st.valor;
+        return `<button type="button" class="pop-opt ${sel ? 'sel' : ''} ${i === st.hi ? 'hi' : ''}" role="option" aria-selected="${sel}"
+            onmouseenter="POPS['${id}'].hi=${i};marcarPop('${id}')" onclick="escolherPop('${id}',${i})">
+          <span class="po-ic" style="--c:${o.cor || 'var(--cyan)'}"><i class="fa-solid ${o.icone || 'fa-circle'}"></i></span>
+          <span class="po-txt"><span class="po-l">${esc(o.rotulo)}</span>${o.desc ? `<span class="po-d">${esc(o.desc)}</span>` : ''}</span>
+          ${o.qtd != null ? `<span class="po-n">${o.qtd}</span>` : ''}<i class="fa-solid fa-check po-ck"></i></button>`;
+      }).join('') || `<div class="pop-empty"><i class="fa-solid fa-magnifying-glass"></i>Nada encontrado</div>`;
+    }
+    function marcarPop(id) {
+      const st = POPS[id], itens = st.painel.querySelectorAll('.pop-opt'), lst = st.painel.querySelector('.pop-list');
+      itens.forEach((b, i) => b.classList.toggle('hi', i === st.hi));
+      const el = itens[st.hi];
+      if (!el) return;
+      // rola só a lista, nunca a página
+      if (el.offsetTop < lst.scrollTop) lst.scrollTop = el.offsetTop - 6;
+      else if (el.offsetTop + el.offsetHeight > lst.scrollTop + lst.clientHeight) lst.scrollTop = el.offsetTop + el.offsetHeight - lst.clientHeight + 6;
+    }
+    function escolherPop(id, i) { definirPop(id, POPS[id].vis[i].valor); }
+    function definirPop(id, valor) {
+      const st = POPS[id];
+      st.valor = valor;
+      desenharBotaoPop(id);
+      fecharPop();
+      st.aoMudar?.(valor);
+    }
+    document.addEventListener('keydown', e => {
+      if (popAberto) {
+        const st = POPS[popAberto];
+        if (e.key === 'Escape') { fecharPop(); st.btn.focus(); }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); st.hi = Math.min(st.vis.length - 1, st.hi + 1); marcarPop(popAberto); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); st.hi = Math.max(0, st.hi - 1); marcarPop(popAberto); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (st.vis[st.hi]) escolherPop(popAberto, st.hi); }
+        return;
+      }
+      if (e.key !== 'Escape') return;
+      if ($('modal').classList.contains('open')) fecharModal();
+      else fecharGaveta();
+    });
+    // clique fora fecha o popover
+    document.addEventListener('pointerdown', e => { if (popAberto && !POPS[popAberto].wrap.contains(e.target)) fecharPop(); });
+
+    // ── Modo noturno ──────────────────────────────────────────────
+    function aplicarTema(escuro) {
+      document.documentElement.dataset.theme = escuro ? 'dark' : 'light';
+      $('bt-tema').innerHTML = `<i class="fa-solid ${escuro ? 'fa-sun' : 'fa-moon'}"></i>`;
+      $('bt-tema').title = escuro ? 'Modo claro' : 'Modo noturno';
+      try { localStorage.setItem('tabelas-tema', escuro ? 'dark' : 'light'); } catch (e) {}
+    }
+    function alternarTema() { aplicarTema(document.documentElement.dataset.theme !== 'dark'); }
+    function temaInicial() {
+      let t = null;
+      try { t = localStorage.getItem('tabelas-tema'); } catch (e) {}
+      aplicarTema(t === 'dark');   // claro por padrão; lembra a escolha do usuário
+    }
+
+    // ── Dados ─────────────────────────────────────────────────────
+    const DADOS = { linhas: [], tabela: '', em: null };
+        const anexosDe = r => Object.values(r?.anexos || {}).filter(a => a && /^https?:\/\/\S+$/i.test(String(a.url || '').trim())).map(a => ({ nome: String(a.nome || 'Anexo'), url: String(a.url).trim() }));
+    // Instrução é texto puro: marcação antiga (<a href>…</a>) sai, fica só o texto
+    const textoLimpo = t => String(t || '').replace(/<\/?[a-z][^>]*>/gi, '').replace(/\n{3,}/g, '\n\n').trim();
+
+    // ── Instrução em campos por categoria ─────────────────────────
+    // O Comercial grava catalogo/{chave}/secoes; exame ainda não migrado traz só o texto
+    // corrido (instrucao), separado aqui pelos títulos. Mesma regra de script/secoes.js
+    // do Comercial: manter as duas cópias iguais.
+    const SECOES = {
+      jejum:        { nome: 'Jejum',                icone: 'fa-utensils',             cor: '#e8890c', re: /^(tempo de )?jejum( obrigatorio)?$/ },
+      orientacoes:  { nome: 'Orientações',          icone: 'fa-clipboard-list',       cor: '#00a8cc', re: /^(orientacao|orientacoes|preparo|instrucoes( de (preparo|coleta))?|informacoes de preparo e coleta)$/ },
+      questionario: { nome: 'Questionário',         icone: 'fa-clipboard-question',   cor: '#6366f1', re: /^questionarios?$/ },
+      interacoes:   { nome: 'Interações',           icone: 'fa-triangle-exclamation', cor: '#d97706', re: /^((interacao|interacoes)( medicamentosas?)?|interferentes)$/ },
+      coleta:       { nome: 'Coleta',               icone: 'fa-syringe',              cor: '#16a34a', re: /^coleta( (no )?apoio)?$/ },
+      rejeicao:     { nome: 'Critério de rejeição', icone: 'fa-ban',                  cor: '#e63946', re: /^(criterios? de )?rejeicao$/ },
+      conservacao:  { nome: 'Conservação',          icone: 'fa-temperature-low',      cor: '#0ea5e9', re: /^(conservacao|armazenamento|estabilidade)$/ },
+      sobre:        { nome: 'Sobre o exame',        icone: 'fa-magnifying-glass',     cor: '#64748b', re: /^(sobre( o exame)?|fundamentacao teorica|interpretacao do exame)$/ },
+      comentarios:  { nome: 'Comentários',          icone: 'fa-comment-dots',         cor: '#8b5cf6', re: /^(comentarios?|cometarios?)$/ }
+    };
+    const RE_EMOJI = /[\p{Extended_Pictographic}\uFE0F\u200D]/gu;
+    function tituloSecao(linha) {
+      const m = String(linha).trim().match(/^([^\p{L}\p{N}]*)([\p{L} ]{3,40}?)\s*(?::\s*(.*))?$/u);
+      if (!m || (m[1] && !/\p{Extended_Pictographic}/u.test(m[1]))) return null;
+      const t = m[2].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+      if (m[3] === undefined && /^jejum nao (e )?(necessario|obrigatorio)$/.test(t)) return { k: 'jejum', resto: m[2].trim() };
+      const k = Object.keys(SECOES).find(s => SECOES[s].re.test(t));
+      return k ? { k, resto: (m[3] || '').trim() } : null;
+    }
+    function limparSecoes(s) {
+      const r = {};
+      Object.keys(SECOES).forEach(k => {
+        const t = textoLimpo(s?.[k]).replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').replace(/(^|\n)[ \t]*(?:🔗[ \t]*)?anexos?[ \t]*:?[ \t]*$/i, '').trim();
+        if (t) r[k] = t;
+      });
+      return r;
+    }
+    function separarSecoes(texto) {
+      const partes = {};
+      let atual = 'sobre';
+      String(texto || '').replace(/\r\n?/g, '\n').split('\n').forEach(linha => {
+        const t = tituloSecao(linha);
+        if (t) { atual = t.k; (partes[atual] ??= []).push('', t.resto); }
+        else (partes[atual] ??= []).push(linha);
+      });
+      return limparSecoes(Object.fromEntries(Object.entries(partes).map(([k, ls]) => [k, ls.join('\n')])));
+    }
+    const secoesDe = c => c?.secoes ? limparSecoes(c.secoes) : separarSecoes(textoLimpo(c?.instrucao));
+    const semEmoji = t => String(t || '').replace(RE_EMOJI, '').replace(/^[ \t]+/gm, '').trim();
+    // Texto do campo em parágrafos, listas (•, -, *) e subtítulos (linha curta terminada em ":")
+    function htmlTextoSecao(texto) {
+      const RE_ITEM = /^(?:[•\-–*]|=>|\.{1,4})\s+/;
+      let html = '', lista = false;
+      const fechar = () => { if (lista) { html += '</ul>'; lista = false; } };
+      semEmoji(texto).split('\n').forEach(l => {
+        const t = l.trim();
+        if (!t) return fechar();
+        if (RE_ITEM.test(t)) { if (!lista) { html += '<ul>'; lista = true; } html += `<li>${esc(t.replace(RE_ITEM, ''))}</li>`; return; }
+        fechar();
+        html += `<p${/:$/.test(t) && t.length < 70 ? ' class="sub"' : ''}>${esc(t)}</p>`;
+      });
+      fechar();
+      return html;
+    }
+    async function copiarSecao(k) {
+      const x = _aberto, t = x && x.secoes[k] ? `${SECOES[k].nome}:\n${semEmoji(x.secoes[k])}` : '';
+      if (!t) return;
+      try { await navigator.clipboard.writeText(t); toast(`${SECOES[k].nome} copiado`); } catch (e) { toast('Não foi possível copiar'); }
+    }
+
+    // ── Tabelas disponíveis ───────────────────────────────────────
+    const TAB_KEY = 'tabelas-ultima';
+    let BANCO = { exames: {}, catalogo: {}, tabelas: {} };
+    let TAB = 'particular';
+    const tabelasAtivas = () => Object.entries(BANCO.tabelas || {}).filter(([, t]) => t && t.ativa !== false)
+      .map(([id, t]) => ({ id, ...t })).sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99) || String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
+    const nomeTabela = id => id === 'particular' ? 'Particular' : BANCO.tabelas?.[id]?.nome || 'Tabela';
+
+    async function carregarBanco() {
+      const [exames, catalogo, tabelas] = await Promise.all([DB.ler('exames'), DB.ler('catalogo'), DB.ler('tabelas')]);
+      BANCO = { exames: exames || {}, catalogo: catalogo || {}, tabelas: tabelas || {} };
+      DADOS.em = new Date();
+    }
+
+    // Monta as linhas da tabela escolhida: Particular = precoPraticado; demais = tabelas/{id}/precos
+    function montarTabela(id) {
+      if (id !== 'particular' && !tabelasAtivas().some(t => t.id === id)) id = 'particular';
+      TAB = id;
+      try { localStorage.setItem(TAB_KEY, id); } catch (e) {}
+      const { exames, catalogo } = BANCO;
+      const precos = id === 'particular'
+        ? Object.fromEntries(Object.entries(exames).map(([k, e]) => [k, e?.precoPraticado]))
+        : BANCO.tabelas[id]?.precos || {};
+      DADOS.linhas = Object.keys(precos).map(k => {
+        const e = exames?.[k], c = catalogo?.[k] || {}, valor = precos[k];
+        if (!e || e.ativo === false || valor == null || !(+valor >= 0)) return null;
+        const d = c.prazoDias ?? e.prazoDias, dias = d != null && !isNaN(d) ? +d : diasDoTexto(c.prazo || e.prazo);
+        const x = { k, mn: String(e.mn || c.mn || k), nome: String(c.nome || e.descricao || e.mn || k), material: String(c.material || e.material || ''),
+          dias, prazo: prazoTexto(d) || String(c.prazo || e.prazo || ''), valor: +valor, neg: false, secoes: secoesDe(c), anexos: anexosDe(c) };
+        x.instrucao = Object.keys(x.secoes).length > 0;
+        x.busca = soLetras(x.mn + x.nome + x.material);
+        return x;
+      }).filter(Boolean);
+      DADOS.tabela = nomeTabela(id);
+    }
+
+    function trocarTabela(id) {
+      montarTabela(id);
+      Object.assign(F, { filtro: '', pag: 1 });
+      desenharTela();
+      toast(`Tabela ${DADOS.tabela}`);
+    }
+
+    async function atualizar(b) {
+      b.disabled = true; b.querySelector('i').classList.add('fa-spin');
+      try { await carregarBanco(); montarTabela(TAB); desenharTela(); toast('Tabelas atualizadas'); }
+      catch (e) {
+        console.error(e);
+        b.disabled = false; b.querySelector('i').classList.remove('fa-spin');
+        toast('Não foi possível atualizar. Verifique a internet.', 'erro');
+      }
+    }
+
+    // ── Tela ──────────────────────────────────────────────────────
+    const POR_PAG = 50;
+    const F = { q: '', filtro: '', pag: 1, ordem: 'nome', dir: 1 };
+    const FILTROS = {
+      ins: { nome: 'Com instrução', icone: 'fa-file-lines', f: x => x.instrucao },
+      anx: { nome: 'Com anexos', icone: 'fa-paperclip', f: x => x.anexos.length }
+    };
+    const PRAZOS = {
+      d0: { nome: '24 Horas', f: x => x.dias === 0 },
+      d2: { nome: 'Até 2 dias', f: x => x.dias != null && x.dias <= 2 },
+      d5: { nome: 'Até 5 dias', f: x => x.dias != null && x.dias <= 5 },
+      d10: { nome: 'Até 10 dias', f: x => x.dias != null && x.dias <= 10 },
+      dm: { nome: 'Mais de 10 dias', f: x => x.dias != null && x.dias > 10 },
+      sem: { nome: 'Sem prazo informado', f: x => x.dias == null }
+    };
+    let _vis = [];              // linhas da página atual (a gaveta abre pelo índice)
+
+    function desenharTela() {
+      const hora = DADOS.em.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      $('page').innerHTML = `
+        <div class="h-row"><div><h2>Tabela de exames</h2><p>Valores, prazos e instruções da tabela <b>${esc(DADOS.tabela)}</b> · ${DADOS.linhas.length} exames · atualizado às ${hora}</p></div>
+          <div class="acoes"><div id="pop-tab"></div><button class="btn" onclick="atualizar(this)"><i class="fa-solid fa-rotate"></i>Atualizar</button>
+            <button class="btn pri" onclick="abrirProposta()"><i class="fa-solid fa-file-pdf"></i>Baixar proposta</button></div></div>
+        <div class="card">
+          <div class="toolbar">
+            <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="q" value="${esc(F.q)}" placeholder="Buscar exame, mnemônico ou material…" autocomplete="off" oninput="F.q=this.value;F.pag=1;desenharLista()">
+              <button type="button" class="limpar" id="q-limpar" title="Limpar a busca" onclick="F.q='';F.pag=1;$('q').value='';desenharLista();$('q').focus()"><i class="fa-solid fa-xmark"></i></button></div>
+            <div id="pop-mat"></div><div id="pop-prazo"></div>
+          </div>
+          <div class="chips" id="chips"></div>
+          <div class="tbl-wrap" style="margin-top:10px"><table><thead id="cab"></thead><tbody id="corpo"></tbody></table></div>
+          <div class="foot" id="rodape"></div>
+        </div>`;
+      criarPop('pop-tab', {
+        rotulo: 'Tabela', titulo: 'Escolha a tabela de preço', icone: 'fa-table-list', busca: 'Buscar tabela…', padrao: 'particular',
+        opcoes: () => [{ valor: 'particular', rotulo: 'Particular', icone: 'fa-user', cor: 'var(--cyan)', desc: 'Preço praticado' },
+          ...tabelasAtivas().map(t => ({ valor: t.id, rotulo: t.nome || t.id, icone: /^fa-/.test(t.icone || '') ? t.icone : t.tipo === 'lab' ? 'fa-building-user' : 'fa-table-list',
+            cor: t.cor || corAvatar(t.id), desc: t.tipo === 'lab' ? 'Laboratórios apoiados' : 'Convênio', qtd: Object.keys(t.precos || {}).length }))],
+        aoMudar: v => { if (v !== TAB) trocarTabela(v); }
+      });
+      POPS['pop-tab'].valor = TAB; desenharBotaoPop('pop-tab');
+      const mats = {};
+      DADOS.linhas.forEach(x => { if (x.material) mats[x.material] = (mats[x.material] || 0) + 1; });
+      criarPop('pop-mat', {
+        rotulo: 'Material', titulo: 'Filtrar por material', icone: 'fa-vial', busca: 'Buscar material…', limpavel: true, padrao: '',
+        opcoes: () => [{ valor: '', rotulo: 'Todos os materiais', icone: 'fa-layer-group', qtd: DADOS.linhas.length },
+          ...Object.entries(mats).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR')).map(([m, n]) => ({ valor: m, rotulo: m, icone: 'fa-vial', qtd: n }))],
+        aoMudar: () => { F.pag = 1; desenharLista(); }
+      });
+      if (POPS['pop-mat'].valor && !mats[POPS['pop-mat'].valor]) { POPS['pop-mat'].valor = ''; desenharBotaoPop('pop-mat'); }
+      criarPop('pop-prazo', {
+        rotulo: 'Prazo', titulo: 'Filtrar por prazo', icone: 'fa-clock', limpavel: true, padrao: '',
+        opcoes: () => [{ valor: '', rotulo: 'Todos os prazos', icone: 'fa-layer-group', qtd: DADOS.linhas.length },
+          ...Object.entries(PRAZOS).map(([k, p]) => ({ valor: k, rotulo: p.nome, icone: 'fa-clock', qtd: DADOS.linhas.filter(p.f).length })).filter(o => o.qtd)],
+        aoMudar: () => { F.pag = 1; desenharLista(); }
+      });
+      desenharLista();
+    }
+
+    const thOrdem = (rotulo, chave, cls = '') =>
+      `<th class="ord ${cls} ${F.ordem === chave ? 'on' : ''}" onclick="ordenar('${chave}')">${rotulo} <i class="fa-solid ${F.ordem === chave ? (F.dir > 0 ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short') : 'fa-sort'}"></i></th>`;
+    function ordenar(chave) {
+      if (F.ordem === chave) F.dir = -F.dir; else { F.ordem = chave; F.dir = 1; }
+      F.pag = 1;
+      desenharLista();
+    }
+
+    function desenharLista() {
+      const mat = valorPop('pop-mat'), pz = PRAZOS[valorPop('pop-prazo')], termos = F.q.split(/\s+/).map(soLetras).filter(Boolean);
+      const base = DADOS.linhas.filter(x => (!mat || x.material === mat) && (!pz || pz.f(x)) && termos.every(t => x.busca.includes(t)));
+      $('q-limpar').style.display = F.q ? '' : 'none';
+      if (F.filtro && !base.some(FILTROS[F.filtro].f)) F.filtro = '';
+      $('chips').innerHTML = `<button class="chip ${!F.filtro ? 'on' : ''}" onclick="F.filtro='';F.pag=1;desenharLista()"><i class="fa-solid fa-list"></i>Todos <b>${base.length}</b></button>` +
+        Object.entries(FILTROS).map(([k, f]) => [k, f, base.filter(f.f).length]).filter(([, , n]) => n)
+          .map(([k, f, n]) => `<button class="chip ${F.filtro === k ? 'on' : ''}" onclick="F.filtro='${k}';F.pag=1;desenharLista()"><i class="fa-solid ${f.icone}"></i>${f.nome} <b>${n}</b></button>`).join('');
+      const txt = (a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base', numeric: true });
+      const ord = { mn: (a, b) => txt(a.mn, b.mn), nome: (a, b) => txt(a.nome, b.nome), material: (a, b) => txt(a.material || '￿', b.material || '￿'),
+        prazo: (a, b) => (a.dias ?? 1e9) - (b.dias ?? 1e9), valor: (a, b) => a.valor - b.valor }[F.ordem];
+      const ls = base.filter(x => !F.filtro || FILTROS[F.filtro].f(x)).sort((a, b) => ord(a, b) * F.dir || txt(a.nome, b.nome));
+      const n = Math.max(1, Math.ceil(ls.length / POR_PAG));
+      if (F.pag > n) F.pag = n;
+      _vis = ls.slice((F.pag - 1) * POR_PAG, F.pag * POR_PAG);
+      $('cab').innerHTML = `<tr>${thOrdem('MN', 'mn', 'col-mn')}${thOrdem('Exame', 'nome')}${thOrdem('Material', 'material', 'col-mat')}${thOrdem('Prazo', 'prazo', 'col-prazo')}${thOrdem('Valor', 'valor', 'num')}<th></th></tr>`;
+      $('corpo').innerHTML = _vis.map((x, i) => `
+        <tr class="row" onclick="abrirExame(${i})">
+          <td class="mn col-mn">${esc(x.mn)}</td>
+          <td class="desc"><div class="nome" title="${esc(x.nome)}">${esc(x.nome)}</div>
+            <div class="sub-m"><span class="mn">${esc(x.mn)}</span>${x.material ? ' · ' + esc(x.material) : ''}${x.prazo ? ' · ' + esc(x.prazo) : ''}</div></td>
+          <td class="col-mat">${x.material ? `<span class="tag" title="${esc(x.material)}"><i class="fa-solid fa-vial"></i>${esc(x.material)}</span>` : '<span class="muted">—</span>'}</td>
+          <td class="col-prazo">${esc(x.prazo) || '<span class="muted">—</span>'}</td>
+          <td class="num"><b>${fmt(x.valor)}</b>${x.neg ? '<i class="fa-solid fa-handshake neg" title="Valor negociado"></i>' : ''}</td>
+          <td class="ic">${x.instrucao ? '<i class="fa-solid fa-file-lines" title="Tem instrução"></i>' : ''}${x.anexos.length ? `<i class="fa-solid fa-paperclip" title="${x.anexos.length} anexo(s)"></i>` : ''}<i class="fa-solid fa-chevron-right"></i></td></tr>`).join('')
+        || `<tr><td colspan="6">${DADOS.linhas.length ? vazio('fa-magnifying-glass', '<b>Nenhum exame encontrado</b><br>Confira a busca e os filtros.') : vazio('fa-table-list', '<b>Tabela sem exames</b><br>Escolha outra tabela.')}</td></tr>`;
+      $('rodape').innerHTML = paginacao(ls.length, F.pag);
+    }
+
+    function paginacao(total, pag) {
+      const n = Math.max(1, Math.ceil(total / POR_PAG));
+      if (n <= 1) return `<span>${total} exame(s)</span>`;
+      const ini = (pag - 1) * POR_PAG + 1, fim = Math.min(total, pag * POR_PAG);
+      const nums = [...new Set([1, pag - 1, pag, pag + 1, n])].filter(p => p >= 1 && p <= n).sort((a, b) => a - b);
+      let h = '', ant = 0;
+      nums.forEach(p => { if (p - ant > 1) h += '<span class="pg-gap">…</span>'; h += `<button class="pg ${p === pag ? 'on' : ''}" onclick="irPagina(${p})">${p}</button>`; ant = p; });
+      return `<span>${ini}–${fim} de ${total} exames</span><div class="pgs">
+        <button class="pg" ${pag <= 1 ? 'disabled' : ''} onclick="irPagina(${pag - 1})" title="Anterior"><i class="fa-solid fa-chevron-left"></i></button>${h}
+        <button class="pg" ${pag >= n ? 'disabled' : ''} onclick="irPagina(${pag + 1})" title="Próxima"><i class="fa-solid fa-chevron-right"></i></button></div>`;
+    }
+    function irPagina(p) {
+      F.pag = p;
+      desenharLista();
+      $('page').querySelector('.card').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+
+    // ── Detalhes do exame: instrução e anexos ─────────────────────
+    function iconeAnexo(a) {
+      if (/\.pdf(\?|#|$)/i.test(a.url) || /\.pdf$/i.test(a.nome)) return 'fa-file-pdf';
+      if (/docs\.google\.com\/(document|forms)/i.test(a.url)) return 'fa-file-lines';
+      return 'fa-paperclip';
+    }
+    const dominio = url => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+
+    let _aberto = null;
+    // Só recolhe o campo que passa de 4 linhas (recolhido mostra 3)
+    function recolherSecoes() {
+      document.querySelectorAll('.secs .sec').forEach(s => s.classList.toggle('corta', s.querySelector('.sec-tx').scrollHeight > 96));
+    }
+    function alternarSecao(bt) {
+      const aberta = bt.parentElement.classList.toggle('aberta');
+      bt.querySelector('span').textContent = aberta ? 'Ver menos' : 'Ver mais';
+    }
+    function abrirExame(i) {
+      const x = _aberto = _vis[i];
+      if (!x) return;
+      abrirGaveta({
+        sobre: x.mn, titulo: x.nome,
+        meta: `${x.material ? `<span class="tag"><i class="fa-solid fa-vial"></i>${esc(x.material)}</span>` : ''}${x.prazo ? `<span class="tag"><i class="fa-solid fa-clock"></i>${esc(x.prazo)}</span>` : ''}`,
+        corpo: `<div class="valor-box"><div><div class="l">Valor do exame</div><div class="v">${fmt(x.valor)}</div></div>
+            <span class="badge-s ok"><i class="fa-solid fa-table-list"></i>${esc(DADOS.tabela)}</span></div>
+          <div class="sec-t"><i class="fa-solid fa-file-lines"></i>Instruções</div>
+          ${x.instrucao ? `<div class="secs">${Object.entries(x.secoes).map(([k, t]) => `<section class="sec" style="--c:${SECOES[k].cor}">
+              <div class="sec-h"><span class="sec-ic"><i class="fa-solid ${SECOES[k].icone}"></i></span><b>${SECOES[k].nome}</b>
+                <button class="sec-cp" title="Copiar ${SECOES[k].nome}" onclick="copiarSecao('${k}')"><i class="fa-solid fa-copy"></i></button></div>
+              <div class="sec-b"><div class="sec-tx">${htmlTextoSecao(t)}</div></div>
+              <button class="sec-mais" onclick="alternarSecao(this)"><span>Ver mais</span><i class="fa-solid fa-chevron-down"></i></button></section>`).join('')}</div>` : '<div class="muted" style="font-size:13px">Sem instrução cadastrada para este exame.</div>'}
+          ${x.anexos.length ? `<div class="sec-t"><i class="fa-solid fa-paperclip"></i>Anexos</div>
+            <div class="anexos">${x.anexos.map(a => `<a class="anexo" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">
+              <span class="po-ic"><i class="fa-solid ${iconeAnexo(a)}"></i></span><span class="tx"><b>${esc(a.nome)}</b><small>${esc(dominio(a.url))}</small></span>
+              <i class="fa-solid fa-arrow-up-right-from-square"></i></a>`).join('')}</div>` : ''}`,
+        rodape: `<span class="muted" style="font-size:12px">${i + 1 + (F.pag - 1) * POR_PAG}º da lista</span>
+          <div style="display:flex;gap:8px"><button class="btn" ${i > 0 ? '' : 'disabled'} onclick="abrirExame(${i - 1})" title="Exame anterior"><i class="fa-solid fa-chevron-left"></i></button>
+          <button class="btn" ${i < _vis.length - 1 ? '' : 'disabled'} onclick="abrirExame(${i + 1})" title="Próximo exame"><i class="fa-solid fa-chevron-right"></i></button>
+          <button class="btn pri" onclick="fecharGaveta()">Fechar</button></div>`
+      });
+      recolherSecoes();
+    }
+
+    // ── Proposta em PDF (acesso interno) ──────────────────────────
+    const LOGO_PDF = 'https://i.imgur.com/qVfGMyc.png';
+    const TEXTO_APRESENTACAO = `Ao (Nome fantasia e CNPJ)
+
 Prezado(a) Senhor(a),
 
     É com grande satisfação que encaminhamos para apreciação de V.Sa, a nossa proposta orçamentária, para realização de exames laboratoriais de nossa especialidade.
@@ -466,424 +853,131 @@ Prezado(a) Senhor(a),
     Ademais, ressaltamos que a estrutura do Núcleo Técnico Operacional – NTO do Laboratório LAMIC está apta a realizar uma gama de aproximadamente 2.000 (dois mil) diferentes exames, e desta forma, caso vossa senhoria demande a realização de algum(ns) exame(s) que não esteja(m) detalhado(s) na presente proposta, encontramo-nos a disposição para apresentar proposta específica para o(s) mesmo(s).
     A recepção dos materiais para análise obedecerá aos seguintes horários:
 
-Juazeiro do Norte (NTO – Centro) – ÁREA TÉCNICA 
-•	Segunda-feira à Sexta-feira: 06h00 às 17h00
-•	Sábado: 06h00 às 12h00
+    Juazeiro do Norte (NTO – Centro) – ÁREA TÉCNICA
+• Segunda-feira à Sexta-feira: 06h00 às 17h00
+• Sábado: 06h00 às 12h00
 
     Entrega dos Resultados:
     Os prazos de entrega dos resultados dos exames estão evidenciados ao lado da descrição de cada exame na relação anexa à presente proposta e levam em consideração o horário da entrada do material coletado na área técnica do Laboratório LAMIC.`;
-
-        // Texto fixo após a tabela
-        const closingText = `Encontramo-nos à disposição para esclarecer eventuais dúvidas julgadas necessárias acerca do presente orçamento.
-
-Atenciosamente, Dr. Leonardo
+    const TEXTO_FECHAMENTO = `Encontramo-nos à disposição para esclarecer eventuais dúvidas julgadas necessárias acerca do presente orçamento.
+Atenciosamente, Dr. Leonardo Bezerra
 Laboratório LAMIC`;
 
-        // Hide main content initially
-        document.querySelector('h1').style.display = 'none';
-        document.getElementById('userName').style.display = 'none';
-        document.querySelector('.search-container').style.display = 'none';
-        document.querySelector('.logo-container').style.display = 'none';
-        document.getElementById('comparisonTable').style.display = 'none';
-        document.getElementById('changeTableButton').style.display = 'none';
+    function abrirProposta() {
+      const m = $('modal');
+      m.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true">
+          <h3>Texto de apresentação da proposta</h3><p>O PDF leva este texto, a relação de ${DADOS.linhas.length} exames (material, prazo e valor) e o fechamento.</p>
+          <textarea class="txt-grande" id="p-texto"></textarea>
+          <div class="modal-acoes"><button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" id="p-baixar" onclick="baixarProposta()"><i class="fa-solid fa-download"></i>Baixar PDF</button></div>
+        </div>`;
+      $('p-texto').value = TEXTO_APRESENTACAO;
+      m.classList.add('open');
+      m.onclick = e => { if (e.target === m) fecharModal(); };
+    }
+    function fecharModal() { $('modal').classList.remove('open'); }
 
-        // Disable login button initially
-        document.getElementById('loginButton').disabled = true;
+    const carregarScript = src => new Promise((ok, erro) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = ok; s.onerror = () => erro(new Error('Falha ao carregar ' + src));
+      document.head.appendChild(s);
+    });
+    function dataPorExtenso() {
+      const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'], d = new Date();
+      return `Juazeiro do Norte/CE, ${String(d.getDate()).padStart(2, '0')} de ${meses[d.getMonth()]} de ${d.getFullYear()}.`;
+    }
 
-        function showPresentationModal() {
-            document.getElementById('presentation-modal').style.display = 'flex';
-            document.getElementById('presentationText').value = defaultPresentationText;
+    async function baixarProposta() {
+      const b = $('p-baixar'), texto = $('p-texto').value || TEXTO_APRESENTACAO;
+      b.disabled = true; b.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>Gerando…';
+      try {
+        if (!window.jspdf) {
+          await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+          await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js');
         }
-
-        function hidePresentationModal() {
-            document.getElementById('presentation-modal').style.display = 'none';
-        }
-
-        // Load tables from Google Sheets
-        async function loadTables() {
-            const userSelect = document.getElementById('userSelect');
-            userSelect.disabled = true;
-            document.getElementById('loadingTableIcon').style.display = 'block';
-            try {
-                const response = await fetch(sheetsUrl);
-                if (response.ok) {
-                    const data = await response.json();
-                    const tables = [...new Set(data.map(row => row.Tabela))];
-                    userSelect.innerHTML = '<option value="">Selecione uma tabela</option>';
-                    tables.forEach(table => {
-                        if (table) {
-                            const option = document.createElement('option');
-                            option.value = table;
-                            option.textContent = table;
-                            userSelect.appendChild(option);
-                        }
-                    });
-                    document.getElementById('loginButton').disabled = false;
-                } else {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
-            } catch (error) {
-                console.warn('Falha ao carregar tabelas, usando dados de teste:', error);
-                userSelect.innerHTML = '<option value="">Selecione uma tabela</option>';
-                testData.forEach(row => {
-                    const option = document.createElement('option');
-                    option.value = row.Tabela;
-                    option.textContent = row.Tabela;
-                    userSelect.appendChild(option);
-                });
-                document.getElementById('loginButton').disabled = false;
-            } finally {
-                document.getElementById('loadingTableIcon').style.display = 'none';
-                userSelect.disabled = false;
-            }
-        }
-
-        // Handle table selection
-        document.getElementById('loginButton').addEventListener('click', async () => {
-            const selectedTable = document.getElementById('userSelect').value;
-            if (selectedTable) {
-                currentTable = selectedTable;
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.querySelector('h1').style.display = 'block';
-                document.getElementById('userName').textContent = selectedTable;
-                document.getElementById('userName').style.display = 'block';
-                document.querySelector('.search-container').style.display = 'block';
-                document.querySelector('.logo-container').style.display = 'block';
-                document.getElementById('comparisonTable').style.display = 'table';
-                document.getElementById('downloadIcon').style.display = 'block';
-                document.getElementById('changeTableButton').style.display = 'block';
-                loadData();
-            }
+        const doc = new window.jspdf.jsPDF();
+        let y = 20;
+        try {               // logotipo centralizado no topo
+          const img = new Image();
+          img.crossOrigin = 'anonymous'; img.src = LOGO_PDF;
+          await new Promise((ok, erro) => { img.onload = ok; img.onerror = () => erro(new Error('logo')); });
+          const cv = document.createElement('canvas');
+          cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+          cv.getContext('2d').drawImage(img, 0, 0);
+          const lg = 60, alt = lg * img.naturalHeight / img.naturalWidth;
+          doc.addImage(cv.toDataURL('image/png'), 'PNG', (210 - lg) / 2, 10, lg, alt);
+          y = 10 + alt + 10;
+        } catch (e) { console.warn('Logotipo não carregado:', e); }
+        doc.setTextColor(44, 62, 80);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+        doc.text('Proposta de Exames', 105, y, { align: 'center' });
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(12);
+        doc.text(dataPorExtenso(), 105, y + 10, { align: 'center' });
+        y += 20;
+        doc.splitTextToSize(texto, 180).forEach(l => {      // texto longo continua na página seguinte
+          if (y > 285) { doc.addPage(); y = 20; }
+          doc.text(l, 15, y); y += 5;
         });
-
-        // Handle "Change Table" button click
-        document.getElementById('changeTableButton').addEventListener('click', () => {
-            document.getElementById('loginOverlay').style.display = 'flex';
-            document.querySelector('h1').style.display = 'none';
-            document.getElementById('userName').style.display = 'none';
-            document.querySelector('.search-container').style.display = 'none';
-            document.querySelector('.logo-container').style.display = 'none';
-            document.getElementById('comparisonTable').style.display = 'none';
-            document.getElementById('downloadIcon').style.display = 'none';
-            document.getElementById('changeTableButton').style.display = 'none';
-            document.getElementById('userSelect').value = '';
-            document.getElementById('loginButton').disabled = true;
+        const txt = (a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base', numeric: true });
+        doc.autoTable({
+          startY: y + 5,
+          head: [['Exame', 'Material Biológico', 'Prazo', 'Valor']],
+          body: [...DADOS.linhas].sort((a, b) => txt(a.nome, b.nome)).map(x => [x.nome, x.material || 'N/A', x.prazo || 'N/A', fmt(x.valor)]),
+          theme: 'striped',
+          styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak', font: 'helvetica', fontStyle: 'normal' },
+          columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 35 }, 2: { cellWidth: 32 }, 3: { cellWidth: 32 } },
+          headStyles: { fillColor: [14, 22, 40], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10 }
         });
+        y = doc.lastAutoTable.finalY + 10;
+        const fecho = doc.splitTextToSize(TEXTO_FECHAMENTO, 180);
+        if (y + fecho.length * 5 > 285) { doc.addPage(); y = 20; }
+        doc.text(fecho, 15, y);
+        doc.save(`Tabela de Exames - ${DADOS.tabela.replace(/[\\/:*?"<>|]/g, '')} - LAMIC.pdf`);
+        fecharModal();
+        toast('Proposta gerada');
+      } catch (e) {
+        console.error(e);
+        toast('Não foi possível gerar o PDF. Verifique a internet.', 'erro');
+        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-download"></i>Baixar PDF';
+      }
+    }
 
-        // Allow Enter key to trigger selection
-        document.getElementById('userSelect').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('loginButton').click();
-            }
-        });
+    // ── Início ────────────────────────────────────────────────────
+    const showLoading = () => { $('loadingOverlay').style.display = 'flex'; };
+    const hideLoading = () => { $('loadingOverlay').style.display = 'none'; };
+    function telaErro() {
+      hideLoading();
+      const el = $('auth');
+      el.classList.remove('hide');
+      el.innerHTML = `<div class="auth-card"><div class="brand"><div class="brand-ico"><i class="fa-solid fa-table-list"></i></div><div><div class="brand-name">LAMIC TABELAS</div><div class="brand-sub">Tabelas de preço</div></div></div>
+        <h1>Sem conexão</h1><p>Não foi possível acessar as tabelas de preço. Verifique a internet e tente de novo.</p>
+        <button class="btn-primary" onclick="location.reload()"><i class="fa-solid fa-rotate"></i>Tentar novamente</button></div>`;
+    }
+    async function iniciar() {
+      temaInicial();
+      showLoading();
+      const limite = setTimeout(telaErro, 20000);
+      try { await carregarBanco(); }
+      catch (e) { console.error(e); clearTimeout(limite); return telaErro(); }
+      clearTimeout(limite);
+      let ultima = 'particular';
+      try { ultima = localStorage.getItem(TAB_KEY) || 'particular'; } catch (e) {}
+      montarTabela(ultima);
+      $('app').classList.remove('oculto');
+      desenharTela();
+      hideLoading();
+    }
+    window.addEventListener('load', iniciar);
 
-        // Enable/disable login button based on selection
-        document.getElementById('userSelect').addEventListener('change', () => {
-            const selectedTable = document.getElementById('userSelect').value;
-            document.getElementById('loginButton').disabled = !selectedTable;
-        });
-
-        // Função para formatar a data no formato desejado
-        function getFormattedDate() {
-            const months = [
-                'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-                'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
-            ];
-            const today = new Date();
-            const day = String(today.getDate()).padStart(2, '0');
-            const month = months[today.getMonth()];
-            const year = today.getFullYear();
-            return `Juazeiro do Norte/CE, ${day} de ${month} de ${year}.`;
-        }
-
-        // Download PDF function
-        async function downloadPDF() {
-            document.getElementById('downloadIcon').style.display = 'none';
-            document.getElementById('loadingDownloadIcon').style.display = 'block';
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            const logoUrl = document.getElementById('mainLogo').src;
-            let startY = 20;
-
-            // Load and add logo
-            try {
-                const logoImg = new Image();
-                logoImg.crossOrigin = "anonymous";
-                logoImg.src = logoUrl;
-
-                await new Promise((resolve, reject) => {
-                    if (logoImg.complete) {
-                        resolve();
-                    } else {
-                        logoImg.onload = () => resolve();
-                        logoImg.onerror = () => reject(new Error('Failed to load logo'));
-                    }
-                });
-
-                const aspectRatio = logoImg.naturalHeight / logoImg.naturalWidth;
-                const imgWidth = 60;
-                const imgHeight = imgWidth * aspectRatio;
-
-                const canvas = document.createElement('canvas');
-                canvas.width = logoImg.naturalWidth;
-                canvas.height = logoImg.naturalHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(logoImg, 0, 0);
-                const imgData = canvas.toDataURL('image/png');
-
-                const x = (210 - imgWidth) / 2;
-                doc.addImage(imgData, 'PNG', x, 10, imgWidth, imgHeight);
-                startY = 10 + imgHeight + 10;
-            } catch (error) {
-                console.warn('Logo load failed:', error);
-            }
-
-            // Add header
-            doc.setTextColor(44, 62, 80);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.text("Proposta de Exames", 105, startY, { align: 'center' });
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(12);
-
-            // Adiciona a localização e data
-            const dateText = getFormattedDate();
-            doc.text(dateText, 105, startY + 10, { align: 'center' });
-
-            // Adiciona o texto de apresentação editável
-            const presentationText = document.getElementById('presentationText').value || defaultPresentationText;
-            const presentationLines = doc.splitTextToSize(presentationText, 180);
-            doc.text(presentationLines, 15, startY + 20);
-
-            // Calcula a posição após o texto de apresentação
-            let textHeight = presentationLines.length * 5;
-            let tableStartY = startY + 20 + textHeight + 10;
-
-            // Prepare table data
-            const rows = Object.keys(examsData).map(exame => {
-                const data = examsData[exame];
-                const valorStr = data.valor !== undefined && !isNaN(data.valor) ? `R$ ${data.valor.toFixed(2)}` : 'N/A';
-                return [exame, data.material || 'N/A', data.prazo || 'N/A', valorStr];
-            });
-
-            // Add table using autoTable
-            doc.autoTable({
-                startY: tableStartY,
-                head: [['Exame', 'Material', 'Prazo', 'Valor']],
-                body: rows,
-                theme: 'striped',
-                styles: { 
-                    fontSize: 9, 
-                    cellPadding: 4,
-                    overflow: 'linebreak',
-                    font: 'helvetica',
-                    fontStyle: 'normal'
-                },
-                columnStyles: {
-                    0: { cellWidth: 95 },
-                    1: { cellWidth: 30 },
-                    2: { cellWidth: 25 },
-                    3: { cellWidth: 30 }
-                },
-                headStyles: { 
-                    fillColor: [26, 43, 95],
-                    textColor: [255, 255, 255],
-                    fontStyle: 'bold',
-                    fontSize: 10
-                }
-            });
-
-            // Adiciona o texto fixo após a tabela
-            const finalY = doc.lastAutoTable.finalY + 10;
-            const closingLines = doc.splitTextToSize(closingText, 180);
-            doc.text(closingLines, 15, finalY);
-
-            doc.save(`LAMIC - Lista de Exames.pdf`);
-
-            document.getElementById('loadingDownloadIcon').style.display = 'none';
-            document.getElementById('downloadIcon').style.display = 'block';
-        }
-
-        // Eventos para o modal de apresentação
-        document.getElementById('downloadIcon').addEventListener('click', () => {
-            showPresentationModal();
-        });
-
-        document.getElementById('cancel-presentation').addEventListener('click', () => {
-            hidePresentationModal();
-            document.getElementById('downloadIcon').style.display = 'block';
-        });
-
-        document.getElementById('download-presentation').addEventListener('click', () => {
-            hidePresentationModal();
-            downloadPDF();
-        });
-
-        // Load data from Google Sheets
-        async function loadData() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            let data;
-            try {
-                const response = await fetch(sheetsUrl);
-                if (response.ok) {
-                    data = await response.json();
-                } else {
-                    throw new Error('Falha ao carregar dados do Google Sheets');
-                }
-            } catch (error) {
-                console.warn('Usando dados de teste:', error);
-                data = testData;
-            }
-
-            // Filter exams for the selected table
-            examsData = {};
-            data.forEach(row => {
-                if (row.Tabela === currentTable) {
-                    const exame = row.Exame;
-                    const valor = parseFloat(row.Valor);
-                    const material = row.Material;
-                    const prazo = row.Prazo;
-                    const descricao = row.Descricao || '';
-                    if (exame && !isNaN(valor)) {
-                        examsData[exame] = { valor, material, prazo, descricao };
-                    }
-                }
-            });
-
-            renderTableHeader();
-            renderTable(Object.keys(examsData));
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-
-        function renderTableHeader() {
-            const header = document.getElementById('tableHeader');
-            header.innerHTML = '<tr><th>Exame</th><th>Material Biológico</th><th>Prazo</th><th>Valor</th><th>Info</th></tr>';
-        }
-
-        function renderTable(exams) {
-            const body = document.getElementById('tableBody');
-            body.innerHTML = '';
-            exams.forEach(exame => {
-                const row = document.createElement('tr');
-                const data = examsData[exame] || { valor: 'N/A', material: 'N/A', prazo: 'N/A', descricao: '' };
-                const displayValor = data.valor !== 'N/A' && !isNaN(data.valor) ? `R$ ${data.valor.toFixed(2)}` : 'N/A';
-                const processedDescription = processHyperlinks(data.descricao);
-                const infoContent = data.descricao ? `<div class="instruction-cell"><i class="fas fa-circle-info instruction-icon" onclick="toggleInstruction(this)"></i><div class="instruction-tooltip">${processedDescription}</div></div>` : '<span>-</span>';
-                row.innerHTML = `<td>${exame}</td><td>${data.material || 'N/A'}</td><td>${data.prazo || 'N/A'}</td><td>${displayValor}</td><td>${infoContent}</td>`;
-                body.appendChild(row);
-            });
-        }
-
-        function processHyperlinks(text) {
-            if (!text) return '';
-            
-            // Se o texto contém tags <a>, extrai e reformata
-            const linkRegex = /<a\s+href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi;
-            let hasLinks = false;
-            
-            const processed = text.replace(linkRegex, (match, url, linkText) => {
-                hasLinks = true;
-                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
-            });
-            
-            // Se encontrou links formatados, retorna o processado
-            if (hasLinks) {
-                return processed;
-            }
-            
-            // Caso contrário, processa URLs simples
-            const urlRegex = /(https?:\/\/[^\s<>"(){}\[\]\\^`|]*)/g;
-            return text.replace(urlRegex, (url) => {
-                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-            });
-        }
-
-        function toggleInstruction(element) {
-            const cell = element.closest('.instruction-cell');
-            if (!cell) return;
-            
-            const allCells = document.querySelectorAll('.instruction-cell.active');
-            allCells.forEach(activeCell => {
-                if (activeCell !== cell) {
-                    activeCell.classList.remove('active');
-                }
-            });
-            
-            cell.classList.toggle('active');
-            
-            // Se o tooltip foi ativado, ajusta a posição para garantir visibilidade
-            if (cell.classList.contains('active')) {
-                setTimeout(() => {
-                    const tooltip = cell.querySelector('.instruction-tooltip');
-                    if (tooltip) {
-                        const rect = tooltip.getBoundingClientRect();
-                        
-                        // Se o tooltip sai pela esquerda, reposiciona para direita
-                        if (rect.left < 0) {
-                            tooltip.style.right = 'auto';
-                            tooltip.style.left = '130%';
-                        }
-                        
-                        // Se o tooltip sai pela direita, reposiciona para esquerda
-                        if (rect.right > window.innerWidth) {
-                            tooltip.style.right = '130%';
-                            tooltip.style.left = 'auto';
-                        }
-                    }
-                }, 0);
-            }
-            
-            event.stopPropagation();
-        }
-
-        function filterExams(query) {
-            const matchingExams = Object.keys(examsData).filter(exame =>
-                exame.toLowerCase().includes(query.toLowerCase())
-            );
-            renderTable(matchingExams);
-            if (!query) {
-                renderTable(Object.keys(examsData));
-            }
-        }
-
-        document.getElementById('searchInput').addEventListener('input', (e) => filterExams(e.target.value));
-
-        // Close instruction tooltips when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.instruction-cell')) {
-                document.querySelectorAll('.instruction-cell.active').forEach(cell => {
-                    cell.classList.remove('active');
-                });
-            }
-        });
-
-        // Initialize on load
-        window.addEventListener('load', () => {
-            loadTables();
-        });
-
-        function ctrlShiftKey(e, keyCode) {
-            return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
-        }
-
-        document.onkeydown = function(event) {
-            if (
-                event.keyCode === 123 || 
-                ctrlShiftKey(event, 'I') || 
-                ctrlShiftKey(event, 'J') || 
-                ctrlShiftKey(event, 'C') || 
-                (event.ctrlKey && event.keyCode === 'U'.charCodeAt(0)) || 
-                (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0))
-            ) {
-                event.preventDefault();
-                return false;
-            }
-        };
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
-    </script>
+    // ── Bloqueio de inspeção (como na versão anterior) ────────────
+    function ctrlShiftKey(e, keyCode) { return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0); }
+    document.onkeydown = function (event) {
+      if (event.keyCode === 123 || ctrlShiftKey(event, 'I') || ctrlShiftKey(event, 'J') || ctrlShiftKey(event, 'C') ||
+        (event.ctrlKey && event.keyCode === 'U'.charCodeAt(0)) || (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0))) {
+        event.preventDefault();
+        return false;
+      }
+    };
+    document.addEventListener('contextmenu', e => e.preventDefault());
+  </script>
 </body>
 </html>

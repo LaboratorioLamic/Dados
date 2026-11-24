@@ -20,6 +20,8 @@ const PULAR = [
 
 function listar(dir) {
   try {
+    // módulo sem repositório próprio (criado direto em seeds/): o git do Dados ignora seeds/, então lista a pasta
+    if (!fs.existsSync(path.join(dir, '.git'))) throw new Error('sem .git');
     const out = execFileSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], { cwd: dir, encoding: 'utf8', maxBuffer: 64 << 20 });
     return out.split('\0').filter(Boolean);
   } catch {

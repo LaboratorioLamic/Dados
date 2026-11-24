@@ -90,6 +90,13 @@ window.LAMIC_SEED_MODULOS = [
     "icone": "fas fa-file-signature",
     "modo": "iframe",
     "ordem": 3
+   },
+   {
+    "nome": "Comparar Orçamentos",
+    "url": "seeds/valor/index.html",
+    "icone": "fas fa-scale-balanced",
+    "modo": "iframe",
+    "ordem": 4
    }
   ]
  },
