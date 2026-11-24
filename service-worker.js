@@ -1,5 +1,5 @@
 // Rede primeiro (dados e login sempre atualizados); cache só como reserva offline do "casco" do app.
-const CACHE = 'lamic-portal-v91';
+const CACHE = 'lamic-portal-v92';
 const CASCO = ['./', 'index.html', 'css/portal.css', 'js/app.js', 'js/chat-flutuante.js', 'js/config.js', 'assents/circulo.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -22,6 +22,11 @@ self.addEventListener('fetch', (e) => {
         if (r.ok) { const copia = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copia)); }
         return r;
       })
-      .catch(() => caches.match(e.request).then((r) => r || caches.match('index.html')))
+      .catch(() => caches.match(e.request).then((r) => {
+        if (r) return r;
+        // index.html só substitui a própria página do portal; num módulo (iframe) abriria o portal dentro dele mesmo
+        const raiz = new URL('./', self.registration.scope).pathname;
+        return (url.pathname === raiz || url.pathname === raiz + 'index.html') ? caches.match('index.html') : Response.error();
+      }))
   );
 });
