@@ -63,7 +63,7 @@
   // Os módulos vivem em seeds/ (local) e são copiados para modulos/ (node ferramentas/sincronizar-modulos.js),
   // que vai no GitHub Pages do Dados. Publicado: abre modulos/{repo}/; local: seeds/{repo}/.
   // Links antigos para laboratoriolamic.github.io/{repo}/ também caem na cópia do Dados.
-  const SEEDS = ['Iamicvacinas', 'L2L', 'Planilhas', 'Pops', 'Protocolos', 'TabeIasIamic', 'Temperatura', 'Termos', 'Treinamentos',
+  const SEEDS = ['Iamicproposta', 'Iamicvacinas', 'L2L', 'Planilhas', 'Pops', 'Protocolos', 'TabeIasIamic', 'Temperatura', 'Termos', 'Treinamentos',
     'auditoriaIamic', 'checkguias', 'comercial', 'conveniosIamic', 'curricuIoIamic', 'docadmin', 'manutencao', 'propagandismolamic', 'respIamic', 'wpp'];
   const PUBLICADO = /\.github\.io$/.test(location.hostname);
   const urlLink = (u) => {

@@ -83,6 +83,13 @@ window.LAMIC_SEED_MODULOS = [
     "icone": "fas fa-money-check-dollar",
     "modo": "iframe",
     "ordem": 2
+   },
+   {
+    "nome": "Propostas",
+    "url": "seeds/Iamicproposta/index.html",
+    "icone": "fas fa-file-signature",
+    "modo": "iframe",
+    "ordem": 3
    }
   ]
  },
