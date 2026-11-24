@@ -29,7 +29,7 @@
   const dataBR = (d) => d ? new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
   const iniciais = (n) => (n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
   // aceita http(s), páginas internas da pasta seeds/ e imagens embutidas (bloqueia javascript: etc.)
-  const urlSegura = (u) => /^(https?:\/\/|seeds\/|data:image\/)/i.test(u || '') ? u : '#';
+  const urlSegura = (u) => /^(https?:\/\/|seeds\/|modulos\/|data:image\/)/i.test(u || '') ? u : '#';
 
   // Realtime Database
   const ref = (p) => S.db.ref(p);
