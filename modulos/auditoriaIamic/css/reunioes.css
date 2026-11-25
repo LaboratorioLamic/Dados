@@ -469,8 +469,8 @@ textarea.reu-blk-text { min-height: 26px; }
 .reu-blk-add { display: flex; align-items: center; gap: 4px; padding: 4px 4px 2px 20px; }
 .reu-blk-add-type { border: 0; background: transparent; width: 26px; height: 26px; border-radius: 6px; color: #94a3b8; cursor: pointer; }
 .reu-blk-add-type:hover { background: #eef2f7; color: var(--accent, #2563eb); }
-.reu-blk-add input { flex: 1; border: 0; border-bottom: 1px dashed #e2e8f0; font: 13px "Segoe UI", system-ui, sans-serif; padding: 5px 4px; background: transparent; }
-.reu-blk-add input:focus { outline: none; border-bottom-color: var(--accent, #2563eb); }
+.reu-blk-add input, .reu-blk-add textarea { flex: 1; resize: none; overflow: hidden; line-height: 1.45; border: 0; border-bottom: 1px dashed #e2e8f0; font: 13px "Segoe UI", system-ui, sans-serif; padding: 5px 4px; background: transparent; }
+.reu-blk-add input:focus, .reu-blk-add textarea:focus { outline: none; border-bottom-color: var(--accent, #2563eb); }
 .reu-topic-anxs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0 14px; padding-top: 8px; border-top: 1px dashed #eef2f7; color: #94a3b8; font-size: 12px; }
 .reu-act-group { display: flex; align-items: center; gap: 8px; padding: 10px 6px 4px; font-size: 13px; color: #0f172a; }
 .reu-act-group:not(:first-child) { margin-top: 6px; border-top: 1px solid #eef2f7; padding-top: 12px; }

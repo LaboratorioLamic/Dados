@@ -2264,13 +2264,13 @@ function _tabPauta(r, o, ed, topics) {
                 ${tasks.length ? `<span class="reu-topic-prog" title="${done}/${tasks.length} concluídas"><span style="width:${Math.round(done / tasks.length * 100)}%"></span></span><small>${done}/${tasks.length}</small>` : ''}
                 ${ed ? `<button class="reu-icon-btn" title="Opções do tópico" onclick="reuPopTopic(this,'${tp}')"><i class="fas fa-ellipsis"></i></button>` : ''}
             </div>
-            ${ed || (t.texto || '').trim() ? `<textarea class="reu-topic-text reu-autogrow" rows="1" data-fk="tx-${t._id}" placeholder="Descrição" ${ed ? '' : 'disabled'} oninput="reuAutogrow(this)" onchange="reuTopicSet('${tp}','texto',this.value)">${_esc((t.texto || '').trim())}</textarea>` : ''}
+            ${(t.texto || '').trim() || (ed && _descAberta.has(t._id)) ? `<textarea class="reu-topic-text reu-autogrow" rows="1" data-fk="tx-${t._id}" placeholder="Descrição" ${ed ? '' : 'disabled'} oninput="reuAutogrow(this)" onchange="reuTopicSet('${tp}','texto',this.value)" onblur="reuDescBlur(this,'${t._id}')">${_esc((t.texto || '').trim())}</textarea>` : ''}
             <div class="reu-blocks">
                 ${_collapsed.has('T' + t._id) ? `<button class="reu-topic-hidden" onclick="reuToggleCollapse('T${t._id}')"><i class="fas fa-eye"></i> ${_flatTree(tree).length} itens ocultos — mostrar</button>` : _renderNodes(r, tp, tree, edT)}
                 ${edT ? `<div class="reu-blk-add">
                     <button class="reu-blk-add-type" title="Adicionar tarefa" onclick="reuItemAdd('${tp}','',null,'tarefa',true)"><i class="far fa-square-check"></i></button>
                     <button class="reu-blk-add-type" title="Adicionar texto" onclick="reuItemAdd('${tp}','',null,'texto',true)"><i class="fas fa-paragraph"></i></button>
-                    <input data-fk="add-${t._id}" placeholder="Nova linha · Enter (mesmo tipo da última) · Ctrl+Enter tarefa · Alt+Enter novo tópico" onkeydown="reuAddKey(event,this,'${tp}')">
+                    <textarea class="reu-autogrow" rows="1" data-fk="add-${t._id}" placeholder="Nova linha · Shift+Enter (mesmo tipo da última) · Ctrl+Enter tarefa · Alt+Enter novo tópico · Enter quebra linha" oninput="reuAutogrow(this)" onkeydown="reuAddKey(event,this,'${tp}')"></textarea>
                 </div>` : ''}
             </div>
             ${nAnx ? `<div class="reu-topic-anxs"><i class="fas fa-paperclip"></i>${_anexoChips(tp, t, ed)}</div>` : ''}
@@ -2339,8 +2339,21 @@ function _tabAnexos(r, o, ed) {
 }
 
 // --- Popovers de tópico/bloco ---------------------------------------------------------
+// Descrição do tópico fica oculta até ter texto ou ser pedida no menu "..."
+const _descAberta = new Set();
+function reuDescAdd(tid) {
+    _descAberta.add(tid); _renderDetail();
+    setTimeout(() => document.querySelector(`#reuDrawer [data-fk="tx-${tid}"]`)?.focus(), 30);
+}
+function reuDescBlur(el, tid) {
+    if (el.value.trim()) return;
+    _descAberta.delete(tid);
+    setTimeout(_renderDetail, 150);
+}
 function reuPopTopic(btn, tp) {
+    const tid = tp.split('/').pop(), tTxt = ((_getAt(tp) || {}).texto || '').trim();
     _openPop(btn, _menuHtml([
+        ...(tTxt || _descAberta.has(tid) ? [] : [{ label: 'Adicionar descrição', icon: 'fa-align-left', fn: `reuClosePop();reuDescAdd('${tid}')` }]),
         { label: 'Responsáveis', icon: 'fa-user-group', fn: `reuClosePop();reuPopTopicResp(document.querySelector('[data-fk=&quot;t-${tp.split('/').pop()}&quot;]'),'${tp}')` },
         { label: 'Marcadores', icon: 'fa-tag', fn: `reuClosePop();reuPopMarcadores(document.querySelector('[data-fk=&quot;t-${tp.split('/').pop()}&quot;]'),'${tp}')` },
         { label: 'Anexar', icon: 'fa-paperclip', fn: `reuOpenAttach('${tp}')` },
@@ -2615,20 +2628,26 @@ function _blkUp() {
 }
 function reuAddKey(e, inp, tp) {
     if (e.key !== 'Enter') return;
+    if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) return;   // Enter simples: quebra linha
     e.preventDefault();
     if (e.altKey) { if (inp.value.trim()) { const v = inp.value; inp.value = ''; reuItemAdd(tp, v, null, 'texto'); } reuTopicAdd(); return; }
     const v = inp.value.trim();
     if (!v) return;
-    inp.value = '';
+    inp.value = ''; inp.style.height = '';
     const last = _flatTree(_tree((_getAt(tp) || {}).itens || {})).pop();
     reuItemAdd(tp, v, null, (e.ctrlKey || e.metaKey) ? 'tarefa' : (last ? (last.it.tipo || 'tarefa') : 'texto'));
 }
 
+// participantes com organizador primeiro, depois co-organizadores, depois os demais (ordem original)
+function _partOrdem(r) {
+    const rank = id => String(id) === String(r.criadoPor) ? 0 : (_isCoOrg(r, id) ? 1 : 2);
+    return (r.participantes || []).map((id, i) => [id, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]);
+}
 function _tabDetalhes(r, o, edGeral) {
     const ed = _isOrg(r);
     const op = _occPath(r, _open.date);
     const pres = o.presenca || {};
-    const people = (r.participantes || []).map(id => {
+    const people = _partOrdem(r).map(id => {
         const p = pres[id] || '';
         return `<div class="reu-prow">
             ${_avatar(id)}<span class="reu-prow-name">${_esc(_userName(id))}${String(id) === String(r.criadoPor) ? ' <small class="reu-muted">· organizador</small>' : (_isCoOrg(r, id) ? ' <small class="reu-muted">· co-organizador</small>' : '')}</span>
@@ -3241,7 +3260,7 @@ function _ataHtml(r, date) {
     }).join('') || '<p class="empty">Nenhum tópico registrado para esta reunião.</p>';
     const anxGeral = _anexosArr(_data[r.id]);
     const presLbl = { p: 'Presente', a: 'Ausente', j: 'Justificado' };
-    const people = (r.participantes || []).map(id => { const pr = (o.presenca || {})[id]; return `<span class="pp ${pr ? 'pr-' + pr : ''}"><span class="av">${_esc(_initials(_userName(id)))}</span>${_esc(_userName(id))}${pr ? `<em>${presLbl[pr]}</em>` : ''}</span>`; }).join('') || '<span class="muted">—</span>';
+    const people = _partOrdem(r).map(id => { const pr = (o.presenca || {})[id]; return `<span class="pp ${pr ? 'pr-' + pr : ''}"><span class="av">${_esc(_initials(_userName(id)))}</span>${_esc(_userName(id))}${pr ? `<em>${presLbl[pr]}</em>` : ''}</span>`; }).join('') || '<span class="muted">—</span>';
     const links = (r.vinculos || []).map(v => { const a = _area(v.area); return `<span class="lk" style="--c:${a.color}"><b>${_esc(a.label)}</b> ${_esc(v.titulo || '#' + v.id)}</span>`; }).join('');
     const stColor = { agendada: '#2563eb', realizada: '#16a34a', cancelada: '#dc2626' }[o.status] || '#2563eb';
     const signers = [r.criadoPor].concat((r.participantes || []).filter(p => String(p) !== String(r.criadoPor))).slice(0, 6);
