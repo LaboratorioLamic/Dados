@@ -1203,15 +1203,21 @@
     const agora = Date.now();
     return lista(snap.val())
       // administradores veem todos os avisos; os não destinados a eles vêm marcados como "fora"
-      .map((a) => ({ ...a, fora: !paraUsuario(a, S.me.login, S.me.grupo) }))
+      .map((a) => ({ ...a, fora: !paraUsuario(a, S.me.login, S.me.grupo, S.me.cargo, S.me.unidade) }))
       .filter((a) => (!a.fora || S.me.grupo === 'admin') && (!a.expira_em || a.expira_em > agora))
       .map((a) => ({ ...a, leitura: lei?.[a.id] }))
       .sort((a, b) => (b.criado_em || 0) - (a.criado_em || 0));
   }
 
   // sem alvo = todos; senão, o grupo ou a pessoa precisa estar marcada
-  const paraUsuario = (a, login, grupo) => (!a.alvo_grupos && !a.alvo_usuarios)
-    || !!a.alvo_grupos?.[grupo] || !!a.alvo_usuarios?.[login];
+  // chave de cargo/unidade no banco (nome livre pode ter . / # $ [ ])
+  const chaveAlvo = (t) => encodeURIComponent(String(t || '').trim()).replace(/\./g, '%2E');
+  const nomeAlvo = (k) => { try { return decodeURIComponent(k); } catch { return k; } };
+  const temAlvo = (a) => !!(a.alvo_grupos || a.alvo_usuarios || a.alvo_cargos || a.alvo_unidades);
+  // sem alvo = todos; senão, o grupo, a pessoa, o cargo ou a unidade precisa estar marcado
+  const paraUsuario = (a, login, grupo, cargo, unidade) => !temAlvo(a)
+    || !!a.alvo_grupos?.[grupo] || !!a.alvo_usuarios?.[login]
+    || (!!cargo && !!a.alvo_cargos?.[chaveAlvo(cargo)]) || (!!unidade && !!a.alvo_unidades?.[chaveAlvo(unidade)]);
 
   const pendente = (a) => !a.fora && (!a.leitura || (a.exige_confirmacao && !a.leitura.confirmado_em));
   async function avisosPendentes() { return (await buscarAvisos()).filter(pendente); }
@@ -1334,7 +1340,7 @@
       const [plat, tema, curso] = b.dataset.cursoImg.split('|');
       cursosDe(plat).then((l) => {
         const c = l.find((x) => x.tema === tema && x.curso === curso); if (!c) return;
-        if (c.img) { const th = $('.av-curso-th', b), img = new Image(); img.alt = ''; img.loading = 'lazy'; img.onload = () => { th.textContent = ''; th.appendChild(img); }; img.src = c.img; }
+        if (c.img) { const th = $('.av-curso-th', b), img = new Image(); img.alt = ''; /* sem loading=lazy: imagem fora da página nunca carregava */ img.onload = () => { th.textContent = ''; th.appendChild(img); }; img.src = c.img; }
         if (c.desc) $('.av-curso-desc', b).textContent = c.desc;
       }).catch(() => {});
     });
@@ -1350,6 +1356,7 @@
     const vids = anexos.filter(ehVid);
     const arqs = anexos.filter((x) => !(x.tipo === 'imagem' && x.fileId) && !ehVid(x));
     const nomesAlvo = [...Object.keys(a.alvo_grupos || {}).map((g) => S.grupos.find((x) => x.id === g)?.nome || g),
+      ...Object.keys(a.alvo_unidades || {}).map(nomeAlvo), ...Object.keys(a.alvo_cargos || {}).map(nomeAlvo),
       ...Object.keys(a.alvo_usuarios || {}).map((u) => `@${u}`)];
     const status = a.fora
       ? `<span class="tag pend" title="Você vê este aviso por ser administrador"><i class="fas fa-eye"></i> Destinado a: ${esc(nomesAlvo.join(', '))}</span>`
@@ -1546,7 +1553,7 @@
     const filtradas = () => opcoes.filter((o) => sem(`${o.rotulo} ${o.sub}`).includes(sem(inp.value.trim())));
     const desenharChips = () => {
       chips.innerHTML = [...sel].map((v) => { const o = opcoes.find((x) => x.v === v);
-        return `<span class="msel-chip ${v.startsWith('g:') ? 'grupo' : ''}"><i class="fas ${o.icone}"></i>${esc(o.rotulo)}<button type="button" data-tira="${esc(v)}" aria-label="Remover"><i class="fas fa-xmark"></i></button></span>`; }).join('');
+        return `<span class="msel-chip ${v.startsWith('u:') ? '' : 'grupo'}"><i class="fas ${o.icone}"></i>${esc(o.rotulo)}<button type="button" data-tira="${esc(v)}" aria-label="Remover"><i class="fas fa-xmark"></i></button></span>`; }).join('');
       $$('[data-tira]', chips).forEach((b) => b.onclick = (e) => { e.stopPropagation(); sel.delete(b.dataset.tira); desenharChips(); desenharPop(); });
       inp.placeholder = sel.size ? 'Adicionar…' : placeholder;
     };
@@ -1555,11 +1562,12 @@
       ativo = Math.min(ativo, Math.max(0, l.length - 1));
       let grupoAnt = '';
       pop.innerHTML = l.length ? l.map((o, i) => {
-        const cab = o.sub === 'Grupo' ? 'Grupos' : 'Pessoas';
+        const cab = o.cab || (o.sub === 'Grupo' ? 'Grupos' : 'Pessoas');
+        const lote = o.icone && o.icone !== 'fa-user';
         const h = cab !== grupoAnt ? `<div class="msel-cab">${cab}</div>` : '';
         grupoAnt = cab;
         return `${h}<div class="msel-op ${sel.has(o.v) ? 'on' : ''} ${i === ativo ? 'ativo' : ''}" data-v="${esc(o.v)}" role="option">
-          <span class="msel-av ${o.sub === 'Grupo' ? 'grupo' : ''}">${o.sub === 'Grupo' ? '<i class="fas fa-users"></i>' : esc(iniciais(o.rotulo))}</span>
+          <span class="msel-av ${lote ? 'grupo' : ''}">${lote ? `<i class="fas ${o.icone}"></i>` : esc(iniciais(o.rotulo))}</span>
           <span class="msel-tx"><b>${esc(o.rotulo)}</b><small>${esc(o.sub)}</small></span><i class="fas fa-check msel-ok"></i></div>`;
       }).join('') : '<div class="msel-vazio">Nada encontrado.</div>';
       $$('.msel-op', pop).forEach((d) => d.onmousedown = (e) => { e.preventDefault(); alternar(d.dataset.v); });
@@ -1662,10 +1670,17 @@
       </footer></form>`, { bloqueante: true });
     $('.modal-box', m).classList.add('wizard');
 
+    // público: grupos, unidades, cargos e pessoas (com quantos usuários ativos há em cada)
+    const contar = (f) => pessoas.filter(f).length;
+    const qtdTx = (n) => `${n} pessoa${n === 1 ? '' : 's'}`;
+    const distintos = (k) => [...new Set(pessoas.map((u) => String(u[k] || '').trim()).filter(Boolean))].sort((x, y) => x.localeCompare(y, 'pt-BR'));
     const alvo = multiSelecao($('#ms-alvo', m), [
-      ...S.grupos.map((g) => ({ v: `g:${g.id}`, rotulo: g.nome, sub: 'Grupo', icone: 'fa-users' })),
-      ...pessoas.map((p) => ({ v: `u:${p.id}`, rotulo: p.nome, sub: `@${p.id}`, icone: 'fa-user' })),
-    ], 'Pesquisar grupo ou pessoa…', ed ? [...Object.keys(ed.alvo_grupos || {}).map((g) => `g:${g}`), ...Object.keys(ed.alvo_usuarios || {}).map((u) => `u:${u}`)] : []);
+      ...S.grupos.map((g) => ({ v: `g:${g.id}`, rotulo: g.nome, sub: `Grupo · ${qtdTx(contar((u) => u.grupo === g.id))}`, cab: 'Grupos', icone: 'fa-users' })),
+      ...distintos('unidade').map((n) => ({ v: `n:${chaveAlvo(n)}`, rotulo: n, sub: `Unidade · ${qtdTx(contar((u) => String(u.unidade || '').trim() === n))}`, cab: 'Unidades', icone: 'fa-building' })),
+      ...distintos('cargo').map((c) => ({ v: `c:${chaveAlvo(c)}`, rotulo: c, sub: `Cargo · ${qtdTx(contar((u) => String(u.cargo || '').trim() === c))}`, cab: 'Cargos', icone: 'fa-briefcase' })),
+      ...pessoas.map((p) => ({ v: `u:${p.id}`, rotulo: p.nome, sub: `@${p.id}`, cab: 'Pessoas', icone: 'fa-user' })),
+    ], 'Pesquisar grupo, unidade, cargo ou pessoa…', ed ? [...Object.keys(ed.alvo_grupos || {}).map((g) => `g:${g}`), ...Object.keys(ed.alvo_unidades || {}).map((k) => `n:${k}`),
+      ...Object.keys(ed.alvo_cargos || {}).map((k) => `c:${k}`), ...Object.keys(ed.alvo_usuarios || {}).map((u) => `u:${u}`)] : []);
     const arquivos = [];
     const existentes = ed ? anexosDe(ed) : [];   // anexos já publicados (podem ser removidos)
     const removidos = [];
@@ -1884,7 +1899,7 @@
             titulo: f.titulo.value.trim(), corpo: f.corpo.value.trim(), prioridade: f.prioridade.value,
             exige_confirmacao: f.exige_confirmacao.checked,
             expira_em: f.expira_em.value ? new Date(f.expira_em.value).getTime() : null,
-            alvo_grupos: alvo.de('g:'), alvo_usuarios: alvo.de('u:'),
+            alvo_grupos: alvo.de('g:'), alvo_usuarios: alvo.de('u:'), alvo_cargos: alvo.de('c:'), alvo_unidades: alvo.de('n:'),
             anexos: existentes.length + enviados.length ? [...existentes, ...enviados] : null,
             vinculos: vincs.length ? vincs : null,
             editado_por: S.me.login, editado_em: TS(),
@@ -1899,7 +1914,7 @@
           titulo: f.titulo.value.trim(), corpo: f.corpo.value.trim(), prioridade: f.prioridade.value,
           exige_confirmacao: f.exige_confirmacao.checked,
           expira_em: f.expira_em.value ? new Date(f.expira_em.value).getTime() : null,
-          alvo_grupos: alvo.de('g:'), alvo_usuarios: alvo.de('u:'),
+          alvo_grupos: alvo.de('g:'), alvo_usuarios: alvo.de('u:'), alvo_cargos: alvo.de('c:'), alvo_unidades: alvo.de('n:'),
           anexos: enviados.length ? enviados : null,
           vinculos: vincs.length ? vincs : null,
           criado_por: S.me.login, criado_em: TS(),
@@ -1925,7 +1940,7 @@
       const av = aviso || {};
       const exige = !!av.exige_confirmacao;
       const nomeG = Object.fromEntries(S.grupos.map((g) => [g.id, g.nome]));
-      const dados = lista(users).filter((u) => u.ativo && paraUsuario(av, u.id, u.grupo)).sort(porNome)
+      const dados = lista(users).filter((u) => u.ativo && paraUsuario(av, u.id, u.grupo, u.cargo, u.unidade)).sort(porNome)
         .map((u) => ({ nome: u.nome, grupo: nomeG[u.grupo] || 'Sem grupo', unidade: (u.unidade || '').trim() || 'Sem unidade', ...(lei?.[u.id]?.[id] || {}) }));
       // "Concluído" = confirmou (aviso com confirmação) ou leu (aviso sem confirmação)
       const feito = (r) => !!(exige ? r.confirmado_em : r.lido_em);
@@ -2118,7 +2133,7 @@
     const cb = q.on('child_added', async (snap) => {
       const a = { id: snap.key, ...snap.val() };
       if (!pronto) { vistos.add(a.id); return; }        // avisos que já existiam ao entrar
-      if (vistos.has(a.id) || !paraUsuario(a, S.me.login, S.me.grupo) || a.criado_por === S.me.login) return;
+      if (vistos.has(a.id) || !paraUsuario(a, S.me.login, S.me.grupo, S.me.cargo, S.me.unidade) || a.criado_por === S.me.login) return;
       vistos.add(a.id);
       notificar(a, true);
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
