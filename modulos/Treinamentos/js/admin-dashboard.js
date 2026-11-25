@@ -302,14 +302,14 @@
         const slugs = Object.keys(CATEGORY_LABELS);
         const [usersSnap, colabsSnap, progressSnap, rows, ...snaps] = await Promise.all([
             get(ref(db, `/${dbRoot}/users`)),
-            get(ref(db, `/${dbRoot}/colaboradores`)),
+            U.ColaboradoresSync.fetchColaboradores(),
             get(ref(db, `/${dbRoot}/progress/byUser`)),
             U.getHistoryRows(),
             ...slugs.map(slug => get(ref(db, `/${dbRoot}/${slug}/trainingData`))),
             ...slugs.map(slug => get(ref(db, `/${dbRoot}/${slug}/quizData`)))
         ]);
         allUsers = usersSnap.exists() ? usersSnap.val() : {};
-        allColaboradores = colabsSnap.exists() ? colabsSnap.val() : {};
+        allColaboradores = colabsSnap || {};
         allProgress = progressSnap.exists() ? progressSnap.val() : {};
         historyRows = rows;
         allTrainingData = {};
@@ -3304,7 +3304,7 @@
         if (unitModal) unitModal.style.display = 'none';
         unitChartRangeChip.reset();
         unitChartRoleChip.clear();
-        unitChartCourseChip.clear();
+        // Curso NÃO é zerado: a escolha vale para todas as unidades (ver unitCourseSticky).
     }
 
     function openUnitModal(unitKey) {
@@ -3336,8 +3336,18 @@
         closeUnitModal();
     });
 
+    // Cursos escolhidos no filtro da unidade, mantidos entre unidades: ao abrir
+    // outra unidade, marca os que se aplicam a ela; os que não se aplicam
+    // ficam guardados para a próxima unidade que os tiver.
+    let unitCourseSticky = new Set();
+    function syncUnitCourseSticky() {
+        const opts = new Set(unitCourseOptions(unitChartColabsCache || [], unitChartRowsCache || []));
+        const kept = [...unitCourseSticky].filter(v => !opts.has(v));
+        unitCourseSticky = new Set([...unitChartCourseChip.getValues(), ...kept]);
+    }
     function repaintUnitCharts() {
         if (!unitChartKeyCache) return;
+        syncUnitCourseSticky();
         unitChartCourseChip.setOptions(unitCourseOptions(unitChartColabsCache, unitChartRowsCache));
         renderUnitCharts(unitChartColabsCache, unitChartRowsCache);
         renderUnitHero(unitChartColabsCache, unitChartRowsCache);
@@ -3466,6 +3476,7 @@
         unitChartRangeChip.setBounds(rows);
         unitChartRoleChip.setOptions(unitRoleOptions(colaboradores));
         unitChartCourseChip.setOptions(unitCourseOptions(colaboradores, rows));
+        unitChartCourseChip.setValues(unitCourseSticky);
         renderUnitCharts(colaboradores, rows);
 
         renderUnitHero(colaboradores, rows);
@@ -6084,7 +6095,12 @@
                 if (searchEl) searchEl.value = '';
                 refresh();
             },
-            getValues() { return values; }
+            getValues() { return values; },
+            // Marca valores sem disparar onChange (ignora os fora das opções).
+            setValues(list) {
+                values = new Set([...list].filter(v => options.includes(v)));
+                refresh();
+            }
         };
     }
 
@@ -7881,10 +7897,14 @@
             allProgress = snapshot.exists() ? snapshot.val() : {};
             scheduleLiveRender();
         });
-        watch(`/${dbRoot}/colaboradores`, snapshot => {
-            allColaboradores = snapshot.exists() ? snapshot.val() : {};
-            refreshUserFilterChips();
-            scheduleLiveRender();
+        // Colaboradores = usuários do Dados LAMIC (/usuarios); a antiga
+        // /colaboradores (espelho da planilha) não é mais alimentada.
+        watch(`/usuarios`, () => {
+            U.ColaboradoresSync.fetchColaboradores().then(c => {
+                allColaboradores = c || {};
+                refreshUserFilterChips();
+                scheduleLiveRender();
+            }).catch(e => console.error('Erro ao recarregar colaboradores:', e));
         });
         watch(`/${dbRoot}/users`, snapshot => {
             allUsers = snapshot.exists() ? snapshot.val() : {};

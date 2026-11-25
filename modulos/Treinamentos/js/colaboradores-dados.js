@@ -16,7 +16,7 @@
             const u = usuarios[login] || {};
             out[login] = {
                 fullName: u.nome || login,
-                unit: null,
+                unit: (u.unidade || '').trim() || null,
                 role: u.cargo || null,
                 funcao: u.funcao || null,
                 active: u.ativo === true,
