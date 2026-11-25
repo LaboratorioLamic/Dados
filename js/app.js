@@ -1413,8 +1413,21 @@
       try {
         if (b.dataset.ac === 'ler') await marcar(id, false);
         if (b.dataset.ac === 'confirmar') await marcar(id, true);
-        if (b.dataset.ac === 'relatorio') return relatorio(id);
-        if (b.dataset.ac === 'editar') { const av = await ler(`avisos/${id}`); return av ? formAviso({ id, ...av }) : toast('Aviso não encontrado.'); }
+        if (b.dataset.ac === 'relatorio') {
+          // no máximo 1 janela: ignora cliques enquanto carrega ou já está aberta
+          if (S.abrindoRel || $('.modal-box.lr-box')) return;
+          S.abrindoRel = true;
+          const html0 = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Carregando…';
+          try { return await relatorio(id); } finally { S.abrindoRel = false; b.disabled = false; b.innerHTML = html0; }
+        }
+        if (b.dataset.ac === 'editar') {
+          // trava contra clique duplo: a leitura demora e cada clique abria outra janela por baixo,
+          // que reaparecia depois de salvar
+          if (S.abrindoAviso || $('.modal-box.wizard')) return;
+          S.abrindoAviso = true;
+          try { const av = await ler(`avisos/${id}`); return av ? await formAviso({ id, ...av }) : toast('Aviso não encontrado.'); }
+          finally { S.abrindoAviso = false; }
+        }
         if (b.dataset.ac === 'excluir') {
           if (!(await confirmarAcao('Excluir este aviso para todos? Os anexos também serão apagados do Drive.'))) return;
           const aviso = await ler(`avisos/${id}`);
@@ -1479,7 +1492,7 @@
     const el = $('#lista');
     el.innerHTML = avisos.map(cartaoAviso).join('') || `<div class="card vazio">Nenhum aviso por enquanto.</div>`;
     ligarAvisos(el);
-    if ($('#novo')) $('#novo').onclick = () => formAviso();
+    if ($('#novo')) $('#novo').onclick = () => { if (!$('.modal-box.wizard')) formAviso(); };
   }
 
   // Popover flutuante: fica por cima da janela (position: fixed), alinhado ao campo.
@@ -2498,6 +2511,7 @@
   }
 
   let filtroUsuarios = 'ativos';
+  const filtroU = { q: '', unidade: '', cargo: '' };   // busca e filtros da lista de usuários (mantidos ao redesenhar)
   async function admUsuarios(el) {
     const [users, conv, priv, cargosCad, funcsRh, unidRh] = await Promise.all([ler('usuarios'), ler('convites'), ler('privado'), ler('rh_cargos').catch(() => null), ler('rh_funcionarios').catch(() => null), ler('rh_unidades').catch(() => null)]);
     const opcoesCargo = nomesCargos(cargosCad);
@@ -2535,8 +2549,17 @@
       <div class="card" style="margin-top:16px">
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${[['ativos', 'Ativos', (u) => u.ativo], ['inativos', 'Inativos', (u) => !u.ativo], ['todos', 'Todos', () => true]]
           .map(([id, rot, f]) => `<button class="btn sm ${filtroUsuarios === id ? 'turq' : 'ghost'}" data-filtro="${id}">${rot} <small>(${lista(users).filter(f).length})</small></button>`).join('')}</div>
+        ${(() => { const uns = [...new Set(lista(users).map((u) => (u.unidade || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+          const cgs = [...new Set(lista(users).map((u) => (u.cargo || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+          const opt = (arr, sel, todos) => `<option value="">${todos}</option>` + arr.map((v) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
+          return `<div class="usr-filtros">
+            <label class="usr-busca"><i class="fas fa-magnifying-glass"></i><input id="usr-q" placeholder="Buscar por nome, login ou CPF…" value="${esc(filtroU.q)}"></label>
+            <label class="usr-sel"><i class="fas fa-building"></i><select id="usr-un">${opt(uns, filtroU.unidade, 'Todas as unidades')}</select></label>
+            <label class="usr-sel"><i class="fas fa-briefcase"></i><select id="usr-cg">${opt(cgs, filtroU.cargo, 'Todos os cargos')}</select></label>
+            <button class="btn sm ghost" id="usr-limpa" title="Limpar busca e filtros"><i class="fas fa-filter-circle-xmark"></i></button>
+            <small id="usr-n" class="usr-n"></small></div>`; })()}
         <div class="scroll-x"><table class="tabela"><thead><tr><th>Colaborador</th><th>Cargo</th><th>Grupo</th><th>Ativo</th><th></th></tr></thead><tbody>
-        ${lista(users).filter((u) => filtroUsuarios === 'todos' || (filtroUsuarios === 'ativos' ? u.ativo : !u.ativo)).sort(porNome).map((u) => `<tr data-u="${esc(u.id)}"><td><b>${esc(u.nome)}</b><br><small>@${esc(u.id)} · CPF ${esc(cpfOculto(priv?.[u.id]?.cpf))}${u.unidade ? ` · ${esc(u.unidade)}` : ''}</small>${funcs.length ? `<br>${funcDe(u.id)
+        ${lista(users).filter((u) => filtroUsuarios === 'todos' || (filtroUsuarios === 'ativos' ? u.ativo : !u.ativo)).sort(porNome).map((u) => `<tr data-u="${esc(u.id)}" data-nm="${esc(semAcento((u.nome || '') + ' ' + u.id + ' ' + String(priv?.[u.id]?.cpf || '').replace(/\D/g, '')))}" data-un="${esc((u.unidade || '').trim())}" data-cg="${esc((u.cargo || '').trim())}"><td><b>${esc(u.nome)}</b><br><small>@${esc(u.id)} · CPF ${esc(cpfOculto(priv?.[u.id]?.cpf))}${u.unidade ? ` · ${esc(u.unidade)}` : ''}</small>${funcs.length ? `<br>${funcDe(u.id)
             ? `<button class="btn sm ghost vinc" style="padding:2px 8px;font-size:11px;margin-top:4px" title="Funcionário vinculado no RH"><i class="fas fa-link" style="color:var(--turq)"></i> RH: ${esc(funcDe(u.id).nome)}</button>`
             : sugestaoDe(u) ? `<button class="btn sm ghost vinc" style="padding:2px 8px;font-size:11px;margin-top:4px;border-color:#f0ad4e" title="Sugestão pelo nome completo"><i class="fas fa-lightbulb" style="color:#f0ad4e"></i> Vincular ao RH (sugerido)</button>`
             : `<button class="btn sm ghost vinc" style="padding:2px 8px;font-size:11px;margin-top:4px;opacity:.7"><i class="fas fa-link-slash"></i> Sem vínculo no RH</button>`}` : ''}</td>
@@ -2547,6 +2570,26 @@
       </tbody></table></div></div>`;
 
     $$('[data-filtro]', el).forEach((b) => b.onclick = () => { filtroUsuarios = b.dataset.filtro; admUsuarios(el); });
+    // busca/filtros: só escondem linhas (sem recarregar a lista)
+    const aplicarFiltroU = () => {
+      const bruto = filtroU.q.trim();
+      const q = /^[\d.\-\s]+$/.test(bruto) ? bruto.replace(/\D/g, '') : semAcento(bruto);   // só números: busca CPF
+      let n = 0, tot = 0;
+      $$('tr[data-u]', el).forEach((tr) => {
+        tot++;
+        const ok = (!q || tr.dataset.nm.includes(q)) && (!filtroU.unidade || tr.dataset.un === filtroU.unidade) && (!filtroU.cargo || tr.dataset.cg === filtroU.cargo);
+        tr.hidden = !ok; if (ok) n++;
+      });
+      const nEl = $('#usr-n', el); if (nEl) nEl.textContent = n === tot ? `${tot} usuário(s)` : `${n} de ${tot}`;
+    };
+    const qEl = $('#usr-q', el), unEl = $('#usr-un', el), cgEl = $('#usr-cg', el);
+    if (qEl) {
+      qEl.oninput = () => { filtroU.q = qEl.value; aplicarFiltroU(); };
+      unEl.onchange = () => { filtroU.unidade = unEl.value; aplicarFiltroU(); };
+      cgEl.onchange = () => { filtroU.cargo = cgEl.value; aplicarFiltroU(); };
+      $('#usr-limpa', el).onclick = () => { filtroU.q = filtroU.unidade = filtroU.cargo = ''; qEl.value = ''; unEl.value = ''; cgEl.value = ''; aplicarFiltroU(); qEl.focus(); };
+      aplicarFiltroU();
+    }
     const vt = $('#vinc-todos', el);
     if (vt) vt.onclick = async () => {
       if (!(await confirmarAcao(`Vincular ${sugeridos.length} usuário(s) ao funcionário do RH com o mesmo nome completo?`))) return;
