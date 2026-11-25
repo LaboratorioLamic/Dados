@@ -274,7 +274,8 @@
 
   // ---------- não lidas (mesma regra do chat da Auditoria) ----------
   function naoLidas(t) {
-    const nivel = (t.mutedBy && t.mutedBy[meuId]) || 'todas';
+    // preferência da pessoa > padrão da conversa (engrenagem do dono) > todas
+    const nivel = (t.mutedBy && t.mutedBy[meuId]) || t.notifPadrao || 'todas';
     if (nivel === 'mudo') return [];
     const visto = (t.lidoPor && t.lidoPor[meuId]) || 0;
     return Object.values(t.mensagens || {}).filter((m) => m && !m.sistema && (m.createdAt || 0) > visto

@@ -1415,8 +1415,19 @@
     $$('[data-ac]', root).forEach((b) => b.onclick = async () => {
       const id = b.closest('.aviso').dataset.id;
       try {
-        if (b.dataset.ac === 'ler') await marcar(id, false);
-        if (b.dataset.ac === 'confirmar') await marcar(id, true);
+        if (b.dataset.ac === 'ler' || b.dataset.ac === 'confirmar') {
+          // atualiza só este cartão (sem redesenhar a página, que sumia com os avisos)
+          const conf = b.dataset.ac === 'confirmar';
+          b.disabled = true;
+          await marcar(id, conf);
+          const art = b.closest('.aviso'), acoes = b.parentElement;
+          art.classList.remove('novo');
+          $$('.tag.pend', acoes).forEach((t) => t.remove());
+          b.outerHTML = conf ? `<span class="tag ok">Confirmado ${dataBR(Date.now())}</span>` : '<span class="tag ok">Lido</span>';
+          $$(`#notifs [data-n="${CSS.escape(id)}"]`).forEach((n) => n.remove());
+          atualizarContador();
+          return;
+        }
         if (b.dataset.ac === 'relatorio') {
           // no máximo 1 janela: ignora cliques enquanto carrega ou já está aberta
           if (S.abrindoRel || $('.modal-box.lr-box')) return;
