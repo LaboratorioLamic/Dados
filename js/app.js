@@ -441,7 +441,6 @@
         <p style="text-align:center;color:var(--txt-2);font-size:14px;margin-bottom:16px">Sua senha foi definida pelo administrador. Por segurança, troque por uma senha que só você conheça.</p>
         <form>
           ${pedirCpf ? campoCpf() : ''}
-          <label class="field"><span>Senha atual (informada pelo administrador)</span><input name="atual" type="password" required autocomplete="current-password"></label>
           <label class="field"><span>Nova senha</span><input name="senha" type="password" required data-forte autocomplete="new-password"></label>
           ${campoConfirma()}
           <div class="modal-acoes"><button type="button" class="btn ghost" data-sair>Sair</button><button class="btn turq">Salvar nova senha</button></div>
@@ -452,14 +451,13 @@
         e.preventDefault();
         const f = e.target;
         if (!f.reportValidity()) return;
-        if (f.senha.value === f.atual.value) return toast('A nova senha precisa ser diferente da atual.');
         const cpf = pedirCpf ? soDigitos(f.cpf.value) : '';
         if (pedirCpf && !cpfValido(cpf)) return toast(ERROS.CPF_INVALIDO);
         const btn = $('button.turq', f); btn.disabled = true;
         try {
           const user = S.auth.currentUser;
-          // confere a senha atual antes de gravar o CPF, para não registrar CPF de quem errou a senha
-          await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(user.email, f.atual.value));
+          // sem pedir a senha atual: a pessoa acabou de entrar com ela. Sessão antiga cai em
+          // auth/requires-recent-login (tratado abaixo: pede para entrar de novo).
           if (pedirCpf && cpf !== CPF_ENTIDADE) {
             // cpfs/{cpf} só aceita gravação se ainda não existe: CPF de outra conta cai aqui
             try { await ref('/').update({ [`privado/${login}`]: { cpf }, [`cpfs/${cpf}`]: login }); }
@@ -479,7 +477,13 @@
               <div class="modal-acoes"><button class="btn turq" data-x>Entendi</button></div>`);
             $('[data-x]', a).onclick = () => a.remove();
           }
-        } catch (err) { toast(traduz(err)); btn.disabled = false; }
+        } catch (err) {
+          if (err && err.code === 'auth/requires-recent-login') {
+            toast('Por segurança, entre de novo com a senha do administrador e crie a nova senha em seguida.');
+            m.remove(); S.auth.signOut(); return;
+          }
+          toast(traduz(err)); btn.disabled = false;
+        }
       };
     });
   }
