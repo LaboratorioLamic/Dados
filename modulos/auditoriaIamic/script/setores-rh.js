@@ -21,6 +21,17 @@
         if (rhNomes && rhNomes.has(String(s))) return true;
         return NUMERADO.test(String(s));
     };
+    // Setor do usuário logado: unidade da conta vinculada no Dados LAMIC, casada com a lista de setores
+    window.meuSetorPadrao = function () {
+        try {
+            if (typeof currentuser === 'undefined' || !currentuser || typeof window._contaDados !== 'function') return '';
+            const c = window._contaDados(currentuser.dadosLogin);
+            const un = c && c.unidade ? String(c.unidade).trim() : '';
+            if (!un) return '';
+            const lista = (typeof masterLists !== 'undefined' && masterLists && masterLists.setores) || [];
+            return lista.find(s => s === un) || lista.find(s => sem(s) === sem(un)) || lista.find(s => chave(s) && chave(s) === chave(un)) || '';
+        } catch (_) { return ''; }
+    };
     window.listaAreas = () => (masterLists.setores || []).filter(s => !window.setorEhRH(s));
     window.listaSetoresRH = () => (masterLists.setores || []).filter(s => window.setorEhRH(s));
 

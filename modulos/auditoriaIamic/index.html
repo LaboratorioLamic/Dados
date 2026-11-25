@@ -507,12 +507,17 @@
                 <span><i class="fas fa-users" style="margin-right:8px;color:var(--accent)"></i>Participantes</span>
                 <button class="msg-icon-btn" onclick="msgCloseMembers()"><i class="fas fa-times"></i></button>
             </div>
-            <div class="msg-popup-list" id="msgMembersList" style="max-height:200px;"></div>
-            <div class="msg-members-add">
-                <label class="msg-field-label" style="margin:0 16px;"><i class="fas fa-user-plus"></i> Adicionar participante</label>
-                <input type="text" class="msg-popup-search" id="msgMemberSearch" placeholder="Buscar usuário..." oninput="msgRenderMemberAddList()">
-                <div class="msg-popup-list" id="msgMemberAddList" style="max-height:200px;"></div>
+            <div class="msg-members-tabs" role="tablist">
+                <button type="button" class="msg-members-tab on" data-tab="lista" onclick="msgMembersTab('lista')"><i class="fas fa-user-group"></i> Participantes <span class="msg-members-tab-n" id="msgMembersCount"></span></button>
+                <button type="button" class="msg-members-tab" data-tab="add" onclick="msgMembersTab('add')"><i class="fas fa-user-plus"></i> Adicionar</button>
             </div>
+            <div class="msg-members-body" data-tab="add" style="display:none;">
+                <input type="text" class="msg-popup-search" id="msgMemberSearch" placeholder="Buscar usuário..." oninput="msgRenderMemberAddList()">
+                <div class="msg-popup-list" id="msgMemberAddList"></div>
+            </div>
+            <div class="msg-members-body" data-tab="lista">
+            <input type="text" class="msg-popup-search" id="msgMembersFilter" placeholder="Buscar participante..." oninput="msgRenderMembers()">
+            <div class="msg-popup-list" id="msgMembersList"></div>
             <div class="msg-members-add" id="msgRetentionBox" style="display:none;">
                 <label class="msg-field-label" style="margin:0 16px;"><i class="fas fa-clock-rotate-left"></i> Apagar mensagens automaticamente após</label>
                 <div style="display:flex;align-items:center;gap:8px;margin:8px 16px 4px;">
@@ -520,6 +525,23 @@
                     <span style="color:var(--text-muted);font-size:13px;">dias (máx. 365)</span>
                 </div>
                 <small style="margin:0 16px 8px;display:block;color:var(--text-muted);">Mensagens e imagens mais antigas que este prazo são apagadas automaticamente.</small>
+            </div>
+            </div>
+        </div>
+
+        <!-- Modal de configurações da conversa (só proprietário) -->
+        <div class="msg-popup" id="msgConfigModal" style="display:none;">
+            <div class="msg-popup-head">
+                <span><i class="fas fa-gear" style="margin-right:8px;color:var(--accent)"></i>Configurações da conversa</span>
+                <button class="msg-icon-btn" onclick="msgCloseConfig()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="msg-members-body">
+                <div class="msg-cfg-sec"><i class="fas fa-bell"></i> Notificações dos participantes</div>
+                <div class="msg-cfg-opts" id="msgCfgNotif"></div>
+                <div class="msg-cfg-sec"><i class="fas fa-at"></i> Marcações dos membros</div>
+                <div class="msg-members-add" id="msgCfgMarc"></div>
+                <div class="msg-cfg-sec"><i class="fas fa-keyboard"></i> Quem pode digitar</div>
+                <div class="msg-members-add" id="msgWriteBox"></div>
             </div>
         </div>
 

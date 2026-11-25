@@ -742,9 +742,10 @@
   // ---------- anexos (Google Drive via Apps Script, mesmo modelo de seeds/respIamic) ----------
   const ANEXO_MAX = 30 * 1024 * 1024;
   const EXT_IMG = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+  const EXT_VID = ['webm', 'mp4'];
   const extDe = (nome) => (String(nome).split('.').pop() || '').toLowerCase();
   const imgDrive = (id, w = 1600) => `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${w}`;
-  const ICONE_EXT = { pdf: 'fa-file-pdf', doc: 'fa-file-word', docx: 'fa-file-word', odt: 'fa-file-word', xls: 'fa-file-excel', xlsx: 'fa-file-excel', ods: 'fa-file-excel', csv: 'fa-file-csv',
+  const ICONE_EXT = { webm: 'fa-file-video', mp4: 'fa-file-video', m4v: 'fa-file-video', mov: 'fa-file-video', ogv: 'fa-file-video', pdf: 'fa-file-pdf', doc: 'fa-file-word', docx: 'fa-file-word', odt: 'fa-file-word', xls: 'fa-file-excel', xlsx: 'fa-file-excel', ods: 'fa-file-excel', csv: 'fa-file-csv',
     ppt: 'fa-file-powerpoint', pptx: 'fa-file-powerpoint', odp: 'fa-file-powerpoint', zip: 'fa-file-zipper', rar: 'fa-file-zipper', mp4: 'fa-file-video', mp3: 'fa-file-audio', txt: 'fa-file-lines' };
 
   // Apps Script responde via redirect e às vezes embrulha o JSON em HTML: tenta o JSON direto e depois o primeiro {...}.
@@ -756,8 +757,11 @@
     return b;
   }
   // POST sem Content-Type: o Apps Script não responde ao preflight CORS.
-  async function driveRequest(payload) {
+  async function driveRequest(payload, onUp) {
     if (!cfg.driveEndpoint) throw new Error('Endereço do Apps Script não configurado (js/config.js → driveEndpoint).');
+    // Sem XHR com progresso: ouvir upload.onprogress força um preflight CORS que o Apps Script
+    // recusa ("Falha de rede"). O envio usa fetch simples; a tela mostra carregamento sem %.
+    if (onUp) onUp(null);
     const ctl = new AbortController();
     const t = setTimeout(() => ctl.abort(), 120000);
     try {
@@ -773,7 +777,47 @@
     r.onerror = () => erro(new Error(`Não foi possível ler ${arq.name}.`));
     r.readAsDataURL(arq);
   });
-  async function enviarAnexo(arq) {
+  // Tela escura de carregamento com anel de %: bloqueia o site até terminar envio/conversão
+  function telaCarga() {
+    const el = document.createElement('div');
+    el.className = 'carga';
+    el.innerHTML = `<div class="carga-box">
+      <div class="carga-anel" style="--p:0"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="carga-fundo"/><circle cx="60" cy="60" r="52" class="carga-arco"/></svg>
+        <b data-pc>0%</b><i class="fas fa-cloud-arrow-up" data-ic></i></div>
+      <h3 data-tit>Preparando…</h3><p data-sub></p>
+      <div class="carga-geral"><span data-geral></span></div><small data-cont></small>
+      <small class="carga-aviso"><i class="fas fa-circle-info"></i> Não feche nem troque de aba até concluir.</small></div>`;
+    document.body.appendChild(el);
+    const bloq = (e) => { if (!el.contains(e.target)) { e.preventDefault(); e.stopPropagation(); } };
+    const tecla = (e) => { e.preventDefault(); e.stopPropagation(); };
+    const sair = (e) => { e.preventDefault(); e.returnValue = ''; };
+    document.addEventListener('keydown', tecla, true);
+    document.addEventListener('focusin', bloq, true);
+    window.addEventListener('beforeunload', sair);
+    requestAnimationFrame(() => el.classList.add('on'));
+    return {
+      // p: 0..1 (null = sem %), geral: 0..1 do total
+      set(tit, sub, p, geral, cont, icone) {
+        $('[data-tit]', el).textContent = tit; $('[data-sub]', el).textContent = sub || '';
+        const anel = $('.carga-anel', el);
+        anel.classList.toggle('indet', p == null);
+        anel.style.setProperty('--p', p == null ? 0 : Math.round(p * 100));
+        $('[data-pc]', el).textContent = p == null ? '' : Math.round(p * 100) + '%';
+        if (icone) $('[data-ic]', el).className = 'fas ' + icone;
+        $('[data-geral]', el).style.width = Math.round((geral || 0) * 100) + '%';
+        $('[data-cont]', el).textContent = cont || '';
+      },
+      fim() {
+        document.removeEventListener('keydown', tecla, true);
+        document.removeEventListener('focusin', bloq, true);
+        window.removeEventListener('beforeunload', sair);
+        el.classList.remove('on'); setTimeout(() => el.remove(), 250);
+      },
+    };
+  }
+
+  async function enviarAnexo(arq, prog) {
+    if (arq.size > ANEXO_MAX) throw new Error(`${arq.name}: maior que 30 MB.`);
     const ext = extDe(arq.name);
     const imagem = EXT_IMG.includes(ext);
     // fotos são reduzidas antes do envio (GIF fica como está para não perder a animação)
@@ -781,13 +825,13 @@
     const data = reduz ? await imagemReduzida(arq, 1920, 0.85) : await lerDataUrl(arq);
     const extFinal = reduz ? (data.startsWith('data:image/webp') ? 'webp' : 'png') : ext;
     const nome = reduz ? arq.name.replace(/\.[^.]+$/, '') + '.' + extFinal : arq.name;
-    const resp = await driveRequest({ action: 'upload', filename: nome, data });
+    const resp = await driveRequest({ action: 'upload', filename: nome, data }, prog ? (p) => prog('envio', p) : null);
     if (!resp || typeof resp !== 'object') throw new Error(typeof resp === 'string' && resp ? `Resposta inesperada do servidor: ${resp.slice(0, 120)}` : 'O servidor não respondeu ao envio.');
     if (resp.success === false || resp.error) throw new Error(resp.error || resp.message || 'O servidor recusou o arquivo.');
     const fileId = resp.fileId || resp.id || null;
     const url = resp.url || (fileId ? `https://drive.google.com/file/d/${fileId}/view` : null);
     if (!url) throw new Error('O servidor não devolveu o link do arquivo.');
-    return { nome, ext: extFinal, tipo: imagem ? 'imagem' : 'arquivo', fileId, url };
+    return { nome, ext: extFinal, tipo: imagem ? 'imagem' : EXT_VID.includes(ext) ? 'video' : 'arquivo', fileId, url };
   }
 
   // Visualizador de imagens (inspirado em seeds/respIamic): zoom (botões, roda, clique, pinça),
@@ -1298,7 +1342,9 @@
     const l = a.leitura;
     const anexos = anexosDe(a);
     const imgs = anexos.filter((x) => x.tipo === 'imagem' && x.fileId);
-    const arqs = anexos.filter((x) => !(x.tipo === 'imagem' && x.fileId));
+    const ehVid = (x) => x.fileId && (x.tipo === 'video' || EXT_VID.includes(String(x.ext || '').toLowerCase()));
+    const vids = anexos.filter(ehVid);
+    const arqs = anexos.filter((x) => !(x.tipo === 'imagem' && x.fileId) && !ehVid(x));
     const nomesAlvo = [...Object.keys(a.alvo_grupos || {}).map((g) => S.grupos.find((x) => x.id === g)?.nome || g),
       ...Object.keys(a.alvo_usuarios || {}).map((u) => `@${u}`)];
     const status = a.fora
@@ -1311,6 +1357,7 @@
       <div class="meta">${dataBR(a.criado_em)}${a.expira_em ? ` · expira ${dataBR(a.expira_em)}` : ''}${a.editado_em ? ` · editado ${dataBR(a.editado_em)}` : ''}</div>
       ${a.corpo ? `<div class="corpo rt-txt">${corpoHtml(a.corpo)}</div>` : ''}
       ${imgs.length ? `<div class="av-galeria" data-imgs="${esc(JSON.stringify(imgs.map((x) => ({ id: x.fileId, nome: x.nome }))))}"></div>` : ''}
+      ${vids.length ? `<div class="av-videos">${vids.map((x) => `<div class="gv" data-vid="${esc(x.fileId)}" data-nome="${esc(x.nome)}" data-url="${esc(urlSegura(x.url))}"></div>`).join('')}</div>` : ''}
       ${arqs.length ? `<div class="av-arqs">${arqs.map((x) => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" class="av-arq">
         <i class="fas ${ICONE_EXT[x.ext] || (x.tipo === 'imagem' ? 'fa-file-image' : 'fa-file')}"></i><span>${esc(x.nome)}</span></a>`).join('')}</div>` : ''}
       ${vinculosDe(a).some((v) => v.tipo === 'curso') ? `<div class="av-cursos">${vinculosDe(a).filter((v) => v.tipo === 'curso').map(cardCurso).join('')}</div>` : ''}
@@ -1327,7 +1374,15 @@
   }
 
   // galerias de imagens dos avisos viram carrossel; clique abre a imagem grande
+  // Vídeo com o player do próprio Google Drive (/preview em iframe): o link direto do Drive
+  // não toca mais em <video> fora do Drive. Só o play do Google (iframe carrega ao chegar na tela).
+  function montarPlayer(el) {
+    if (el.dataset.ok) return; el.dataset.ok = '1';
+    el.innerHTML = `<iframe src="https://drive.google.com/file/d/${encodeURIComponent(el.dataset.vid)}/preview" loading="lazy" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer" title="${esc(el.dataset.nome || 'Vídeo')}"></iframe>`;
+  }
+
   function ligarGalerias(root) {
+    $$('.av-videos .gv', root).forEach(montarPlayer);
     $$('.av-galeria', root).forEach((g) => {
       const imgs = JSON.parse(g.dataset.imgs || '[]');
       montarCarrossel(g, imgs.map((x) => `<div class="slide"><img src="${esc(imgDrive(x.id, 1200))}" alt="${esc(x.nome)}" loading="lazy" referrerpolicy="no-referrer"></div>`), { classe: 'galeria' });
@@ -1535,7 +1590,7 @@
         </section>
         <section class="wz-etapa" data-e="1" hidden>
           <label class="anexo-zona" tabindex="0"><input type="file" multiple hidden>
-            <i class="fas fa-cloud-arrow-up"></i><b>Clique ou arraste arquivos aqui</b><small>Imagens, PDF, Word, planilhas… até 30 MB cada · imagens aparecem em carrossel</small></label>
+            <i class="fas fa-cloud-arrow-up"></i><b>Clique ou arraste arquivos aqui</b><small>Imagens, vídeos (MP4 ou WebM), PDF, Word, planilhas… até 30 MB cada</small></label>
           <div class="img-dica"><i class="fas fa-image"></i>
             <span><b>Imagem ideal:</b> 1920 × 1080 px (16:9), PNG com fundo transparente ou WebP. Será convertida para WebP automaticamente.</span>
             <span class="img-modelo-box"><button type="button" class="img-modelo" aria-haspopup="menu" title="Baixar modelo transparente"><i class="fas fa-download"></i> Modelo PNG <i class="fas fa-chevron-down img-modelo-seta"></i></button>
@@ -1596,6 +1651,8 @@
     };
     const adicionar = (lista) => {
       [...lista].forEach((f) => {
+        // vídeo: só MP4 e WebM
+        if (/^video\//.test(f.type || '') && !EXT_VID.includes(extDe(f.name))) return toast(`${f.name}: vídeo só em MP4 ou WebM.`);
         if (f.size > ANEXO_MAX) return toast(`${f.name}: maior que 30 MB.`);
         arquivos.push(f);
       });
@@ -1780,12 +1837,20 @@
       const btn = $('[data-pub]', m);
       btn.disabled = true;
       const enviados = [];
+      const carga = arquivos.length ? telaCarga() : null;
       try {
-        for (let i = 0; i < arquivos.length; i++) {
-          btn.textContent = `Enviando ${i + 1}/${arquivos.length}…`;
-          enviados.push(await enviarAnexo(arquivos[i]));
+        const N = arquivos.length;
+        for (let i = 0; i < N; i++) {
+          const a = arquivos[i], vid = false;   // sem conversão: só envio
+          btn.textContent = `Enviando ${i + 1}/${N}…`;
+          // cada arquivo pesa 1/N; vídeo: metade conversão, metade envio
+          const geral = (fase, p) => (i + (vid ? (fase === 'conv' ? p / 2 : 0.5 + p / 2) : p)) / N;
+          carga.set('Enviando anexos', a.name, 0, geral('envio', 0) - (vid ? 0.5 / N : 0), `Arquivo ${i + 1} de ${N}`, vid ? 'fa-film' : 'fa-cloud-arrow-up');
+          enviados.push(await enviarAnexo(a, (fase, p) => carga.set('Enviando para o Drive', a.name, null, i / N,
+            `Arquivo ${i + 1} de ${N}`, fase === 'conv' ? 'fa-film' : 'fa-cloud-arrow-up')));
         }
         btn.textContent = ed ? 'Salvando…' : 'Publicando…';
+        if (carga) carga.set(ed ? 'Salvando aviso' : 'Publicando aviso', 'Quase lá…', null, 1, '', 'fa-paper-plane');
         if (ed) {
           await ref(`avisos/${ed.id}`).update({
             titulo: f.titulo.value.trim(), corpo: f.corpo.value.trim(), prioridade: f.prioridade.value,
@@ -1799,7 +1864,7 @@
           // só apaga do Drive depois de salvar
           removidos.forEach((x) => { if (x.fileId) driveRequest({ action: 'delete', id: x.fileId }).catch(() => {}); });
           auditar('aviso_editado', f.titulo.value.trim());
-          m.remove(); toast('Aviso atualizado.'); rotear();
+          carga?.fim(); m.remove(); toast('Aviso atualizado.'); rotear();
           return;
         }
         const novo = await ref('avisos').push({
@@ -1812,28 +1877,156 @@
           criado_por: S.me.login, criado_em: TS(),
         });
         auditar('aviso_publicado', f.titulo.value.trim() || novo.key);
-        m.remove(); toast('Aviso publicado.'); rotear();
+        carga?.fim(); m.remove(); toast('Aviso publicado.'); rotear();
       } catch (err) {
         // não deixa arquivo solto no Drive se o aviso não foi publicado
+        carga?.fim();
         enviados.forEach((x) => { if (x.fileId) driveRequest({ action: 'delete', id: x.fileId }).catch(() => {}); });
         toast(traduz(err)); btn.disabled = false; btn.innerHTML = ed ? '<i class="fas fa-floppy-disk"></i> Salvar alterações' : '<i class="fas fa-paper-plane"></i> Publicar';
       }
     };
   }
 
+  // Leitura do aviso: abas Pendentes / Confirmados / Todos (lembra a última), pessoas
+  // agrupadas por unidade (abre/fecha) e filtros em popover por grupo e por unidade.
+  const LR_ABA = 'lamic_leitura_aba';
+  const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   async function relatorio(id) {
     try {
       const [aviso, users, lei] = await Promise.all([ler(`avisos/${id}`), ler('usuarios'), ler('leituras')]);
+      const av = aviso || {};
+      const exige = !!av.exige_confirmacao;
       const nomeG = Object.fromEntries(S.grupos.map((g) => [g.id, g.nome]));
-      const dados = lista(users).filter((u) => u.ativo && paraUsuario(aviso || {}, u.id, u.grupo)).sort(porNome)
-        .map((u) => ({ nome: u.nome, grupo: nomeG[u.grupo] || '—', ...(lei?.[u.id]?.[id] || {}) }));
+      const dados = lista(users).filter((u) => u.ativo && paraUsuario(av, u.id, u.grupo)).sort(porNome)
+        .map((u) => ({ nome: u.nome, grupo: nomeG[u.grupo] || 'Sem grupo', unidade: (u.unidade || '').trim() || 'Sem unidade', ...(lei?.[u.id]?.[id] || {}) }));
+      // "Concluído" = confirmou (aviso com confirmação) ou leu (aviso sem confirmação)
+      const feito = (r) => !!(exige ? r.confirmado_em : r.lido_em);
       const tot = dados.length, lidos = dados.filter((r) => r.lido_em).length, conf = dados.filter((r) => r.confirmado_em).length;
-      const m = modal(`<h2>Leitura do aviso</h2>
-        <p style="margin-bottom:12px"><span class="tag ok">${lidos}/${tot} leram</span> <span class="tag normal">${conf}/${tot} confirmaram</span></p>
-        <div class="scroll-x"><table class="tabela"><thead><tr><th>Nome</th><th>Grupo</th><th>Lido</th><th>Confirmado</th></tr></thead><tbody>
-        ${dados.map((r) => `<tr><td>${esc(r.nome)}</td><td>${esc(r.grupo)}</td><td>${dataBR(r.lido_em)}</td><td>${r.confirmado_em ? dataBR(r.confirmado_em) : '<span class="tag pend">pendente</span>'}</td></tr>`).join('')}
-        </tbody></table></div><div class="modal-acoes"><button class="btn ghost" data-x>Fechar</button></div>`);
-      $('[data-x]', m).onclick = () => m.remove();
+      const nFeito = dados.filter(feito).length, pct = tot ? Math.round(nFeito / tot * 100) : 0;
+      const ord = (arr) => [...new Set(arr)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      const UNID = ord(dados.map((r) => r.unidade)), GRUP = ord(dados.map((r) => r.grupo));
+
+      let aba = localStorage.getItem(LR_ABA); if (!['pend', 'ok', 'todos'].includes(aba)) aba = 'pend';
+      let busca = '';
+      const filtro = { unidade: new Set(), grupo: new Set() };
+      const fechados = new Set();
+      const ini = (n) => String(n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+      const rotOk = exige ? 'Confirmados' : 'Leram';
+
+      const m = modal(`<div class="lr">
+        <div class="lr-head">
+          <div><h2>Leitura do aviso</h2><p class="lr-tit">${esc(av.titulo || '')}</p></div>
+          <button class="lr-x" data-x title="Fechar"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="lr-stats">
+          <div class="lr-ring" style="--p:${pct}"><b>${pct}%</b><small>${exige ? 'confirmaram' : 'leram'}</small></div>
+          <div class="lr-nums">
+            <div><b>${lidos}<small>/${tot}</small></b><span><i class="fas fa-eye"></i> leram</span></div>
+            ${exige ? `<div><b>${conf}<small>/${tot}</small></b><span><i class="fas fa-circle-check"></i> confirmaram</span></div>` : ''}
+            <div class="is-pend"><b>${tot - nFeito}</b><span><i class="fas fa-hourglass-half"></i> pendentes</span></div>
+          </div>
+        </div>
+        <div class="lr-tabs" role="tablist">
+          <button data-aba="pend"><i class="fas fa-hourglass-half"></i> Pendentes <em>${tot - nFeito}</em></button>
+          <button data-aba="ok"><i class="fas fa-circle-check"></i> ${rotOk} <em>${nFeito}</em></button>
+          <button data-aba="todos"><i class="fas fa-users"></i> Todos <em>${tot}</em></button>
+        </div>
+        <div class="lr-bar">
+          <label class="lr-busca"><i class="fas fa-magnifying-glass"></i><input placeholder="Buscar pessoa..." data-busca></label>
+          <button class="lr-fbtn" data-f="unidade"><i class="fas fa-building"></i> Unidades <em data-fn="unidade"></em> <i class="fas fa-chevron-down"></i></button>
+          <button class="lr-fbtn" data-f="grupo"><i class="fas fa-user-group"></i> Grupos <em data-fn="grupo"></em> <i class="fas fa-chevron-down"></i></button>
+          <button class="lr-lnk" data-toggle-all title="Abrir/fechar todas as unidades"><i class="fas fa-up-down"></i></button>
+        </div>
+        <div class="lr-chips" data-chips></div>
+        <div class="lr-lista" data-lista></div>
+      </div>`);
+      m.querySelector('.modal-box').classList.add('lr-box');
+
+      const lst = $('[data-lista]', m), chips = $('[data-chips]', m);
+      const visiveis = () => dados.filter((r) =>
+        (aba === 'todos' || (aba === 'ok' ? feito(r) : !feito(r)))
+        && (!filtro.unidade.size || filtro.unidade.has(r.unidade))
+        && (!filtro.grupo.size || filtro.grupo.has(r.grupo))
+        && (!busca || semAcento(r.nome).includes(busca)));
+      const linha = (r) => {
+        const ok = feito(r);
+        return `<div class="lr-p ${ok ? 'ok' : ''}">
+          <span class="lr-av">${esc(ini(r.nome))}</span>
+          <span class="lr-pn"><b>${esc(r.nome)}</b><small>${esc(r.grupo)}</small></span>
+          <span class="lr-pd">${r.lido_em ? `<span title="Lido"><i class="fas fa-eye"></i> ${dataBR(r.lido_em)}</span>` : '<span class="mut"><i class="fas fa-eye-slash"></i> não leu</span>'}
+            ${exige ? (r.confirmado_em ? `<span class="okc" title="Confirmado"><i class="fas fa-circle-check"></i> ${dataBR(r.confirmado_em)}</span>` : '<span class="pendc">Pendente</span>') : ''}</span>
+        </div>`;
+      };
+      const desenhar = () => {
+        $$('.lr-tabs button', m).forEach((b) => b.classList.toggle('on', b.dataset.aba === aba));
+        ['unidade', 'grupo'].forEach((k) => { const e = $(`[data-fn="${k}"]`, m); e.textContent = filtro[k].size || ''; e.parentElement.classList.toggle('on', !!filtro[k].size); });
+        chips.innerHTML = ['unidade', 'grupo'].flatMap((k) => [...filtro[k]].map((v) => `<span class="lr-chip"><i class="fas ${k === 'unidade' ? 'fa-building' : 'fa-user-group'}"></i>${esc(v)}<button data-rm="${k}" data-v="${esc(v)}" title="Remover"><i class="fas fa-xmark"></i></button></span>`)).join('')
+          + (filtro.unidade.size || filtro.grupo.size ? '<button class="lr-limpa" data-limpa>Limpar filtros</button>' : '');
+        const vis = visiveis();
+        if (!vis.length) {
+          lst.innerHTML = `<div class="lr-vazio"><i class="fas ${aba === 'pend' && !busca && !filtro.unidade.size && !filtro.grupo.size ? 'fa-champagne-glasses' : 'fa-magnifying-glass'}"></i>
+            <p>${aba === 'pend' && !busca && !filtro.unidade.size && !filtro.grupo.size ? 'Ninguém pendente. Todos concluíram!' : 'Ninguém encontrado com esses filtros.'}</p></div>`;
+          return;
+        }
+        const porU = new Map(); vis.forEach((r) => { if (!porU.has(r.unidade)) porU.set(r.unidade, []); porU.get(r.unidade).push(r); });
+        lst.innerHTML = [...porU.keys()].sort((a, b) => (a === 'Sem unidade') - (b === 'Sem unidade') || a.localeCompare(b, 'pt-BR')).map((u) => {
+          const rs = porU.get(u), daU = dados.filter((r) => r.unidade === u), fU = daU.filter(feito).length, pU = daU.length ? Math.round(fU / daU.length * 100) : 0;
+          const fech = fechados.has(u);
+          return `<section class="lr-u ${fech ? 'fech' : ''}">
+            <button class="lr-uh" data-u="${esc(u)}">
+              <i class="fas fa-chevron-down lr-car"></i><i class="fas fa-building lr-uic"></i>
+              <b>${esc(u)}</b><em>${rs.length}</em>
+              <span class="lr-um"><span class="lr-ub"><span style="width:${pU}%"></span></span><small>${fU}/${daU.length}</small></span>
+            </button>
+            <div class="lr-ul">${fech ? '' : rs.map(linha).join('')}</div>
+          </section>`;
+        }).join('');
+      };
+
+      // Popover de filtro (unidades ou grupos), com busca e marcar/limpar
+      let pop = null;
+      const fecharPop = () => { if (pop) { pop.remove(); pop = null; document.removeEventListener('mousedown', fora, true); } };
+      const fora = (e) => { if (pop && !pop.contains(e.target) && !e.target.closest('.lr-fbtn')) fecharPop(); };
+      const abrirPop = (btn, k) => {
+        if (pop && pop.dataset.k === k) return fecharPop();
+        fecharPop();
+        const todos = k === 'unidade' ? UNID : GRUP;
+        pop = document.createElement('div'); pop.className = 'lr-pop'; pop.dataset.k = k;
+        const desenharPop = (q = '') => {
+          const qq = semAcento(q);
+          $('.lr-pop-l', pop).innerHTML = todos.filter((v) => !qq || semAcento(v).includes(qq)).map((v) => {
+            const n = dados.filter((r) => r[k] === v).length, on = filtro[k].has(v);
+            return `<label class="${on ? 'on' : ''}"><input type="checkbox" value="${esc(v)}" ${on ? 'checked' : ''}><span class="lr-ck"><i class="fas fa-check"></i></span><span class="lr-pv">${esc(v)}</span><small>${n}</small></label>`;
+          }).join('') || '<div class="lr-pop-v">Nada encontrado.</div>';
+        };
+        pop.innerHTML = `<div class="lr-pop-t">${k === 'unidade' ? '<i class="fas fa-building"></i> Filtrar por unidade' : '<i class="fas fa-user-group"></i> Filtrar por grupo'}</div>
+          ${todos.length > 6 ? '<input class="lr-pop-b" placeholder="Buscar...">' : ''}
+          <div class="lr-pop-l"></div>
+          <div class="lr-pop-f"><button data-pl>Limpar</button><button data-pt>Marcar todos</button></div>`;
+        desenharPop();
+        const r = btn.getBoundingClientRect(), box = m.querySelector('.modal-box').getBoundingClientRect();
+        pop.style.top = (r.bottom - box.top + m.querySelector('.modal-box').scrollTop + 6) + 'px';
+        pop.style.left = Math.max(12, Math.min(r.left - box.left, box.width - 292)) + 'px';
+        m.querySelector('.modal-box').appendChild(pop);
+        const b = $('.lr-pop-b', pop); if (b) { b.oninput = () => desenharPop(b.value); setTimeout(() => b.focus(), 0); }
+        pop.addEventListener('change', (e) => { const v = e.target.value; filtro[k].has(v) ? filtro[k].delete(v) : filtro[k].add(v); desenharPop(b ? b.value : ''); desenhar(); });
+        $('[data-pl]', pop).onclick = () => { filtro[k].clear(); desenharPop(b ? b.value : ''); desenhar(); };
+        $('[data-pt]', pop).onclick = () => { todos.forEach((v) => filtro[k].add(v)); desenharPop(b ? b.value : ''); desenhar(); };
+        setTimeout(() => document.addEventListener('mousedown', fora, true), 0);
+      };
+
+      m.addEventListener('click', (e) => {
+        const t = e.target;
+        if (t.closest('[data-x]')) { fecharPop(); return m.remove(); }
+        const ab = t.closest('[data-aba]'); if (ab) { aba = ab.dataset.aba; localStorage.setItem(LR_ABA, aba); return desenhar(); }
+        const fb = t.closest('.lr-fbtn'); if (fb) return abrirPop(fb, fb.dataset.f);
+        const uh = t.closest('.lr-uh'); if (uh) { const u = uh.dataset.u; fechados.has(u) ? fechados.delete(u) : fechados.add(u); return desenhar(); }
+        if (t.closest('[data-toggle-all]')) { const us = [...new Set(visiveis().map((r) => r.unidade))]; const abrir = us.some((u) => fechados.has(u)); us.forEach((u) => abrir ? fechados.delete(u) : fechados.add(u)); return desenhar(); }
+        const rm = t.closest('[data-rm]'); if (rm) { filtro[rm.dataset.rm].delete(rm.dataset.v); return desenhar(); }
+        if (t.closest('[data-limpa]')) { filtro.unidade.clear(); filtro.grupo.clear(); fecharPop(); return desenhar(); }
+      });
+      $('[data-busca]', m).oninput = (e) => { busca = semAcento(e.target.value.trim()); desenhar(); };
+      desenhar();
     } catch (e) { toast(traduz(e)); }
   }
 

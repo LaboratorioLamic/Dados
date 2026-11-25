@@ -97,6 +97,9 @@
             u.dadosLogin = login;
             if (cpf && !soDig(u.cpf)) u.cpf = cpf;
             if (adminDados) u.isAdmin = true;
+            // Grafia do APP LAMIC prevalece (maiúsculas/acentos). Só quando é o mesmo nome:
+            // nome diferente de verdade fica, pois registros antigos podem citar o nome.
+            if (perfil.nome && u.name !== perfil.nome && normNome(u.name) === normNome(perfil.nome)) u.name = perfil.nome;
             return arr;
         });
         if (!res.committed) return telaDados('Erro', 'Não foi possível ligar seu usuário. Recarregue a página.');
@@ -128,11 +131,11 @@
         await loadAuthSettings();
         const gp = getUserGroup(authSettings.defaultGroupId);
         const contas = Object.entries(contasDados || {}).filter(([l, d]) => d && d.ativo !== false && l);
-        let ligados = 0, criados = 0, semGrupo = 0;
+        let ligados = 0, criados = 0, semGrupo = 0, ren = 0;
         const res = await window.firebaseRunTransaction(window.firebaseRef(window.firebaseDatabase, 'passwords'), cur => {
             if (cur !== null && !Array.isArray(cur)) return;
             const arr = cur || [];
-            ligados = criados = semGrupo = 0;
+            ligados = criados = semGrupo = ren = 0;
             const livres = () => arr.filter(x => x && !x.dadosLogin);
             contas.forEach(([login, d]) => {
                 if (arr.some(x => x && x.dadosLogin === login)) return;
@@ -156,10 +159,15 @@
                 });
                 criados++;
             });
-            if (!ligados && !criados) return; // nada a mudar: aborta sem escrever
+            // Grafia do APP LAMIC prevalece para todos os vinculados (mesmo nome, outra caixa/acento)
+            arr.forEach(x => {
+                const d = x && x.dadosLogin && contasDados[x.dadosLogin];
+                if (d && d.nome && x.name !== d.nome && normNome(x.name) === normNome(d.nome)) { x.name = d.nome; ren++; }
+            });
+            if (!ligados && !criados && !ren) return; // nada a mudar: aborta sem escrever
             return arr;
         });
-        if (res.committed && (ligados || criados)) {
+        if (res.committed && (ligados || criados || ren)) {
             await loadusers();
             if (typeof renderusersConfigTable === 'function') renderusersConfigTable();
         }

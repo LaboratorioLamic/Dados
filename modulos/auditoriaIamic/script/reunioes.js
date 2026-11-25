@@ -38,7 +38,8 @@ const _area = k => AREAS.find(a => a.key === k) || AREAS[0];
 // ---------------------------------------------------------------------------
 let _data = {};              // { id: reuniao }
 let _listener = null;
-let _view = 'mes';           // mes | semana | dia | lista
+const _VIEW_KEY = 'reu_view';  // última visualização escolhida (cache local)
+let _view = (() => { try { const v = localStorage.getItem(_VIEW_KEY); return ['mes', 'semana', 'dia', 'lista'].includes(v) ? v : 'mes'; } catch (_) { return 'mes'; } })();   // mes | semana | dia | lista
 let _cursor = _today();      // data de referência da agenda (YYYY-MM-DD)
 let _open = null;            // { id, date } reunião aberta no drawer
 let _editId = null;          // id em edição no formulário (null = nova)
@@ -76,6 +77,12 @@ function _me() {
     return { id: String(currentuser.id || currentuser.user || ''), name: currentuser.name || currentuser.user || 'Usuário' };
 }
 function _users() { return (typeof users !== 'undefined' && Array.isArray(users)) ? users.filter(u => u && u.active !== false) : []; }
+// Responsáveis do item: lista em it.responsaveis (novo) ou o antigo it.responsavel (string)
+function _resps(it) {
+    if (!it) return [];
+    if (Array.isArray(it.responsaveis) && it.responsaveis.length) return it.responsaveis.map(String);
+    return it.responsavel ? [String(it.responsavel)] : [];
+}
 function _userName(id) {
     const u = _users().find(u => String(u.id) === String(id) || String(u.user) === String(id));
     return u ? (u.name || u.user) : (id || '—');
@@ -108,15 +115,23 @@ function _canEdit(r) {
     if (!r) return true; // criar nova
     return String(r.criadoPor) === me.id || (r.participantes || []).map(String).includes(me.id);
 }
+// Organizador (dono): só ele altera detalhes e presença. Admin entra só se não houver organizador.
+// Co-organizador (r.coOrg[id] = true) também edita detalhes e vê a pauta inteira.
+function _isDono(r) {
+    const me = _me();
+    if (!me || !r) return false;
+    if (!r.criadoPor) return _isAdmin();
+    return String(r.criadoPor) === me.id;
+}
+function _isCoOrg(r, id) { return !!(r && r.coOrg && r.coOrg[String(id)]); }
+function _isOrg(r) { const me = _me(); return _isDono(r) || (!!me && _isCoOrg(r, me.id)); }
 // Privacidade: só vê a reunião quem está vinculado (organizador, participante ou
-// responsável por tópico/item). Admin e "Gerenciar reuniões = Total" veem todas.
+// responsável por tópico/item). Nem admin vê reunião em que não está vinculado.
 function _visible(r) {
     const me = _me();
     if (!me) return false;
-    if (_isAdmin()) return true;
-    if (typeof window.userCanManageReu === 'function' && window.userCanManageReu() === 'total') return true;
     if (_isMine(r)) return true;
-    const respIn = tps => Object.values(tps || {}).some(t => t && ((t.resp || []).map(String).includes(me.id) || Object.values(t.itens || {}).some(it => it && String(it.responsavel || '') === me.id)));
+    const respIn = tps => Object.values(tps || {}).some(t => t && ((t.resp || []).map(String).includes(me.id) || Object.values(t.itens || {}).some(it => _resps(it).includes(me.id))));
     return respIn(r.topicos) || respIn(r.topicosModelo) || Object.values(r.excecoes || {}).some(e => e && respIn(e.topicos));
 }
 function _isMine(r) {
@@ -274,9 +289,35 @@ function _notifyAdded(prev, next, reuId, date, titulo) {
 }
 
 // --- Sino de reuniões no cabeçalho ------------------------------------------------
+// Ocorrência já terminou? (data passada ou hoje depois do horaFim)
+function _ended(date, horaFim) {
+    if (!date) return false;
+    const t = _today();
+    if (date < t) return true;
+    if (date > t) return false;
+    const now = new Date();
+    return !!horaFim && _minutes(horaFim) <= now.getHours() * 60 + now.getMinutes();
+}
+// Só reuniões de hoje que ainda não terminaram
 function _todayMine() {
     const t = _today();
-    return _occurrences(t, t).filter(o => !o.excluida && o.status !== 'cancelada' && _isMine(o.r));
+    return _occurrences(t, t).filter(o => !o.excluida && o.status !== 'cancelada' && _isMine(o.r) && !_ended(t, o.r.horaFim));
+}
+// Últimas reuniões já encerradas (uma por reunião/série), só para consulta no sino
+function _anterioresMine(n) {
+    const t = _today();
+    const occ = _occurrences(_addDays(t, -180), t)
+        .filter(o => !o.excluida && _isMine(o.r) && _ended(o.day || o.date, o.r.horaFim))
+        .sort((a, b) => ((b.day || b.date) + b.r.horaInicio).localeCompare((a.day || a.date) + a.r.horaInicio));
+    const vistos = new Set(), out = [];
+    for (const o of occ) { const k = String(o.base.id); if (vistos.has(k)) continue; vistos.add(k); out.push(o); if (out.length >= n) break; }
+    return out;
+}
+// Aviso some quando a reunião a que se refere já terminou
+function _avisoVivo(a) {
+    if (!a || !a.reuId) return false;
+    const r = _data[a.reuId];
+    return !_ended(a.data, r && r.horaFim);
 }
 function _ensureBell() {
     let c = document.getElementById('reuBellContainer');
@@ -293,7 +334,7 @@ function _ensureBell() {
 function _refreshBell() {
     if (!_me()) return;
     if (!_ensureBell()) return;
-    const unread = Object.values(_avisos).filter(a => a && !a.lido).length;
+    const unread = Object.values(_avisos).filter(a => a && !a.lido && _avisoVivo(a)).length;
     const n = unread + _todayMine().filter(o => o.status === 'agendada').length;
     const b = document.getElementById('reuBellBadge');
     if (b) { b.textContent = n; b.classList.toggle('hidden', !n); }
@@ -329,7 +370,7 @@ function _renderBell() {
     const p = document.getElementById('reuBellPanel'); if (!p) return;
     const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
     const today = _todayMine();
-    const avs = Object.keys(_avisos).map(k => Object.assign({ _k: k }, _avisos[k])).filter(a => a && a.reuId).sort((a, b) => (b.em || 0) - (a.em || 0)).slice(0, 30);
+    const avs = Object.keys(_avisos).map(k => Object.assign({ _k: k }, _avisos[k])).filter(_avisoVivo).sort((a, b) => (b.em || 0) - (a.em || 0)).slice(0, 30);
     const meetRow = o => {
         const r = o.r, st = STATUS[o.status] || STATUS.agendada;
         const past = _minutes(r.horaFim) <= nowMin, live = !past && _minutes(r.horaInicio) <= nowMin;
@@ -348,6 +389,10 @@ function _renderBell() {
         <div class="reu-bell-body">
             <div class="reu-bell-sec">Hoje · ${_fmtDate(_today())}</div>
             ${today.length ? today.map(meetRow).join('') : '<div class="reu-bell-empty">Nenhuma reunião hoje.</div>'}
+            <div class="reu-bell-sec">Anteriores</div>
+            ${(() => { const ant = _anterioresMine(5); return ant.length ? ant.map(o => `<div class="reu-bell-it is-past" style="--c:${_esc(o.r.cor || COLORS[0])}" onclick="reuBellOpen('${_esc(o.base.id)}','${o.date}')">
+                <span class="reu-bell-time">${_fmtDate(o.day || o.date).slice(0, 5)}<small>${_esc(o.r.horaInicio)}</small></span>
+                <span class="reu-bell-main"><b>${_esc(o.r.titulo)}</b><small>${(STATUS[o.status] || STATUS.agendada).label}</small></span></div>`).join('') : '<div class="reu-bell-empty">Nenhuma reunião anterior.</div>'; })()}
             <div class="reu-bell-sec">Avisos ${avs.length ? `<button class="reu-bell-clear" onclick="reuClearAvisos()">Limpar</button>` : ''}</div>
             ${avs.length ? avs.map(avRow).join('') : '<div class="reu-bell-empty">Nenhum aviso.</div>'}
         </div>`;
@@ -450,7 +495,7 @@ function _monthHtml() {
         const s = _addDays(start, i), d = _parse(s);
         const items = byDay[s] || [];
         const out = d.getMonth() !== c.getMonth();
-        h += `<div class="reu-md ${out ? 'out' : ''} ${s === today ? 'today' : ''}" data-day="${s}" onclick="reuDayClick('${s}')">
+        h += `<div class="reu-md ${out ? 'out' : ''} ${s === today ? 'today' : ''} ${s === _selDay ? 'is-pick' : ''}" data-day="${s}" onclick="reuDayClick('${s}')">
             <span class="reu-md-n">${d.getDate()}</span>
             ${items.slice(0, 3).map(o => `<span class="reu-ev ${o.status === 'cancelada' ? 'is-can' : ''}" style="--c:${_esc(o.r.cor || COLORS[0])}" ${_evAttrs(o)}><b>${_esc(o.r.horaInicio)}</b> ${_esc(o.r.titulo)}</span>`).join('')}
             ${items.length > 3 ? `<span class="reu-more" onclick="event.stopPropagation();reuGoDay('${s}')">+${items.length - 3} mais</span>` : ''}
@@ -467,7 +512,7 @@ function _timeGridHtml(start, n) {
     let cols = '';
     for (let i = 0; i < n; i++) {
         const s = _addDays(start, i), d = _parse(s);
-        head += `<div class="reu-tg-hd ${s === today ? 'today' : ''}" onclick="reuGoDay('${s}')"><span>${WEEK[d.getDay()]}</span><b>${d.getDate()}</b></div>`;
+        head += `<div class="reu-tg-hd ${s === today ? 'today' : ''} ${s === _selDay ? 'is-pick' : ''}" data-day="${s}" onclick="reuGoDay('${s}')"><span>${WEEK[d.getDay()]}</span><b>${d.getDate()}</b></div>`;
         const dayOcc = occ.filter(o => o.day === s);
         const lanes = _lanes(dayOcc);
         const evs = dayOcc.map(o => {
@@ -484,7 +529,7 @@ function _timeGridHtml(start, n) {
         for (let hh = 0; hh < 24; hh++) lines += `<div class="reu-tg-slot"></div>`;
         let now = '';
         if (s === today) { const m = new Date(); now = `<div class="reu-tg-now" style="top:${(m.getHours() * 60 + m.getMinutes()) / 60 * SLOT_PX}px"></div>`; }
-        cols += `<div class="reu-tg-col" data-day="${s}">${lines}${evs}${now}</div>`;
+        cols += `<div class="reu-tg-col ${s === _selDay ? 'is-pick' : ''}" data-day="${s}">${lines}${evs}${now}</div>`;
     }
     head += '</div>';
     let gutter = '<div class="reu-tg-gutter">';
@@ -532,7 +577,7 @@ function _renderUpcoming() {
     box.innerHTML = occ.length ? occ.map(o => _itemHtml(o, false)).join('') : '<div class="reu-side-empty">Nenhuma reunião nos próximos 30 dias.</div>';
 }
 
-function reuSetView(v) { _view = v; _renderMain(); }
+function reuSetView(v) { _view = v; try { localStorage.setItem(_VIEW_KEY, v); } catch (_) {} _renderMain(); }
 function reuNav(dir) {
     if (dir === 0) _cursor = _today();
     else if (_view === 'mes') { const c = _parse(_cursor); c.setDate(1); c.setMonth(c.getMonth() + dir); _cursor = _ds(c); }
@@ -542,6 +587,18 @@ function reuNav(dir) {
     _renderMain();
 }
 function reuGoDay(s) { _cursor = s; _view = 'dia'; _renderMain(); }
+// Seleção visual do dia (só destaque, sem ação): mês, semana/dia e mini-calendário
+let _selDay = null;
+function _pickDay(s) {
+    if (!s) return;
+    _selDay = s;
+    document.querySelectorAll('.reu-md.is-pick,.reu-tg-hd.is-pick,.reu-tg-col.is-pick,.reu-mini-d.is-pick').forEach(el => el.classList.remove('is-pick'));
+    document.querySelectorAll(`.reu-md[data-day="${s}"],.reu-tg-hd[data-day="${s}"],.reu-tg-col[data-day="${s}"],.reu-mini-d[data-day="${s}"]`).forEach(el => el.classList.add('is-pick'));
+}
+document.addEventListener('pointerdown', e => {
+    const el = e.target && e.target.closest && e.target.closest('.reu-md[data-day],.reu-tg-hd[data-day],.reu-tg-col[data-day],.reu-mini-d[data-day]');
+    if (el) _pickDay(el.dataset.day);
+}, true);
 function reuDayClick(s) { if (_me()) reuOpenForm(null, s); }
 function reuSlotClick(s, h) { if (_me()) reuOpenForm(null, s, _pad(h) + ':00'); }
 
@@ -613,6 +670,7 @@ function _askScope(title, opts) {
     return new Promise(res => {
         const el = document.createElement('div');
         el.className = 'reu-overlay reu-overlay--top open';
+        el.style.zIndex = '10300';   // acima de popovers e da reunião
         el.innerHTML = `<div class="reu-modal reu-modal--scope">
             <div class="reu-modal-head"><h3><i class="fas fa-repeat"></i> ${_esc(title)}</h3></div>
             <div class="reu-modal-body">
@@ -897,7 +955,7 @@ function _miniHtml() {
     for (let i = 0; i < 42; i++) {
         const s = _addDays(start, i), d = _parse(s);
         const cls = [d.getMonth() !== c.getMonth() ? 'out' : '', s === today ? 'today' : '', (_view !== 'mes' && s >= ws && s <= we) ? 'sel' : '', has.has(s) ? 'has' : ''].join(' ');
-        h += `<button class="reu-mini-d ${cls}" onclick="reuMiniPick('${s}')">${d.getDate()}</button>`;
+        h += `<button class="reu-mini-d ${cls} ${s === _selDay ? 'is-pick' : ''}" data-day="${s}" onclick="reuMiniPick('${s}')">${d.getDate()}</button>`;
     }
     return h + '</div>';
 }
@@ -964,8 +1022,7 @@ function reuOpenForm(id, date, hora, horaFim) {
 
 function _renderForm() {
     const f = _form, rec = f.recorrencia;
-    const usersHtml = f.participantes.map(id => `<span class="reu-pchip on">${_avatar(id)}${_esc(_userName(id))}<i class="fas fa-times reu-chip-x" onclick="reuFormToggleUser('${_esc(id)}')"></i></span>`).join('')
-        + `<button type="button" class="reu-chip reu-chip--add" onclick="reuFormPopUsers(this)"><i class="fas fa-user-plus"></i> Adicionar</button>`;
+    const usersHtml = _formPartsHtml();
     const linksHtml = f.vinculos.map((v, i) => _linkChip(v, `reuFormRemoveLink(${i})`)).join('');
     document.getElementById('reuFormModal').innerHTML = `
     <div class="reu-modal">
@@ -1006,7 +1063,7 @@ function _renderForm() {
                 <small id="reuMeetHint" class="reu-hint"></small>
                 <small class="reu-muted">Crie a sala em <a href="https://meet.google.com/new" target="_blank" rel="noopener">meet.google.com/new</a> e cole o link aqui.</small>
             </label>
-            <div class="reu-f"><span>Participantes <small class="reu-muted">(${f.participantes.length})</small></span><div class="reu-pchips" id="reuFPart">${usersHtml}</div></div>
+            <div class="reu-f"><span>Participantes <small class="reu-muted" id="reuFPartN">(${f.participantes.length})</small></span><div class="reu-pchips" id="reuFPart">${usersHtml}</div></div>
             <div class="reu-f"><span>Vínculos</span><div class="reu-links">${linksHtml}<button type="button" class="reu-chip reu-chip--add" onclick="reuOpenLinkPicker('form')"><i class="fas fa-link"></i> Vincular card</button></div></div>
             <label class="reu-f"><span>Descrição</span><textarea rows="3" placeholder="Objetivo da reunião..." oninput="reuF('descricao',this.value)">${_esc(f.descricao || '')}</textarea></label>
             <div class="reu-f"><span>Cor</span><div class="reu-colors">${COLORS.map(c => `<button type="button" class="${f.cor === c ? 'on' : ''}" style="background:${c}" onclick="reuF('cor','${c}');reuRerenderForm()"></button>`).join('')}</div></div>
@@ -1030,18 +1087,38 @@ function reuFToggleWd(i) {
     rec.diasSemana = d;
     _renderForm();
 }
+// Chips resumidos: primeiro nome + inicial do último; até 8 visíveis e "+N" para ver todos
+let _formPartsAll = false;
+const _nomeCurto = n => { const p = String(n || '').trim().split(/\s+/); return p.length > 1 ? `${p[0]} ${p[p.length - 1][0]}.` : (p[0] || ''); };
+function _formPartsHtml() {
+    const ids = (_form && _form.participantes || []).map(String).sort((a, b) => _userName(a).localeCompare(_userName(b), 'pt-BR'));
+    const LIM = 8, ver = _formPartsAll ? ids : ids.slice(0, LIM);
+    const nome = s => _esc(s.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase()));
+    return ver.map(id => `<span class="reu-pchip reu-pchip--sm on" title="${_esc(_userName(id))}">${_avatar(id)}${nome(_nomeCurto(_userName(id)))}<i class="fas fa-times reu-chip-x" onclick="reuFormToggleUser('${_esc(id)}')"></i></span>`).join('')
+        + (ids.length > LIM ? `<button type="button" class="reu-chip reu-pchip-more" onclick="reuFormPartsAll()">${_formPartsAll ? '<i class="fas fa-chevron-up"></i> Mostrar menos' : `+${ids.length - LIM} pessoas`}</button>` : '')
+        + `<button type="button" class="reu-chip reu-chip--add" onclick="reuFormPopUsers(this)"><i class="fas fa-user-plus"></i> Adicionar</button>`
+        + (ids.length > 1 ? `<button type="button" class="reu-chip reu-pchip-clear" title="Remover todos" onclick="reuFormPartsClear()"><i class="fas fa-user-xmark"></i></button>` : '');
+}
+function _refreshFormParts() {
+    const box = document.getElementById('reuFPart'); if (box) box.innerHTML = _formPartsHtml();
+    const n = document.getElementById('reuFPartN'); if (n) n.textContent = `(${_form.participantes.length})`;
+}
+function reuFormPartsAll() { _formPartsAll = !_formPartsAll; _refreshFormParts(); }
+async function reuFormPartsClear() {
+    if (!_form || !_form.participantes.length) return;
+    if (!(await _confirmBox({ titulo: 'Remover todos os participantes?', icone: 'fa-user-xmark', perigo: true, ok: 'Remover todos', html: `Os ${_form.participantes.length} participantes saem da lista. Você pode adicionar de novo antes de salvar.` }))) return;
+    _form.participantes = []; _refreshFormParts();
+}
 function reuFormToggleUser(id) {
     const p = _form.participantes.map(String);
     _form.participantes = p.includes(String(id)) ? p.filter(x => x !== String(id)) : p.concat(String(id));
     _renderForm();
 }
 function reuFormPopUsers(btn) {
-    _userPop(btn, { title: 'Participantes', selected: _form.participantes.slice(), multi: true, onPick: id => {
+    _userPop(btn, { title: 'Participantes', selected: _form.participantes.slice(), multi: true, lotes: true, lotesAll: true, onPick: id => {
         const p = _form.participantes.map(String);
         _form.participantes = p.includes(String(id)) ? p.filter(x => x !== String(id)) : p.concat(String(id));
-        const box = document.getElementById('reuFPart');
-        if (box) box.innerHTML = _form.participantes.map(x => `<span class="reu-pchip on">${_avatar(x)}${_esc(_userName(x))}<i class="fas fa-times reu-chip-x" onclick="reuFormToggleUser('${_esc(x)}')"></i></span>`).join('')
-            + `<button type="button" class="reu-chip reu-chip--add" onclick="reuFormPopUsers(this)"><i class="fas fa-user-plus"></i> Adicionar</button>`;
+        _refreshFormParts();
     } });
 }
 function reuFormRemoveLink(i) { _form.vinculos.splice(i, 1); _renderForm(); }
@@ -1189,8 +1266,8 @@ const PRESENCA = {
 };
 
 const _SHORTCUTS = [
-    ['Adicionar', [['Enter', 'nova linha abaixo, do mesmo tipo'], ['Ctrl + Enter', 'nova tarefa abaixo'], ['Alt + Enter', 'novo tópico'], ['Shift + Enter', 'quebra de linha (texto)']]],
-    ['Linha', [['End', 'marcar / desmarcar tarefa'], ['Shift + End', 'alternar texto ↔ tarefa'], ['Shift + ↑ / ↓', 'mover para cima / baixo'], ['Shift + →', 'virar subitem'], ['Shift + ←', 'subir nível'], ['Tab / Shift + Tab', 'recuar / avançar nível'], ['Shift + Del', 'excluir item'], ['Backspace (vazio)', 'excluir linha vazia'], ['↑ / ↓', 'navegar entre linhas'], ['Ctrl + B', 'marcadores']]],
+    ['Adicionar', [['Shift + Enter', 'nova linha abaixo, do mesmo tipo'], ['Ctrl + Enter', 'nova tarefa abaixo'], ['Alt + Enter', 'novo tópico'], ['Enter', 'quebra de linha no texto (mantém o marcador)']]],
+    ['Linha', [['End', 'marcar / desmarcar tarefa'], ['Shift + End', 'alternar texto ↔ tarefa'], ['Shift + ↑ / ↓', 'mover para cima / baixo'], ['Shift + →', 'virar subitem'], ['Shift + ←', 'subir nível'], ['Tab / Shift + Tab', 'marcador • no texto (mais / menos nível)'], ['Shift + Del', 'excluir item'], ['Backspace (vazio)', 'excluir linha vazia'], ['↑ / ↓', 'navegar entre linhas'], ['Ctrl + M', 'marcadores']]],
     ['Geral', [['Ctrl + Z', 'desfazer'], ['Ctrl + Shift + Z / Ctrl + Y', 'refazer']]]
 ];
 function reuShowShortcuts(btn) {
@@ -1385,7 +1462,7 @@ function _deleteStored(a) {
     if (a.blobId && typeof window._deleteImgBlob === 'function') window._deleteImgBlob(a.blobId);
     if (a.fileId && typeof driveDelete === 'function') driveDelete(a.fileId).catch(() => {});
 }
-const _SERIES_SKIP = ['topicosModelo', 'excecoes', 'atualizadoEm', 'id', 'criadoEm', 'criadoPor', 'serieOrigem', 'data', 'horaInicio', 'horaFim', 'recorrencia', 'topicos'];
+const _SERIES_SKIP = ['mkDefs', 'topicosModelo', 'excecoes', 'atualizadoEm', 'id', 'criadoEm', 'criadoPor', 'serieOrigem', 'data', 'horaInicio', 'horaFim', 'recorrencia', 'topicos'];
 const _FIELD_LABEL = { titulo: 'título', descricao: 'descrição', cor: 'cor', participantes: 'participantes', vinculos: 'vínculos', anexos: 'anexos', meetUrl: 'link do Meet', status: 'status', lembreteMin: 'lembrete', presenca: 'presença', topicosModelo: 'modelo da pauta' };
 function _baseDiff(a, b) {
     const ch = {};
@@ -1407,6 +1484,7 @@ function _askSave(opts) {
     return new Promise(res => {
         const el = document.createElement('div');
         el.className = 'reu-overlay reu-overlay--top open';
+        el.style.zIndex = '10300';   // acima de popovers e da reunião
         const scopes = [['future', 'Esta e as próximas', 'Aplica a partir de ' + _fmtDate(opts.day) + (opts.pauta ? '. A pauta é espelhada nas próximas; as anteriores não mudam.' : '.')],
             ['one', 'Apenas esta ocorrência', 'As alterações valem só para ' + _fmtDate(opts.day) + '.']];
         if (opts.base) scopes.push(['all', 'Todas as ocorrências', 'Aplica à série inteira' + (opts.pauta ? ' (pauta: atas anteriores preservadas).' : '.')]);
@@ -1461,7 +1539,7 @@ async function reuDetailSave() {
     const resumo = [...new Set(parts)].join(', ');
     const inv = new Set((cur.participantes || []).map(String));
     if (cur.criadoPor) inv.add(String(cur.criadoPor));
-    const addResp = tps => Object.values(tps || {}).forEach(t => { if (!t) return; (t.resp || []).forEach(u => inv.add(String(u))); Object.values(t.itens || {}).forEach(it => { if (it && it.responsavel) inv.add(String(it.responsavel)); }); });
+    const addResp = tps => Object.values(tps || {}).forEach(t => { if (!t) return; (t.resp || []).forEach(u => inv.add(String(u))); Object.values(t.itens || {}).forEach(it => _resps(it).forEach(u => inv.add(u))); });
     addResp(rec ? (excOf(cur) || {}).topicos : cur.topicos); addResp(cur.topicosModelo);
     const others = [...inv].filter(x => x && (!me || x !== me.id));
     const ans = await _askSave({ rec, day: key, pauta, base: Object.keys(ch).length > 0, others: others.length, resumo });
@@ -1476,14 +1554,29 @@ async function reuDetailSave() {
         } else {
             const restored = _clean(snap);
             restored.excecoes = _clean(cur.excecoes || {});
+            // Organizador e co-organizadores valem para a reunião toda (não por ocorrência):
+            // aplica direto na série e limpa cópias antigas nas exceções.
+            if (cur.criadoPor) restored.criadoPor = cur.criadoPor;
+            if (cur.coOrg && Object.keys(cur.coOrg).length) restored.coOrg = _clean(cur.coOrg); else delete restored.coOrg;
+            if (cur.mkDefs && Object.keys(cur.mkDefs).length) restored.mkDefs = _clean(cur.mkDefs); else delete restored.mkDefs;
+            const mkMudou = JSON.stringify(snap.mkDefs || null) !== JSON.stringify(cur.mkDefs || null);
+            Object.values(restored.excecoes).forEach(e => { if (e && e.ov) { delete e.ov.coOrg; delete e.ov.criadoPor; } });
+            const donoMudou = String(snap.criadoPor || '') !== String(cur.criadoPor || '') || JSON.stringify(snap.coOrg || null) !== JSON.stringify(cur.coOrg || null);
             _data[id] = restored;
             const c2 = Object.assign({}, ch);
+            delete c2.coOrg;
             if (Object.keys(c2).length) {
                 if (ans.scope !== 'one') { const e = restored.excecoes[key]; if (e && e.ov) Object.keys(c2).forEach(k => delete e.ov[k]); }
                 finalId = _applyScoped(id, key, c2, ans.scope);
             } else {
                 restored.atualizadoEm = Date.now();
                 _commit('reunioes/' + id, _clean(restored));
+            }
+            // Com outras mudanças em escopo, garante que dono/co-organizadores também foram gravados na série
+            if (Object.keys(c2).length && (donoMudou || mkMudou)) {
+                const up = { criadoPor: restored.criadoPor || null, coOrg: restored.coOrg || null, mkDefs: restored.mkDefs || null };
+                Object.keys(restored.excecoes || {}).forEach(k => { up['excecoes/' + k + '/ov/coOrg'] = null; up['excecoes/' + k + '/ov/criadoPor'] = null; });
+                _commit('reunioes/' + id, up, true);
             }
             if (pauta && ans.scope !== 'one') _propagatePauta(finalId, key, (excOf(cur) || {}).topicos);
         }
@@ -1559,19 +1652,58 @@ function _renderUserPopList() {
     const c = _popCfg;
     const first = (c.first || []).map(String);
     let list = _users().map(u => ({ id: String(u.id), name: u.name || u.user || '' }));
+    // only: só participantes (+ quem já está selecionado, para poder desmarcar)
+    if (c.only) list = list.filter(u => first.includes(u.id) || (c.selected || []).map(String).includes(u.id));
     list.sort((a, b) => (first.includes(b.id) - first.includes(a.id)) || a.name.localeCompare(b.name));
     const q = (typeof normalizeText === 'function') ? normalizeText(c.q) : c.q.toLowerCase();
     if (q) list = list.filter(u => ((typeof normalizeText === 'function') ? normalizeText(u.name) : u.name.toLowerCase()).includes(q));
     const sel = (c.selected || []).map(String);
-    let html = c.allowNone ? `<button class="reu-pop-it ${!sel.length ? 'is-on' : ''}" onclick="reuPopPick('')"><span class="reu-av reu-av--none"><i class="fas fa-user-slash"></i></span><span>Sem responsável</span></button>` : '';
+    let html = '';
+    // Unidades (setor do RH) e grupos, só com os participantes da reunião
+    if (c.lotes) {
+        if (typeof window._carregarContasDados === 'function' && !_popLotesPedido) { _popLotesPedido = true; try { Promise.resolve(window._carregarContasDados()).then(() => _renderUserPopList()).catch(() => {}); } catch (_) {} }
+        const base = c.lotesAll ? _users() : _users().filter(u => first.includes(String(u.id)));
+        const nq = x => (typeof normalizeText === 'function') ? normalizeText(x) : String(x).toLowerCase();
+        _popLotes = { setor: _lotesDe(base, _setorDoUser), grupo: _lotesDe(base, _grupoDoUser) };
+        const sec = (tipo, ic, tit) => {
+            const ls = _popLotes[tipo].map((l, i) => [l, i]).filter(x => !q || nq(x[0][0]).includes(q));
+            if (!ls.length) return '';
+            return `<div class="reu-pop-sec">${tit}</div>` + ls.map(x => {
+                const nome = x[0][0], ids = x[0][1], i = x[1];
+                const n = ids.filter(id => sel.includes(id)).length, todos = n === ids.length;
+                return `<button class="reu-pop-it ${todos ? 'is-on' : ''}" onclick="reuPopPickLote('${tipo}',${i})">
+                    <span class="reu-pop-cb ${todos ? 'on' : ''}">${todos ? '<i class="fas fa-check"></i>' : n ? '<i class="fas fa-minus"></i>' : ''}</span>
+                    <span class="reu-av reu-av--none"><i class="fas ${ic}"></i></span><span>${_esc(nome)}</span><small class="reu-muted">${ids.length}</small></button>`;
+            }).join('');
+        };
+        html += sec('setor', 'fa-building', 'Unidades') + sec('grupo', 'fa-users', 'Grupos');
+        if (html) html += '<div class="reu-pop-sec">Pessoas</div>';
+    }
+    html += c.allowNone ? `<button class="reu-pop-it ${!sel.length ? 'is-on' : ''}" onclick="reuPopPick('')"><span class="reu-av reu-av--none"><i class="fas fa-user-slash"></i></span><span>Sem responsável</span></button>` : '';
     html += list.slice(0, 60).map(u => {
         const on = sel.includes(u.id);
         return `<button class="reu-pop-it ${on ? 'is-on' : ''}" onclick="reuPopPick('${_esc(u.id)}')">
             ${c.multi ? `<span class="reu-pop-cb ${on ? 'on' : ''}">${on ? '<i class="fas fa-check"></i>' : ''}</span>` : ''}
             ${_avatar(u.id)}<span>${_esc(u.name)}</span>
-            ${first.includes(u.id) && !c.multi ? '<small class="reu-muted">participante</small>' : ''}</button>`;
-    }).join('') || '<div class="reu-side-empty">Nenhum usuário encontrado.</div>';
+            ${first.includes(u.id) && !c.multi && !c.only ? '<small class="reu-muted">participante</small>' : ''}</button>`;
+    }).join('') || `<div class="reu-side-empty">${c.only ? 'Nenhum participante encontrado. Adicione participantes em Detalhes.' : 'Nenhum usuário encontrado.'}</div>`;
     box.innerHTML = html;
+}
+let _popLotes = { setor: [], grupo: [] }, _popLotesPedido = false;
+function _setorDoUser(u) { try { const c = typeof window._contaDados === 'function' ? window._contaDados(u.dadosLogin) : null; return String((c && c.unidade) || '').trim(); } catch (_) { return ''; } }
+function _grupoDoUser(u) { try { const g = (u.grupoId && typeof getUserGroup === 'function') ? getUserGroup(u.grupoId) : null; return String((g && g.name) || u.grupo || '').trim(); } catch (_) { return ''; } }
+function _lotesDe(us, fn) {
+    const m = new Map();
+    us.forEach(u => { const k = fn(u); if (!k) return; if (!m.has(k)) m.set(k, []); m.get(k).push(String(u.id)); });
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
+}
+// Clicar numa unidade/grupo marca todos dela (ou desmarca, se todos já estavam)
+function reuPopPickLote(tipo, i) {
+    const c = _popCfg; const l = (_popLotes[tipo] || [])[i];
+    if (!c || !l) return;
+    const sel = (c.selected || []).map(String), ids = l[1];
+    const todos = ids.every(id => sel.includes(id));
+    ids.filter(id => todos ? sel.includes(id) : !sel.includes(id)).forEach(id => reuPopPick(id));
 }
 function reuPopSearch(q) { if (_popCfg) { _popCfg.q = q || ''; _renderUserPopList(); } }
 function reuPopPick(id) {
@@ -1580,7 +1712,7 @@ function reuPopPick(id) {
     c.onPick(id);
     if (c.multi) {
         const s = (c.selected || []).map(String);
-        c.selected = s.includes(String(id)) ? s.filter(x => x !== String(id)) : s.concat(String(id));
+        c.selected = !id ? [] : s.includes(String(id)) ? s.filter(x => x !== String(id)) : s.concat(String(id));
         _renderUserPopList();
     } else _closePop();
 }
@@ -1595,7 +1727,7 @@ function _isTopicResp(path) {
     if ((t.resp || []).map(String).includes(me.id)) return true;
     const m = String(path).slice(tp.length).match(/^\/itens\/([^/]+)/);
     const itens = t.itens || {};
-    for (let id = m && m[1], g = 0; id && itens[id] && g < 10; id = itens[id].pai, g++) if (String(itens[id].responsavel || '') === me.id) return true;
+    for (let id = m && m[1], g = 0; id && itens[id] && g < 10; id = itens[id].pai, g++) if (_resps(itens[id]).includes(me.id)) return true;
     return false;
 }
 function _guard(path) { const r = _cur(); if (r && (_canEdit(r) || (path && _isTopicResp(path)))) return r; _toast('Sem permissão para editar.', 'error'); return null; }
@@ -1638,7 +1770,22 @@ function _renderDetail() {
     box.querySelectorAll('textarea.reu-autogrow').forEach(_autogrow);
     _setSaveInd();
 }
-function _autogrow(t) { t.style.height = 'auto'; t.style.height = Math.max(t.classList.contains('reu-in') ? 44 : 26, t.scrollHeight + 2) + 'px'; }
+// Altura = só as linhas com texto. Medir com o campo ainda sem largura (drawer abrindo,
+// aba oculta) dava uma altura enorme; espera ter largura e remede quando a largura muda.
+const _agRO = typeof ResizeObserver === 'function' ? new ResizeObserver(es => es.forEach(e => {
+    const t = e.target, w = Math.round(e.contentRect.width);
+    if (w && t._agW !== w) { t._agW = w; _autogrow(t, 1); }
+})) : null;
+function _autogrow(t, tent) {
+    if (!t) return;
+    if (_agRO && !t._agObs) { t._agObs = true; _agRO.observe(t); }
+    if (!t.isConnected || t.clientWidth < 60) {
+        if ((tent || 0) < 20) requestAnimationFrame(() => _autogrow(t, (tent || 0) + 1));
+        return;
+    }
+    t.style.height = 'auto';
+    t.style.height = Math.max(t.classList.contains('reu-in') ? 44 : 26, t.scrollHeight + 2) + 'px';
+}
 
 // Privacidade da pauta: quem não organiza nem participa só vê o que é seu. Tópico em que é
 // responsável aparece inteiro; item em que é responsável aparece com seus subitens e os
@@ -1652,7 +1799,7 @@ function _pautaPrivada(o) {
         if ((t.resp || []).map(String).includes(me.id)) { out[tid] = t; return; }
         const itens = t.itens || {}, keep = new Set();
         Object.keys(itens).forEach(id => {
-            if (!itens[id] || String(itens[id].responsavel || '') !== me.id) return;
+            if (!itens[id] || !_resps(itens[id]).includes(me.id)) return;
             keep.add(id);
             _descIds(itens, id).forEach(d => keep.add(d));
             for (let p = itens[id].pai, g = 0; p && itens[p] && g < 20; p = itens[p].pai, g++) keep.add(p);
@@ -1670,7 +1817,8 @@ function _detailHtml(r) {
     r = o.r;
     const st = STATUS[o.status] || STATUS.agendada;
     const ed = _canEdit(r);
-    if (!ed && !_isMine(r)) o = _pautaPrivada(o);
+    const org = _isOrg(r);
+    if (!org) o = _pautaPrivada(o);   // pauta oculta: só organizador/co vê tudo
     const topics = _sortedTopics(o.topicos);
     const items = _allItems(o);
     const done = items.filter(x => x.it.checked).length;
@@ -1678,8 +1826,8 @@ function _detailHtml(r) {
     const nLinks = (r.vinculos || []).length;
 
     let body = '';
-    if (_tab === 'pauta') body = _tabPauta(r, o, ed, topics);
-    else if (_tab === 'acoes') body = _tabAcoes(r, o, ed, items);
+    if (_tab === 'pauta') body = _tabPauta(r, o, ed && org, topics);
+    else if (_tab === 'acoes') body = _tabAcoes(r, o, ed && org, items);
     else if (_tab === 'detalhes') body = _tabDetalhes(r, o, ed);
     else if (_tab === 'anexos') body = _tabAnexos(r, o, ed);
     else body = _tabVinculos(r, ed);
@@ -1695,7 +1843,7 @@ function _detailHtml(r) {
             ${_dirty ? `<button class="reu-btn" onclick="reuDetailDiscard()"><i class="fas fa-rotate-left"></i> Descartar</button>
                         <button class="reu-btn reu-btn--pri" onclick="reuDetailSave()"><i class="fas fa-check"></i> Salvar</button>` : ''}
             ${r.meetUrl ? `<a class="reu-x-meet" href="${_esc(r.meetUrl)}" target="_blank" rel="noopener" title="${_esc(r.meetUrl)}"><i class="fas fa-video"></i> Entrar no Meet</a>`
-                        : (ed ? `<button class="reu-x-meet reu-x-meet--empty" onclick="reuPopMeet(this)"><i class="fas fa-video"></i> Adicionar Meet</button>` : '')}
+                        : (ed && _isOrg(r) ? `<button class="reu-x-meet reu-x-meet--empty" onclick="reuPopMeet(this)"><i class="fas fa-video"></i> Adicionar Meet</button>` : '')}
             <button class="reu-icon-btn" title="Mais ações" onclick="reuPopMenu(this)"><i class="fas fa-ellipsis"></i></button>
             <button class="reu-icon-btn" title="Fechar" onclick="reuCloseDetail()"><i class="fas fa-times"></i></button>
         </div>
@@ -1772,9 +1920,25 @@ function _startMkListener() {
         if (_open) _renderDetail();
     });
 }
-function _mkList() { return Object.keys(_marcadores).map(k => Object.assign({ _id: k }, _marcadores[k])).sort((a, b) => (a.ordem || 0) - (b.ordem || 0)); }
+// Marcadores são de cada reunião: reunioes/{id}/mkDefs/{mkId} = { nome, cor, ordem } (ou { del: true }).
+// Os antigos globais (/reunioesMarcadores) só aparecem na reunião que já os usa, até serem editados nela.
+function _mkDefsDe(r) {
+    r = r || _cur();
+    if (!r) return {};
+    const out = {};
+    const usados = JSON.stringify(r.topicos || {}) + JSON.stringify(r.topicosModelo || {}) + JSON.stringify(r.excecoes || {});
+    Object.keys(_marcadores).forEach(k => { if (usados.includes('"' + k + '"')) out[k] = _marcadores[k]; });
+    Object.entries(r.mkDefs || {}).forEach(([k, v]) => { if (v && v.del) delete out[k]; else if (v) out[k] = v; });
+    return out;
+}
+function _mkDef(id, r) { return _mkDefsDe(r)[id] || null; }
+function _mkList(r) { const d = _mkDefsDe(r); return Object.keys(d).map(k => Object.assign({ _id: k }, d[k])).sort((a, b) => (a.ordem || 0) - (b.ordem || 0)); }
+function _mkSalvar(id, def) {   // grava a definição inteira na reunião aberta (rascunho)
+    const r = _cur(); if (!r) return;
+    _write('reunioes/' + r.id + '/mkDefs/' + id, def);
+}
 function _mkChips(ids) {
-    return (ids || []).map(id => _marcadores[id]).filter(Boolean)
+    return (ids || []).map(id => _mkDef(id)).filter(Boolean)
         .map(m => `<span class="reu-tag" style="--t:${_esc(m.cor)}">${_esc(m.nome)}</span>`).join('');
 }
 function reuPopMarcadores(btn, path) {
@@ -1795,7 +1959,12 @@ function _renderMkList() {
             <span class="reu-pop-cb ${on ? 'on' : ''}">${on ? '<i class="fas fa-check"></i>' : ''}</span>
             <button class="reu-mk-dot" style="background:${_esc(m.cor)}" title="Trocar cor" onclick="event.stopPropagation();reuMkColor('${m._id}')"></button>
             <span>${_esc(m.nome)}</span>
-            <i class="fas fa-trash-can reu-mk-del" title="Excluir marcador" onclick="event.stopPropagation();reuMkDelete('${m._id}')"></i></div>`;
+            <i class="fas fa-pen reu-mk-del reu-mk-ren" title="Renomear marcador" onclick="event.stopPropagation();reuMkRename('${m._id}')"></i>
+            <i class="fas fa-trash-can reu-mk-del" title="Excluir marcador" onclick="event.stopPropagation();reuMkDelete('${m._id}')"></i></div>
+            ${_mkPaleta === m._id ? `<div class="reu-mk-pal" onclick="event.stopPropagation()">
+                ${MK_COLORS.map(c => `<button class="${c === m.cor ? 'on' : ''}" style="background:${c}" title="${c}" onclick="reuMkSetColor('${m._id}','${c}')"></button>`).join('')}
+                <label class="reu-mk-pal-custom" title="Outra cor"><i class="fas fa-eye-dropper"></i><input type="color" value="${_esc(/^#[0-9a-f]{6}$/i.test(m.cor) ? m.cor : '#2563eb')}" onchange="reuMkSetColor('${m._id}',this.value)"></label>
+            </div>` : ''}`;
     }).join('') || '<div class="reu-side-empty">Nenhum marcador. Crie um abaixo.</div>';
 }
 function reuMkToggle(id) {
@@ -1810,21 +1979,33 @@ async function reuMkCreate(nome) {
     if (!nome || !_popCfg) return;
     const id = _uid('mk');
     const cor = MK_COLORS[_mkList().length % MK_COLORS.length];
-    _marcadores[id] = { nome, cor, ordem: Date.now() };
-    try { await _set('reunioesMarcadores/' + id, _marcadores[id]); } catch (e) { _fail(e); }
+    if (_mkList().some(x => String(x.nome || '').toLowerCase() === nome.toLowerCase())) { _toast('Já existe um marcador com esse nome nesta reunião.', 'error'); return; }
+    _mkSalvar(id, { nome, cor, ordem: Date.now() });
     const inp = document.getElementById('reuMkNew'); if (inp) inp.value = '';
     reuMkToggle(id);
 }
-async function reuMkColor(id) {
-    const m = _marcadores[id]; if (!m) return;
-    m.cor = MK_COLORS[(MK_COLORS.indexOf(m.cor) + 1) % MK_COLORS.length];
-    _renderMkList(); _renderDetail();
-    try { await _update('reunioesMarcadores/' + id, { cor: m.cor }); } catch (e) { _fail(e); }
+// Clicar na bolinha abre/fecha a paleta daquele marcador
+let _mkPaleta = null;
+function reuMkColor(id) { _mkPaleta = _mkPaleta === id ? null : id; _renderMkList(); }
+async function reuMkRename(id) {
+    const m = _mkDef(id); if (!m) return;
+    const v = await _promptBox({ titulo: 'Renomear marcador', icone: 'fa-tag', valor: m.nome || '', ok: 'Salvar' });
+    const nome = (v || '').trim();
+    if (!nome || nome === m.nome) return;
+    if (_mkList().some(x => x._id !== id && String(x.nome || '').toLowerCase() === nome.toLowerCase())) { _toast('Já existe um marcador com esse nome.', 'error'); return; }
+    _mkSalvar(id, Object.assign({}, m, { nome }));
+    _renderMkList();
+}
+async function reuMkSetColor(id, cor) {
+    const m = _mkDef(id); if (!m || !cor) return;
+    _mkPaleta = null;
+    _mkSalvar(id, Object.assign({}, m, { cor }));
+    _renderMkList();
 }
 async function reuMkDelete(id) {
-    delete _marcadores[id];
-    _renderMkList(); _renderDetail();
-    try { await _set('reunioesMarcadores/' + id, null); } catch (e) { _fail(e); }
+    // antigo global: marca como excluído só nesta reunião; próprio da reunião: apaga
+    _mkSalvar(id, _marcadores[id] ? { del: true } : null);
+    _renderMkList();
 }
 
 // --- Anexos (reunião, tópico, bloco) — mesmo pipeline dos cards ----------------------
@@ -1836,7 +2017,7 @@ function _anIcon(a, size) {
 function _anexoChips(path, obj, ed) {
     return _anexosArr(obj).map(a => `<span class="reu-anx" onclick="reuOpenAnexo('${path}','${a._id}')" title="${_esc(a.nome)}">
         ${_anIcon(a, '14px')}<span>${_esc(a.nome)}</span>
-        ${ed ? `<i class="fas fa-times reu-chip-x" onclick="event.stopPropagation();reuDeleteAnexo('${path}','${a._id}')"></i>` : ''}</span>`).join('');
+        ${ed ? `<i class="fas fa-pen reu-chip-x reu-chip-ed" title="Renomear" onclick="event.stopPropagation();reuRenameAnexo('${path}','${a._id}')"></i><i class="fas fa-times reu-chip-x" title="Remover" onclick="event.stopPropagation();reuDeleteAnexo('${path}','${a._id}')"></i>` : ''}</span>`).join('');
 }
 function _getAt(path) { return path.split('/').reduce((o, k, i) => (i === 0 ? _data : o && o[k]), null); }
 
@@ -1920,10 +2101,24 @@ async function reuAnxFiles(files) {
         setTimeout(reuCloseAttach, 350);
     } else if (ok && fail) _toast(ok + ' anexado(s), ' + fail + ' com erro.', 'error');
 }
+// Link colado do Google/Gmail/Outlook vem embrulhado (google.com/url?q=...): usa o destino real
+function _linkReal(u) {
+    for (let i = 0; i < 3; i++) {
+        let x; try { x = new URL(u); } catch (_) { return u; }
+        const h = x.hostname.replace(/^www\./, '');
+        let alvo = null;
+        if (/^google\.[a-z.]+$/.test(h) && x.pathname === '/url') alvo = x.searchParams.get('q') || x.searchParams.get('url');
+        else if (/safelinks\.protection\.outlook\.com$/.test(h)) alvo = x.searchParams.get('url');
+        if (!alvo || !/^https?:\/\//i.test(alvo)) return u;
+        u = alvo;
+    }
+    return u;
+}
 function reuAnxAddLink() {
     let u = (document.getElementById('reuAnxLink').value || '').trim();
     if (!u) { _toast('Cole a URL.', 'error'); return; }
     if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    u = _linkReal(u);
     const nome = (document.getElementById('reuAnxLinkName').value || '').trim() || u.replace(/^https?:\/\//, '').slice(0, 60);
     const me = _me();
     _write(_anxPath + '/anexos/' + _uid('a'), { tipo: 'link', nome, url: u, por: me ? me.id : '', em: Date.now() });
@@ -1938,7 +2133,45 @@ function reuOpenAnexo(path, aid) {
         else if (typeof window._loadImgBlob === 'function') window._loadImgBlob(a.blobId).then(u => { const w = window.open(); if (w) w.document.write(`<img src="${u}" style="max-width:100%">`); });
         return;
     }
-    if (a.url) window.open(a.url, '_blank', 'noopener');
+    if (a.url) window.open(_linkReal(a.url), '_blank', 'noopener');
+}
+// Renomeia só o título exibido do anexo/link (o arquivo ou URL não mudam)
+async function reuRenameAnexo(path, aid) {
+    if (!_guard(path)) return;
+    const a = ((_getAt(path) || {}).anexos || {})[aid];
+    if (!a) return;
+    const novo = await _promptBox({ titulo: 'Renomear anexo', icone: 'fa-pen', valor: a.nome || '', ok: 'Salvar' });
+    if (novo === null) return;
+    const v = novo.trim();
+    if (!v || v === a.nome) return;
+    _write(path + '/anexos/' + aid + '/nome', v);
+}
+function _promptBox(o) {
+    return new Promise(res => {
+        const el = document.createElement('div');
+        el.className = 'reu-overlay reu-overlay--top open';
+        el.style.zIndex = '10300';   // acima de popovers e da reunião
+        el.innerHTML = `<div class="reu-modal reu-modal--scope" style="max-width:440px">
+            <div class="reu-modal-head"><h3><i class="fas ${o.icone || 'fa-pen'}" style="color:#2563eb"></i> ${_esc(o.titulo || '')}</h3></div>
+            <div class="reu-modal-body"><input class="reu-search" data-pb value="${_esc(o.valor || '')}" maxlength="160"></div>
+            <div class="reu-modal-foot"><span style="flex:1"></span>
+                <button class="reu-btn" data-act="cancel">Cancelar</button>
+                <button class="reu-btn reu-btn--pri" data-act="ok">${_esc(o.ok || 'OK')}</button></div></div>`;
+        const inp = () => el.querySelector('[data-pb]');
+        const close = v => { el.remove(); document.removeEventListener('keydown', onKey, true); res(v); };
+        const onKey = e => {
+            if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(null); }
+            else if (e.key === 'Enter') { e.stopPropagation(); e.preventDefault(); close(inp().value); }
+        };
+        el.addEventListener('click', e => {
+            if (e.target === el) return close(null);
+            const b = e.target.closest('[data-act]');
+            if (b) close(b.dataset.act === 'ok' ? inp().value : null);
+        });
+        document.addEventListener('keydown', onKey, true);
+        document.body.appendChild(el);
+        setTimeout(() => { const i = inp(); i.focus(); i.select(); }, 0);
+    });
 }
 function reuDeleteAnexo(path, aid) {
     if (!_guard(path)) return;
@@ -1983,8 +2216,8 @@ function _blockRow(r, tp, node, ed, opts) {
         <button class="reu-blk-caret ${hasKids ? '' : 'is-empty'}" ${hasKids ? `onclick="reuToggleCollapse('${it._id}')"` : 'tabindex="-1"'}><i class="fas fa-chevron-${col ? 'right' : 'down'}"></i></button>
         ${task ? `<input type="checkbox" class="reu-blk-cb" ${it.checked ? 'checked' : ''} ${ed ? '' : 'disabled'} onchange="reuItemSet('${ip}','checked',this.checked)">`
                : `<span class="reu-blk-para" title="Bloco de texto"><i class="fas fa-paragraph"></i></span>`}
-        ${task ? `<input class="reu-blk-text" data-fk="i-${it._id}" value="${_esc(it.texto || '')}" placeholder="Tarefa" ${ed ? '' : 'disabled'}
-                    onchange="reuItemSet('${ip}','texto',this.value)" onkeydown="reuBlkKey(event,this,'${tp}','${it._id}')">`
+        ${task ? `<textarea class="reu-blk-text reu-autogrow" rows="1" data-fk="i-${it._id}" placeholder="Tarefa" ${ed ? '' : 'disabled'}
+                    oninput="reuAutogrow(this)" onchange="reuItemSet('${ip}','texto',this.value)" onkeydown="reuBlkKey(event,this,'${tp}','${it._id}')">${_esc(it.texto || '')}</textarea>`
                : `<textarea class="reu-blk-text reu-autogrow" rows="1" data-fk="i-${it._id}" placeholder="Texto" ${ed ? '' : 'disabled'}
                     oninput="reuAutogrow(this)" onchange="reuItemSet('${ip}','texto',this.value)" onkeydown="reuBlkKey(event,this,'${tp}','${it._id}')">${_esc(it.texto || '')}</textarea>`}
         ${opts.extra || ''}
@@ -1995,8 +2228,9 @@ function _blockRow(r, tp, node, ed, opts) {
             ${task ? `<label class="reu-due ${it.prazo ? 'has' : ''} ${od ? 'is-late' : ''}" title="${it.prazo ? 'Prazo: ' + _fmtDate(it.prazo) : 'Definir prazo'}">
                 <i class="fas ${od ? 'fa-triangle-exclamation' : 'fa-calendar-day'}"></i>${it.prazo ? `<span>${_fmtDate(it.prazo).slice(0, 5)}</span>` : ''}
                 ${ed ? `<input type="date" value="${_esc(it.prazo || '')}" onchange="reuItemSet('${ip}','prazo',this.value||null)" onclick="try{this.showPicker()}catch(e){}">` : ''}</label>` : ''}
-            <button class="reu-who ${it.responsavel ? 'has' : ''}" ${ed ? `onclick="reuPopResp(this,'${ip}','${_esc(it.responsavel || '')}')"` : 'disabled'} title="${it.responsavel ? _esc(_userName(it.responsavel)) : 'Definir responsável'}">
-                ${it.responsavel ? _avatar(it.responsavel) + `<span>${_esc(_userName(it.responsavel).split(' ')[0])}</span>` : '<i class="fas fa-user-plus"></i>'}</button>
+            ${(() => { const rs = _resps(it), podeR = _isOrg(r); if (!rs.length && !podeR) return '';
+                return `<button class="reu-who ${rs.length ? 'has' : ''}" ${podeR ? `onclick="reuPopResp(this,'${ip}')"` : 'disabled'} title="${rs.length ? _esc(rs.map(_userName).join(', ')) : 'Definir responsáveis'}">
+                ${rs.length === 1 ? _avatar(rs[0]) + `<span>${_esc(_userName(rs[0]).split(' ')[0])}</span>` : rs.length ? _avStack(rs, 3) : '<i class="fas fa-user-plus"></i>'}</button>`; })()}
             ${ed && node.depth < MAX_DEPTH - 1 ? `<button class="reu-icon-btn reu-hover" title="Adicionar subitem" onclick="reuItemAdd('${tp}','','${it._id}','tarefa',true)"><i class="fas fa-plus"></i></button>` : ''}
             ${ed ? `<button class="reu-icon-btn reu-hover" title="Opções" onclick="reuPopBlock(this,'${tp}','${it._id}')"><i class="fas fa-ellipsis-vertical"></i></button>` : ''}
         </span>
@@ -2006,7 +2240,7 @@ function _blockRow(r, tp, node, ed, opts) {
 }
 function _renderNodes(r, tp, nodes, ed) {
     const me = _me();
-    return nodes.map(n => { const e2 = ed || !!(me && String(n.it.responsavel || '') === me.id); return _blockRow(r, tp, n, e2, { dnd: true }) + (n.children.length && !_collapsed.has(n.it._id) ? _renderNodes(r, tp, n.children, e2) : ''); }).join('');
+    return nodes.map(n => { const e2 = ed || !!(me && _resps(n.it).includes(me.id)); return _blockRow(r, tp, n, e2, { dnd: true }) + (n.children.length && !_collapsed.has(n.it._id) ? _renderNodes(r, tp, n.children, e2) : ''); }).join('');
 }
 
 function _tabPauta(r, o, ed, topics) {
@@ -2022,7 +2256,7 @@ function _tabPauta(r, o, ed, topics) {
             <div class="reu-topic-head">
                 <span class="reu-topic-n">${ti + 1}</span>
                 ${ed && topics.length > 1 ? `<span class="reu-topic-mv"><button class="reu-icon-btn" title="Subir tópico" ${ti === 0 ? 'disabled' : ''} onclick="reuTopicMove('${tp}',-1)"><i class="fas fa-chevron-up"></i></button><button class="reu-icon-btn" title="Descer tópico" ${ti === topics.length - 1 ? 'disabled' : ''} onclick="reuTopicMove('${tp}',1)"><i class="fas fa-chevron-down"></i></button></span>` : ''}
-                <input class="reu-topic-title" data-fk="t-${t._id}" value="${_esc(t.titulo || '')}" placeholder="Título do tópico" ${ed ? '' : 'disabled'} onchange="reuTopicSet('${tp}','titulo',this.value)" onkeydown="if(event.key==='Enter'){this.blur();}else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='b'){event.preventDefault();reuPopMarcadores(this,'${tp}');}">
+                <input class="reu-topic-title" data-fk="t-${t._id}" value="${_esc(t.titulo || '')}" placeholder="Título do tópico" ${ed ? '' : 'disabled'} onchange="reuTopicSet('${tp}','titulo',this.value)" onkeydown="if(event.key==='Enter'){this.blur();}else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='m'){event.preventDefault();reuPopMarcadores(this,'${tp}');}">
                 <span class="reu-topic-tags">${_mkChips(t.marcadores)}</span>
                 ${(t.resp || []).length ? `<button class="reu-meta reu-meta--btn reu-topic-resp" ${ed ? `onclick="reuPopTopicResp(this,'${tp}')"` : 'disabled'} title="Responsáveis pelo tópico">${_avStack(t.resp, 3)}</button>`
                     : (ed ? `<button class="reu-who" onclick="reuPopTopicResp(this,'${tp}')" title="Adicionar responsáveis pelo tópico"><i class="fas fa-user-plus"></i></button>` : '')}
@@ -2055,7 +2289,7 @@ function _tabAcoes(r, o, ed, items) {
         if (!_isTask(it)) return false;
         if (_actFilter.st === 'pend' && it.checked) return false;
         if (_actFilter.st === 'ok' && !it.checked) return false;
-        if (_actFilter.who && String(it.responsavel || '') !== String(_actFilter.who === '_none' ? '' : _actFilter.who)) return false;
+        if (_actFilter.who && (_actFilter.who === '_none' ? _resps(it).length > 0 : !_resps(it).includes(String(_actFilter.who)))) return false;
         if (_actFilter.mk && !(it.marcadores || []).includes(_actFilter.mk) && !(t.marcadores || []).includes(_actFilter.mk)) return false;
         return true;
     };
@@ -2074,7 +2308,7 @@ function _tabAcoes(r, o, ed, items) {
     }).join('');
     const cnt = { todos: items.length, pend: items.filter(x => !x.it.checked).length, ok: items.filter(x => x.it.checked).length };
     const whoLabel = !_actFilter.who ? 'Todos os responsáveis' : (_actFilter.who === '_none' ? 'Sem responsável' : _userName(_actFilter.who));
-    const mk = _actFilter.mk && _marcadores[_actFilter.mk];
+    const mk = _actFilter.mk && _mkDef(_actFilter.mk);
     return `<div class="reu-filters">
         <div class="reu-seg reu-seg--sm">
             ${[['pend', 'Pendentes'], ['ok', 'Concluídas'], ['todos', 'Todas']].map(([k, l]) => `<button class="${_actFilter.st === k ? 'on' : ''}" onclick="reuActFilter('st','${k}')">${l} <b>${cnt[k]}</b></button>`).join('')}
@@ -2127,10 +2361,16 @@ function reuTopicMove(tp, dir) {
     [list[i], list[j]] = [list[j], list[i]];
     list.forEach((t, k) => { if ((t.ordem || 0) !== (k + 1) * 1000) _write(base + '/' + t._id, { ordem: (k + 1) * 1000 }, true); });
 }
+// Participantes desta ocorrência (visão mesclada, inclui o rascunho ainda não salvo)
+function _partsAtuais(r) {
+    r = r || _cur(); if (!r) return [];
+    try { const o = _occ(r, _open.date); return ((o && o.r && o.r.participantes) || r.participantes || []).map(String); } catch (_) { return (r.participantes || []).map(String); }
+}
 function reuPopTopicResp(btn, tp) {
     const r = _cur(); if (!r) return;
     const t = _getAt(tp) || {};
-    _userPop(btn, { title: 'Responsáveis pelo tópico', selected: (t.resp || []).slice(), multi: true, first: r.participantes || [], onPick: id => {
+    if (!_isOrg(r)) { _toast('Só o organizador e co-organizadores definem responsáveis.', 'error'); return; }
+    _userPop(btn, { title: 'Responsáveis pelo tópico', selected: (t.resp || []).slice(), multi: true, lotes: true, first: _partsAtuais(r), only: true, onPick: id => {
         const cur = ((_getAt(tp) || {}).resp || []).map(String);
         const next = cur.includes(String(id)) ? cur.filter(x => x !== String(id)) : cur.concat(String(id));
         _write(tp + '/resp', next.length ? next : null);
@@ -2189,7 +2429,7 @@ function reuBlkKey(e, inp, tp, bid) {
         _focusBlock(bid, true);
         return;
     }
-    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'b') {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'm') {   // Ctrl+M: marcadores
         e.preventDefault();
         if (inp.value !== (it.texto || '')) reuItemSet(ip, 'texto', inp.value);
         setTimeout(() => { const el = document.querySelector(`#reuDrawer [data-fk="i-${bid}"]`); if (el) reuPopMarcadores(el, ip); }, 0);
@@ -2215,7 +2455,8 @@ function reuBlkKey(e, inp, tp, bid) {
         reuTopicAdd();
         return;
     }
-    if (e.key === 'Enter' && e.shiftKey) return; // sem atalho (texto: quebra de linha)
+    // Enter: quebra de linha no texto (mantém o marcador) · Shift/Ctrl+Enter: nova linha abaixo
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) { e.preventDefault(); _bulNovaLinha(inp); return; }
     if (e.key === 'Enter') {
         e.preventDefault();
         if (inp.value !== (it.texto || '')) reuItemSet(ip, 'texto', inp.value);
@@ -2226,9 +2467,7 @@ function reuBlkKey(e, inp, tp, bid) {
         _focusBlock(nid);
     } else if (e.key === 'Tab') {
         e.preventDefault();
-        if (inp.value !== (it.texto || '')) reuItemSet(ip, 'texto', inp.value);
-        reuIndent(tp, bid, e.shiftKey ? -1 : 1);
-        _focusBlock(bid, true);
+        _bulNivel(inp, e.shiftKey ? -1 : 1);   // marcadores no texto (mover na árvore: Shift + ← / →)
     } else if (e.key === 'Backspace' && !inp.value && !_descIds(itens, bid).length) {
         e.preventDefault();
         const flat = _flatTree(_tree(itens));
@@ -2237,12 +2476,46 @@ function reuBlkKey(e, inp, tp, bid) {
         _write(ip, null);
         if (prev) _focusBlock(prev, true);
     } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-        if (isText && inp.value.includes('\n')) return;
+        if (inp.value.includes('\n')) return;
         const flat = _flatTree(_tree(itens));
         const i = flat.findIndex(n => n.it._id === bid);
         const tgt = flat[i + (e.key === 'ArrowUp' ? -1 : 1)];
         if (tgt) { e.preventDefault(); if (inp.value !== (it.texto || '')) reuItemSet(ip, 'texto', inp.value); _focusBlock(tgt.it._id, true); }
     }
+}
+// --- Marcadores no texto: Tab / Shift+Tab mudam o nível da linha do cursor ---
+// Nível n (1..10): 2 espaços de recuo por nível; • no 1º, ◦ no 2º, ▪ do 3º em diante.
+const _BUL_MAX = 10;
+const _bulPre = n => n <= 0 ? '' : '  '.repeat(n - 1) + (n === 1 ? '• ' : n === 2 ? '◦ ' : '▪ ');
+const _BUL_RE = /^( *)[•◦▪] /;
+function _bulLinha(inp) {
+    const v = inp.value, pos = inp.selectionStart;
+    const ini = v.lastIndexOf('\n', pos - 1) + 1;
+    let fim = v.indexOf('\n', pos); if (fim < 0) fim = v.length;
+    const linha = v.slice(ini, fim), m = linha.match(_BUL_RE), pre = m ? m[0] : '';
+    return { v, pos, ini, fim, linha, pre, nivel: m ? Math.floor(m[1].length / 2) + 1 : 0 };
+}
+function _bulSet(inp, v, caret) {
+    inp.value = v; inp.setSelectionRange(caret, caret);
+    if (inp.classList.contains('reu-autogrow')) _autogrow(inp);
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+}
+function _bulNivel(inp, dir) {
+    if (inp.disabled) return;
+    const L = _bulLinha(inp);
+    const n = Math.max(0, Math.min(_BUL_MAX, L.nivel + dir));
+    const pre = _bulPre(n);
+    const novo = pre + L.linha.slice(L.pre.length);
+    _bulSet(inp, L.v.slice(0, L.ini) + novo + L.v.slice(L.fim), Math.max(L.ini + pre.length, L.pos + pre.length - L.pre.length));
+}
+// Shift+Enter: quebra a linha; se a linha tem marcador, a nova começa com o mesmo.
+// Linha só com marcador (vazia) → remove o marcador, como no Word.
+function _bulNovaLinha(inp) {
+    if (inp.disabled) return;
+    const L = _bulLinha(inp);
+    if (L.pre && !L.linha.slice(L.pre.length).trim()) return _bulSet(inp, L.v.slice(0, L.ini) + L.v.slice(L.ini + L.pre.length), L.ini);
+    const ins = '\n' + L.pre, fimSel = inp.selectionEnd;
+    _bulSet(inp, L.v.slice(0, L.pos) + ins + L.v.slice(fimSel), L.pos + ins.length);
 }
 // Move o bloco entre os irmãos (mesmo pai), levando os subitens junto
 function reuBlkMove(tp, bid, dir) {
@@ -2351,14 +2624,18 @@ function reuAddKey(e, inp, tp) {
     reuItemAdd(tp, v, null, (e.ctrlKey || e.metaKey) ? 'tarefa' : (last ? (last.it.tipo || 'tarefa') : 'texto'));
 }
 
-function _tabDetalhes(r, o, ed) {
+function _tabDetalhes(r, o, edGeral) {
+    const ed = _isOrg(r);
     const op = _occPath(r, _open.date);
     const pres = o.presenca || {};
     const people = (r.participantes || []).map(id => {
         const p = pres[id] || '';
         return `<div class="reu-prow">
-            ${_avatar(id)}<span class="reu-prow-name">${_esc(_userName(id))}${String(id) === String(r.criadoPor) ? ' <small class="reu-muted">· organizador</small>' : ''}</span>
+            ${_avatar(id)}<span class="reu-prow-name">${_esc(_userName(id))}${String(id) === String(r.criadoPor) ? ' <small class="reu-muted">· organizador</small>' : (_isCoOrg(r, id) ? ' <small class="reu-muted">· co-organizador</small>' : '')}</span>
             <div class="reu-pres">${Object.keys(PRESENCA).map(k => `<button class="${p === k ? 'on ' + PRESENCA[k].cls : ''}" title="${PRESENCA[k].label}" ${ed ? `onclick="reuSetPresenca('${_esc(id)}','${p === k ? '' : k}')"` : 'disabled'}>${PRESENCA[k].short}</button>`).join('')}</div>
+            ${_isDono(r) && String(id) === String(r.criadoPor) ? `<button class="reu-icon-btn" style="color:#2563eb" title="Transferir organizador (você vira co-organizador)" onclick="reuPopOrganizador(this)"><i class="fas fa-right-left"></i></button>` : ''}
+            ${!_isDono(r) && _me() && String(id) === _me().id && _isCoOrg(r, id) ? `<button class="reu-icon-btn" style="color:#dc2626" title="Deixar de ser co-organizador" onclick="reuToggleCoOrg('${_esc(id)}')"><i class="fas fa-user-xmark"></i></button>` : ''}
+            ${_isDono(r) && String(id) !== String(r.criadoPor) ? `<button class="reu-icon-btn ${_isCoOrg(r, id) ? '' : 'reu-hover'}" style="${_isCoOrg(r, id) ? 'color:#d97706' : ''}" title="${_isCoOrg(r, id) ? 'Remover co-organizador' : 'Tornar co-organizador (edita detalhes e vê toda a pauta)'}" onclick="reuToggleCoOrg('${_esc(id)}')"><i class="fas fa-user-shield"></i></button>` : ''}
             ${ed ? `<button class="reu-icon-btn reu-hover" title="Remover participante" onclick="reuToggleParticipant('${_esc(id)}')"><i class="fas fa-times"></i></button>` : ''}
         </div>`;
     }).join('') || '<div class="reu-side-empty">Nenhum participante.</div>';
@@ -2377,7 +2654,9 @@ function _tabDetalhes(r, o, ed) {
             <div class="reu-kv"><span>Horário</span><b>${_esc(r.horaInicio)}–${_esc(r.horaFim)} (${_duration(r)})</b></div>
             <div class="reu-kv"><span>Recorrência</span><b>${_esc(_recLabel(r))}</b></div>
             <div class="reu-kv"><span>Lembrete</span><b>${_esc(_lembLabel(r.lembreteMin))}</b></div>
-            <div class="reu-kv"><span>Organizador</span><b>${_esc(_userName(r.criadoPor))}</b></div>
+            <div class="reu-kv"><span>Organizador</span><b>${_esc(_userName(r.criadoPor))}${_isDono(r) ? ` <button class="reu-btn reu-btn--sm" style="margin-left:6px" title="Transferir a propriedade da reunião" onclick="reuPopOrganizador(this)"><i class="fas fa-right-left"></i> Transferir</button>` : ''}</b></div>
+            ${(r.participantes || []).some(id => _isCoOrg(r, id)) ? `<div class="reu-kv"><span>Co-organizadores</span><b>${(r.participantes || []).filter(id => _isCoOrg(r, id)).map(id => _esc(_userName(id))).join(', ')}</b></div>` : ''}
+            ${ed ? '' : '<div class="reu-muted" style="margin-top:8px"><i class="fas fa-lock"></i> Só o organizador e co-organizadores alteram os detalhes e a presença.</div>'}
             ${ed ? `<button class="reu-btn reu-btn--sm" style="margin:10px 0 0" onclick="reuOpenForm('${_esc(r.id)}')"><i class="fas fa-pen"></i> Editar data, horário e recorrência</button>` : ''}
         </div>
         <div class="reu-card">
@@ -2433,29 +2712,37 @@ function reuPopLembrete(btn) {
 }
 function reuPopMeet(btn) {
     const r = _cur(); if (!r) return;
+    if (!_isOrg(r)) { _toast('Só o organizador e co-organizadores definem o Meet.', 'error'); return; }
     _openPop(btn, `<div class="reu-pop-title">Link do Google Meet</div>
         <input class="reu-pop-search" id="reuPopMeetIn" data-autofocus placeholder="https://meet.google.com/xxx-xxxx-xxx" value="${_esc(r.meetUrl || '')}" onkeydown="if(event.key==='Enter')reuSaveMeetPop()">
         <div class="reu-pop-foot"><a href="https://meet.google.com/new" target="_blank" rel="noopener">Criar sala nova</a><button class="reu-btn reu-btn--pri reu-btn--xs" onclick="reuSaveMeetPop()">Salvar</button></div>`, 'reu-pop--form');
 }
 function reuSaveMeetPop() {
+    if (!_isOrg(_cur())) { _closePop(); return; }
     const v = (document.getElementById('reuPopMeetIn').value || '').trim();
     if (v && !MEET_RE.test(v)) _toast('Link não parece ser do Google Meet — salvo mesmo assim.', 'info');
     _closePop();
     reuSetField('meetUrl', v);
 }
-function reuPopResp(btn, path, cur) {
+function reuPopResp(btn, path) {
     const r = _cur(); if (!r) return;
-    _userPop(btn, { title: 'Responsável', selected: cur ? [cur] : [], first: r.participantes || [], allowNone: true, onPick: id => reuItemSet(path, 'responsavel', id || '') });
+    if (!_isOrg(r)) { _toast('Só o organizador e co-organizadores definem responsáveis.', 'error'); return; }
+    _userPop(btn, { title: 'Responsáveis', selected: _resps(_getAt(path)), multi: true, lotes: true, first: _partsAtuais(r), allowNone: true, only: true, onPick: id => {
+        let cur = _resps(_getAt(path));
+        if (!id) cur = [];
+        else cur = cur.includes(String(id)) ? cur.filter(x => x !== String(id)) : cur.concat(String(id));
+        _write(path, { responsaveis: cur.length ? cur : null, responsavel: cur[0] || '' }, true);
+    } });
 }
 function reuPopParticipants(btn) {
     const r = _cur(); if (!r) return;
-    _userPop(btn, { title: 'Participantes', selected: (r.participantes || []).slice(), multi: true, onPick: id => reuToggleParticipant(id) });
+    _userPop(btn, { title: 'Participantes', selected: _partsAtuais(r), multi: true, lotes: true, lotesAll: true, onPick: id => reuToggleParticipant(id) });
 }
 function reuPopActWho(btn) {
     const r = _cur(); if (!r) return;
     _openPop(btn, `<div class="reu-pop-list">${_menuHtml([{ label: 'Todos os responsáveis', icon: 'fa-users', on: !_actFilter.who, fn: "reuActFilter('who','')" },
         { label: 'Sem responsável', icon: 'fa-user-slash', on: _actFilter.who === '_none', fn: "reuActFilter('who','_none')" }, '-']
-        .concat((r.participantes || []).map(id => ({ label: _userName(id), icon: 'fa-user', on: String(_actFilter.who) === String(id), fn: `reuActFilter('who','${_esc(id)}')` }))))}</div>`);
+        .concat(_partsAtuais(r).map(id => ({ label: _userName(id), icon: 'fa-user', on: String(_actFilter.who) === String(id), fn: `reuActFilter('who','${_esc(id)}')` }))))}</div>`);
 }
 function reuActFilter(k, v) { _actFilter[k] = v; _closePop(); _renderDetail(); }
 function reuClosePop() { _closePop(); }
@@ -2469,16 +2756,94 @@ function reuSetStatus(k) {
     _write(_occPath(r, _open.date), patch, true);
 }
 function reuSetField(k, v) {
-    const r = _guard(); if (!r) return;
+    const r = (k === 'descricao' || k === 'meetUrl') ? _guardOrg() : _guard(); if (!r) return;
     _write('reunioes/' + r.id, { [k]: v, atualizadoEm: Date.now() }, true);
 }
+function _guardOrg() {
+    const r = _cur();
+    if (r && _isOrg(r)) return r;
+    _toast('Só o organizador pode alterar isto.', 'error'); return null;
+}
+// Confirmação no estilo do sistema (substitui o confirm() do navegador)
+function _confirmBox(o) {
+    return new Promise(res => {
+        const el = document.createElement('div');
+        el.className = 'reu-overlay reu-overlay--top open';
+        el.style.zIndex = '10300';   // acima de popovers e da reunião
+        const cor = o.perigo ? '#dc2626' : '#2563eb';
+        el.innerHTML = `<div class="reu-modal reu-modal--scope" style="max-width:440px">
+            <div class="reu-modal-head"><h3><i class="fas ${o.icone || 'fa-circle-question'}" style="color:${cor}"></i> ${_esc(o.titulo || 'Confirmar')}</h3></div>
+            <div class="reu-modal-body" style="display:flex;gap:14px;align-items:flex-start">
+                ${o.avatar ? `<span style="flex:none;transform:scale(1.5);margin:6px 8px 0 4px">${_avatar(o.avatar)}</span>` : ''}
+                <div style="font-size:14px;line-height:1.55;color:inherit">${o.html || ''}</div>
+            </div>
+            <div class="reu-modal-foot"><span style="flex:1"></span>
+                <button class="reu-btn" data-act="cancel">Cancelar</button>
+                <button class="reu-btn reu-btn--pri" data-act="ok" style="background:${cor};border-color:${cor}">${_esc(o.ok || 'Confirmar')}</button></div></div>`;
+        const close = v => { el.remove(); document.removeEventListener('keydown', onKey, true); res(v); };
+        const onKey = e => {
+            if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(false); }
+            else if (e.key === 'Enter') { e.preventDefault(); close(true); }
+        };
+        el.addEventListener('click', e => {
+            if (e.target === el) return close(false);
+            const a = e.target.closest('[data-act]');
+            if (a) close(a.dataset.act === 'ok');
+        });
+        document.addEventListener('keydown', onKey, true);
+        document.body.appendChild(el);
+        setTimeout(() => { const b = el.querySelector('[data-act=ok]'); if (b) b.focus(); }, 0);
+    });
+}
+async function reuToggleCoOrg(uid) {
+    // Lê da visão desta ocorrência: numa série, um ajuste "só este evento" guarda cópia de coOrg
+    // na exceção (ov), que esconderia a mudança feita na série.
+    const base = _cur(); const me = _me();
+    const r = base && _open ? _occ(base, _open.date).r : base;
+    uid = String(uid);
+    const proprio = !!me && uid === me.id && _isCoOrg(r, uid);   // co-organizador pode sair do cargo
+    if (!r || (!_isDono(r) && !proprio)) { _toast('Só o organizador define co-organizadores.', 'error'); return; }
+    if (proprio && !_isDono(r) && !(await _confirmBox({ titulo: 'Deixar de ser co-organizador(a)?', icone: 'fa-user-xmark', perigo: true, ok: 'Sair do cargo',
+        html: 'Você continua como participante, mas perde a edição dos detalhes e a visão da pauta inteira.' }))) return;
+    const on = !_isCoOrg(r, uid);
+    const co = Object.assign({}, r.coOrg || {});
+    if (on) co[uid] = true; else delete co[uid];
+    // grava o campo inteiro: _write descarta a cópia da exceção e a mudança aparece na hora
+    _write('reunioes/' + r.id + '/coOrg', Object.keys(co).length ? co : null);
+    _toast(on ? `${_userName(uid)} agora é co-organizador(a).` : `${_userName(uid)} deixou de ser co-organizador(a).`, 'success');
+}
+function reuPopOrganizador(btn) {
+    const r = _cur(); if (!r || !_isDono(r)) return;
+    const cands = (r.participantes || []).map(String).filter(id => id !== String(r.criadoPor));
+    if (!cands.length) { _toast('Adicione participantes para transferir a propriedade.', 'info'); return; }
+    _openPop(btn, _menuHtml(cands.map(id => ({ label: _userName(id), icon: 'fa-user', fn: `reuTransferOrg('${_esc(id)}')` }))));
+}
+async function reuTransferOrg(uid) {
+    let r = _cur(); if (!r || !_isDono(r)) return;
+    uid = String(uid);
+    if (typeof reuClosePop === 'function') reuClosePop();
+    if (!(await _confirmBox({ titulo: 'Transferir organizador', icone: 'fa-right-left', ok: 'Transferir', avatar: uid,
+        html: `<b>${_esc(_userName(uid))}</b> passa a ser o(a) organizador(a) de <b>${_esc(r.titulo || 'esta reunião')}</b>.<br><span style="opacity:.75">Você vira co-organizador(a) e continua editando os detalhes.</span>` }))) return;
+    r = _cur(); if (!r || !_isDono(r)) return;
+    const parts = (r.participantes || []).map(String);
+    if (!parts.includes(String(r.criadoPor))) parts.push(String(r.criadoPor));
+    if (typeof reuClosePop === 'function') reuClosePop();
+    const v = _open ? _occ(r, _open.date).r : r;
+    const co = Object.assign({}, v.coOrg || {}); delete co[uid]; co[String(r.criadoPor)] = true;
+    const ps = (v.participantes || parts).map(String); if (!ps.includes(String(r.criadoPor))) ps.push(String(r.criadoPor));
+    // campo a campo: descarta cópias da exceção da ocorrência
+    _write('reunioes/' + r.id + '/coOrg', co);
+    _write('reunioes/' + r.id + '/participantes', ps);
+    _write('reunioes/' + r.id + '/criadoPor', uid);
+    _toast(`Organizador agora é ${_userName(uid)}.`, 'success');
+}
 function reuSetPresenca(uid, v) {
-    const r = _guard(); if (!r) return;
+    const r = _guardOrg(); if (!r) return;
     _write(_occPath(r, _open.date) + '/presenca/' + uid, v || null);
 }
 function reuToggleParticipant(uid) {
     const r = _guard(); if (!r) return;
-    const p = (r.participantes || []).map(String);
+    const p = _partsAtuais(r);
     const next = p.includes(String(uid)) ? p.filter(x => x !== String(uid)) : p.concat(String(uid));
     _write('reunioes/' + r.id + '/participantes', next);
 }
@@ -2586,7 +2951,7 @@ function reuCarryPending() {
     if (!pend.length) { _toast('Nenhuma pendência na reunião de ' + _fmtDate(prev) + '.', 'info'); return; }
     const tid = _uid('t');
     const itens = {};
-    pend.forEach((x, i) => { itens[_uid('i') + i] = { texto: x.it.texto, checked: false, responsavel: x.it.responsavel || '', prazo: x.it.prazo || null, ordem: Date.now() + i }; });
+    pend.forEach((x, i) => { itens[_uid('i') + i] = { texto: x.it.texto, checked: false, responsavel: x.it.responsavel || '', responsaveis: x.it.responsaveis || null, prazo: x.it.prazo || null, ordem: Date.now() + i }; });
     _write(_occPath(r, _open.date) + '/topicos/' + tid, { titulo: 'Pendências de ' + _fmtDate(prev), texto: '', ordem: 0, itens });
     _tab = 'pauta'; _renderDetail();
     _toast(pend.length + ' pendência(s) trazida(s).', 'success');
@@ -2608,7 +2973,10 @@ function reuOpenLinkPicker(target) {
         <div class="reu-modal-head"><h3><i class="fas fa-link"></i> Vincular card</h3><span style="flex:1"></span><button class="reu-icon-btn" title="Fechar" onclick="reuCloseLinkPicker()"><i class="fas fa-times"></i></button></div>
         <div class="reu-modal-body">
             <div class="reu-area-tabs" id="reuLinkAreas"></div>
-            <input class="reu-search" id="reuLinkSearch" placeholder="Buscar por título ou número..." oninput="reuRenderLinkList()">
+            <div class="reu-link-searchrow">
+                <input class="reu-search" id="reuLinkSearch" placeholder="Buscar por título ou número..." oninput="reuRenderLinkList()">
+                <button type="button" class="reu-link-new" id="reuLinkNew" onclick="reuLinkNovo()"><i class="fas fa-plus"></i></button>
+            </div>
             <div class="reu-link-list" id="reuLinkList"></div>
         </div></div>`;
     el.classList.add('open');
@@ -2618,10 +2986,34 @@ function reuOpenLinkPicker(target) {
 }
 function reuCloseLinkPicker() { const el = document.getElementById('reuLinkModal'); if (el) el.classList.remove('open'); }
 function _renderLinkAreas() {
+    const nb = document.getElementById('reuLinkNew');
+    if (nb) { const a = _area(_linkArea); nb.title = (a.key === 'rnc' || a.key === 'doc' ? 'Novo(a) ' : 'Nova ') + a.label; nb.style.setProperty('--c', a.color); }
     document.getElementById('reuLinkAreas').innerHTML = AREAS.map(a =>
         `<button class="${a.key === _linkArea ? 'on' : ''}" style="--c:${a.color}" onclick="reuSetLinkArea('${a.key}')"><i class="fas ${a.icon}"></i> ${a.label}</button>`).join('');
 }
 function reuSetLinkArea(k) { _linkArea = k; _renderLinkAreas(); reuRenderLinkList(); }
+// "+" do Vincular card: abre o formulário de criação da área selecionada
+function reuLinkNovo() {
+    const k = _linkArea, nome = (typeof currentuser !== 'undefined' && currentuser) ? (currentuser.name || currentuser.user || '') : '';
+    const form = (tipo, drawer, resp, zera) => {
+        if (typeof resetModal !== 'function' || typeof openFormDrawer !== 'function') return false;
+        try { zera(); } catch (_) {}
+        if (typeof originalItem !== 'undefined') try { originalItem = null; } catch (_) {}
+        resetModal(tipo);
+        if (nome && typeof msSetValue === 'function') msSetValue(resp, [nome]);
+        openFormDrawer(drawer);
+        return true;
+    };
+    let ok = false;
+    if (k === 'oc') ok = typeof window.ocOpenNew === 'function' && (window.ocOpenNew(), true);
+    else if (k === 'rnc') ok = typeof window.rncOpenNew === 'function' && (window.rncOpenNew(), true);
+    else if (k === 'ativ') ok = form('ativ', 'modalAtividades', 'ativ-resp', () => { editingAtivId = null; });
+    else if (k === 'audit') ok = form('audit', 'modalAuditoria', 'audit-resp', () => { editingAuditId = null; });
+    else if (k === 'doc') ok = form('doc', 'modalDocumentos', 'doc-resp', () => { editingDocId = null; });
+    if (!ok) { _toast('Não foi possível abrir o formulário de ' + _area(k).label + '.', 'error'); return; }
+    reuCloseLinkPicker();
+    _toast('Depois de salvar, volte em Vincular card para vinculá-lo.', 'info');
+}
 function _cardTitle(area, c) {
     if (area === 'oc') {
         let tipo = '';
@@ -2824,16 +3216,16 @@ function _ataHtml(r, date) {
     const geradoEm = _fmtDate(_ds(now)) + ' ' + _pad(now.getHours()) + ':' + _pad(now.getMinutes());
     const ataNo = 'ATA-' + date.replace(/-/g, '') + '-' + String(r.id).slice(-4).toUpperCase();
     const actions = [];
-    const tag = ids => (ids || []).map(id => _marcadores[id]).filter(Boolean).map(m => `<span class="tg" style="--t:${_esc(m.cor)}">${_esc(m.nome)}</span>`).join('');
+    const tag = ids => (ids || []).map(id => _mkDef(id, r)).filter(Boolean).map(m => `<span class="tg" style="--t:${_esc(m.cor)}">${_esc(m.nome)}</span>`).join('');
     const anxList = obj => { const a = _anexosArr(obj); return a.length ? `<div class="anx">${a.map(x => `<span>📎 ${x.url ? `<a href="${_esc(x.url)}">${_esc(x.nome)}</a>` : _esc(x.nome)}</span>`).join('')}</div>` : ''; };
     const renderNodes = (nodes) => nodes.length ? `<ul class="cl">${nodes.map(n => {
         const it = n.it, task = _isTask(it);
         const line = task
-            ? `<span class="box">${it.checked ? '✓' : ''}</span><span class="it">${_esc(it.texto)}</span>${tag(it.marcadores)}${it.prazo ? `<span class="due ${_isOverdue(it) ? 'late' : ''}">${_fmtDate(it.prazo).slice(0, 5)}</span>` : ''}${it.responsavel ? `<span class="who">${_esc(_userName(it.responsavel))}</span>` : ''}`
+            ? `<span class="box">${it.checked ? '✓' : ''}</span><span class="it">${_esc(it.texto)}</span>${tag(it.marcadores)}${it.prazo ? `<span class="due ${_isOverdue(it) ? 'late' : ''}">${_fmtDate(it.prazo).slice(0, 5)}</span>` : ''}${_resps(it).length ? `<span class="who">${_esc(_resps(it).map(_userName).join(', '))}</span>` : ''}`
             : `<span class="para">${_esc(it.texto).replace(/\n/g, '<br>')}</span>${tag(it.marcadores)}`;
         return `<li class="${task ? (it.checked ? 'ok' : '') : 'txtb'}"><div class="ln">${line}</div>${anxList(it)}${renderNodes(n.children)}</li>`;
     }).join('')}</ul>` : '';
-    _allItems(o).forEach(x => actions.push({ t: x.it.texto, who: x.it.responsavel ? _userName(x.it.responsavel) : '—', ok: x.it.checked, prazo: x.it.prazo, late: _isOverdue(x.it), n: (x.ti + 1) + '.' + (actions.filter(a => a.ti === x.ti).length + 1), ti: x.ti }));
+    _allItems(o).forEach(x => actions.push({ t: x.it.texto, who: _resps(x.it).length ? _resps(x.it).map(_userName).join(', ') : '—', ok: x.it.checked, prazo: x.it.prazo, late: _isOverdue(x.it), n: (x.ti + 1) + '.' + (actions.filter(a => a.ti === x.ti).length + 1), ti: x.ti }));
     const topicsHtml = topics.map((t, i) => {
         const tree = _tree(t.itens);
         const tasks = _flatTree(tree).filter(n => _isTask(n.it));
@@ -3023,12 +3415,12 @@ Object.assign(window, {
     reuSetView, reuNav, reuGoDay, reuDayClick, reuSlotClick,
     reuOpenForm, reuCloseForm, reuSaveForm, reuDelete, reuF, reuFRec, reuFToggleWd, reuFormToggleUser, reuFormRemoveLink, reuRerenderForm, reuMeetHint,
     reuOpen, reuCloseDetail, reuSetStatus, reuTopicAdd, reuTopicSet, reuTopicDelete, reuItemAdd, reuItemSet, reuItemDelete, reuRemoveLink,
-    reuTab, reuPopStatus, reuPopMenu, reuPopLembrete, reuPopMeet, reuSaveMeetPop, reuPopResp, reuPopParticipants, reuPopActWho, reuActFilter,
-    reuClosePop, reuAutogrow, reuAddKey, reuSetField, reuSetPresenca, reuToggleParticipant, reuDuplicate, reuCarryPending,
-    reuPopSearch, reuPopPick, reuFormPopUsers, reuMiniNav, reuMiniPick,
-    reuPopMarcadores, reuMkToggle, reuMkCreate, reuMkColor, reuMkDelete, reuPopTopic, reuPopTopicResp, reuPopBlock, reuPopActMk,
-    reuToggleCollapse, reuBlkKey, reuIndent, reuBlkDragStart, reuDetailSave, reuDetailDiscard, reuTopicMove, reuShowShortcuts, reuBlkMove, reuToggleBell, reuCloseBell, reuClearAvisos, reuBellOpen, reuRemoveNodeLink, reuOpenAttach, reuCloseAttach, reuAnxFiles, reuAnxAddLink, reuOpenAnexo, reuDeleteAnexo,
-    reuOpenLinkPicker, reuCloseLinkPicker, reuSetLinkArea, reuRenderLinkList, reuPickLink, reuOpenLinked, reuGetVinculadas,
+    reuTab, reuPopStatus, reuPopMenu, reuPopLembrete, reuPopMeet, reuSaveMeetPop, reuPopResp, reuPopPickLote, reuPopParticipants, reuPopActWho, reuActFilter,
+    reuClosePop, reuAutogrow, reuAddKey, reuSetField, reuSetPresenca, reuPopOrganizador, reuTransferOrg, reuToggleCoOrg, reuToggleParticipant, reuDuplicate, reuCarryPending,
+    reuPopSearch, reuPopPick, reuFormPopUsers, reuFormPartsAll, reuFormPartsClear, reuMiniNav, reuMiniPick,
+    reuPopMarcadores, reuMkToggle, reuMkCreate, reuMkColor, reuMkSetColor, reuMkRename, reuMkDelete, reuPopTopic, reuPopTopicResp, reuPopBlock, reuPopActMk,
+    reuToggleCollapse, reuBlkKey, reuIndent, reuBlkDragStart, reuDetailSave, reuDetailDiscard, reuTopicMove, reuShowShortcuts, reuBlkMove, reuToggleBell, reuCloseBell, reuClearAvisos, reuBellOpen, reuRemoveNodeLink, reuOpenAttach, reuCloseAttach, reuAnxFiles, reuAnxAddLink, reuOpenAnexo, reuDeleteAnexo, reuRenameAnexo,
+    reuOpenLinkPicker, reuCloseLinkPicker, reuSetLinkArea, reuLinkNovo, reuRenderLinkList, reuPickLink, reuOpenLinked, reuGetVinculadas,
     reuShareChat, reuChatChipExtra, reuListForChat, reuCopyLink, reuPrintAta
 });
 })();

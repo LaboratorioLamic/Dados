@@ -144,6 +144,12 @@
         _renderTags(prefix);
         var hiddenEl = document.getElementById(_hiddenId(prefix));
         if (hiddenEl) hiddenEl.value = '';
+        // Formulário novo de Atividade/Rotina/Documento/RNC: já vem com o setor do usuário
+        // logado (unidade vinculada no Dados LAMIC). Na edição, smsSetValue sobrescreve depois.
+        if (['ativ', 'audit', 'doc', 'rnc'].indexOf(prefix) > -1 && typeof window.meuSetorPadrao === 'function') {
+            var meu = window.meuSetorPadrao();
+            if (meu) window.smsSetValue(prefix, [meu]);
+        }
     };
 
     document.addEventListener('click', function (e) {

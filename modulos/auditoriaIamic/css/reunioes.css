@@ -128,8 +128,9 @@
 .reu-chip--add { --c: #64748b; border-style: dashed; background: #fff; font-weight: 600; color: #475569; }
 
 /* Picker de vínculos */
-.reu-area-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
-.reu-area-tabs button { display: inline-flex; gap: 6px; align-items: center; border: 1px solid #e2e8f0; background: #fff; border-radius: 99px; padding: 6px 12px; font: 600 12.5px "Segoe UI", system-ui, sans-serif; color: #475569; cursor: pointer; }
+.reu-area-tabs { display: flex; flex-wrap: nowrap; gap: 5px; overflow-x: auto; scrollbar-width: none; }
+.reu-area-tabs::-webkit-scrollbar { display: none; }
+.reu-area-tabs button { display: inline-flex; gap: 6px; align-items: center; border: 1px solid #e2e8f0; background: #fff; border-radius: 99px; padding: 6px 10px; white-space: nowrap; flex: none; font: 600 12.5px "Segoe UI", system-ui, sans-serif; color: #475569; cursor: pointer; }
 .reu-area-tabs button i { color: var(--c); }
 .reu-area-tabs button.on { background: var(--c); border-color: var(--c); color: #fff; }
 .reu-area-tabs button.on i { color: #fff; }
@@ -599,3 +600,48 @@ body.dark-mode .reu-notify-txt b { color: #f1f5f9; }
 body.dark-mode .reu-kbd-btn { background: #1e293b; border-color: #334155; color: #cbd5e1; }
 body.dark-mode .reu-kbd kbd { background: #0f172a; border-color: #334155; color: #e2e8f0; }
 body.dark-mode .reu-kbd-head { color: #f1f5f9; }
+
+/* Seleção visual do dia clicado */
+.reu-md.is-pick { background: #eff6ff; box-shadow: inset 0 0 0 2px var(--accent, #2563eb); }
+.reu-md.is-pick:hover { background: #e0ecff; }
+.reu-tg-hd.is-pick { background: #eff6ff; border-radius: 10px 10px 0 0; box-shadow: inset 0 -3px 0 var(--accent, #2563eb); }
+.reu-tg-col.is-pick { background: rgba(37, 99, 235, .06); }
+.reu-mini-d.is-pick { box-shadow: inset 0 0 0 2px var(--accent, #2563eb); font-weight: 700; }
+.reu-md, .reu-tg-col, .reu-tg-hd { transition: background .12s, box-shadow .12s; }
+body.dark-mode .reu-md.is-pick, body.dark-mode .reu-tg-hd.is-pick { background: #1e3a8a33; }
+body.dark-mode .reu-tg-col.is-pick { background: rgba(96, 165, 250, .08); }
+
+/* Vincular card: busca + botão "+" para criar novo */
+.reu-link-searchrow { display: flex; gap: 8px; align-items: center; }
+.reu-link-searchrow .reu-search { flex: 1; min-width: 0; margin: 0; }
+.reu-link-new { --c: #2563eb; flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer; color: #fff; background: var(--c); font-size: 16px;
+    display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(15, 23, 42, .18); transition: transform .15s, filter .15s; }
+.reu-link-new:hover { transform: scale(1.07); filter: brightness(.92); }
+/* Formulários de criação (Vincular card → "+") abrem por cima da agenda/reunião */
+body:has(#reuDrawer.open) .form-drawer-backdrop { z-index: 10080 !important; }
+body:has(#reuDrawer.open) .form-drawer { z-index: 10081 !important; }
+/* Seções Unidades / Grupos / Pessoas no seletor de responsáveis */
+.reu-pop-sec { padding: 8px 10px 4px; font: 700 10.5px "Segoe UI", system-ui, sans-serif; letter-spacing: .05em; text-transform: uppercase; color: #94a3b8; }
+
+.reu-chip-ed { font-size: 10px; }
+.reu-chip-ed:hover { color: #2563eb !important; }
+
+/* Paleta de cores do marcador */
+.reu-mk-pal { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; padding: 8px 10px 10px 40px; animation: reuMkPal .12s ease-out; }
+@keyframes reuMkPal { from { opacity: 0; transform: translateY(-3px); } }
+.reu-mk-pal button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #e2e8f0; cursor: pointer; padding: 0; transition: transform .12s; }
+.reu-mk-pal button:hover { transform: scale(1.15); }
+.reu-mk-pal button.on { box-shadow: 0 0 0 2px #0f172a; }
+.reu-mk-pal-custom { position: relative; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; color: #475569; background: conic-gradient(#dc2626, #ca8a04, #16a34a, #0891b2, #2563eb, #7c3aed, #db2777, #dc2626); cursor: pointer; }
+.reu-mk-pal-custom i { background: #fff; border-radius: 50%; width: 14px; height: 14px; display: grid; place-items: center; font-size: 8px; }
+.reu-mk-pal-custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.reu-mk-ren { margin-left: auto; }
+.reu-mk-ren + .reu-mk-del { margin-left: 8px !important; }
+.reu-mk-ren:hover { color: #2563eb !important; }
+
+/* Participantes do formulário: chips resumidos */
+.reu-pchip--sm { padding: 3px 6px 3px 3px !important; font-size: 12.5px !important; gap: 5px !important; }
+.reu-pchip--sm .reu-av { width: 22px !important; height: 22px !important; font-size: 9.5px !important; }
+.reu-pchip-more { font-weight: 700; color: #2563eb !important; background: #eff6ff !important; border-color: #bfdbfe !important; }
+.reu-pchip-clear { color: #94a3b8 !important; padding-left: 9px !important; padding-right: 9px !important; }
+.reu-pchip-clear:hover { color: #dc2626 !important; border-color: #fecaca !important; }

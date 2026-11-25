@@ -52,11 +52,13 @@
 .cf-badge{position:absolute;top:-3px;right:-3px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#ef4444;color:#fff;
   font:700 12px/22px "DM Sans",system-ui,sans-serif;text-align:center;border:2px solid #fff;box-sizing:border-box}
 .cf-badge[hidden]{display:none}
-.cf-win{position:fixed;right:22px;bottom:92px;z-index:191;width:380px;height:min(580px,calc(100dvh - 120px));border-radius:16px;overflow:hidden;
+.cf-win{position:fixed;right:22px;bottom:92px;z-index:191;width:min(440px,calc(100vw - 44px));height:min(720px,calc(100dvh - 116px));border-radius:16px;overflow:hidden;
   background:#fff;box-shadow:0 24px 60px rgba(22,32,54,.32),0 4px 14px rgba(22,32,54,.16);border:1px solid rgba(22,32,54,.08);
   transform-origin:bottom right;transition:opacity .2s,transform .2s,width .25s,height .25s}
 .cf-win.cf-oculta{opacity:0;transform:translateY(14px) scale(.96);pointer-events:none;visibility:hidden;transition:opacity .2s,transform .2s,visibility 0s .2s}
-.cf-win.cf-grande{width:min(760px,calc(100vw - 44px));height:calc(100dvh - 120px)}
+.cf-win.cf-grande{width:min(820px,calc(100vw - 44px));height:calc(100dvh - 116px)}
+/* reunião/card aberto dentro do chat: janela quase tela cheia para dar para interagir */
+.cf-win.cf-foco{width:min(1180px,calc(100vw - 44px));height:calc(100dvh - 116px)}
 .cf-win iframe{width:100%;height:100%;border:0;display:block}
 .cf-cobre{position:absolute;inset:0;background:#162036;color:#fff;display:grid;place-items:center;text-align:center;font-family:"DM Sans",system-ui,sans-serif;padding:24px}
 .cf-cobre[hidden]{display:none}
@@ -73,7 +75,7 @@
 #chat-flutuante.cf-sistema:not(.cf-mostra) .cf-fab,#chat-flutuante.cf-sistema:not(.cf-mostra) .cf-win{display:none}
 @media (max-width:640px){
   .cf-fab{right:16px;bottom:84px;width:54px;height:54px;font-size:22px}
-  .cf-win,.cf-win.cf-grande{right:0;bottom:0;width:100vw;height:100dvh;border-radius:0;border:0}
+  .cf-win,.cf-win.cf-grande,.cf-win.cf-foco{right:0;bottom:0;width:100vw;height:100dvh;border-radius:0;border:0}
 }`;
     document.head.appendChild(st);
   }
@@ -260,6 +262,7 @@
     else if (d.acao === 'erro') { if (/acesso|inativ|desativ|cadastro/i.test(d.msg || '')) semAcesso(); else falha(d.msg); }
     else if (d.acao === 'fechar') minimizar();
     else if (d.acao === 'expandir') expandir();
+    else if (d.acao === 'foco') $('.cf-win', raiz).classList.toggle('cf-foco', !!d.on);
     else if (d.acao === 'notif') alternarNotif();
     else if (d.acao === 'thread') gravar({ t: d.id || '' });
     else if (d.acao === 'abrirCard') abrirCard(d.area, d.id);

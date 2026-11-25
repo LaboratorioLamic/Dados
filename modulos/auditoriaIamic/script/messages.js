@@ -161,8 +161,8 @@ function _visibleThreads() {
 // ---------------------------------------------------------------------------
 function _muteLevel(thread) {
     const me = _me();
-    if (!me || !thread || !thread.mutedBy) return 'todas';
-    return thread.mutedBy[me.id] || 'todas';
+    if (!me || !thread) return 'todas';
+    return (thread.mutedBy && thread.mutedBy[me.id]) || thread.notifPadrao || 'todas';
 }
 async function msgSetMuteLevel(threadId, level) {
     const me = _me();
@@ -438,9 +438,147 @@ function _threadTitle(thread) {
     return `${names[0]}, ${names[1]} +${names.length - 2}`;
 }
 function _isOwner(t) { const me = _me(); return me && t && t.createdBy && String(t.createdBy.id) === me.id; }
+// Administrador da conversa (definido pelo dono pela coroa): gerencia participantes e escrita
+function _isThreadAdmin(t, id) { return !!(t && t.admins && t.admins[String(id)]); }
+function _souAdminConversa(t) { const me = _me(); return !!me && (_isOwner(t) || _isThreadAdmin(t, me.id)); }
+// Escrita restrita: com t.escritaRestrita ligado, só dono, administradores e t.autorizados[id] escrevem
+function _isAdminUser() { try { return typeof userIsAdmin === 'function' && !!userIsAdmin(); } catch (_) { return false; } }
+function _canManageWrite(t) { return !!t && _souAdminConversa(t); }
+function _isAuthorized(t, id) {
+    if (!t) return false;
+    if (t.createdBy && String(t.createdBy.id) === String(id)) return true;
+    if (_isThreadAdmin(t, id)) return true;   // administradores da conversa sempre escrevem
+    return !!(t.autorizados && t.autorizados[String(id)]);
+}
+function _canWrite(t) {
+    const me = _me();
+    if (!t || !me) return false;
+    if (!t.escritaRestrita) return true;
+    return _isAuthorized(t, me.id);
+}
+function _applyWritePerm(t) {
+    const comp = document.getElementById('msgThreadComposer');
+    const input = document.getElementById('msgThreadInput');
+    if (!comp || !input) return;
+    const ok = _canWrite(t);
+    comp.classList.toggle('msg-composer--bloq', !ok);
+    input.disabled = !ok;
+    input.placeholder = ok ? 'Escreva uma resposta...' : 'Somente o proprietário pode escrever aqui.';
+    let aviso = document.getElementById('msgWriteNotice');
+    if (!ok) {
+        if (!aviso) {
+            aviso = document.createElement('div');
+            aviso.id = 'msgWriteNotice'; aviso.className = 'msg-write-notice';
+            aviso.innerHTML = '<i class="fas fa-lock"></i><span>Somente o proprietário (e quem ele autorizou) pode escrever nesta conversa.</span>';
+            comp.prepend(aviso);
+        }
+    } else if (aviso) aviso.remove();
+}
+async function msgToggleWriteRestrict(on) {
+    const t = _threads[_activeThreadId];
+    const me = _me();
+    if (!t || !me || !_canManageWrite(t)) return;
+    const threadId = _activeThreadId;
+    try {
+        await _updateThread(threadId, { escritaRestrita: !!on });
+        await _postSystem(threadId, on
+            ? `${me.name} restringiu a conversa: só o proprietário pode escrever.`
+            : `${me.name} liberou a conversa: todos os participantes podem escrever.`);
+    } catch (e) { _toast('Erro ao salvar permissão: ' + (e.message || e), 'error'); }
+    _renderWriteBox(); _renderMembers();
+}
+async function msgToggleAuthorized(userId) {
+    const t = _threads[_activeThreadId];
+    const me = _me();
+    if (!t || !me || !_canManageWrite(t)) return;
+    const id = String(userId);
+    if (t.createdBy && String(t.createdBy.id) === id) return;   // dono sempre escreve
+    const novo = !(t.autorizados && t.autorizados[id]);
+    const threadId = _activeThreadId;
+    try {
+        await _updateThread(threadId, { ['autorizados/' + id]: novo ? true : null });
+        await _postSystem(threadId, novo ? `${me.name} autorizou ${_userName(id)} a escrever.` : `${me.name} retirou a permissão de escrita de ${_userName(id)}.`);
+    } catch (e) { _toast('Erro ao salvar permissão: ' + (e.message || e), 'error'); }
+    _renderMembers();
+}
+function _renderWriteBox() {
+    const t = _threads[_activeThreadId];
+    const box = document.getElementById('msgWriteBox');
+    if (!t || !box) return;
+    const pode = _canManageWrite(t);
+    const on = !!t.escritaRestrita;
+    box.innerHTML = `
+        <label class="msg-write-row ${pode ? '' : 'is-off'}" title="${pode ? '' : 'Apenas o proprietário pode alterar.'}">
+            <span class="msg-write-txt"><b><i class="fas fa-lock"></i> Somente proprietário digita</b>
+                <small>${on ? 'Só o proprietário (e quem tiver o lápis marcado em Participantes) envia mensagens.' : 'Todos os participantes podem enviar mensagens.'}</small></span>
+            <input type="checkbox" class="msg-switch" ${on ? 'checked' : ''} ${pode ? '' : 'disabled'} onchange="msgToggleWriteRestrict(this.checked)">
+        </label>`;
+}
+
+// Configurações da conversa (só proprietário): notificação padrão + quem digita
+const _NOTIF_OPTS = [
+    ['todas', 'fa-bell', 'Toda mensagem', 'Avisar sobre toda mensagem'],
+    ['mencoes', 'fa-at', 'Só marcações', 'Avisar só quem for mencionado(a)'],
+    ['mudo', 'fa-bell-slash', 'Sem notificação', 'Não avisar nesta conversa'],
+];
+function _renderConfig() {
+    const t = _threads[_activeThreadId];
+    const box = document.getElementById('msgCfgNotif');
+    if (!t || !box) return;
+    const atual = t.notifPadrao || 'todas';
+    box.innerHTML = _NOTIF_OPTS.map(([v, ic, tit, sub]) => `
+        <button type="button" class="msg-mute-opt ${v === atual ? 'active' : ''}" onclick="msgSetNotifPadrao('${v}')">
+            <span class="msg-mute-opt-ic"><i class="fas ${ic}"></i></span>
+            <span class="msg-mute-opt-txt"><span class="msg-mute-opt-title">${tit}</span><span class="msg-mute-opt-sub">${sub}</span></span>
+            <i class="fas fa-check msg-mute-opt-check"></i>
+        </button>`).join('') +
+        '<small class="msg-cfg-hint">Padrão da conversa. Cada participante ainda pode ajustar o próprio sino na lista.</small>';
+    const mb = document.getElementById('msgCfgMarc');
+    if (mb) {
+        const m = t.marcacoes || {};
+        mb.innerHTML = _MARC_OPTS.map(([k, ic, tit, sub]) => `
+            <label class="msg-write-row">
+                <span class="msg-write-txt"><b><i class="fas ${ic}"></i> ${tit}</b><small>${sub}</small></span>
+                <input type="checkbox" class="msg-switch" ${m[k] !== false ? 'checked' : ''} onchange="msgSetMarcacao('${k}', this.checked)">
+            </label>`).join('') + '<small class="msg-cfg-hint">Vale para membros comuns. Dono e administradores da conversa podem marcar sempre.</small>';
+    }
+    _renderWriteBox();
+}
+async function msgSetMarcacao(k, on) {
+    const t = _threads[_activeThreadId], me = _me();
+    if (!t || !me || !_isOwner(t)) return;
+    const threadId = _activeThreadId;
+    const nome = (_MARC_OPTS.find(o => o[0] === k) || [])[2] || k;
+    try {
+        await _updateThread(threadId, { ['marcacoes/' + k]: on ? null : false });
+        await _postSystem(threadId, `${me.name} ${on ? 'liberou' : 'bloqueou'} marcações de ${nome} para os membros.`);
+    } catch (e) { _toast('Erro ao salvar: ' + (e.message || e), 'error'); }
+    _renderConfig();
+}
+function msgOpenConfig() {
+    const t = _threads[_activeThreadId];
+    if (!t || !_isOwner(t)) return;
+    document.getElementById('msgConfigModal').style.display = 'flex';
+    _renderConfig();
+}
+function msgCloseConfig() { const m = document.getElementById('msgConfigModal'); if (m) m.style.display = 'none'; }
+async function msgSetNotifPadrao(v) {
+    const t = _threads[_activeThreadId], me = _me();
+    if (!t || !me || !_isOwner(t) || (t.notifPadrao || 'todas') === v) return;
+    const threadId = _activeThreadId;
+    const nome = (_NOTIF_OPTS.find(o => o[0] === v) || [])[2] || v;
+    try {
+        await _updateThread(threadId, { notifPadrao: v });
+        await _postSystem(threadId, `${me.name} definiu as notificações da conversa: ${nome}.`);
+    } catch (e) { _toast('Erro ao salvar notificações: ' + (e.message || e), 'error'); }
+    _renderConfig(); _renderThreadList();
+}
 
 // Posta uma mensagem de sistema na thread (entrou/saiu/removido/renomeou)
+// Só entrada/saída de membros vira mensagem de sistema no chat; o resto (config, admins, título...) não aparece.
+const _SYS_MEMBRO = /(adicionou .+|saiu da conversa|foi removid[oa]|entrou na conversa)/;
 async function _postSystem(threadId, texto) {
+    if (!_SYS_MEMBRO.test(String(texto || ''))) return;
     const now = Date.now();
     const msgId = _uid();
     const patch = {};
@@ -518,10 +656,14 @@ function _renderThread(threadId) {
     // Botões da topbar: Membros | Sair | Apagar (dono)
     const acts = document.getElementById('msgThreadActions');
     acts.innerHTML = `
-        <button class="msg-icon-btn" title="Título" onclick="msgEditTitle()" ${owner ? '' : 'style="display:none"'}><i class="fas fa-pen"></i></button>
+        ${owner ? `<button class="msg-icon-btn" title="Configurações da conversa" onclick="msgOpenConfig()"><i class="fas fa-gear"></i></button>` : ''}
         <button class="msg-icon-btn" title="Participantes" onclick="msgOpenMembers()"><i class="fas fa-users"></i></button>
         <button class="msg-icon-btn" title="Sair da conversa" onclick="msgLeaveThread()"><i class="fas fa-right-from-bracket"></i></button>
         ${owner ? `<button class="msg-icon-btn msg-icon-btn--danger" title="Apagar conversa (para todos)" onclick="msgDeleteThread()"><i class="fas fa-trash-can"></i></button>` : ''}`;
+
+    _applyWritePerm(t);
+    if (document.getElementById('msgMembersModal').style.display === 'flex') _renderMembers();
+    if (document.getElementById('msgConfigModal').style.display === 'flex') { if (owner) _renderConfig(); else msgCloseConfig(); }
 
     // Banner: "todos saíram" — só resta o dono
     const banner = document.getElementById('msgThreadBanner');
@@ -613,6 +755,7 @@ function _seenDateTime(ts) {
 function _bubbleHtml(m, thread, me) {
     // Mensagem de sistema (centralizada, sem autor/ações)
     if (m.sistema) {
+        if (!_SYS_MEMBRO.test(String(m.texto || ''))) return '';   // avisos antigos de configuração ficam ocultos
         return `<div class="msg-system-row"><span class="msg-system-pill"><i class="fas fa-circle-info"></i> ${_esc(m.texto)}</span></div>`;
     }
     const mine = String(m.autor && m.autor.id) === (me && me.id);
@@ -663,8 +806,18 @@ function _bubbleHtml(m, thread, me) {
         </div>`;
 }
 function _linkifyMentions(texto) {
-    // Destaca @Nome (nomes conhecidos) e escapa o resto
+    // Destaca @Nome (nomes conhecidos), @todos e @Setor/@Grupo; escapa o resto
     let out = _esc(texto);
+    out = out.replace(/(^|\s)@todos(?![\wÀ-ÿ])/gi, '$1<span class="msg-mention-tag msg-mention-tag--lote">@todos</span>');
+    try {
+        const nomes = new Set();
+        _lotes(_usersList(), _setorDe).forEach(([n]) => nomes.add(n));
+        _lotes(_usersList(), _grupoDe).forEach(([n]) => nomes.add(n));
+        [...nomes].sort((a, b) => b.length - a.length).forEach(nm => {
+            const re = new RegExp('@' + _esc(nm).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\wÀ-ÿ])', 'g');
+            out = out.replace(re, `<span class="msg-mention-tag msg-mention-tag--lote">@${_esc(nm)}</span>`);
+        });
+    } catch (_) {}
     _usersList().forEach(u => {
         const nm = (u.name || u.user || '').trim();
         if (!nm) return;
@@ -918,21 +1071,49 @@ async function msgSendNew() {
 // Enviar RESPOSTA na thread
 // ---------------------------------------------------------------------------
 // Extrai ids de participantes mencionados via "@Nome" no texto (usado no autocomplete/composer da thread)
+// Marcações que membros comuns podem usar. Dono e administradores da conversa: sempre todas.
+const _MARC_OPTS = [
+    ['todos', 'fa-users-line', '@todos', 'Marcar todos os participantes de uma vez'],
+    ['setores', 'fa-building', 'Setores', 'Marcar um setor inteiro (@Setor)'],
+    ['grupos', 'fa-users', 'Grupos', 'Marcar um grupo inteiro (@Grupo)'],
+    ['pessoas', 'fa-user', 'Pessoas', 'Marcar participantes pelo nome'],
+];
+function _podeMarcar(t, tipo) {
+    if (!t) return true;
+    if (_souAdminConversa(t)) return true;
+    const m = t.marcacoes || {};
+    return m[tipo] !== false;
+}
+// Lotes (setor/grupo) formados só pelos participantes da conversa
+function _lotesThread(thread) {
+    const ids = ((thread && thread.participants) || []).map(String);
+    const us = _usersList().filter(u => ids.includes(String(u.id)));
+    return { setor: _lotes(us, _setorDe), grupo: _lotes(us, _grupoDe) };
+}
+const _TODOS_RE = /(^|\s)@todos(?![\wÀ-ÿ])/i;
 function _extractMentionIds(texto, thread) {
     if (!texto) return [];
-    const parts = (thread && thread.participants) || [];
-    const found = [];
-    parts.forEach(pid => {
+    const parts = ((thread && thread.participants) || []).map(String);
+    const found = new Set();
+    const me = _me();
+    const pode = k => _podeMarcar(thread, k);
+    if (pode('todos') && _TODOS_RE.test(texto)) parts.forEach(pid => { if (!me || pid !== me.id) found.add(pid); });
+    if (pode('pessoas')) parts.forEach(pid => {
         const nm = _userName(pid);
-        if (nm && texto.includes('@' + nm)) found.push(String(pid));
+        if (nm && texto.includes('@' + nm)) found.add(pid);
     });
-    return found;
+    const L = _lotesThread(thread);
+    [...(pode('setores') ? L.setor : []), ...(pode('grupos') ? L.grupo : [])].forEach(([nome, ids]) => {
+        if (texto.includes('@' + nome)) ids.forEach(id => { if (!me || id !== me.id) found.add(id); });
+    });
+    return [...found];
 }
 
 async function msgSendReply() {
     const me = _me();
     const t = _threads[_activeThreadId];
     if (!me || !t) return;
+    if (!_canWrite(t)) { _toast('Somente administradores e pessoas autorizadas podem escrever nesta conversa.', 'error'); return; }
     const input = document.getElementById('msgThreadInput');
     const texto = input.value.trim();
     const d = _draft.thread;
@@ -1021,14 +1202,15 @@ async function msgTransferOwnership(userId) {
     const novoNome = _userName(userId);
     const ok = await _msgConfirm({
         title: 'Transferir liderança',
-        text: `Tornar ${novoNome} o novo dono desta conversa? Você deixará de ser o dono.`,
+        text: `Tornar ${novoNome} o novo dono desta conversa? Você passa a ser administrador(a).`,
         icon: 'fa-crown',
         confirmLabel: 'Transferir'
     });
     if (!ok) return;
     const threadId = _activeThreadId;
     try {
-        await _updateThread(threadId, { createdBy: { id: String(userId), name: novoNome } });
+        await _updateThread(threadId, { createdBy: { id: String(userId), name: novoNome }, ['admins/' + String(userId)]: null, ['admins/' + me.id]: true });
+        _transferindo = false;
         await _postSystem(threadId, `${me.name} transferiu a liderança da conversa para ${novoNome}.`);
         _renderMembers();
         _toast(`${novoNome} agora é o dono da conversa.`, 'success');
@@ -1060,43 +1242,113 @@ async function msgDeleteThread() {
 function msgOpenMembers() {
     const t = _threads[_activeThreadId];
     if (!t) return;
+    { const f = document.getElementById("msgMembersFilter"); if (f) f.value = ""; } _transferindo = false;
     _renderMembers();
     document.getElementById('msgMemberSearch').value = '';
     _renderMemberAddList();
     _renderRetentionBox();
+    _renderWriteBox();
+    // setores vêm das contas do Dados (RH), que podem ainda não estar carregadas
+    if (typeof window._carregarContasDados === 'function') window._carregarContasDados().then(() => { if (document.getElementById('msgMembersModal').style.display !== 'none') _renderMemberAddList(); }).catch(() => {});
+    msgMembersTab('lista');
     _openPopup('msgMembersModal');
 }
+// Sub-abas do modal: 'lista' (participantes + ajustes) | 'add' (adicionar)
+function msgMembersTab(tab) {
+    const m = document.getElementById('msgMembersModal');
+    if (!m) return;
+    m.querySelectorAll('.msg-members-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    m.querySelectorAll('.msg-members-body').forEach(b => { b.style.display = b.dataset.tab === tab ? '' : 'none'; });
+    if (tab === 'add') { const s = document.getElementById('msgMemberSearch'); if (s) setTimeout(() => s.focus(), 30); }
+}
 function msgCloseMembers() { _closePopup('msgMembersModal'); }
+let _transferindo = false;   // modo "escolher novo dono"
+function msgToggleTransfer() { _transferindo = !_transferindo; _renderMembers(); }
+async function msgToggleThreadAdmin(userId) {
+    const t = _threads[_activeThreadId], me = _me();
+    if (!t || !me || !_souAdminConversa(t)) return;   // dono ou administrador
+    const id = String(userId);
+    if (t.createdBy && String(t.createdBy.id) === id) return;   // o dono não é alterado
+    const novo = !_isThreadAdmin(t, id);
+    const threadId = _activeThreadId;
+    try {
+        await _updateThread(threadId, { ['admins/' + id]: novo ? true : null });
+        await _postSystem(threadId, novo ? `${me.name} tornou ${_userName(id)} administrador(a) da conversa.` : `${me.name} removeu ${_userName(id)} dos administradores da conversa.`);
+    } catch (e) { _toast('Erro ao salvar: ' + (e.message || e), 'error'); }
+    _renderMembers();
+}
 function _renderMembers() {
     const t = _threads[_activeThreadId];
     const me = _me();
     const owner = _isOwner(t);
+    const souAdm = _souAdminConversa(t);
     const box = document.getElementById('msgMembersList');
-    box.innerHTML = (t.participants || []).map(pid => {
-        const isOwnerMember = t.createdBy && String(t.createdBy.id) === String(pid);
+    const cnt = document.getElementById('msgMembersCount');
+    if (cnt) cnt.textContent = String((t.participants || []).length);
+    if (!owner) _transferindo = false;
+    const fEl = document.getElementById('msgMembersFilter');
+    const q = _normBusca(fEl ? fEl.value : '');
+    const ownerId = t.createdBy ? String(t.createdBy.id) : '';
+    // dono primeiro, depois administradores, depois o resto (alfabético)
+    const ordem = (t.participants || []).map(String)
+        .filter(pid => !q || _normBusca(_userName(pid)).includes(q))
+        .sort((a, b) => ((b === ownerId) - (a === ownerId)) || (_isThreadAdmin(t, b) - _isThreadAdmin(t, a)) || _userName(a).localeCompare(_userName(b), 'pt-BR'));
+    const aviso = _transferindo ? `<div class="msg-transfer-bar"><i class="fas fa-right-left"></i><span>Escolha o novo dono da conversa</span><button onclick="msgToggleTransfer()">Cancelar</button></div>` : '';
+    box.innerHTML = aviso + (ordem.length ? '' : '<div class="msg-popup-empty">Ninguém encontrado.</div>') + ordem.map(pid => {
+        const isOwnerMember = pid === ownerId;
         const isMe = String(pid) === (me && me.id);
-        const canManage = owner && !isOwnerMember; // dono gerencia os demais
+        const isAdm = _isThreadAdmin(t, pid);
+        const canManage = !isOwnerMember && souAdm; // dono e administradores gerenciam todos, menos o dono
+        const restrita = !!t.escritaRestrita;
+        const autorizado = _isAuthorized(t, pid);
+        const sub = [isOwnerMember ? '<i class="fas fa-crown" style="color:#ca8a04"></i> Dono' : '',
+            !isOwnerMember && isAdm ? '<i class="fas fa-user-shield" style="color:#ca8a04"></i> Administrador(a)' : '',
+            restrita && !isOwnerMember && !isAdm && autorizado ? '<i class="fas fa-pen" style="color:var(--accent)"></i> Pode escrever' : '',
+            restrita && !autorizado ? '<i class="fas fa-eye"></i> Só leitura' : ''].filter(Boolean).join(' · ');
+        const penBtn = restrita && !isOwnerMember && !isAdm && canManage && !_transferindo
+            ? `<button class="msg-icon-btn ${autorizado ? 'msg-icon-btn--on' : ''}" title="${autorizado ? 'Retirar permissão de escrita' : 'Autorizar a escrever'}" onclick="msgToggleAuthorized('${_esc(pid)}')"><i class="fas ${autorizado ? 'fa-user-pen' : 'fa-user-lock'}"></i></button>` : '';
         return `<div class="msg-popup-item" style="cursor:default;">
             <div class="msg-avatar" style="width:34px;height:34px;font-size:13px;">${_esc(_initials(_userName(pid)))}</div>
             <div style="flex:1;min-width:0;">
                 <div class="msg-popup-item-name">${_esc(_userName(pid))}${isMe ? ' <small style="color:var(--text-muted)">(você)</small>' : ''}</div>
-                ${isOwnerMember ? '<div class="msg-popup-item-sub"><i class="fas fa-crown" style="color:#ca8a04"></i> Dono</div>' : ''}
+                ${sub ? `<div class="msg-popup-item-sub">${sub}</div>` : ''}
             </div>
-            ${canManage ? `<button class="msg-icon-btn msg-icon-btn--gold" title="Tornar dono" onclick="msgTransferOwnership('${_esc(pid)}')"><i class="fas fa-crown"></i></button>` : ''}
-            ${canManage ? `<button class="msg-icon-btn msg-icon-btn--danger" title="Remover" onclick="msgRemoveMember('${_esc(pid)}')"><i class="fas fa-user-minus"></i></button>` : ''}
+            ${isOwnerMember && owner ? `<button class="msg-icon-btn ${_transferindo ? 'msg-icon-btn--on' : ''}" title="Trocar o dono da conversa" onclick="msgToggleTransfer()"><i class="fas fa-right-left"></i></button>` : ''}
+            ${_transferindo && !isOwnerMember ? `<button class="msg-transfer-pick" onclick="msgTransferOwnership('${_esc(pid)}')"><i class="fas fa-crown"></i> Tornar dono</button>` : `
+            ${penBtn}
+            ${souAdm && !isOwnerMember ? `<button class="msg-icon-btn ${isAdm ? 'msg-icon-btn--gold msg-icon-btn--on' : 'msg-icon-btn--gold'}" title="${isAdm ? 'Remover administrador da conversa' : 'Tornar administrador da conversa'}" onclick="msgToggleThreadAdmin('${_esc(pid)}')"><i class="fas ${isAdm ? 'fa-user-shield' : 'fa-crown'}"></i></button>` : ''}
+            ${canManage ? `<button class="msg-icon-btn msg-icon-btn--danger" title="Remover" onclick="msgRemoveMember('${_esc(pid)}')"><i class="fas fa-user-minus"></i></button>` : ''}`}
         </div>`;
     }).join('');
 }
+// Adicionar por Setor (unidade do RH), Grupo da Auditoria ou Usuário — mesmas fontes do seletor de menções
+let _addLotes = { setor: [], grupo: [] };
 function _renderMemberAddList() {
     const t = _threads[_activeThreadId];
-    const q = (document.getElementById('msgMemberSearch').value || '').toLowerCase();
+    const q = _normBusca(document.getElementById('msgMemberSearch').value);
     const box = document.getElementById('msgMemberAddList');
-    const candidates = _usersList().filter(u =>
-        !(t.participants || []).some(p => String(p) === String(u.id)) &&
-        (u.name || u.user || '').toLowerCase().includes(q)
-    );
-    if (!candidates.length) { box.innerHTML = `<div class="msg-popup-empty">Nenhum usuário disponível.</div>`; return; }
-    box.innerHTML = candidates.map(u => `
+    const dentro = id => (t.participants || []).some(p => String(p) === String(id));
+    const fora = _usersList().filter(u => !dentro(u.id));
+    _addLotes = { setor: _lotes(fora, _setorDe), grupo: _lotes(fora, _grupoDe) };
+    const lote = (tipo, ic, cls) => _addLotes[tipo].map(([nome, ids], i) => [nome, ids, i])
+        .filter(([nome]) => _normBusca(nome).includes(q))
+        .map(([nome, ids, i]) => `<div class="msg-popup-item" onclick="msgAddMemberLote('${tipo}', ${i})">
+                <div class="msg-avatar ${cls}" style="width:34px;height:34px;font-size:14px;"><i class="fas ${ic}"></i></div>
+                <div style="flex:1;min-width:0;">
+                    <div class="msg-popup-item-name">${_esc(nome)}</div>
+                    <div class="msg-popup-item-sub">${ids.length} pessoa${ids.length > 1 ? 's' : ''} fora da conversa</div>
+                </div>
+                <i class="fas fa-user-plus" style="color:var(--accent)"></i>
+            </div>`).join('');
+    const setores = lote('setor', 'fa-building', 'msg-avatar--setor');
+    const grupos = lote('grupo', 'fa-users', 'msg-avatar--lote');
+    const candidates = fora.filter(u => _normBusca(u.name || u.user).includes(q));
+    let h = '';
+    if (setores) h += `<div class="msg-popup-sec"><i class="fas fa-building"></i> Setores / unidades</div>` + setores;
+    if (grupos) h += `<div class="msg-popup-sec"><i class="fas fa-users"></i> Grupos</div>` + grupos;
+    if (candidates.length) h += `<div class="msg-popup-sec"><i class="fas fa-user"></i> Usuários</div>`;
+    if (!h) { box.innerHTML = `<div class="msg-popup-empty">Nenhum usuário disponível.</div>`; return; }
+    box.innerHTML = h + candidates.map(u => `
         <div class="msg-popup-item" onclick="msgAddMember('${_esc(u.id)}')">
             <div class="msg-avatar" style="width:34px;height:34px;font-size:13px;">${_esc(_initials(u.name || u.user))}</div>
             <div style="flex:1;min-width:0;">
@@ -1120,10 +1372,32 @@ async function msgAddMember(userId) {
         _renderMemberAddList();
     } catch (e) { _toast('Erro ao adicionar: ' + (e.message || e), 'error'); }
 }
+async function msgAddMemberLote(tipo, idx) {
+    const t = _threads[_activeThreadId];
+    const me = _me();
+    const lote = (_addLotes[tipo] || [])[idx];
+    if (!t || !me || !lote) return;
+    const [nome] = lote;
+    const novos = lote[1].filter(id => !(t.participants || []).some(p => String(p) === String(id)));
+    if (!novos.length) { _toast(`Todos de "${nome}" já estão na conversa.`, 'info'); return; }
+    const de = tipo === 'setor' ? 'do setor' : 'do grupo';
+    const ok = await _msgConfirm({ title: 'Adicionar em lote', icon: 'fa-user-plus', confirmLabel: 'Adicionar',
+        text: `Adicionar ${novos.length} pessoa${novos.length > 1 ? 's' : ''} ${de} "${nome}" à conversa?` });
+    if (!ok) return;
+    const threadId = _activeThreadId;
+    const newParts = Array.from(new Set([...(t.participants || []).map(String), ...novos.map(String)]));
+    try {
+        await _updateThread(threadId, { participants: newParts });
+        await _postSystem(threadId, `${me.name} adicionou ${novos.length} pessoa${novos.length > 1 ? 's' : ''} ${de} "${nome}": ${novos.map(_userName).join(', ')}.`);
+        _toast(`${novos.length} pessoa${novos.length > 1 ? 's' : ''} adicionada${novos.length > 1 ? 's' : ''}.`, 'success');
+        _renderMembers();
+        _renderMemberAddList();
+    } catch (e) { _toast('Erro ao adicionar: ' + (e.message || e), 'error'); }
+}
 async function msgRemoveMember(userId) {
     const t = _threads[_activeThreadId];
     const me = _me();
-    if (!t || !me || !_isOwner(t)) return;
+    if (!t || !me || !_souAdminConversa(t)) return;
     if (String(userId) === String(t.createdBy.id)) return; // dono não se remove aqui (usa Sair)
     if (!(await _msgConfirm({ title: 'Remover participante', text: `Remover ${_userName(userId)} da conversa?`, danger: true, confirmLabel: 'Remover' }))) return;
     const threadId = _activeThreadId;
@@ -1163,6 +1437,7 @@ async function msgEditTitle() {
 function msgOpenMentionPicker(target) {
     _mentionTarget = target;
     _mentionSel = (target === 'compose') ? _draft.compose.mentions.slice() : [];
+    _mentionTodos = false;
     document.getElementById('msgMentionSearch').value = '';
     _renderMentionList();
     // contas do Dados (setor do RH) podem ainda não estar carregadas
@@ -1232,11 +1507,19 @@ function _renderMentionList() {
             <i class="fas fa-check-circle msg-popup-item-check"></i>
         </div>`).join('');
     let h = '';
-    if (setores) h += `<div class="msg-popup-sec"><i class="fas fa-building"></i> Setores</div>` + setores;
-    if (grupos) h += `<div class="msg-popup-sec"><i class="fas fa-users"></i> Grupos</div>` + grupos;
-    if (pessoas) h += `<div class="msg-popup-sec"><i class="fas fa-user"></i> Usuários</div>` + pessoas;
-    box.innerHTML = h || `<div class="msg-popup-empty">Nada encontrado.</div>`;
+    const tAt = _mentionTarget === 'thread' ? _threads[_activeThreadId] : null;
+    const podeP = k => !tAt || _podeMarcar(tAt, k);
+    if (_mentionTarget === 'thread' && podeP('todos') && 'todos'.includes(q)) h += `<div class="msg-popup-item ${_mentionTodos ? 'selected' : ''}" onclick="msgToggleMentionTodos()">
+            <div class="msg-avatar msg-avatar--lote" style="width:34px;height:34px;font-size:14px;"><i class="fas fa-users-line"></i></div>
+            <div style="flex:1;min-width:0;"><div class="msg-popup-item-name">@todos</div><div class="msg-popup-item-sub">Marca todos os participantes da conversa</div></div>
+            <i class="fas fa-check-circle msg-popup-item-check"></i></div>`;
+    if (setores && podeP('setores')) h += `<div class="msg-popup-sec"><i class="fas fa-building"></i> Setores</div>` + setores;
+    if (grupos && podeP('grupos')) h += `<div class="msg-popup-sec"><i class="fas fa-users"></i> Grupos</div>` + grupos;
+    if (pessoas && podeP('pessoas')) h += `<div class="msg-popup-sec"><i class="fas fa-user"></i> Usuários</div>` + pessoas;
+    box.innerHTML = h || `<div class="msg-popup-empty">${tAt && !_MARC_OPTS.some(o => _podeMarcar(tAt, o[0])) ? 'Marcações desativadas nesta conversa.' : 'Nada encontrado.'}</div>`;
 }
+let _mentionTodos = false;
+function msgToggleMentionTodos() { _mentionTodos = !_mentionTodos; _renderMentionList(); }
 function msgToggleMention(id) {
     const i = _mentionSel.findIndex(x => String(x) === String(id));
     if (i >= 0) _mentionSel.splice(i, 1); else _mentionSel.push(id);
@@ -1260,7 +1543,7 @@ function msgConfirmMentions() {
                     .catch(() => {});
             }
             const input = document.getElementById('msgThreadInput');
-            const nomes = _mentionSel.map(id => '@' + _userName(id)).join(' ');
+            const nomes = (_mentionTodos ? ['@todos'] : []).concat(_mentionSel.map(id => '@' + _userName(id))).join(' ');
             input.value = (input.value ? input.value + ' ' : '') + nomes + ' ';
             input.focus();
         }
@@ -1607,6 +1890,20 @@ function _closePopup(id) {
     el.classList.remove('anchored');
     el.style.top = ''; el.style.left = ''; el.style.bottom = ''; el.style.transform = '';
 }
+// Clicar fora de uma janela aberta do chat (participantes, configurações, menções, cards, anexo) fecha ela.
+// Não fecha com clique no diálogo de confirmação, no autocomplete de @ ou em overlays de outros módulos.
+document.addEventListener('mousedown', e => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest('.msg-popup, #msgDialog, #msgDialogBackdrop, #msgMentionAC, #msgMutePopover, .reu-overlay, .modal, .form-drawer')) return;
+    document.querySelectorAll('.msg-popup').forEach(el => {
+        if (el.style.display && el.style.display !== 'none') {
+            if (el.id === 'msgConfigModal') msgCloseConfig();
+            else if (el.id === 'msgMembersModal' && typeof msgCloseMembers === 'function') msgCloseMembers();
+            else _closePopup(el.id);
+        }
+    });
+}, true);
 // Ancora um popup ACIMA do botão que o abriu (usado no composer da thread)
 function _anchorPopupAbove(id, anchorEl) {
     const el = document.getElementById(id);
@@ -1657,14 +1954,16 @@ function _acCandidates(term) {
     const me = _me();
     if (!t) return [];
     const q = (typeof normalizeText === 'function') ? normalizeText(term) : term.toLowerCase();
-    return (t.participants || [])
-        .filter(pid => String(pid) !== (me && me.id))
-        .map(pid => ({ id: String(pid), name: _userName(pid) }))
-        .filter(u => {
-            if (!q) return true;
-            const n = (typeof normalizeText === 'function') ? normalizeText(u.name) : u.name.toLowerCase();
-            return n.includes(q);
-        });
+    const nq = x => (typeof normalizeText === 'function') ? normalizeText(x) : String(x).toLowerCase();
+    const ok = nome => !q || nq(nome).includes(q);
+    const out = [];
+    const outros = (t.participants || []).filter(pid => String(pid) !== (me && me.id));
+    if (outros.length > 1 && _podeMarcar(t, 'todos') && ok('todos')) out.push({ id: '', name: 'todos', kind: 'todos', sub: `Todos os ${outros.length} participantes` });
+    const L = _lotesThread(t);
+    if (_podeMarcar(t, 'setores')) L.setor.forEach(([nome, ids]) => { if (ok(nome)) out.push({ id: '', name: nome, kind: 'setor', sub: `Setor · ${ids.length} pessoa${ids.length > 1 ? 's' : ''}` }); });
+    if (_podeMarcar(t, 'grupos')) L.grupo.forEach(([nome, ids]) => { if (ok(nome)) out.push({ id: '', name: nome, kind: 'grupo', sub: `Grupo · ${ids.length} pessoa${ids.length > 1 ? 's' : ''}` }); });
+    if (_podeMarcar(t, 'pessoas')) outros.map(pid => ({ id: String(pid), name: _userName(pid), kind: 'user' })).forEach(u => { if (ok(u.name)) out.push(u); });
+    return out;
 }
 
 // Detecta se o cursor está logo após um "@termo" (sem espaço) e abre/atualiza o AC
@@ -1686,8 +1985,8 @@ function _acRender() {
     box.innerHTML = _acItems.map((u, i) => `
         <div class="msg-mention-ac-item ${i === _acIndex ? 'active' : ''}" data-i="${i}"
              onmousedown="event.preventDefault();msgAcPick(${i})" onmousemove="msgAcHover(${i})">
-            <div class="msg-avatar" style="width:28px;height:28px;font-size:11px;">${_esc(_initials(u.name))}</div>
-            <span class="msg-mention-ac-name">${_esc(u.name)}</span>
+            <div class="msg-avatar ${u.kind === 'setor' ? 'msg-avatar--setor' : u.kind && u.kind !== 'user' ? 'msg-avatar--lote' : ''}" style="width:28px;height:28px;font-size:11px;">${u.kind === 'todos' ? '<i class="fas fa-users-line"></i>' : u.kind === 'setor' ? '<i class="fas fa-building"></i>' : u.kind === 'grupo' ? '<i class="fas fa-users"></i>' : _esc(_initials(u.name))}</div>
+            <span class="msg-mention-ac-name">${u.kind && u.kind !== 'user' ? '@' : ''}${_esc(u.name)}${u.sub ? ` <small style="opacity:.6;font-weight:400">· ${_esc(u.sub)}</small>` : ''}</span>
         </div>`).join('');
     box.style.display = 'block';
     _acOpen = true;
@@ -1798,13 +2097,14 @@ Object.assign(window, {
     msgOpenThread, msgLeaveThread, msgDeleteThread,
     msgOpenMutePopover, msgCloseMutePopover, msgPickMute,
     msgOpenSeenPopover, msgCloseSeenPopover,
-    msgOpenMembers, msgCloseMembers, msgAddMember, msgRemoveMember, msgTransferOwnership, msgRenderMemberAddList: _renderMemberAddList,
-    msgSetRetention,
+    msgOpenMembers, msgCloseMembers, msgAddMember, msgAddMemberLote, msgRemoveMember, msgTransferOwnership, msgRenderMemberAddList: _renderMemberAddList,
+    msgSetRetention, msgMembersTab, msgToggleTransfer, msgToggleThreadAdmin, msgRenderMembers: _renderMembers, msgToggleWriteRestrict, msgToggleAuthorized,
+    msgOpenConfig, msgCloseConfig, msgSetNotifPadrao, msgSetMarcacao,
     msgEditTitle,
     msgStartReply, msgCancelReply, msgEditMessage, msgDeleteMessage,
     msgAcPick, msgAcHover,
     msgOpenCard, msgOpenLightbox, msgCloseLightbox,
-    msgOpenMentionPicker, msgCloseMentionPicker, msgMentionToggleLote, msgToggleMention, msgConfirmMentions, msgRemoveMention, msgRenderMentionList: _renderMentionList,
+    msgOpenMentionPicker, msgToggleMentionTodos, msgCloseMentionPicker, msgMentionToggleLote, msgToggleMention, msgConfirmMentions, msgRemoveMention, msgRenderMentionList: _renderMentionList,
     msgOpenCardPicker, msgCloseCardPicker, msgSetCardArea, msgPickCard, msgComposeWithCard, msgRenderCardList: _renderCardList,
     msgOpenAttachMenu, msgCloseAttachModal, msgSetAttachType, msgDropzoneClick, msgClearAttachFile, msgConfirmAttach,
     msgRemoveDraftCard, msgRemoveDraftAnexo,
