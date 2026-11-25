@@ -675,6 +675,7 @@ function _renderThread(threadId) {
         banner.innerHTML = '';
     }
 
+    _renderPinBar(t);
     const box = document.getElementById('msgBubbles');
     const msgs = _msgsArr(t);
     box.innerHTML = msgs.map(m => _bubbleHtml(m, t, me)).join('');
@@ -794,17 +795,258 @@ function _bubbleHtml(m, thread, me) {
                 ${texto}
                 ${chips ? `<div class="msg-bubble-chips">${chips}</div>` : ''}
             </div>
+            ${_reacoesHtml(m, me)}
             <div class="msg-bubble-actions">
+                <button class="msg-bubble-act" onclick="msgOpenReact(event,'${m._id}')" title="Reagir"><i class="far fa-face-smile"></i></button>
                 <button class="msg-bubble-act" onclick="msgStartReply('${m._id}')" title="Responder"><i class="fas fa-reply"></i> Responder</button>
                 ${_canModify(m) ? `
                     <button class="msg-bubble-act" onclick="msgEditMessage('${m._id}')" title="Editar"><i class="fas fa-pen"></i></button>
                     <button class="msg-bubble-act msg-bubble-act--danger" onclick="msgDeleteMessage('${m._id}')" title="Apagar"><i class="fas fa-trash-can"></i></button>
                 ` : ''}
-                <span class="msg-bubble-time">${_hora(m.createdAt)}${editado}</span>
+                <span class="msg-bubble-time">${me && thread.favs && thread.favs[me.id] && thread.favs[me.id][m._id] ? '<i class="fas fa-star msg-fav-ic" title="Favorita"></i> ' : ''}${_hora(m.createdAt)}${editado}</span>
                 ${seenIcon}
             </div>
         </div>`;
 }
+// ---------------------------------------------------------------------------
+// Emojis (mesmas abas do campo de texto dos Avisos) e reações nas mensagens
+// mensagens/{mid}/reacoes/{userId} = '👍' (uma reação por pessoa, como no WhatsApp)
+// ---------------------------------------------------------------------------
+const _EMOJIS = [
+    ['Reações', 'fa-face-smile', '😀 😊 🙂 😉 😍 😎 🤔 😮 👍 👏 🙌 🙏 💪 🤝 👋 ✌️ 👌 🤗'],
+    ['Trabalho', 'fa-briefcase', '✅ ❌ ⚠️ ❗ ❓ 💡 📌 📅 ⏰ ⏳ 📢 🔔 📝 📄 📎 📊 📈 🎯'],
+    ['Saúde', 'fa-heart-pulse', '🧪 🔬 🩺 💉 💊 🩸 🧬 🏥 🚑 😷 🧤 🧼 🩹 🌡️ ❤️ 💙 💚 ♻️'],
+    ['Celebração', 'fa-champagne-glasses', '🎉 🎊 🥳 🎂 🎁 🎈 🏆 🥇 ⭐ 🌟 ✨ 🚀 ☕ 🍰 🌞 🌻 💐 🎶'],
+].map(([nome, ic, l]) => ({ nome, ic, lista: l.split(' ') }));
+const _REAC_RAPIDAS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+function _reacoesDe(m) {
+    const g = new Map();
+    Object.entries((m && m.reacoes) || {}).forEach(([uid, e]) => { if (!e) return; if (!g.has(e)) g.set(e, []); g.get(e).push(String(uid)); });
+    return [...g.entries()].sort((a, b) => b[1].length - a[1].length);
+}
+function _reacoesHtml(m, me) {
+    const grupos = _reacoesDe(m);
+    if (!grupos.length) return '';
+    const minha = me && m.reacoes && m.reacoes[me.id];
+    const total = grupos.reduce((n, [, ids]) => n + ids.length, 0);
+    return `<button type="button" class="msg-reacoes ${minha ? 'minha' : ''}" onclick="msgShowReacoes(event,'${m._id}')" title="Ver quem reagiu">
+        ${grupos.slice(0, 4).map(([e]) => `<span>${e}</span>`).join('')}${total > 1 ? `<b>${total}</b>` : ''}</button>`;
+}
+
+// Painel de emojis com abas; onPick(emoji)
+function _emojiPop(anchor, onPick, opts) {
+    _fecharEmojiPop();
+    const pop = document.createElement('div');
+    pop.className = 'msg-emoji-pop'; pop.id = 'msgEmojiPop';
+    const rapidas = opts && opts.rapidas;
+    pop.innerHTML = `${rapidas ? `<div class="msg-emoji-rap">${_REAC_RAPIDAS.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>` : ''}
+        <div class="msg-emoji-cab"><b>Emojis</b><div class="msg-emoji-abas">${_EMOJIS.map((c, i) => `<button type="button" data-aba="${i}" class="${i ? '' : 'on'}" title="${c.nome}"><i class="fas ${c.ic}"></i></button>`).join('')}</div></div>
+        <small class="msg-emoji-nome">${_EMOJIS[0].nome}</small>
+        ${_EMOJIS.map((c, i) => `<div class="msg-emoji-grade" data-g="${i}" ${i ? 'hidden' : ''}>${c.lista.map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>`).join('')}`;
+    pop.addEventListener('mousedown', e => e.preventDefault());   // não tira o foco do campo de texto
+    pop.addEventListener('click', e => {
+        const aba = e.target.closest('[data-aba]');
+        if (aba) {
+            pop.querySelectorAll('[data-aba]').forEach(b => b.classList.toggle('on', b === aba));
+            pop.querySelectorAll('[data-g]').forEach(g => { g.hidden = g.dataset.g !== aba.dataset.aba; });
+            pop.querySelector('.msg-emoji-nome').textContent = _EMOJIS[aba.dataset.aba].nome;
+            return;
+        }
+        const b = e.target.closest('[data-e]');
+        if (b) { onPick(b.dataset.e); if (!(opts && opts.manter)) _fecharEmojiPop(); }
+    });
+    document.body.appendChild(pop);
+    const r = anchor.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    let left = Math.min(window.innerWidth - w - 8, Math.max(8, r.right - w));
+    let top = r.top - h - 8; if (top < 8) top = r.bottom + 8;
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+    setTimeout(() => document.addEventListener('mousedown', _foraEmojiPop, true), 0);
+}
+function _foraEmojiPop(e) { const p = document.getElementById('msgEmojiPop'); if (p && !p.contains(e.target) && !e.target.closest('.msg-emoji-btn')) _fecharEmojiPop(); }
+function _fecharEmojiPop() { const p = document.getElementById('msgEmojiPop'); if (p) p.remove(); document.removeEventListener('mousedown', _foraEmojiPop, true); }
+
+// Botão de emoji no campo de texto da conversa: insere no cursor
+function msgToggleEmoji(btn) {
+    if (document.getElementById('msgEmojiPop')) { _fecharEmojiPop(); return; }
+    const inp = document.getElementById('msgThreadInput');
+    _emojiPop(btn, e => {
+        if (!inp || inp.disabled) return;
+        const a = inp.selectionStart ?? inp.value.length, b = inp.selectionEnd ?? a;
+        inp.value = inp.value.slice(0, a) + e + inp.value.slice(b);
+        const c = a + e.length; inp.focus(); inp.setSelectionRange(c, c);
+        if (typeof _autoGrow === 'function') _autoGrow(inp);
+    }, { manter: true });
+}
+
+// Reagir: atalhos rápidos + abas completas. Mesmo emoji de novo = tira a reação.
+function msgOpenReact(ev, mid) {
+    ev.stopPropagation();
+    _emojiPop(ev.currentTarget, e => _reagir(mid, e), { rapidas: true });
+}
+async function _reagir(mid, e) {
+    const me = _me(), t = _threads[_activeThreadId];
+    if (!me || !t) return;
+    const atual = t.mensagens && t.mensagens[mid] && t.mensagens[mid].reacoes && t.mensagens[mid].reacoes[me.id];
+    try { await _updateThread(_activeThreadId, { ['mensagens/' + mid + '/reacoes/' + me.id]: atual === e ? null : e }); }
+    catch (err) { _toast('Erro ao reagir: ' + (err.message || err), 'error'); }
+}
+// Quem reagiu: abas Todos / por emoji; tocar na própria reação remove
+function msgShowReacoes(ev, mid) {
+    ev.stopPropagation();
+    _fecharEmojiPop();
+    const t = _threads[_activeThreadId]; const m = t && t.mensagens && t.mensagens[mid];
+    if (!m) return;
+    const me = _me();
+    const grupos = _reacoesDe(m);
+    const pop = document.createElement('div');
+    pop.className = 'msg-emoji-pop msg-reac-pop'; pop.id = 'msgEmojiPop';
+    const lista = filtro => Object.entries(m.reacoes || {}).filter(([, e]) => e && (!filtro || e === filtro))
+        .sort((a, b) => _userName(a[0]).localeCompare(_userName(b[0]), 'pt-BR'))
+        .map(([uid, e]) => { const eu = me && String(uid) === me.id;
+            return `<div class="msg-reac-it ${eu ? 'eu' : ''}" ${eu ? `data-tirar="${_esc(e)}" title="Toque para remover"` : ''}>
+                <div class="msg-avatar" style="width:30px;height:30px;font-size:11px;">${_esc(_initials(_userName(uid)))}</div>
+                <span class="msg-reac-nome">${eu ? 'Você' : _esc(_userName(uid))}${eu ? '<small>Toque para remover</small>' : ''}</span><span class="msg-reac-e">${e}</span></div>`; }).join('');
+    const total = grupos.reduce((n, [, ids]) => n + ids.length, 0);
+    pop.innerHTML = `<div class="msg-reac-abas"><button type="button" class="on" data-f="">Todos ${total}</button>${grupos.map(([e, ids]) => `<button type="button" data-f="${e}">${e} ${ids.length}</button>`).join('')}</div>
+        <div class="msg-reac-lista">${lista('')}</div>`;
+    pop.addEventListener('click', e => {
+        const f = e.target.closest('[data-f]');
+        if (f) { pop.querySelectorAll('[data-f]').forEach(b => b.classList.toggle('on', b === f)); pop.querySelector('.msg-reac-lista').innerHTML = lista(f.dataset.f); return; }
+        const x = e.target.closest('[data-tirar]');
+        if (x) { _reagir(mid, x.dataset.tirar); _fecharEmojiPop(); }
+    });
+    document.body.appendChild(pop);
+    const r = ev.currentTarget.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    pop.style.left = Math.min(window.innerWidth - w - 8, Math.max(8, r.left)) + 'px';
+    let top = r.top - h - 8; if (top < 8) top = r.bottom + 8; pop.style.top = top + 'px';
+    setTimeout(() => document.addEventListener('mousedown', _foraEmojiPop, true), 0);
+}
+
+// ---------------------------------------------------------------------------
+// Menu da mensagem (clique direito / segurar no celular), estilo WhatsApp
+// ---------------------------------------------------------------------------
+function _renderPinBar(t) {
+    let bar = document.getElementById('msgPinBar');
+    const box = document.getElementById('msgBubbles');
+    if (!box) return;
+    if (!bar) { bar = document.createElement('div'); bar.id = 'msgPinBar'; bar.className = 'msg-pin-bar'; box.parentNode.insertBefore(bar, box); }
+    const fx = t && t.fixada, m = fx && t.mensagens && t.mensagens[fx.mid];
+    if (!m) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+    bar.style.display = 'flex';
+    bar.innerHTML = `<i class="fas fa-thumbtack"></i><div class="msg-pin-tx" onclick="msgIrPara('${_esc(fx.mid)}')"><b>${_esc((m.autor && m.autor.name) || 'Mensagem fixada')}</b><span>${_esc((m.texto || 'Anexo').slice(0, 120))}</span></div>
+        ${_souAdminConversa(t) ? `<button type="button" title="Desafixar" onclick="msgFixar('${_esc(fx.mid)}')"><i class="fas fa-xmark"></i></button>` : ''}`;
+}
+function msgIrPara(mid) {
+    const row = document.querySelector(`.msg-bubble-row[data-mid="${CSS.escape(mid)}"]`);
+    if (!row) return;
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.remove('msg-pisca'); void row.offsetWidth; row.classList.add('msg-pisca');
+}
+async function msgFixar(mid) {
+    const t = _threads[_activeThreadId], me = _me();
+    if (!t || !me || !_souAdminConversa(t)) { _toast('Só o dono e os administradores da conversa fixam mensagens.', 'error'); return; }
+    const tirar = t.fixada && t.fixada.mid === mid;
+    try { await _updateThread(_activeThreadId, { fixada: tirar ? null : { mid, por: me.id, em: Date.now() } }); _toast(tirar ? 'Mensagem desafixada.' : 'Mensagem fixada no topo.', 'success'); }
+    catch (e) { _toast('Erro: ' + (e.message || e), 'error'); }
+}
+async function msgFavoritar(mid) {
+    const t = _threads[_activeThreadId], me = _me();
+    if (!t || !me) return;
+    const on = !(t.favs && t.favs[me.id] && t.favs[me.id][mid]);
+    try { await _updateThread(_activeThreadId, { ['favs/' + me.id + '/' + mid]: on ? true : null }); _toast(on ? 'Adicionada às favoritas.' : 'Removida das favoritas.', 'success'); }
+    catch (e) { _toast('Erro: ' + (e.message || e), 'error'); }
+}
+async function msgCopiar(mid) {
+    const t = _threads[_activeThreadId]; const m = t && t.mensagens && t.mensagens[mid];
+    if (!m) return;
+    const txt = m.texto || (m.anexos || []).map(a => a.url).join('\n');
+    try { await navigator.clipboard.writeText(txt); _toast('Copiado.', 'success'); }
+    catch (_) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); _toast('Copiado.', 'success'); } catch (e) {} ta.remove(); }
+}
+// Dados da mensagem: quem leu (lidoPor >= hora da mensagem) e quem ainda não
+function msgDadosMensagem(mid) {
+    const t = _threads[_activeThreadId]; const m = t && t.mensagens && t.mensagens[mid];
+    if (!m) return;
+    const autor = String(m.autor && m.autor.id || '');
+    const outros = (t.participants || []).map(String).filter(id => id !== autor);
+    const lidoEm = id => (t.lidoPor && t.lidoPor[id]) || 0;
+    const leram = outros.filter(id => lidoEm(id) >= (m.createdAt || 0)).sort((a, b) => lidoEm(b) - lidoEm(a));
+    const nao = outros.filter(id => !leram.includes(id)).sort((a, b) => _userName(a).localeCompare(_userName(b), 'pt-BR'));
+    const quando = ts => { const d = new Date(ts); return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
+    const linha = (id, sub) => `<div class="msg-dm-it"><div class="msg-avatar" style="width:30px;height:30px;font-size:11px;">${_esc(_initials(_userName(id)))}</div><span>${_esc(_userName(id))}</span>${sub ? `<small>${sub}</small>` : ''}</div>`;
+    const el = document.createElement('div');
+    el.className = 'msg-dm-bg';
+    el.innerHTML = `<div class="msg-dm">
+        <div class="msg-dm-head"><b><i class="fas fa-circle-info"></i> Dados da mensagem</b><button type="button" data-x><i class="fas fa-xmark"></i></button></div>
+        <div class="msg-dm-msg"><small>${_esc((m.autor && m.autor.name) || '')} · ${quando(m.createdAt)}${m.editedAt ? ' · editada' : ''}</small><p>${_esc((m.texto || 'Anexo').slice(0, 300))}</p></div>
+        <div class="msg-dm-sec"><i class="fas fa-check-double" style="color:#2563eb"></i> Lida por ${leram.length}</div>
+        ${leram.map(id => linha(id, quando(lidoEm(id)))).join('') || '<div class="msg-dm-vazio">Ninguém leu ainda.</div>'}
+        <div class="msg-dm-sec"><i class="fas fa-check"></i> Ainda não leram ${nao.length}</div>
+        ${nao.map(id => linha(id, '')).join('') || '<div class="msg-dm-vazio">Todos leram.</div>'}
+    </div>`;
+    el.addEventListener('click', e => { if (e.target === el || e.target.closest('[data-x]')) el.remove(); });
+    document.body.appendChild(el);
+}
+function _fecharCtx() { const c = document.getElementById('msgCtxMenu'); if (c) c.remove(); document.removeEventListener('mousedown', _foraCtx, true); }
+function _foraCtx(e) { const c = document.getElementById('msgCtxMenu'); if (c && !c.contains(e.target)) _fecharCtx(); }
+function _abrirCtx(mid, x, y) {
+    _fecharCtx(); _fecharEmojiPop();
+    const t = _threads[_activeThreadId], me = _me(); const m = t && t.mensagens && t.mensagens[mid];
+    if (!m || m.sistema) return;
+    const minha = me && m.reacoes && m.reacoes[me.id];
+    const fav = me && t.favs && t.favs[me.id] && t.favs[me.id][mid];
+    const fixada = t.fixada && t.fixada.mid === mid;
+    const podeApagar = _canModify(m) || (_souAdminConversa(t) && !_isAuthor(m));
+    const it = (ic, tx, fn, cls) => `<button type="button" class="msg-ctx-it ${cls || ''}" data-fn="${fn}"><i class="${ic}"></i><span>${tx}</span></button>`;
+    const c = document.createElement('div');
+    c.id = 'msgCtxMenu'; c.className = 'msg-ctx';
+    c.innerHTML = `<div class="msg-ctx-reac">${_REAC_RAPIDAS.map(e => `<button type="button" data-e="${e}" class="${minha === e ? 'on' : ''}">${e}</button>`).join('')}<button type="button" data-mais title="Mais emojis"><i class="fas fa-plus"></i></button></div>
+        <div class="msg-ctx-lista">
+            ${it('fas fa-circle-info', 'Dados da mensagem', 'dados')}
+            ${it('fas fa-reply', 'Responder', 'responder')}
+            ${m.texto ? it('far fa-copy', 'Copiar', 'copiar') : ''}
+            ${_souAdminConversa(t) ? it('fas fa-thumbtack', fixada ? 'Desafixar' : 'Fixar', 'fixar') : ''}
+            ${it(fav ? 'fas fa-star' : 'far fa-star', fav ? 'Desfavoritar' : 'Favoritar', 'favoritar')}
+            ${_canModify(m) && m.texto ? `<hr>${it('fas fa-pen', 'Editar', 'editar')}` : ''}
+            ${podeApagar ? `${_canModify(m) && m.texto ? '' : '<hr>'}${it('far fa-trash-can', 'Apagar', 'apagar', 'perigo')}` : ''}
+        </div>`;
+    document.body.appendChild(c);
+    const w = c.offsetWidth, h = c.offsetHeight;
+    c.style.left = Math.max(8, Math.min(x, window.innerWidth - w - 8)) + 'px';
+    c.style.top = Math.max(8, Math.min(y, window.innerHeight - h - 8)) + 'px';
+    c.addEventListener('click', ev => {
+        const e = ev.target.closest('[data-e]');
+        if (e) { _fecharCtx(); _reagir(mid, e.dataset.e); return; }
+        if (ev.target.closest('[data-mais]')) { const r = c.getBoundingClientRect(); _fecharCtx(); const a = document.createElement('span'); a.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:1px`; document.body.appendChild(a); _emojiPop(a, em => _reagir(mid, em)); a.remove(); return; }
+        const f = ev.target.closest('[data-fn]'); if (!f) return;
+        _fecharCtx();
+        ({ dados: () => msgDadosMensagem(mid), responder: () => msgStartReply(mid), copiar: () => msgCopiar(mid), fixar: () => msgFixar(mid),
+           favoritar: () => msgFavoritar(mid), editar: () => msgEditMessage(mid), apagar: () => msgDeleteMessage(mid) })[f.dataset.fn]();
+    });
+    setTimeout(() => document.addEventListener('mousedown', _foraCtx, true), 0);
+}
+// clique direito (computador) e segurar ~500 ms (celular)
+(function () {
+    const alvo = e => e.target.closest && e.target.closest('#msgBubbles .msg-bubble-row[data-mid]');
+    const ignorar = e => e.target.closest('a, button, input, textarea, .msg-edit-box, .msg-chip-thumb');
+    document.addEventListener('contextmenu', e => {
+        const row = alvo(e); if (!row || e.target.closest('.msg-edit-box')) return;
+        e.preventDefault(); _abrirCtx(row.dataset.mid, e.clientX, e.clientY);
+    });
+    let tm = null, sx = 0, sy = 0;
+    document.addEventListener('touchstart', e => {
+        const row = alvo(e); if (!row || ignorar(e)) return;
+        const p = e.touches[0]; sx = p.clientX; sy = p.clientY;
+        tm = setTimeout(() => { tm = null; try { navigator.vibrate && navigator.vibrate(15); } catch (_) {} _abrirCtx(row.dataset.mid, sx, sy); }, 500);
+    }, { passive: true });
+    const cancelar = () => { if (tm) { clearTimeout(tm); tm = null; } };
+    document.addEventListener('touchmove', e => { const p = e.touches[0]; if (Math.abs(p.clientX - sx) > 10 || Math.abs(p.clientY - sy) > 10) cancelar(); }, { passive: true });
+    document.addEventListener('touchend', cancelar);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') _fecharCtx(); });
+    document.addEventListener('scroll', _fecharCtx, true);
+})();
+
 function _linkifyMentions(texto) {
     // Destaca @Nome (nomes conhecidos), @todos e @Setor/@Grupo; escapa o resto
     let out = _esc(texto);
@@ -979,7 +1221,9 @@ async function _saveEdit(msgId, newText) {
 async function msgDeleteMessage(msgId, skipConfirm) {
     const t = _threads[_activeThreadId];
     const m = t && t.mensagens && t.mensagens[msgId];
-    if (!m || !_guardEditWindow(m)) return;
+    if (!m) return;
+    const admDel = _souAdminConversa(t) && !_isAuthor(m);   // dono/admin da conversa: qualquer mensagem
+    if (!admDel && !_guardEditWindow(m)) return;
     if (!skipConfirm && !(await _msgConfirm({ title: 'Apagar mensagem', text: 'Esta ação não pode ser desfeita.', danger: true, confirmLabel: 'Apagar' }))) return;
 
     const msgs = _msgsArr(t);
@@ -1109,6 +1353,16 @@ function _extractMentionIds(texto, thread) {
     return [...found];
 }
 
+// Responder conta como marcar o autor da mensagem respondida (como no WhatsApp),
+// se ele ainda está na conversa, não é quem responde e a marcação de pessoas está liberada.
+function _mencoesComResposta(texto, t, replyId, me) {
+    const ids = _extractMentionIds(texto, t);
+    const q = replyId && t && t.mensagens && t.mensagens[replyId];
+    const alvo = q && !q.sistema && q.autor && String(q.autor.id);
+    if (alvo && (!me || alvo !== me.id) && (t.participants || []).map(String).includes(alvo)
+        && _podeMarcar(t, 'pessoas') && !ids.includes(alvo)) ids.push(alvo);
+    return ids;
+}
 async function msgSendReply() {
     const me = _me();
     const t = _threads[_activeThreadId];
@@ -1127,7 +1381,7 @@ async function msgSendReply() {
         autor: { id: me.id, name: me.name },
         texto: texto || '',
         createdAt: now,
-        mencoes: _extractMentionIds(texto, t),
+        mencoes: _mencoesComResposta(texto, t, _replyTo, me),
         cardsVinculados: d.cards,
         anexos: d.anexos,
         respostaA: _replyTo || null
@@ -2099,7 +2353,7 @@ Object.assign(window, {
     msgOpenSeenPopover, msgCloseSeenPopover,
     msgOpenMembers, msgCloseMembers, msgAddMember, msgAddMemberLote, msgRemoveMember, msgTransferOwnership, msgRenderMemberAddList: _renderMemberAddList,
     msgSetRetention, msgMembersTab, msgToggleTransfer, msgToggleThreadAdmin, msgRenderMembers: _renderMembers, msgToggleWriteRestrict, msgToggleAuthorized,
-    msgOpenConfig, msgCloseConfig, msgSetNotifPadrao, msgSetMarcacao,
+    msgOpenConfig, msgCloseConfig, msgToggleEmoji, msgOpenReact, msgShowReacoes, msgIrPara, msgFixar, msgFavoritar, msgCopiar, msgDadosMensagem, msgSetNotifPadrao, msgSetMarcacao,
     msgEditTitle,
     msgStartReply, msgCancelReply, msgEditMessage, msgDeleteMessage,
     msgAcPick, msgAcHover,

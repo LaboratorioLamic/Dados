@@ -404,7 +404,10 @@
                             <button class="msg-tool-btn" onclick="msgOpenCardPicker('thread')" title="Vincular card"><i class="fas fa-link"></i></button>
                             <button class="msg-tool-btn" onclick="msgOpenAttachMenu('thread')" title="Anexar"><i class="fas fa-paperclip"></i></button>
                         </div>
-                        <textarea class="msg-textarea" id="msgThreadInput" rows="1" placeholder="Escreva uma resposta..."></textarea>
+                        <div class="msg-input-wrap">
+                            <textarea class="msg-textarea" id="msgThreadInput" rows="1" placeholder="Escreva uma resposta..."></textarea>
+                            <button type="button" class="msg-emoji-btn" onclick="msgToggleEmoji(this)" title="Emojis"><i class="far fa-face-smile"></i></button>
+                        </div>
                         <button class="msg-send-btn" onclick="msgSendReply()" title="Enviar"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
