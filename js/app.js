@@ -2144,7 +2144,31 @@
       if ((location.hash.slice(1) || 'avisos').startsWith('avisos') && !$('.modal')) rotear();
     });
     q.once('value').then(() => { pronto = true; });   // depois da carga inicial, só avisos novos
-    S.offAvisos = () => q.off('child_added', cb);
+
+    // Edição e exclusão em tempo real para todos: troca só o cartão afetado (sem redesenhar o quadro)
+    const noQuadro = () => (location.hash.slice(1) || 'avisos').startsWith('avisos') && $('#pagina');
+    const aoMudar = async (snap) => {
+      atualizarContador();
+      if (!noQuadro()) return;
+      const a = { id: snap.key, ...snap.val() };
+      const fora = !paraUsuario(a, S.me.login, S.me.grupo, S.me.cargo, S.me.unidade);
+      const visivel = (!fora || S.me.grupo === 'admin') && (!a.expira_em || a.expira_em > Date.now());
+      const atual = $(`.aviso[data-id="${CSS.escape(a.id)}"]`);
+      if (!visivel) { atual?.remove(); return; }
+      if (!atual) { if (!$('.modal')) rotear(); return; }   // passou a ser para mim: entra na lista
+      const leitura = await ler(`leituras/${S.me.login}/${a.id}`).catch(() => null);
+      const tmp = document.createElement('div');
+      tmp.innerHTML = cartaoAviso({ ...a, fora, leitura: leitura || undefined }).trim();
+      const novo = tmp.firstElementChild;
+      if (!novo || !atual.isConnected) return;
+      atual.replaceWith(novo);
+      ligarAvisos(novo);
+    };
+    const aoSair = (snap) => { atualizarContador(); $(`.aviso[data-id="${CSS.escape(snap.key)}"]`)?.remove(); $$(`#notifs [data-n="${CSS.escape(snap.key)}"]`).forEach((n) => n.remove()); };
+    const todos = ref('avisos');
+    todos.on('child_changed', aoMudar);
+    todos.on('child_removed', aoSair);
+    S.offAvisos = () => { q.off('child_added', cb); todos.off('child_changed', aoMudar); todos.off('child_removed', aoSair); };
     if ('Notification' in window && Notification.permission === 'default') {
       document.addEventListener('click', () => Notification.requestPermission(), { once: true });
     }
