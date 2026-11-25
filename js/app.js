@@ -1315,9 +1315,9 @@
     const T = VINC_TIPOS[v.tipo]; if (!T) return;
     if (v.tipo === 'curso') {
       const P = UNI_PLATS[v.plat]; if (!P) return;
-      return abrirViewer(`seeds/Treinamentos/portal.html?cat=${encodeURIComponent(P.nome)}&tema=${encodeURIComponent(v.tema)}&curso=${encodeURIComponent(v.curso)}`, `UniLAMIC · ${v.titulo}`);
+      return abrirViewer(`${PUBLICADO ? 'modulos' : 'seeds'}/Treinamentos/portal.html?cat=${encodeURIComponent(P.nome)}&tema=${encodeURIComponent(v.tema)}&curso=${encodeURIComponent(v.curso)}`, `UniLAMIC · ${v.titulo}`);
     }
-    abrirViewer(`seeds/${T.seed}/index.html?doc=${encodeURIComponent(v.titulo)}`, `${T.nome} · ${v.titulo}`);
+    abrirViewer(`${PUBLICADO ? 'modulos' : 'seeds'}/${T.seed}/index.html?doc=${encodeURIComponent(v.titulo)}`, `${T.nome} · ${v.titulo}`);
   }
   // card do curso no aviso: miniatura (imagem do curso, carregada depois), plataforma, tema e descrição
   function cardCurso(v) {
