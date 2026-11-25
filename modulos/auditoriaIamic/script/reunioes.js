@@ -20,6 +20,10 @@ const STATUS = {
     realizada: { label: 'Realizada', cls: 'reu-st--ok',  icon: 'fa-circle-check' },
     cancelada: { label: 'Cancelada', cls: 'reu-st--can', icon: 'fa-ban' }
 };
+// classe e ícone do evento no calendário conforme o status (realizada ✓ / cancelada ⊘)
+const _stCls = o => o.status === 'cancelada' ? 'is-can' : o.status === 'realizada' ? 'is-ok' : '';
+const _stIco = o => o.status === 'realizada' ? '<i class="fas fa-circle-check reu-ev-st" title="Realizada"></i>' : o.status === 'cancelada' ? '<i class="fas fa-ban reu-ev-st" title="Cancelada"></i>'
+    : (!o.excluida && o.r && _ended(o.day || o.date, o.r.horaFim)) ? '<i class="fas fa-triangle-exclamation reu-ev-st is-pend" title="Pendente: marque realizada ou cancelada"></i>' : '';
 const WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
@@ -304,14 +308,19 @@ function _todayMine() {
     return _occurrences(t, t).filter(o => !o.excluida && o.status !== 'cancelada' && _isMine(o.r) && !_ended(t, o.r.horaFim));
 }
 // Últimas reuniões já encerradas (uma por reunião/série), só para consulta no sino
-function _anterioresMine(n) {
+function _anterioresMine(n, filtro) {
     const t = _today();
     const occ = _occurrences(_addDays(t, -180), t)
-        .filter(o => !o.excluida && _isMine(o.r) && _ended(o.day || o.date, o.r.horaFim))
+        .filter(o => !o.excluida && _isMine(o.r) && _ended(o.day || o.date, o.r.horaFim) && (!filtro || filtro(o)))
         .sort((a, b) => ((b.day || b.date) + b.r.horaInicio).localeCompare((a.day || a.date) + a.r.horaInicio));
     const vistos = new Set(), out = [];
     for (const o of occ) { const k = String(o.base.id); if (vistos.has(k)) continue; vistos.add(k); out.push(o); if (out.length >= n) break; }
     return out;
+}
+// Pendentes: por reunião/série, só a última ocorrência já terminada, se ainda não foi
+// marcada como realizada nem cancelada
+function _pendentesMine() {
+    return _anterioresMine(999).filter(o => (o.status || 'agendada') === 'agendada');
 }
 // Aviso some quando a reunião a que se refere já terminou
 function _avisoVivo(a) {
@@ -389,10 +398,13 @@ function _renderBell() {
         <div class="reu-bell-body">
             <div class="reu-bell-sec">Hoje · ${_fmtDate(_today())}</div>
             ${today.length ? today.map(meetRow).join('') : '<div class="reu-bell-empty">Nenhuma reunião hoje.</div>'}
-            <div class="reu-bell-sec">Anteriores</div>
-            ${(() => { const ant = _anterioresMine(5); return ant.length ? ant.map(o => `<div class="reu-bell-it is-past" style="--c:${_esc(o.r.cor || COLORS[0])}" onclick="reuBellOpen('${_esc(o.base.id)}','${o.date}')">
+            ${(() => { const pend = _pendentesMine(); return pend.length ? `<div class="reu-bell-sec">Pendentes <b class="reu-bell-pend-n">${pend.length}</b></div>` + pend.map(o => `<div class="reu-bell-it is-pend" style="--c:${_esc(o.r.cor || COLORS[0])}" onclick="reuBellOpen('${_esc(o.base.id)}','${o.date}')" title="Marque como realizada ou cancelada">
                 <span class="reu-bell-time">${_fmtDate(o.day || o.date).slice(0, 5)}<small>${_esc(o.r.horaInicio)}</small></span>
-                <span class="reu-bell-main"><b>${_esc(o.r.titulo)}</b><small>${(STATUS[o.status] || STATUS.agendada).label}</small></span></div>`).join('') : '<div class="reu-bell-empty">Nenhuma reunião anterior.</div>'; })()}
+                <span class="reu-bell-main"><b>${_esc(o.r.titulo)}</b><small><i class="fas fa-triangle-exclamation"></i> Sem status · marque realizada ou cancelada</small></span></div>`).join('') : ''; })()}
+            <div class="reu-bell-sec">Anteriores</div>
+            ${(() => { const ant = _anterioresMine(5, o => o.status === 'realizada' || o.status === 'cancelada'); return ant.length ? ant.map(o => `<div class="reu-bell-it is-past ${_stCls(o)}" style="--c:${_esc(o.r.cor || COLORS[0])}" onclick="reuBellOpen('${_esc(o.base.id)}','${o.date}')">
+                <span class="reu-bell-time">${_fmtDate(o.day || o.date).slice(0, 5)}<small>${_esc(o.r.horaInicio)}</small></span>
+                <span class="reu-bell-main"><b>${_stIco(o)}${_esc(o.r.titulo)}</b><small>${(STATUS[o.status] || STATUS.agendada).label}</small></span></div>`).join('') : '<div class="reu-bell-empty">Nenhuma reunião anterior.</div>'; })()}
             <div class="reu-bell-sec">Avisos ${avs.length ? `<button class="reu-bell-clear" onclick="reuClearAvisos()">Limpar</button>` : ''}</div>
             ${avs.length ? avs.map(avRow).join('') : '<div class="reu-bell-empty">Nenhum aviso.</div>'}
         </div>`;
@@ -497,7 +509,7 @@ function _monthHtml() {
         const out = d.getMonth() !== c.getMonth();
         h += `<div class="reu-md ${out ? 'out' : ''} ${s === today ? 'today' : ''} ${s === _selDay ? 'is-pick' : ''}" data-day="${s}" onclick="reuDayClick('${s}')">
             <span class="reu-md-n">${d.getDate()}</span>
-            ${items.slice(0, 3).map(o => `<span class="reu-ev ${o.status === 'cancelada' ? 'is-can' : ''}" style="--c:${_esc(o.r.cor || COLORS[0])}" ${_evAttrs(o)}><b>${_esc(o.r.horaInicio)}</b> ${_esc(o.r.titulo)}</span>`).join('')}
+            ${items.slice(0, 3).map(o => `<span class="reu-ev ${_stCls(o)}" style="--c:${_esc(o.r.cor || COLORS[0])}" ${_evAttrs(o)}>${_stIco(o)}<b>${_esc(o.r.horaInicio)}</b> ${_esc(o.r.titulo)}</span>`).join('')}
             ${items.length > 3 ? `<span class="reu-more" onclick="event.stopPropagation();reuGoDay('${s}')">+${items.length - 3} mais</span>` : ''}
         </div>`;
     }
@@ -521,8 +533,8 @@ function _timeGridHtml(start, n) {
             const L = lanes.get(o) || { lane: 0, lanes: 1 };
             const w = 100 / L.lanes;
             const ed = _canEdit(o.base);
-            return `<div class="reu-tg-ev ${o.status === 'cancelada' ? 'is-can' : ''} ${ed ? 'is-ed' : ''} ${hgt < 36 ? 'is-short' : ''}" style="top:${top}px;height:${hgt}px;left:calc(${L.lane * w}% + 2px);width:calc(${w}% - 4px);--c:${_esc(o.r.cor || COLORS[0])}" ${_evAttrs(o)}>
-                <b>${_esc(o.r.titulo)}</b><span>${_esc(o.r.horaInicio)}–${_esc(o.r.horaFim)}</span>${_isRecurring(o.base) ? '<i class="fas fa-repeat reu-tg-rec"></i>' : ''}
+            return `<div class="reu-tg-ev ${_stCls(o)} ${ed ? 'is-ed' : ''} ${hgt < 36 ? 'is-short' : ''}" style="top:${top}px;height:${hgt}px;left:calc(${L.lane * w}% + 2px);width:calc(${w}% - 4px);--c:${_esc(o.r.cor || COLORS[0])}" ${_evAttrs(o)}>
+                <b>${_stIco(o)}${_esc(o.r.titulo)}</b><span>${_esc(o.r.horaInicio)}–${_esc(o.r.horaFim)}</span>${_isRecurring(o.base) ? '<i class="fas fa-repeat reu-tg-rec"></i>' : ''}
                 ${ed ? '<div class="reu-tg-rs" title="Arraste para mudar a duração"></div>' : ''}</div>`;
         }).join('');
         let lines = '';
@@ -552,12 +564,12 @@ function _listHtml() {
 function _itemHtml(o, wide) {
     const st = STATUS[o.status] || STATUS.agendada;
     const r = o.r;
-    return `<div class="reu-item ${wide ? 'wide' : ''}" style="--c:${_esc(r.cor || COLORS[0])}" onclick="reuOpen('${_esc(o.base.id)}','${o.date}')">
+    return `<div class="reu-item ${wide ? 'wide' : ''} ${_stCls(o)}" style="--c:${_esc(r.cor || COLORS[0])}" onclick="reuOpen('${_esc(o.base.id)}','${o.date}')">
         <div class="reu-item-main">
-            <div class="reu-item-title">${_esc(r.titulo)}</div>
+            <div class="reu-item-title">${_stIco(o)}${_esc(r.titulo)}</div>
             <div class="reu-item-sub">${wide ? '' : _fmtDate(o.day).slice(0, 5) + ' · '}${_esc(r.horaInicio)}–${_esc(r.horaFim)}${_isRecurring(o.base) ? ' · <i class="fas fa-repeat"></i>' : ''}${r.meetUrl ? ' · <i class="fas fa-video"></i>' : ''}</div>
         </div>
-        <span class="reu-st ${st.cls}">${st.label}</span>
+        <span class="reu-st ${st.cls}"><i class="fas ${st.icon}"></i> ${st.label}</span>
     </div>`;
 }
 
@@ -1730,7 +1742,15 @@ function _isTopicResp(path) {
     for (let id = m && m[1], g = 0; id && itens[id] && g < 10; id = itens[id].pai, g++) if (_resps(itens[id]).includes(me.id)) return true;
     return false;
 }
-function _guard(path) { const r = _cur(); if (r && (_canEdit(r) || (path && _isTopicResp(path)))) return r; _toast('Sem permissão para editar.', 'error'); return null; }
+// Pauta/ata: organizador, co-organizadores e participantes editam sempre (mesmo com
+// "Gerenciar reuniões = Não"); responsável por tópico/item edita o seu ramo.
+function _canEditPauta(r) {
+    const me = _me();
+    if (!me || !r) return false;
+    if (_canEdit(r) || _isOrg(r)) return true;
+    return String(r.criadoPor) === me.id || (r.participantes || []).map(String).includes(me.id);
+}
+function _guard(path) { const r = _cur(); if (r && (_canEditPauta(r) || (path && _isTopicResp(path)))) return r; _toast('Sem permissão para editar.', 'error'); return null; }
 // Ocorrência sem pauta própria → copia o modelo da série para o rascunho
 function _materialize() {
     const r = _open && _data[_open.id];
@@ -1826,8 +1846,8 @@ function _detailHtml(r) {
     const nLinks = (r.vinculos || []).length;
 
     let body = '';
-    if (_tab === 'pauta') body = _tabPauta(r, o, ed && org, topics);
-    else if (_tab === 'acoes') body = _tabAcoes(r, o, ed && org, items);
+    if (_tab === 'pauta') body = _tabPauta(r, o, _canEditPauta(r), topics);   // participantes também editam a pauta/ata
+    else if (_tab === 'acoes') body = _tabAcoes(r, o, _canEditPauta(r), items);
     else if (_tab === 'detalhes') body = _tabDetalhes(r, o, ed);
     else if (_tab === 'anexos') body = _tabAnexos(r, o, ed);
     else body = _tabVinculos(r, ed);
@@ -1866,8 +1886,8 @@ function _detailHtml(r) {
     <div class="reu-x-body">${body}</div>`;
 }
 
-// --- Blocos em árvore (tarefa | texto), até 3 níveis ------------------------------
-const MAX_DEPTH = 3;
+// --- Blocos em árvore (tarefa | texto), até 10 níveis ------------------------------
+const MAX_DEPTH = 10;
 const MK_COLORS = ['#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777', '#64748b'];
 let _marcadores = {};        // /reunioesMarcadores/{id}: { nome, cor, ordem }
 let _mkListener = null;
@@ -2216,10 +2236,11 @@ function _blockRow(r, tp, node, ed, opts) {
         <button class="reu-blk-caret ${hasKids ? '' : 'is-empty'}" ${hasKids ? `onclick="reuToggleCollapse('${it._id}')"` : 'tabindex="-1"'}><i class="fas fa-chevron-${col ? 'right' : 'down'}"></i></button>
         ${task ? `<input type="checkbox" class="reu-blk-cb" ${it.checked ? 'checked' : ''} ${ed ? '' : 'disabled'} onchange="reuItemSet('${ip}','checked',this.checked)">`
                : `<span class="reu-blk-para" title="Bloco de texto"><i class="fas fa-paragraph"></i></span>`}
-        ${task ? `<textarea class="reu-blk-text reu-autogrow" rows="1" data-fk="i-${it._id}" placeholder="Tarefa" ${ed ? '' : 'disabled'}
-                    oninput="reuAutogrow(this)" onchange="reuItemSet('${ip}','texto',this.value)" onkeydown="reuBlkKey(event,this,'${tp}','${it._id}')">${_esc(it.texto || '')}</textarea>`
-               : `<textarea class="reu-blk-text reu-autogrow" rows="1" data-fk="i-${it._id}" placeholder="Texto" ${ed ? '' : 'disabled'}
-                    oninput="reuAutogrow(this)" onchange="reuItemSet('${ip}','texto',this.value)" onkeydown="reuBlkKey(event,this,'${tp}','${it._id}')">${_esc(it.texto || '')}</textarea>`}
+        ${_bulView(it.texto)}
+        ${task ? `<textarea class="reu-blk-text reu-autogrow${_temBul(it.texto) ? ' reu-bul-off' : ''}" rows="1" data-fk="i-${it._id}" placeholder="Tarefa" ${ed ? '' : 'disabled'}
+                    oninput="reuAutogrow(this)" onchange="reuItemSet('${ip}','texto',this.value)" onblur="reuBulBlur(this)" onkeydown="reuBlkKey(event,this,'${tp}','${it._id}')">${_esc(it.texto || '')}</textarea>`
+               : `<textarea class="reu-blk-text reu-autogrow${_temBul(it.texto) ? ' reu-bul-off' : ''}" rows="1" data-fk="i-${it._id}" placeholder="Texto" ${ed ? '' : 'disabled'}
+                    oninput="reuAutogrow(this)" onchange="reuItemSet('${ip}','texto',this.value)" onblur="reuBulBlur(this)" onkeydown="reuBlkKey(event,this,'${tp}','${it._id}')">${_esc(it.texto || '')}</textarea>`}
         ${opts.extra || ''}
         <span class="reu-blk-meta">
             ${_mkChips(it.marcadores)}
@@ -2227,7 +2248,7 @@ function _blockRow(r, tp, node, ed, opts) {
             ${nAnx ? `<button class="reu-blk-anx" onclick="reuOpenAttach('${ip}')" title="Anexos"><i class="fas fa-paperclip"></i> ${nAnx}</button>` : ''}
             ${task ? `<label class="reu-due ${it.prazo ? 'has' : ''} ${od ? 'is-late' : ''}" title="${it.prazo ? 'Prazo: ' + _fmtDate(it.prazo) : 'Definir prazo'}">
                 <i class="fas ${od ? 'fa-triangle-exclamation' : 'fa-calendar-day'}"></i>${it.prazo ? `<span>${_fmtDate(it.prazo).slice(0, 5)}</span>` : ''}
-                ${ed ? `<input type="date" value="${_esc(it.prazo || '')}" onchange="reuItemSet('${ip}','prazo',this.value||null)" onclick="try{this.showPicker()}catch(e){}">` : ''}</label>` : ''}
+                ${ed ? `<button type="button" class="reu-due-hit" aria-label="Definir prazo" onclick="reuPopPrazo(this,'${ip}')"></button>` : ''}</label>` : ''}
             ${(() => { const rs = _resps(it), podeR = _isOrg(r); if (!rs.length && !podeR) return '';
                 return `<button class="reu-who ${rs.length ? 'has' : ''}" ${podeR ? `onclick="reuPopResp(this,'${ip}')"` : 'disabled'} title="${rs.length ? _esc(rs.map(_userName).join(', ')) : 'Definir responsáveis'}">
                 ${rs.length === 1 ? _avatar(rs[0]) + `<span>${_esc(_userName(rs[0]).split(' ')[0])}</span>` : rs.length ? _avStack(rs, 3) : '<i class="fas fa-user-plus"></i>'}</button>`; })()}
@@ -2260,6 +2281,9 @@ function _tabPauta(r, o, ed, topics) {
                 <span class="reu-topic-tags">${_mkChips(t.marcadores)}</span>
                 ${(t.resp || []).length ? `<button class="reu-meta reu-meta--btn reu-topic-resp" ${ed ? `onclick="reuPopTopicResp(this,'${tp}')"` : 'disabled'} title="Responsáveis pelo tópico">${_avStack(t.resp, 3)}</button>`
                     : (ed ? `<button class="reu-who" onclick="reuPopTopicResp(this,'${tp}')" title="Adicionar responsáveis pelo tópico"><i class="fas fa-user-plus"></i></button>` : '')}
+                ${(() => { const pais = _flatTree(tree).filter(n => n.children.length); if (!pais.length || _collapsed.has('T' + t._id)) return '';
+                    const algumAberto = pais.some(n => !_collapsed.has(n.it._id));
+                    return `<button class="reu-icon-btn" title="${algumAberto ? 'Recolher toda a árvore' : 'Expandir toda a árvore'}" onclick="reuTreeAll('${tp}',${algumAberto ? 1 : 0})"><i class="fas ${algumAberto ? 'fa-angles-up' : 'fa-angles-down'}"></i></button>`; })()}
                 ${tree.length ? `<button class="reu-icon-btn" title="${_collapsed.has('T' + t._id) ? 'Mostrar itens' : 'Ocultar itens'}" onclick="reuToggleCollapse('T${t._id}')"><i class="fas ${_collapsed.has('T' + t._id) ? 'fa-eye-slash' : 'fa-sitemap'}"></i></button>` : ''}
                 ${tasks.length ? `<span class="reu-topic-prog" title="${done}/${tasks.length} concluídas"><span style="width:${Math.round(done / tasks.length * 100)}%"></span></span><small>${done}/${tasks.length}</small>` : ''}
                 ${ed ? `<button class="reu-icon-btn" title="Opções do tópico" onclick="reuPopTopic(this,'${tp}')"><i class="fas fa-ellipsis"></i></button>` : ''}
@@ -2268,6 +2292,7 @@ function _tabPauta(r, o, ed, topics) {
             <div class="reu-blocks">
                 ${_collapsed.has('T' + t._id) ? `<button class="reu-topic-hidden" onclick="reuToggleCollapse('T${t._id}')"><i class="fas fa-eye"></i> ${_flatTree(tree).length} itens ocultos — mostrar</button>` : _renderNodes(r, tp, tree, edT)}
                 ${edT ? `<div class="reu-blk-add">
+                    <button class="reu-blk-add-type reu-blk-add-plus" title="Adicionar nova linha (mesmo tipo da última)" onclick="reuAddBtn('${tp}','${t._id}')"><i class="fas fa-plus"></i></button>
                     <button class="reu-blk-add-type" title="Adicionar tarefa" onclick="reuItemAdd('${tp}','',null,'tarefa',true)"><i class="far fa-square-check"></i></button>
                     <button class="reu-blk-add-type" title="Adicionar texto" onclick="reuItemAdd('${tp}','',null,'texto',true)"><i class="fas fa-paragraph"></i></button>
                     <textarea class="reu-autogrow" rows="1" data-fk="add-${t._id}" placeholder="Nova linha · Shift+Enter (mesmo tipo da última) · Ctrl+Enter tarefa · Alt+Enter novo tópico · Enter quebra linha" oninput="reuAutogrow(this)" onkeydown="reuAddKey(event,this,'${tp}')"></textarea>
@@ -2413,6 +2438,11 @@ function reuPopActMk(btn) {
     _openPop(btn, `<div class="reu-pop-list">${_menuHtml([{ label: 'Todos os marcadores', icon: 'fa-tags', on: !_actFilter.mk, fn: "reuActFilter('mk','')" }, '-']
         .concat(_mkList().map(m => ({ label: m.nome, icon: 'fa-circle', color: m.cor, on: _actFilter.mk === m._id, fn: `reuActFilter('mk','${m._id}')` }))))}</div>`);
 }
+// Recolhe (1) ou expande (0) todos os itens com subitens do tópico
+function reuTreeAll(tp, recolher) {
+    _flatTree(_tree((_getAt(tp) || {}).itens || {})).forEach(n => { if (!n.children.length) return; recolher ? _collapsed.add(n.it._id) : _collapsed.delete(n.it._id); });
+    _renderDetail();
+}
 function reuToggleCollapse(bid) { _collapsed.has(bid) ? _collapsed.delete(bid) : _collapsed.add(bid); _renderDetail(); }
 
 // --- Teclado nos blocos --------------------------------------------------------------
@@ -2420,6 +2450,7 @@ function _focusBlock(bid, atEnd) {
     setTimeout(() => {
         const el = document.querySelector(`#reuDrawer [data-fk="i-${bid}"]`);
         if (!el) return;
+        if (el.classList.contains('reu-bul-off') && el.previousElementSibling) reuBulEdit(el.previousElementSibling);
         el.focus();
         try { const n = atEnd ? el.value.length : 0; el.setSelectionRange(n, n); } catch (_) {}
     }, 0);
@@ -2499,6 +2530,34 @@ function reuBlkKey(e, inp, tp, bid) {
 // --- Marcadores no texto: Tab / Shift+Tab mudam o nível da linha do cursor ---
 // Nível n (1..10): 2 espaços de recuo por nível; • no 1º, ◦ no 2º, ▪ do 3º em diante.
 const _BUL_MAX = 10;
+// Visualização com recuo deslocado (como no Word): a linha quebrada de um marcador
+// alinha com o texto, não com o marcador. Textarea não faz isso, então fora da edição
+// mostramos um div; clicar nele volta para o textarea.
+const _temBul = t => /^ *[•◦▪] /m.test(t || '');
+function _bulView(t) {
+    if (!_temBul(t)) return '';
+    const linhas = String(t).split('\n').map(l => {
+        const m = l.match(/^( *)([•◦▪]) (.*)$/);
+        if (!m) return `<div class="reu-bv-l">${_esc(l) || '&nbsp;'}</div>`;
+        return `<div class="reu-bv-l reu-bv-b" style="--n:${Math.floor(m[1].length / 2)}"><span class="reu-bv-m">${m[2]}</span><span>${_esc(m[3]) || '&nbsp;'}</span></div>`;
+    }).join('');
+    return `<div class="reu-blk-text reu-bul-view" onclick="reuBulEdit(this,event)">${linhas}</div>`;
+}
+function reuBulEdit(v, e) {
+    if (e && e.target.closest('a')) return;
+    const ta = v.nextElementSibling; if (!ta || ta.tagName !== 'TEXTAREA') return;
+    v.style.display = 'none'; ta.classList.remove('reu-bul-off');
+    _autogrow(ta); ta.focus();
+}
+function reuBulBlur(ta) {
+    const v = ta.previousElementSibling;
+    const html = _bulView(ta.value);
+    if (v && v.classList.contains('reu-bul-view')) {
+        if (!html) { v.remove(); return; }
+        v.outerHTML = html; ta.classList.add('reu-bul-off'); return;
+    }
+    if (html) { ta.insertAdjacentHTML('beforebegin', html); ta.classList.add('reu-bul-off'); }
+}
 const _bulPre = n => n <= 0 ? '' : '  '.repeat(n - 1) + (n === 1 ? '• ' : n === 2 ? '◦ ' : '▪ ');
 const _BUL_RE = /^( *)[•◦▪] /;
 function _bulLinha(inp) {
@@ -2549,7 +2608,7 @@ function reuIndent(tp, bid, dir) {
         const sibs = _sortedItems(itens).filter(x => (x.pai || '') === (it.pai || ''));
         const i = sibs.findIndex(x => x._id === bid);
         if (i <= 0) return;
-        // profundidade do bloco + profundidade da sua subárvore precisa caber em 3 níveis
+        // profundidade do bloco + profundidade da sua subárvore precisa caber em MAX_DEPTH níveis
         const subDepth = (function d(id) { const k = Object.keys(itens).filter(x => itens[x] && itens[x].pai === id); return k.length ? 1 + Math.max(...k.map(d)) : 0; })(bid);
         if (_depthOf(itens, bid) + 1 + subDepth > MAX_DEPTH - 1) { _toast('Limite de ' + MAX_DEPTH + ' níveis.', 'info'); return; }
         const newPai = sibs[i - 1];
@@ -2626,12 +2685,70 @@ function _blkUp() {
     _write(d.tp + '/itens/' + d.bid, patch, true);
     if (d.zone === 'inside') _syncParentCheck(d.tp + '/itens/' + d.bid);
 }
+// Botão +: usa o texto digitado no campo "Nova linha", se houver; senão cria linha vazia
+// --- Calendário do prazo (substitui o seletor nativo do navegador) -----------------
+const _MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+let _calPrazo = null;   // { ip, ym: 'AAAA-MM' }
+function reuPopPrazo(btn, ip) {
+    const v = (_getAt(ip) || {}).prazo || '';
+    _calPrazo = { ip, ym: (v || _today()).slice(0, 7) };
+    _openPop(btn, _calPrazoHtml(), 'reu-cal-pop');
+}
+function _calPrazoHtml() {
+    const { ip, ym } = _calPrazo;
+    const sel = (_getAt(ip) || {}).prazo || '', hoje = _today();
+    const [y, m] = ym.split('-').map(Number);
+    const first = new Date(y, m - 1, 1), ini = _addDays(_ds(first), -first.getDay());
+    let cells = '';
+    for (let i = 0; i < 42; i++) {
+        const d = _addDays(ini, i), dd = _parse(d), fora = dd.getMonth() !== m - 1, fds = dd.getDay() === 0 || dd.getDay() === 6;
+        cells += `<button type="button" class="reu-cal-d ${fora ? 'fora' : ''} ${fds ? 'fds' : ''} ${d === hoje ? 'hoje' : ''} ${d === sel ? 'sel' : ''} ${sel && d < hoje && d === sel ? 'late' : ''}" onclick="reuPrazoSet('${d}')">${dd.getDate()}</button>`;
+    }
+    const rap = [['Hoje', hoje], ['Amanhã', _addDays(hoje, 1)], ['+1 semana', _addDays(hoje, 7)], ['+1 mês', _ds(new Date(_parse(hoje).getFullYear(), _parse(hoje).getMonth() + 1, _parse(hoje).getDate()))]];
+    return `<div class="reu-cal" onclick="event.stopPropagation()">
+        <div class="reu-cal-h">
+            <button type="button" class="reu-cal-nav" title="Mês anterior" onclick="reuPrazoNav(-1)"><i class="fas fa-chevron-left"></i></button>
+            <b>${_MESES[m - 1]} <span>${y}</span></b>
+            <button type="button" class="reu-cal-nav" title="Próximo mês" onclick="reuPrazoNav(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="reu-cal-w">${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(x => `<span>${x}</span>`).join('')}</div>
+        <div class="reu-cal-g">${cells}</div>
+        <div class="reu-cal-q">${rap.map(([l, d]) => `<button type="button" class="${d === sel ? 'on' : ''}" onclick="reuPrazoSet('${d}')">${l}</button>`).join('')}</div>
+        <div class="reu-cal-f">
+            ${sel ? `<span class="reu-cal-cur"><i class="fas fa-calendar-check"></i> ${_fmtDate(sel)}</span>` : '<span class="reu-cal-cur is-empty">Sem prazo</span>'}
+            ${sel ? `<button type="button" class="reu-cal-clr" onclick="reuPrazoSet('')"><i class="fas fa-xmark"></i> Remover</button>` : ''}
+        </div>
+    </div>`;
+}
+function reuPrazoNav(n) {
+    if (!_calPrazo) return;
+    const [y, m] = _calPrazo.ym.split('-').map(Number), d = new Date(y, m - 1 + n, 1);
+    _calPrazo.ym = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const pop = document.querySelector('.reu-pop.reu-cal-pop'); if (pop) pop.innerHTML = _calPrazoHtml();
+}
+function reuPrazoSet(d) {
+    if (!_calPrazo) return;
+    const ip = _calPrazo.ip; _calPrazo = null;
+    _closePop();
+    reuItemSet(ip, 'prazo', d || null);
+}
+function reuAddBtn(tp, tid) {
+    const inp = document.querySelector(`#reuDrawer [data-fk="add-${tid}"]`);
+    const v = inp && inp.value.trim() ? inp.value.replace(/\s+$/, '') : '';
+    const last = _flatTree(_tree((_getAt(tp) || {}).itens || {})).pop();
+    const tipo = last ? (last.it.tipo || 'tarefa') : 'texto';
+    if (v) { inp.value = ''; inp.style.height = ''; reuItemAdd(tp, v, null, tipo); }
+    else reuItemAdd(tp, '', null, tipo, true);
+}
 function reuAddKey(e, inp, tp) {
+    // Marcadores de texto (•, ◦, ▪) também no campo "Nova linha": Tab / Shift+Tab mudam o nível
+    if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); _bulNivel(inp, e.shiftKey ? -1 : 1); return; }
     if (e.key !== 'Enter') return;
-    if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) return;   // Enter simples: quebra linha
+    // Enter simples: quebra linha mantendo o marcador (linha só com marcador → remove o marcador)
+    if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); _bulNovaLinha(inp); return; }
     e.preventDefault();
     if (e.altKey) { if (inp.value.trim()) { const v = inp.value; inp.value = ''; reuItemAdd(tp, v, null, 'texto'); } reuTopicAdd(); return; }
-    const v = inp.value.trim();
+    const v = inp.value.trim() ? inp.value.replace(/\s+$/, '') : '';   // mantém o recuo do marcador inicial
     if (!v) return;
     inp.value = ''; inp.style.height = '';
     const last = _flatTree(_tree((_getAt(tp) || {}).itens || {})).pop();
@@ -2767,12 +2884,28 @@ function reuActFilter(k, v) { _actFilter[k] = v; _closePop(); _renderDetail(); }
 function reuClosePop() { _closePop(); }
 function reuAutogrow(t) { _autogrow(t); }
 // --- Gravações (otimistas) ------------------------------------------------------------
-function reuSetStatus(k) {
+// Status salva na hora e só nesta ocorrência (série: excecoes/{data}); não mexe nas futuras
+// nem nas outras alterações ainda não salvas do rascunho.
+async function reuSetStatus(k) {
     const r = _guard(); if (!r) return;
     _closePop();
     const patch = { status: k };
     if (_isRecurring(r)) patch.cancelada = (k === 'cancelada') ? true : null;
-    _write(_occPath(r, _open.date), patch, true);
+    const path = _occPath(r, _open.date);
+    // Com edições pendentes: põe o status no rascunho e salva tudo junto (fluxo normal do Salvar)
+    if (_dirty) { _write(path, patch, true); return reuDetailSave(); }
+    // espelha no instantâneo salvo, para o status não contar como "alteração não salva"
+    if (_openSnap) {
+        const segs = path.split('/').slice(2);
+        let o = _openSnap;
+        segs.forEach(sg => { if (!o[sg] || typeof o[sg] !== 'object') o[sg] = {}; o = o[sg]; });
+        Object.keys(patch).forEach(x => { if (patch[x] === null) delete o[x]; else o[x] = patch[x]; });
+    }
+    const sujo = _dirty;
+    _commit(path, patch, true);
+    if (!sujo) { _dirty = false; _openSnap = _clean(_data[_open.id]); }   // sem outras pendências: continua "Salvo"
+    _rerender();
+    if (await _flush('Salvando status…')) _toast('Status salvo: ' + ((STATUS[k] || {}).label || k) + '.', 'success');
 }
 function reuSetField(k, v) {
     const r = (k === 'descricao' || k === 'meetUrl') ? _guardOrg() : _guard(); if (!r) return;
@@ -3217,11 +3350,24 @@ function _checkReminders() {
 function reuPrintAta() {
     const r = _cur(); if (!r) return;
     const html = _ataHtml(r, _open.date);
-    const w = window.open('', '_blank');
-    if (!w) { _toast('Permita pop-ups para gerar a ata.', 'error'); return; }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    // Abre na própria página: camada em tela cheia com a ata num iframe (a impressão é só do iframe)
+    reuAtaClose();
+    const ov = document.createElement('div');
+    ov.id = 'reuAtaOv';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.55);display:flex;';
+    const fr = document.createElement('iframe');
+    fr.title = 'Ata da reunião';
+    fr.style.cssText = 'flex:1;border:0;background:#fff;';
+    ov.appendChild(fr);
+    document.body.appendChild(ov);
+    fr.srcdoc = html;
+    document.addEventListener('keydown', _ataEsc, true);
+}
+function _ataEsc(e) { if (e.key === 'Escape' && document.getElementById('reuAtaOv')) { e.stopPropagation(); reuAtaClose(); } }
+function reuAtaClose() {
+    const ov = document.getElementById('reuAtaOv');
+    if (ov) ov.remove();
+    document.removeEventListener('keydown', _ataEsc, true);
 }
 
 function _ataHtml(r, date) {
@@ -3263,7 +3409,6 @@ function _ataHtml(r, date) {
     const people = _partOrdem(r).map(id => { const pr = (o.presenca || {})[id]; return `<span class="pp ${pr ? 'pr-' + pr : ''}"><span class="av">${_esc(_initials(_userName(id)))}</span>${_esc(_userName(id))}${pr ? `<em>${presLbl[pr]}</em>` : ''}</span>`; }).join('') || '<span class="muted">—</span>';
     const links = (r.vinculos || []).map(v => { const a = _area(v.area); return `<span class="lk" style="--c:${a.color}"><b>${_esc(a.label)}</b> ${_esc(v.titulo || '#' + v.id)}</span>`; }).join('');
     const stColor = { agendada: '#2563eb', realizada: '#16a34a', cancelada: '#dc2626' }[o.status] || '#2563eb';
-    const signers = [r.criadoPor].concat((r.participantes || []).filter(p => String(p) !== String(r.criadoPor))).slice(0, 6);
     const footTxt = ('LAMIC · Ata ' + ataNo + ' · Gerado em ' + geradoEm + (me ? ' por ' + me.name : '')).replace(/["\\]/g, '');
     const title = `Ata - ${r.titulo} - ${_fmtDate(date)}`.replace(/[\\/:*?"<>|]/g, '-');
 
@@ -3365,7 +3510,7 @@ tbody tr:nth-child(even) td { background: var(--bg); }
   .ftr .pg { display: none; }
 }
 </style></head><body>
-<div class="bar-tools"><span>Pré-visualização da ata</span><button class="p" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button><button class="c" onclick="window.close()">Fechar</button></div>
+<div class="bar-tools"><span>Pré-visualização da ata</span><button class="p" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button><button class="c" onclick="try{parent.reuAtaClose()}catch(e){window.close()}">Fechar</button></div>
 <div class="page">
   <header class="hdr">
     <img class="logo" referrerpolicy="no-referrer" src="${LOGO_WHITE}" alt="LAMIC" onerror="this.outerHTML='<span class=&quot;logo-fb&quot;>LAMIC</span>'">
@@ -3392,8 +3537,6 @@ tbody tr:nth-child(even) td { background: var(--bg); }
     ${actions.length ? `<h2>Ações e responsáveis</h2>
     <table><thead><tr><th style="width:34px">#</th><th>Ação</th><th style="width:120px">Responsável</th><th style="width:70px">Prazo</th><th style="width:86px">Status</th></tr></thead>
     <tbody>${actions.map((a, i) => `<tr><td>${a.n}</td><td>${_esc(a.t)}</td><td>${_esc(a.who)}</td><td class="${a.late ? 'late' : ''}">${a.prazo ? _fmtDate(a.prazo).slice(0, 5) : '—'}</td><td><span class="tag ${a.ok ? 'ok' : 'pend'}">${a.ok ? 'Concluída' : 'Pendente'}</span></td></tr>`).join('')}</tbody></table>` : ''}
-    <h2>Assinaturas</h2>
-    <div class="signs">${signers.map((id, i) => `<div class="sign">${_esc(_userName(id))}<small>${i === 0 ? 'Organizador' : 'Participante'}</small></div>`).join('')}</div>
   </div>
   <footer class="ftr">
     <img referrerpolicy="no-referrer" src="${LOGO_COLOR}" alt="" onerror="this.remove()">
@@ -3435,7 +3578,7 @@ Object.assign(window, {
     reuOpenForm, reuCloseForm, reuSaveForm, reuDelete, reuF, reuFRec, reuFToggleWd, reuFormToggleUser, reuFormRemoveLink, reuRerenderForm, reuMeetHint,
     reuOpen, reuCloseDetail, reuSetStatus, reuTopicAdd, reuTopicSet, reuTopicDelete, reuItemAdd, reuItemSet, reuItemDelete, reuRemoveLink,
     reuTab, reuPopStatus, reuPopMenu, reuPopLembrete, reuPopMeet, reuSaveMeetPop, reuPopResp, reuPopPickLote, reuPopParticipants, reuPopActWho, reuActFilter,
-    reuClosePop, reuAutogrow, reuAddKey, reuSetField, reuSetPresenca, reuPopOrganizador, reuTransferOrg, reuToggleCoOrg, reuToggleParticipant, reuDuplicate, reuCarryPending,
+    reuClosePop, reuAutogrow, reuBulBlur, reuBulEdit, reuAddBtn, reuAtaClose, reuTreeAll, reuPopPrazo, reuPrazoNav, reuPrazoSet, reuDescAdd, reuDescBlur, reuAddKey, reuSetField, reuSetPresenca, reuPopOrganizador, reuTransferOrg, reuToggleCoOrg, reuToggleParticipant, reuDuplicate, reuCarryPending,
     reuPopSearch, reuPopPick, reuFormPopUsers, reuFormPartsAll, reuFormPartsClear, reuMiniNav, reuMiniPick,
     reuPopMarcadores, reuMkToggle, reuMkCreate, reuMkColor, reuMkSetColor, reuMkRename, reuMkDelete, reuPopTopic, reuPopTopicResp, reuPopBlock, reuPopActMk,
     reuToggleCollapse, reuBlkKey, reuIndent, reuBlkDragStart, reuDetailSave, reuDetailDiscard, reuTopicMove, reuShowShortcuts, reuBlkMove, reuToggleBell, reuCloseBell, reuClearAvisos, reuBellOpen, reuRemoveNodeLink, reuOpenAttach, reuCloseAttach, reuAnxFiles, reuAnxAddLink, reuOpenAnexo, reuDeleteAnexo, reuRenameAnexo,

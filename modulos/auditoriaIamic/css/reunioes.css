@@ -48,7 +48,11 @@
 .reu-ev { display: block; font-size: 11.5px; padding: 2px 6px; border-radius: 5px; background: color-mix(in srgb, var(--c) 14%, white); color: color-mix(in srgb, var(--c) 75%, black); border-left: 3px solid var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .reu-ev:hover { background: color-mix(in srgb, var(--c) 24%, white); }
 .reu-ev b { font-weight: 700; }
-.reu-ev.is-can, .reu-tg-ev.is-can { text-decoration: line-through; opacity: .55; }
+/* status no calendário: realizada (✓ verde) e cancelada (⊘, bem mais claro e riscado) */
+.reu-ev-st { margin-right: 4px; font-size: .92em; }
+.reu-ev.is-ok .reu-ev-st, .reu-tg-ev.is-ok .reu-ev-st, .reu-item.is-ok .reu-ev-st { color: #16a34a; }
+.reu-ev.is-can, .reu-tg-ev.is-can, .reu-item.is-can { text-decoration: line-through; opacity: .38; filter: saturate(.35); }
+.reu-ev.is-can .reu-ev-st, .reu-tg-ev.is-can .reu-ev-st, .reu-item.is-can .reu-ev-st { color: #dc2626; text-decoration: none; }
 .reu-more { font-size: 11px; color: #64748b; font-weight: 600; padding-left: 4px; }
 .reu-more:hover { color: var(--accent, #2563eb); }
 
@@ -447,7 +451,7 @@ body.dark-mode .reu-md.is-over { background: #172554 !important; }
 .reu-blk { display: flex; align-items: flex-start; gap: 6px; padding: 3px 4px 3px calc(var(--d) * 26px); border-radius: 8px; position: relative; min-height: 32px; }
 .reu-blk:hover { background: #f8fafc; }
 .reu-blk::before { content: ""; position: absolute; left: calc(var(--d) * 26px - 13px); top: 0; bottom: 0; width: 1px; background: #e2e8f0; display: none; }
-.reu-blk[style*="--d:1"]::before, .reu-blk[style*="--d:2"]::before { display: block; }
+.reu-blk:not([style*="--d:0"])::before { display: block; }
 .reu-blk-caret { width: 18px; height: 26px; border: 0; background: transparent; color: #94a3b8; cursor: pointer; font-size: 10px; flex-shrink: 0; border-radius: 5px; }
 .reu-blk-caret:hover { background: #eef2f7; color: #334155; }
 .reu-blk-caret.is-empty { visibility: hidden; }
@@ -456,6 +460,12 @@ body.dark-mode .reu-md.is-over { background: #172554 !important; }
 .reu-blk-text { flex: 1; min-width: 0; border: 0; background: transparent; font: 13.5px/1.5 "Segoe UI", system-ui, sans-serif; color: #1e293b; padding: 3px 6px; border-radius: 6px; resize: none; overflow: hidden; }
 .reu-blk-text:focus { outline: none; background: #fff; box-shadow: inset 0 0 0 1px #cbd5e1; }
 textarea.reu-blk-text { min-height: 26px; }
+textarea.reu-blk-text.reu-bul-off { display: none; }
+.reu-bul-view { cursor: text; white-space: pre-wrap; word-break: break-word; min-height: 26px; }
+.reu-bul-view:hover { background: rgba(148,163,184,.08); }
+.reu-bv-b { display: flex; padding-left: calc(var(--n, 0) * 1.4em); }
+.reu-bv-m { flex: 0 0 1.1em; }
+.reu-bv-b > span:last-child { flex: 1; min-width: 0; }
 .reu-blk.is-text .reu-blk-text { color: #475569; }
 .reu-blk.done .reu-blk-text { text-decoration: line-through; color: #94a3b8; }
 .reu-blk-meta { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; min-height: 28px; }
@@ -558,6 +568,11 @@ body.dark-mode .reu-blk.drop-inside { background: #172554 !important; }
 .reu-bell-it { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; cursor: pointer; border-left: 3px solid var(--c, transparent); }
 .reu-bell-it:hover { background: #f8fafc; }
 .reu-bell-it.is-past { opacity: .55; }
+.reu-bell-it.is-pend { background: #fffbeb; }
+.reu-bell-it.is-pend .reu-bell-main small { color: #b45309; }
+.reu-bell-pend-n { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 4px; border-radius: 99px; background: #f59e0b; color: #fff; font-size: 10.5px; line-height: 17px; text-align: center; }
+body.dark-mode .reu-bell-it.is-pend { background: rgba(245,158,11,.1); }
+body.dark-mode .reu-bell-it.is-pend .reu-bell-main small { color: #fbbf24; }
 .reu-bell-av { border-left-color: transparent; }
 .reu-bell-av.is-new { background: #eff6ff; }
 .reu-bell-time { display: flex; flex-direction: column; align-items: center; min-width: 42px; font: 700 13px "Segoe UI", system-ui, sans-serif; color: #0f172a; }
@@ -645,3 +660,57 @@ body:has(#reuDrawer.open) .form-drawer { z-index: 10081 !important; }
 .reu-pchip-more { font-weight: 700; color: #2563eb !important; background: #eff6ff !important; border-color: #bfdbfe !important; }
 .reu-pchip-clear { color: #94a3b8 !important; padding-left: 9px !important; padding-right: 9px !important; }
 .reu-pchip-clear:hover { color: #dc2626 !important; border-color: #fecaca !important; }
+
+/* Calendário do prazo */
+.reu-due-hit { position: absolute; inset: 0; border: 0; background: transparent; cursor: pointer; padding: 0; }
+.reu-pop.reu-cal-pop { padding: 0; border-radius: 14px; overflow: hidden; }
+.reu-cal { width: 268px; padding: 14px 14px 10px; font-family: "Segoe UI", system-ui, sans-serif; }
+.reu-cal-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.reu-cal-h b { font-size: 14.5px; color: #0f172a; text-transform: capitalize; font-weight: 700; }
+.reu-cal-h b span { color: #94a3b8; font-weight: 600; }
+.reu-cal-nav { width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: #64748b; cursor: pointer; display: grid; place-items: center; font-size: 12px; transition: background .15s, color .15s; }
+.reu-cal-nav:hover { background: #eff6ff; color: #2563eb; }
+.reu-cal-w, .reu-cal-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.reu-cal-w span { text-align: center; font-size: 11px; font-weight: 700; color: #94a3b8; padding: 4px 0 6px; letter-spacing: .3px; }
+.reu-cal-d { height: 32px; border: 0; border-radius: 9px; background: transparent; color: #1e293b; font: 600 13px "Segoe UI", system-ui, sans-serif; cursor: pointer; position: relative; transition: background .12s, color .12s, transform .12s; }
+.reu-cal-d:hover { background: #eff6ff; color: #2563eb; }
+.reu-cal-d:active { transform: scale(.94); }
+.reu-cal-d.fds { color: #64748b; }
+.reu-cal-d.fora { color: #cbd5e1; }
+.reu-cal-d.hoje { color: #2563eb; }
+.reu-cal-d.hoje::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: #2563eb; }
+.reu-cal-d.sel { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; box-shadow: 0 4px 10px rgba(37,99,235,.3); }
+.reu-cal-d.sel::after { background: #fff; }
+.reu-cal-d.sel.late { background: linear-gradient(135deg, #f87171, #dc2626); box-shadow: 0 4px 10px rgba(220,38,38,.3); }
+.reu-cal-q { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+.reu-cal-q button { border: 1px solid #e2e8f0; background: #fff; color: #475569; font: 600 11.5px "Segoe UI", system-ui, sans-serif; padding: 4px 10px; border-radius: 999px; cursor: pointer; transition: all .12s; }
+.reu-cal-q button:hover, .reu-cal-q button.on { border-color: #93c5fd; background: #eff6ff; color: #2563eb; }
+.reu-cal-f { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; min-height: 26px; }
+.reu-cal-cur { font-size: 12px; font-weight: 600; color: #334155; display: inline-flex; align-items: center; gap: 6px; }
+.reu-cal-cur i { color: #2563eb; }
+.reu-cal-cur.is-empty { color: #94a3b8; font-weight: 500; }
+.reu-cal-clr { border: 0; background: transparent; color: #dc2626; font: 600 12px "Segoe UI", system-ui, sans-serif; cursor: pointer; padding: 4px 8px; border-radius: 7px; }
+.reu-cal-clr:hover { background: #fef2f2; }
+body.dark-mode .reu-cal-h b { color: #f1f5f9; }
+body.dark-mode .reu-cal-d { color: #e2e8f0; }
+body.dark-mode .reu-cal-d.fds { color: #94a3b8; }
+body.dark-mode .reu-cal-d.fora { color: #475569; }
+body.dark-mode .reu-cal-d:hover, body.dark-mode .reu-cal-nav:hover { background: #1e3a8a55; color: #93c5fd; }
+body.dark-mode .reu-cal-q { border-top-color: #1e293b; }
+body.dark-mode .reu-cal-q button { background: transparent; border-color: #334155; color: #cbd5e1; }
+body.dark-mode .reu-cal-cur { color: #e2e8f0; }
+
+/* anteriores no sino: ícone de status */
+.reu-bell-it.is-ok .reu-ev-st { color: #16a34a; }
+.reu-bell-it.is-can { opacity: .6; }
+.reu-bell-it.is-can b { text-decoration: line-through; }
+.reu-bell-it.is-can .reu-ev-st { color: #dc2626; }
+/* passada sem status: alerta amarelo */
+.reu-ev-st.is-pend { color: #facc15; filter: drop-shadow(0 0 1px rgba(0,0,0,.45)); }
+.reu-item .reu-ev-st.is-pend, .reu-bell-it .reu-ev-st.is-pend { color: #d97706; filter: none; }
+
+/* botão "+" da aba Novos (nova atividade) */
+.nc-fab { position: absolute; right: 22px; bottom: 22px; width: 54px; height: 54px; border-radius: 50%; border: 0;
+    background: #2563eb; color: #fff; font-size: 20px; cursor: pointer; z-index: 5;
+    box-shadow: 0 6px 18px rgba(37,99,235,.4); transition: transform .15s, background .15s; }
+.nc-fab:hover { background: #1d4ed8; transform: scale(1.06); }

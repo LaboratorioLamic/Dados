@@ -488,4 +488,14 @@
 
     window.toggleNewCardsModal = toggleNewCardsModal;
     window.closeNewCardsModal  = closeNewCardsModal;
+    // "+" da aba Novos: abre o formulário de criação de atividade
+    window.ncNovaAtividade = function () {
+        if (typeof resetModal !== 'function' || typeof openFormDrawer !== 'function') return;
+        const nome = (typeof currentuser !== 'undefined' && currentuser) ? (currentuser.name || currentuser.user || '') : '';
+        try { editingAtivId = null; } catch (_) {}
+        try { originalItem = null; } catch (_) {}
+        resetModal('ativ');
+        if (nome && typeof msSetValue === 'function') msSetValue('ativ-resp', [nome]);
+        openFormDrawer('modalAtividades');
+    };
     window.updateNewCardsBadge = updateNewCardsBadge;
