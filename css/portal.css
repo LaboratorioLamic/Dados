@@ -867,3 +867,11 @@ html:has(#viewer), html:has(#viewer) body { overflow: hidden; }
 .usr-busca input { border: 0; outline: 0; padding: 9px 0; width: 100%; font-size: 14px; background: transparent; }
 .usr-sel select { border: 0; outline: 0; padding: 9px 0; font-size: 14px; background: transparent; max-width: 220px; cursor: pointer; }
 .usr-n { color: var(--txt-2); font-size: 12.5px; margin-left: auto; }
+
+/* Vídeo ainda processando no Drive */
+.gv.gv-proc { display: grid; place-items: center; background: linear-gradient(135deg, #0f1b33, #16284a); }
+.gv-espera { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; color: #fff; padding: 20px; max-width: 420px; }
+.gv-espera b { font-size: 16px; }
+.gv-espera small { font-size: 13px; opacity: .7; line-height: 1.5; }
+.gv-spin { width: 54px; height: 54px; border-radius: 50%; border: 4px solid rgba(255,255,255,.14); border-top-color: var(--turq); border-right-color: var(--turq-cl); animation: gvSpin .9s linear infinite; margin-bottom: 4px; box-shadow: 0 0 24px rgba(42,167,190,.25); }
+@keyframes gvSpin { to { transform: rotate(360deg); } }

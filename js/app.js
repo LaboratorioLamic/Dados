@@ -1385,11 +1385,46 @@
   }
 
   // galerias de imagens dos avisos viram carrossel; clique abre a imagem grande
-  // Vídeo com o player do próprio Google Drive (/preview em iframe): o link direto do Drive
-  // não toca mais em <video> fora do Drive. Só o play do Google (iframe carrega ao chegar na tela).
+  // Vídeo com o player do próprio Google Drive (/preview em iframe).
+  // Enquanto o Drive processa o vídeo, o player dele mostra "ainda está a ser processado".
+  // Não dá para ler o iframe (outro domínio), então usamos a miniatura como sinal: o Drive só
+  // gera a miniatura do vídeo depois de processar. Sem miniatura: animação "processando" e nova
+  // tentativa a cada 15 s; com miniatura: troca pelo player na hora. Após 15 min mostra o player.
+  const vidProntos = new Set(JSON.parse(sessionStorage.getItem('lamic_vid_ok') || '[]'));
   function montarPlayer(el) {
     if (el.dataset.ok) return; el.dataset.ok = '1';
-    el.innerHTML = `<iframe src="https://drive.google.com/file/d/${encodeURIComponent(el.dataset.vid)}/preview" loading="lazy" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer" title="${esc(el.dataset.nome || 'Vídeo')}"></iframe>`;
+    const id = el.dataset.vid, nome = el.dataset.nome || 'Vídeo';
+    const player = () => {
+      el.classList.remove('gv-proc');
+      el.innerHTML = `<iframe src="https://drive.google.com/file/d/${encodeURIComponent(id)}/preview" loading="lazy" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer" title="${esc(nome)}"></iframe>`;
+    };
+    if (vidProntos.has(id)) return player();
+    const inicio = Date.now();
+    let tentativa = 0;
+    const testar = () => {
+      if (!el.isConnected) return;   // cartão saiu da tela
+      const img = new Image();
+      img.referrerPolicy = 'no-referrer';
+      img.onload = () => {
+        if (img.naturalWidth > 1) {
+          vidProntos.add(id); sessionStorage.setItem('lamic_vid_ok', JSON.stringify([...vidProntos]));
+          player();
+        } else agendar();
+      };
+      img.onerror = agendar;
+      img.src = `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w320&t=${tentativa++}`;
+    };
+    const agendar = () => {
+      if (!el.isConnected) return;
+      if (Date.now() - inicio > 15 * 60 * 1000) return player();
+      if (!el.classList.contains('gv-proc')) {
+        el.classList.add('gv-proc');
+        el.innerHTML = `<div class="gv-espera"><span class="gv-spin"></span><b>Preparando o vídeo…</b>
+          <small>O Google Drive está processando o arquivo. O player aparece aqui sozinho quando terminar.</small></div>`;
+      }
+      setTimeout(testar, 15000);
+    };
+    testar();
   }
 
   function ligarGalerias(root) {
