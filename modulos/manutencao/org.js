@@ -1427,11 +1427,13 @@ async function orgLegadoExcluir(i) {
   const nome = _orgPendLista[i];
   if (!nome) return;
   if (state.ativos.some(a => a && a.setor === nome && !a.setorId)) { showToast('Não é possível remover: há ativos neste item.', 'error'); return; }
-  if (_orgPermissoesComNome(nome)) { showToast('Não é possível remover: há grupos ou usuários com acesso a este item.', 'error'); return; }
+  const temPerm = _orgPermissoesComNome(nome);
   if (!(await _orgConfirmar({
     tipo: 'perigo', titulo: 'Remover da lista antiga?', confirmar: 'Remover',
     mensagem: `O item <b>${_orgEsc(nome)}</b> sai da lista antiga de setores.`,
-    detalhe: 'Não há ativos nem permissões usando este item.'
+    detalhe: temPerm
+      ? 'Não há ativos neste item, mas há grupos ou usuários com acesso a ele. Essas permissões deixarão de ter efeito.'
+      : 'Não há ativos nem permissões usando este item.'
   }))) return;
   state.setores = (state.setores || []).filter(s => s !== nome);
   saveState();

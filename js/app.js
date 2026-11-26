@@ -56,6 +56,8 @@
     { id: 'docadmin', nome: 'Documentos', icone: 'fas fa-folder-open', perms: [['docadmin.gerenciar', 'Abrir o DocAdmin (cadastrar POPs, protocolos, termos e planilhas)']] },
     { id: 'comercial', nome: 'Comercial', icone: 'fas fa-hand-holding-dollar', perms: [['comercial.acessar', 'Acessar o Comercial LAMIC (preços, custos, propostas): ler e gravar']] },
     { id: 'unilamic', nome: 'UniLAMIC', icone: 'fas fa-graduation-cap', perms: [['unilamic.gerenciar', 'Abrir as configurações do UniLAMIC (cursos, relatórios, alunos)']] },
+    { id: 'feriados', nome: 'Feriados', icone: 'fas fa-calendar-xmark', perms: [['feriados.gerenciar', 'Cadastrar feriados (valem para o portal, agendas e Temperatura)']] },
+    { id: 'temperatura', nome: 'Temperatura', icone: 'fas fa-temperature-half', perms: [['temperatura.ver', 'Ver a aba Temperatura (Manutenção)'], ['temperatura.lancar', 'Lançar e editar leituras'], ['temperatura.exportar', 'Exportar leituras (planilha)'], ['temperatura.importar', 'Importar leituras de planilha'], ['temperatura.configurar', 'Cadastrar equipamentos e gerar acessos por unidade']] },
     { id: 'auditoria', nome: 'Auditoria', icone: 'fas fa-clipboard-list', perms: [['auditoria.ver', 'Ver log de auditoria']] },
   ];
   const PERMISSOES = CATEGORIAS.flatMap((c) => c.perms);
@@ -69,7 +71,7 @@
   // nomes de repo trocam "l" por "I" maiúsculo (TabeIasIamic); compara ignorando essa troca
   const chaveRepo = (s) => String(s || '').replace(/I/g, 'l').toLowerCase();
   const repoDe = (u, soGithub = false) => {
-    const sd = soGithub ? null : /^seeds\/([^/?#]+)\/?(index\.html)?$/.exec(u || '');
+    const sd = soGithub ? null : /^seeds\/([^/?#]+)\/?(index\.html)?(#[\w/-]*)?$/.exec(u || '');
     const gh = /^https:\/\/laboratoriolamic\.github\.io\/([^/?#]+)\/?(index\.html)?$/i.exec(u || '');
     const nome = (sd || gh)?.[1];
     return nome ? SEEDS.find((r) => chaveRepo(r) === chaveRepo(nome)) : undefined;
@@ -77,7 +79,10 @@
   const urlLink = (u) => {
     const repo = repoDe(u);
     if (!repo) return u;
-    return PUBLICADO ? `modulos/${repo}/index.html` : `seeds/${repo}/index.html`;
+    // O Controle de Temperatura antigo virou a aba Temperatura do Manutenção: o link Operacional › Temperatura abre direto nela
+    if (repo === 'Temperatura') return `${PUBLICADO ? 'modulos' : 'seeds'}/manutencao/index.html#temperatura`;
+    const hash = (String(u).match(/#[\w/-]+$/) || [''])[0];   // ex.: manutencao/index.html#temperatura
+    return (PUBLICADO ? `modulos/${repo}/index.html` : `seeds/${repo}/index.html`) + hash;
   };
   // Link liberado ao grupo: grupos/{g}/links/{linkId}. Grupo antigo sem a lista usa o módulo inteiro (modulos/{m}/grupos).
   function linkLiberado(grupo, m, l) {
@@ -245,9 +250,9 @@
     });
   }
 
-  // ---------- logout automático por inatividade (2 h) ----------
+  // ---------- logout automático por inatividade (4 h) ----------
   // Última atividade fica no localStorage: vale para todas as abas abertas do portal.
-  const INATIVO_MAX = 2 * 60 * 60 * 1000, CH_ATIVO = 'lamic_ultima_atividade';
+  const INATIVO_MAX = 4 * 60 * 60 * 1000, CH_ATIVO = 'lamic_ultima_atividade';
   let ultimoGravado = 0;
   const marcarAtivo = () => {
     const t = Date.now(); if (t - ultimoGravado < 30000) return;   // grava no máx. a cada 30 s
@@ -425,6 +430,7 @@
     await carregarGrupos();
     montarShell();
     ouvirAvisos();
+    iniciarTemperatura();
     window.onhashchange = rotear;
     await rotear();
     // não aguarda: a troca de senha e a fila de avisos esperam o usuário, e o loader só sai quando entrar() termina
@@ -498,7 +504,7 @@
   }
 
   // ---------- layout ----------
-  const ADMIN_PERMS = ['usuarios.gerenciar', 'grupos.gerenciar', 'modulos.gerenciar', 'auditoria.ver'];
+  const ADMIN_PERMS = ['usuarios.gerenciar', 'grupos.gerenciar', 'modulos.gerenciar', 'feriados.gerenciar', 'auditoria.ver'];
 
   function montarShell() {
     const admin = ADMIN_PERMS.some(pode);
@@ -562,10 +568,80 @@
     nav.insertAdjacentHTML('beforeend', S.mods.map((m) =>
       `<button class="lat-item" data-mod="${esc(m.id)}" title="${esc(m.nome)}"><i class="${esc(m.icone)}"></i><span>${esc(m.nome)}</span></button>`).join(''));
     ligarSetasNav(nav);
+    marcarTemperatura();
     $$('[data-mod]', nav).forEach((b) => b.onclick = () => {
       if (b.classList.contains('on')) return fecharPainel();
       abrirPainel(S.mods.find((m) => m.id === b.dataset.mod), b);
     });
+  }
+
+  // ---------- Temperatura: bolinha vermelha em Operacional › Temperatura enquanto houver pendência atrasada ----------
+  // Mesmas regras da aba (js/temperatura-calc.js): unidade do RH + unidades do índice temperatura/acesso/{login};
+  // só para quem tem temperatura.ver (grupo do portal ou índice). Caixas de transporte (obrigatorio:false) não contam.
+  const TS_ = { offs: [], offLeit: [], equip: {}, acesso: null, fer: {}, rh: {}, leit: {}, mesUn: '', ligado: false, n: 0, t: null };
+  const ouvirT = (p, cb) => { const r = ref(p); const h = r.on('value', (sn) => cb(sn.val()), () => cb(null)); return () => r.off('value', h); };
+  const ehLinkTemp = (url) => /#temperatura\b/.test(urlLink(url || ''));
+  function marcarTemperatura() {
+    const on = TS_.n > 0;
+    $$('.lat-item[data-mod]').forEach((b) => {
+      const m = (S.mods || []).find((x) => x.id === b.dataset.mod);
+      b.classList.toggle('tem-pend', on && !!m?._links.some((l) => ehLinkTemp(l.url)));
+    });
+    $$('#painel-links .pl-links a').forEach((a) => a.classList.toggle('tem-pend', on && /#temperatura\b/.test(a.getAttribute('href') || '')));
+  }
+  function recontarT() {
+    clearTimeout(TS_.t);
+    TS_.t = setTimeout(() => {
+      let n = 0;
+      try {
+        if (window.TempCalc && TS_.ligado) {
+          const agora = new Date();
+          const todas = Object.entries(TS_.rh || {}).filter(([, u]) => u && u.nome).map(([id, u]) => ({ id, nome: u.nome }));
+          const lib = TS_.acesso?.equips;
+          TempCalc.unidadesVisiveis({ todas, admin: false, minha: S.me?.unidadeId || null, acesso: TS_.acesso }).forEach((u) => {
+            const equips = Object.values(TS_.equip || {}).filter((e) => e && e.unidadeId === u.id && e.ativo !== false && (!lib || lib[e.id]));
+            n += TempCalc.pendencias({ equips, leituras: TS_.leit[u.id], feriados: TS_.fer, ano: agora.getFullYear(), mes: agora.getMonth(), agora }).filter((x) => x.atrasado).length;
+          });
+        }
+      } catch (e) { console.warn('[temperatura]', e); }
+      TS_.n = n; marcarTemperatura();
+    }, 300);
+  }
+  function ouvirLeiturasT() {
+    if (!TS_.ligado || !window.TempCalc) return;
+    const todas = Object.entries(TS_.rh || {}).filter(([, u]) => u && u.nome).map(([id, u]) => ({ id, nome: u.nome }));
+    const uns = TempCalc.unidadesVisiveis({ todas, admin: false, minha: S.me?.unidadeId || null, acesso: TS_.acesso }).map((u) => u.id);
+    const hj = new Date(), ym = TempCalc.ym(hj.getFullYear(), hj.getMonth());
+    const chave = ym + '|' + uns.sort().join(',');
+    if (chave === TS_.mesUn) return;
+    TS_.offLeit.forEach((f) => f()); TS_.leit = {}; TS_.mesUn = chave;
+    TS_.offLeit = uns.map((u) => ouvirT(`temperatura/leituras/${u}/${ym}`, (v) => { TS_.leit[u] = v || {}; recontarT(); }));
+  }
+  function ligarDadosT() {
+    if (TS_.ligado) return;
+    TS_.ligado = true;
+    TS_.offs.push(
+      ouvirT('temperatura/equipamentos', (v) => { TS_.equip = v || {}; recontarT(); }),
+      ouvirT('feriados', (v) => { TS_.fer = v || {}; recontarT(); }),
+      ouvirT('rh_unidades', (v) => { TS_.rh = v || {}; ouvirLeiturasT(); recontarT(); }));
+    ouvirLeiturasT();
+  }
+  function iniciarTemperatura() {
+    pararTemperatura();
+    if (!S.me || !window.TempCalc) return;
+    if (pode('temperatura.ver')) ligarDadosT();
+    // índice próprio (sempre legível): unidades, mnemônicos e permissões vindas do grupo do Manutenção
+    TS_.offs.push(ouvirT(`temperatura/acesso/${S.me.login}`, (v) => {
+      TS_.acesso = v || null;
+      if (v?.perms?.ver === true) ligarDadosT();
+      ouvirLeiturasT(); recontarT();
+    }));
+    TS_.relogio = setInterval(() => { ouvirLeiturasT(); recontarT(); }, 60 * 1000);   // vira "atrasado" às 12h/17h; troca de mês
+  }
+  function pararTemperatura() {
+    TS_.offs.forEach((f) => f()); TS_.offLeit.forEach((f) => f());
+    TS_.offs = []; TS_.offLeit = []; TS_.leit = {}; TS_.mesUn = ''; TS_.ligado = false; TS_.n = 0;
+    clearInterval(TS_.relogio); marcarTemperatura();
   }
 
   function fecharPainel() {
@@ -586,6 +662,7 @@
     // nunca passa da margem inferior da tela
     p.style.setProperty('--pl-max', `${Math.max(200, innerHeight - topo - 16)}px`);
     p.classList.remove('hidden');
+    marcarTemperatura();
     $('.pl-x', p).onclick = fecharPainel;
     $$('a', p).forEach((a) => a.onclick = (e) => {
       if (a.dataset.modo === 'iframe') { e.preventDefault(); abrirViewer(a.href, a.dataset.nome); }
@@ -685,6 +762,7 @@
       return null;
     },
     abrirViewer: (url, nome) => abrirViewer(url, nome),
+    lightbox: (itens, inicio) => lightbox(itens, inicio),
     iframeDe: (url) => guardados.get(url)?.el.querySelector('iframe') || null,
   };
   // Sistemas abertos ficam guardados em segundo plano (display:none = sem pintura/layout, só memória).
@@ -1222,8 +1300,12 @@
   const pendente = (a) => !a.fora && (!a.leitura || (a.exige_confirmacao && !a.leitura.confirmado_em));
   async function avisosPendentes() { return (await buscarAvisos()).filter(pendente); }
 
+
   async function atualizarContador() {
-    const n = (await avisosPendentes().catch(() => [])).length;
+    const avs = await avisosPendentes().catch(() => []);
+    const pend = avs;
+    const n = pend.length;
+    if (S.me) desenharSino(pend);
     const c = $('#cont-avisos');
     if (!c) return;
     c.textContent = n;
@@ -1394,6 +1476,16 @@
   function montarPlayer(el) {
     if (el.dataset.ok) return; el.dataset.ok = '1';
     const id = el.dataset.vid, nome = el.dataset.nome || 'Vídeo';
+    // Celular: o player do Drive em iframe funciona mal. Mostra a capa com botão de play
+    // que abre o vídeo no Drive (nova aba / app do Drive).
+    if (matchMedia('(max-width: 760px), (pointer: coarse)').matches) {
+      const url = `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
+      el.classList.add('gv-cel');
+      el.innerHTML = `<a class="gv-capa" href="${esc(url)}" target="_blank" rel="noopener" title="Assistir no Google Drive">
+        <img src="${esc(imgDrive(id, 800))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">
+        <span class="gv-play"><i class="fas fa-play"></i></span><span class="gv-cel-txt"><i class="fab fa-google-drive"></i> Assistir no Drive</span></a>`;
+      return;
+    }
     const player = () => {
       el.classList.remove('gv-proc');
       el.innerHTML = `<iframe src="https://drive.google.com/file/d/${encodeURIComponent(id)}/preview" loading="lazy" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer" title="${esc(nome)}"></iframe>`;
@@ -1468,6 +1560,7 @@
           b.outerHTML = conf ? `<span class="tag ok">Confirmado ${dataBR(Date.now())}</span>` : '<span class="tag ok">Lido</span>';
           $$(`#notifs [data-n="${CSS.escape(id)}"]`).forEach((n) => n.remove());
           atualizarContador();
+          dispatchEvent(new CustomEvent('aviso:lido', { detail: { id, conf } }));
           return;
         }
         if (b.dataset.ac === 'relatorio') {
@@ -1547,9 +1640,215 @@
       await ref(`leituras/${S.me.login}`).update(Object.fromEntries(simples.map((a) => [`${a.id}/lido_em`, TS()]))).catch(() => {});
     }
     const el = $('#lista');
-    el.innerHTML = avisos.map(cartaoAviso).join('') || `<div class="card vazio">Nenhum aviso por enquanto.</div>`;
-    ligarAvisos(el);
+    const PRIO = { urgente: 0, importante: 1, normal: 2 };
+    const LIMITE = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const pend = avisos.filter(pendente);
+    const recentes = avisos.filter((a) => !pendente(a) && (a.criado_em || 0) >= LIMITE);
+    const anteriores = avisos.filter((a) => !pendente(a) && (a.criado_em || 0) < LIMITE);
+    pend.sort((a, b) => (PRIO[a.prioridade] ?? 2) - (PRIO[b.prioridade] ?? 2) || (b.criado_em || 0) - (a.criado_em || 0));
+    const itens = [...pend, ...recentes];
+    if (!itens.length && !anteriores.length) { el.innerHTML = `<div class="card vazio">Nenhum aviso por enquanto.</div>`; S.car = null; }
+    else montarQuadro(el, itens, anteriores);
     if ($('#novo')) $('#novo').onclick = () => { if (!$('.modal-box.wizard')) formAviso(); };
+  }
+
+  // Quadro de avisos em carrossel: aviso em foco no centro, vizinhos esmaecidos nas laterais,
+  // barras com setas e alerta de pendências de cada lado, trilha de pontos e contador.
+  // Modo lista alternativo (lembrado por pessoa). Avisos com mais de 30 dias e já lidos ficam em "Anteriores".
+  const AV_MODO = 'lamic.avisos.modo';
+  function montarQuadro(el, itens, anteriores) {
+    let modo = 'carrossel';
+    try { modo = localStorage.getItem(AV_MODO) || 'carrossel'; } catch {}
+    let cur = 0, verAnt = false;
+    const ICO_CONF = '<i class="fas fa-signature"></i>';
+    el.innerHTML = `<div class="qd-barra">
+        <div class="qd-info"></div>
+        <div class="qd-pontos" role="tablist"></div>
+        <div class="qd-modos">
+          <button type="button" class="qd-modo" data-modo="carrossel" title="Carrossel"><i class="fas fa-clone"></i></button>
+          <button type="button" class="qd-modo" data-modo="lista" title="Ver em lista"><i class="fas fa-list"></i></button>
+        </div></div>
+      <div class="qd">
+        <div class="qd-trilho">${itens.map((a, i) => `<div class="qd-item" data-i="${i}">${cartaoAviso(a)}</div>`).join('')}</div>
+        <button type="button" class="qd-lado esq" data-lado="-1" aria-label="Aviso anterior"><span class="qd-seta"><i class="fas fa-chevron-left"></i></span><span class="qd-alerta" data-pula="-1" hidden></span></button>
+        <button type="button" class="qd-lado dir" data-lado="1" aria-label="Próximo aviso"><span class="qd-seta"><i class="fas fa-chevron-right"></i></span><span class="qd-alerta" data-pula="1" hidden></span></button>
+      </div>
+      ${itens.length ? '' : '<div class="card vazio">Nenhum aviso recente.</div>'}
+      ${anteriores.length ? `<button type="button" class="qd-ant-bt"><i class="fas fa-clock-rotate-left"></i> Anteriores (${anteriores.length})</button>
+        <div class="qd-ant" hidden>${anteriores.map(cartaoAviso).join('')}</div>` : ''}`;
+    const car = $('.qd', el), trilho = $('.qd-trilho', el), pontos = $('.qd-pontos', el), info = $('.qd-info', el);
+    ligarAvisos(trilho);
+    const elItens = () => $$('.qd-item', trilho).filter((x) => x.firstElementChild);
+    // estado de cada aviso lido do próprio cartão (muda ao confirmar / em tempo real)
+    const estado = (it) => {
+      const art = it.firstElementChild;
+      if (!art) return null;
+      if ($('[data-ac="confirmar"]', art)) return 'confirmar';
+      if (art.classList.contains('novo')) return 'novo';
+      return 'ok';
+    };
+    // vídeo (iframe do Drive): ao sair do centro, guarda o iframe e tira da tela (para o som);
+    // ao voltar ao centro, cria um iframe novo (recarregar o mesmo iframe deixava o player em branco)
+    const pararVideos = (it) => $$('.gv iframe', it).forEach((f) => {
+      const gv = f.closest('.gv');
+      gv.dataset.html = f.outerHTML.replace(' loading="lazy"', '');
+      f.replaceWith(document.createComment('video'));
+      gv.classList.add('gv-pausa');
+    });
+    const voltarVideos = (it) => $$('.gv.gv-pausa', it).forEach((gv) => {
+      if (gv.querySelector('iframe') || !gv.dataset.html) return;
+      gv.insertAdjacentHTML('beforeend', gv.dataset.html);
+      gv.classList.remove('gv-pausa');
+    });
+    let roAlt = null;
+    const ajustarAltura = () => {
+      const at = elItens()[cur];
+      if (modo !== 'carrossel' || !at) { trilho.style.height = ''; return; }
+      trilho.style.height = `${at.offsetHeight + 56}px`;   // folga para a sombra do cartão (a máscara corta o que passa da caixa)
+    };
+    const desenhar = (anterior) => {
+      const its = elItens();
+      // remove itens que ficaram vazios (aviso excluído em tempo real)
+      $$('.qd-item', trilho).forEach((x) => { if (!x.firstElementChild) x.remove(); });
+      if (!its.length) { car.hidden = true; pontos.innerHTML = ''; info.textContent = ''; return; }
+      cur = Math.max(0, Math.min(cur, its.length - 1));
+      el.classList.toggle('modo-lista', modo === 'lista');
+      $$('.qd-modo', el).forEach((b) => b.classList.toggle('on', b.dataset.modo === modo));
+      // movimento: anima de onde cada cartão estava até a nova posição (Web Animations,
+      // funciona mesmo com "reduzir movimento" do sistema, que desliga transições CSS)
+      const antes = anterior != null && modo === 'carrossel' ? its.map((it) => { const c = getComputedStyle(it); return { t: c.transform, o: c.opacity }; }) : null;
+      its.forEach((it, i) => {
+        const d = i - cur;
+        it.dataset.pos = d === 0 ? '0' : d === -1 ? '-1' : d === 1 ? '1' : d < 0 ? '-2' : '2';
+        it.setAttribute('aria-hidden', d !== 0 && modo === 'carrossel' ? 'true' : 'false');
+        if ('inert' in it) it.inert = d !== 0 && modo === 'carrossel';
+      });
+      if (antes) its.forEach((it, i) => {
+        const c = getComputedStyle(it), b = antes[i];
+        if (b.t === c.transform && b.o === c.opacity) return;
+        it.getAnimations().forEach((a) => a.cancel());
+        it.animate([{ transform: b.t, opacity: b.o }, { transform: c.transform, opacity: c.opacity }], { duration: 560, easing: 'cubic-bezier(.22,1,.36,1)' });
+      });
+      if (anterior != null && anterior !== cur && its[anterior]) pararVideos(its[anterior]);
+      if (its[cur]) voltarVideos(its[cur]);
+      const est = its.map(estado);
+      const nConf = est.filter((e) => e === 'confirmar').length, nNovo = est.filter((e) => e === 'novo').length;
+      info.innerHTML = `<b>${cur + 1}</b> de ${its.length}${nConf ? ` · <span class="qd-info-conf">${ICO_CONF} ${nConf} para confirmar</span>` : ''}${nNovo ? ` · <span class="qd-info-novo">${nNovo} novo${nNovo > 1 ? 's' : ''}</span>` : ''}`;
+      pontos.innerHTML = its.map((it, i) => {
+        const pr = it.firstElementChild.classList.contains('urgente') ? 'urgente' : it.firstElementChild.classList.contains('importante') ? 'importante' : 'normal';
+        return `<button type="button" class="qd-ponto ${pr} ${est[i]}${i === cur ? ' atual' : ''}" data-ir="${i}" title="${esc($('h3', it)?.firstChild?.textContent?.trim() || '')}"></button>`;
+      }).join('');
+      // alertas laterais: pendências antes/depois do atual
+      [-1, 1].forEach((lado) => {
+        const alvo = $(`.qd-alerta[data-pula="${lado}"]`, car);
+        const idxs = est.map((e, i) => (e !== 'ok' && (lado < 0 ? i < cur : i > cur) ? i : -1)).filter((i) => i >= 0);
+        const conf = idxs.filter((i) => est[i] === 'confirmar').length;
+        // pendência daquele lado: a própria seta muda de cor e pulsa (sem texto)
+        alvo.hidden = true;
+        const bt = $(`.qd-lado[data-lado="${lado}"]`, car);
+        bt.classList.toggle('pend-conf', !!conf);
+        bt.classList.toggle('pend-novo', !conf && !!idxs.length);
+        bt.title = idxs.length ? `${idxs.length} ${conf ? 'para confirmar' : idxs.length > 1 ? 'novos' : 'novo'} deste lado` : '';
+        bt.disabled = lado < 0 ? cur === 0 : cur === its.length - 1;
+      });
+      ajustarAltura();
+      roAlt?.disconnect();
+      if ('ResizeObserver' in window && its[cur]) { roAlt = new ResizeObserver(ajustarAltura); roAlt.observe(its[cur]); }
+    };
+    // alerta lateral muda acompanhando o deslize: sai para o lado do movimento e entra pelo outro
+    const trocarAlerta = (alvo, html, classe, dir) => {
+      const vis = !alvo.hidden;
+      if (alvo._html === html && alvo.className === classe) return;
+      const seq = alvo._seq = (alvo._seq || 0) + 1;
+      const aplicar = () => {
+        if (seq !== alvo._seq) return;
+        alvo._html = html; alvo.className = classe; alvo.innerHTML = html; alvo.hidden = !html;
+        if (html) alvo.animate(dir
+          ? [{ opacity: 0, transform: `translateX(${dir * 22}px) scale(.9)` }, { opacity: 1, transform: 'none' }]
+          : [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }],
+          { duration: 320, easing: 'cubic-bezier(.22,1,.36,1)' });
+      };
+      if (!vis || !dir) return aplicar();
+      alvo.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-dir * 22}px) scale(.9)` }],
+        { duration: 220, easing: 'ease-in', fill: 'forwards' }).onfinish = (e) => { aplicar(); e.target.cancel(); };
+    };
+    const ir = (i) => {
+      const its = elItens();
+      if (!its.length) return;
+      const ant = cur;
+      cur = Math.max(0, Math.min(i, its.length - 1));
+      if (ant !== cur) desenhar(ant);
+    };
+    const pularPendente = (lado) => {
+      const est = elItens().map(estado);
+      if (lado > 0) { const i = est.findIndex((e, k) => k > cur && e !== 'ok'); if (i >= 0) ir(i); }
+      else { for (let k = cur - 1; k >= 0; k--) if (est[k] !== 'ok') return ir(k); }
+    };
+    car.addEventListener('click', (e) => {
+      const p = e.target.closest('[data-pula]');
+      if (p) { e.stopPropagation(); return pularPendente(+p.dataset.pula); }
+      const l = e.target.closest('[data-lado]');
+      if (l) ir(cur + +l.dataset.lado);
+    });
+    pontos.addEventListener('click', (e) => { const b = e.target.closest('[data-ir]'); if (b) ir(+b.dataset.ir); });
+    $$('.qd-modo', el).forEach((b) => b.onclick = () => {
+      modo = b.dataset.modo;
+      try { localStorage.setItem(AV_MODO, modo); } catch {}
+      desenhar();
+    });
+    const antBt = $('.qd-ant-bt', el);
+    if (antBt) antBt.onclick = () => {
+      verAnt = !verAnt;
+      const box = $('.qd-ant', el);
+      if (verAnt && !box.dataset.ligado) { box.dataset.ligado = '1'; ligarAvisos(box); }
+      box.hidden = !verAnt;
+      antBt.classList.toggle('on', verAnt);
+      if (verAnt) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    // deslizar (toque/mouse) troca de aviso
+    let x0 = null, y0 = 0;
+    trilho.addEventListener('pointerdown', (e) => { if (modo === 'carrossel' && e.pointerType !== 'mouse') { x0 = e.clientX; y0 = e.clientY; } });
+    trilho.addEventListener('pointerup', (e) => {
+      if (x0 == null) return;
+      const dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) ir(cur + (dx < 0 ? 1 : -1));
+    });
+    // teclado: ← → (fora de campos, modais e sistemas abertos)
+    const tecla = (e) => {
+      if (!document.body.contains(car)) return removeEventListener('keydown', tecla);
+      if (modo !== 'carrossel' || $('.modal') || $('#viewer:not([hidden])') || $('.lightbox')) return;
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable) return;
+      if (e.key === 'ArrowLeft') ir(cur - 1);
+      else if (e.key === 'ArrowRight') ir(cur + 1);
+    };
+    addEventListener('keydown', tecla);
+    // confirmou: check animado e avança para o próximo pendente
+    const aoConfirmar = (e) => {
+      if (!document.body.contains(car)) return removeEventListener('aviso:lido', aoConfirmar);
+      const its = elItens(), i = its.findIndex((it) => it.firstElementChild?.dataset.id === e.detail.id);
+      if (i < 0) return;
+      const ok = document.createElement('div');
+      ok.className = 'qd-ok'; ok.innerHTML = '<i class="fas fa-check"></i>';
+      its[i].appendChild(ok);
+      setTimeout(() => ok.remove(), 1100);
+      desenhar();
+      if (!e.detail.conf || modo !== 'carrossel' || i !== cur) return;
+      setTimeout(() => {
+        const est = elItens().map(estado);
+        let prox = est.findIndex((s, k) => k > cur && s !== 'ok');
+        if (prox < 0) prox = est.findIndex((s) => s !== 'ok');
+        if (prox >= 0) ir(prox); else toast('Tudo em dia ✓');
+      }, 750);
+    };
+    addEventListener('aviso:lido', aoConfirmar);
+    addEventListener('resize', ajustarAltura);
+    S.car = {
+      // leva o carrossel até o aviso (sino, rota #avisos/id); devolve true se estava nele
+      ir: (id) => { const i = elItens().findIndex((it) => it.firstElementChild?.dataset.id === id); if (i >= 0) { ir(i); return true; } return false; },
+      atualizar: () => document.body.contains(car) && desenhar(),
+      ativo: () => modo === 'carrossel' && document.body.contains(car),
+    };
+    desenhar();
   }
 
   // Popover flutuante: fica por cima da janela (position: fixed), alinhado ao campo.
@@ -2112,20 +2411,70 @@
   // A confirmação de leitura acontece no próprio aviso, que abre destacado no quadro.
   const ROTULO_PRIO = { normal: 'Normal', importante: 'Importante', urgente: 'Urgente' };
   function notificar(a, novo = true) {
-    let pilha = $('#notifs');
-    if (!pilha) { pilha = document.createElement('div'); pilha.id = 'notifs'; document.body.appendChild(pilha); }
-    if ($(`[data-n="${CSS.escape(a.id)}"]`, pilha)) return;
-    const n = document.createElement('div');
-    n.className = `notif ${esc(a.prioridade || 'normal')}`;
-    n.dataset.n = a.id;
-    n.innerHTML = `<div class="nt-ic"><i class="fas fa-bell"></i></div>
-      <div class="nt-corpo"><small>${novo ? 'Novo aviso' : 'Aviso não lido'}${a.exige_confirmacao ? ' · requer confirmação' : ''}</small>
-        <b>${esc(a.titulo)}</b><span class="tag ${esc(a.prioridade || 'normal')}">${esc(ROTULO_PRIO[a.prioridade] || a.prioridade || 'Normal')}</span></div>
-      <div class="nt-acoes"><button class="btn sm turq" data-ver>Ver aviso</button><button class="nt-x" title="Fechar"><i class="fas fa-xmark"></i></button></div>`;
-    const fechar = () => { n.classList.add('saindo'); setTimeout(() => n.remove(), 250); };
-    $('.nt-x', n).onclick = fechar;
-    $('[data-ver]', n).onclick = () => { fechar(); irParaAviso(a.id); };
-    pilha.prepend(n);
+    S.sinoNovos = S.sinoNovos || new Set();
+    if (novo) S.sinoNovos.add(a.id);
+    atualizarContador().then(() => balancarSino());
+  }
+
+  // Sino de notificações (ao lado da barra do usuário). Só aparece com avisos pendentes e fica
+  // acima dos sistemas abertos (iframes); some sozinho quando as pendências zeram.
+  function montarSino() {
+    let w = $('#sino');
+    if (w) return w;
+    w = document.createElement('div');
+    w.id = 'sino'; w.className = 'sino'; w.hidden = true;
+    w.innerHTML = `<button type="button" class="sino-bt" aria-label="Notificações" title="Notificações"><i class="fas fa-bell"></i><b class="sino-n"></b></button>
+      <div class="sino-painel" hidden><div class="sino-topo"><b>Notificações</b><small></small></div><div class="sino-lista"></div>
+        <button type="button" class="sino-todos">Abrir quadro de avisos <i class="fas fa-arrow-right"></i></button></div>`;
+    document.body.appendChild(w);
+    const painel = $('.sino-painel', w);
+    const abrir = (v) => { painel.hidden = !v; w.classList.toggle('aberto', v); };
+    $('.sino-bt', w).onclick = (e) => { e.stopPropagation(); abrir(painel.hidden); };
+    $('.sino-todos', w).onclick = () => { abrir(false); fecharViewer(); location.hash = 'avisos'; };
+    painel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const it = e.target.closest('[data-aviso]');
+      if (it) { abrir(false); fecharViewer(); irParaAviso(it.dataset.aviso); }
+    });
+    document.addEventListener('click', () => abrir(false));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') abrir(false); });
+    // clique dentro de um iframe não chega aqui: fecha ao perder o foco
+    window.addEventListener('blur', () => abrir(false));
+    return w;
+  }
+  function posicionarSino() {
+    const w = $('#sino'), t = $('.topo-dir');
+    if (!w || !t) return;
+    const r = t.getBoundingClientRect();
+    w.style.top = `${r.top + (r.height - 44) / 2}px`;
+    w.style.right = `${innerWidth - r.left + 8}px`;
+  }
+  addEventListener('resize', () => posicionarSino());
+  function desenharSino(pend) {
+    const w = montarSino();
+    const n = pend.length;
+    if (!n) { w.hidden = true; w.classList.remove('aberto'); $('.sino-painel', w).hidden = true; return; }
+    const novos = S.sinoNovos || new Set();
+    $('.sino-n', w).textContent = n > 99 ? '99+' : n;
+    w.classList.toggle('urgente', pend.some((a) => a.prioridade === 'urgente'));
+    $('.sino-topo small', w).textContent = `${n} pendente${n > 1 ? 's' : ''}`;
+    $('.sino-lista', w).innerHTML = pend.slice().sort((a, b) => (b.criado_em || 0) - (a.criado_em || 0)).slice(0, 20).map((a) => {
+      const pr = a.prioridade || 'normal';
+      return `<button type="button" class="sino-item ${esc(pr)}" data-aviso="${esc(a.id)}">
+        <span class="sino-ic"><i class="fas ${pr === 'urgente' ? 'fa-triangle-exclamation' : pr === 'importante' ? 'fa-circle-exclamation' : 'fa-bell'}"></i></span>
+        <span class="sino-txt"><small>${novos.has(a.id) ? '<em>Novo</em> · ' : ''}${a.criado_em ? esc(dataBR(a.criado_em)) : ''}</small>
+          <b>${esc(a.titulo)}</b>${a.exige_confirmacao ? '<span class="sino-conf"><i class="fas fa-signature"></i> Confirme a leitura</span>' : ''}</span>
+        <span class="tag ${esc(pr)}">${esc(ROTULO_PRIO[pr] || pr)}</span></button>`;
+    }).join('') + (n > 20 ? `<div class="sino-mais">+ ${n - 20} no quadro de avisos</div>` : '');
+    const estava = w.hidden;
+    w.hidden = false;
+    posicionarSino();
+    if (estava) w.animate([{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 320, easing: 'cubic-bezier(.2,.9,.3,1.3)' });
+  }
+  function balancarSino() {
+    const b = $('#sino:not([hidden]) .sino-bt');
+    if (!b) return;
+    b.classList.remove('tocando'); void b.offsetWidth; b.classList.add('tocando');
   }
 
   // Já no quadro e o aviso na tela: só rola e destaca, sem redesenhar a página.
@@ -2145,17 +2494,31 @@
   function destacarAviso(id) {
     const c = id && $(`.aviso[data-id="${CSS.escape(id)}"]`);
     if (!c) return;
+    if (S.car?.ativo() && c.closest('.qd')) {
+      S.car.ir(id);
+      return setTimeout(() => { $('.qd')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); destacarCartao(c); }, 480);
+    }
     c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    destacarCartao(c);
+  }
+  function destacarCartao(c) {
     clearTimeout(c._dt);
     setTimeout(() => c.classList.add('destaque'), 250);   // destaca depois de começar a rolar
     c._dt = setTimeout(() => c.classList.remove('destaque'), 4200);
+    // aviso que exige confirmação: chama atenção para o botão "Li e estou ciente"
+    const conf = $('[data-ac="confirmar"]', c);
+    if (conf) {
+      clearTimeout(conf._dt);
+      conf.classList.remove('chamar'); void conf.offsetWidth;
+      setTimeout(() => conf.classList.add('chamar'), 700);
+      conf._dt = setTimeout(() => conf.classList.remove('chamar'), 6000);
+    }
   }
 
   // Ao entrar: avisos pendentes viram notificações (até 3 + resumo).
   async function avisosObrigatorios() {
-    const pend = await avisosPendentes();
-    pend.slice(0, 3).reverse().forEach((a) => notificar(a, false));
-    if (pend.length > 3) toast(`Você tem ${pend.length} avisos não lidos.`);
+    await atualizarContador();
+    balancarSino();
   }
 
   // Tempo real: todo aviso novo dispara a notificação em todos os usuários logados a quem ele se destina.
@@ -2198,8 +2561,9 @@
       if (!novo || !atual.isConnected) return;
       atual.replaceWith(novo);
       ligarAvisos(novo);
+      S.car?.atualizar();
     };
-    const aoSair = (snap) => { atualizarContador(); $(`.aviso[data-id="${CSS.escape(snap.key)}"]`)?.remove(); $$(`#notifs [data-n="${CSS.escape(snap.key)}"]`).forEach((n) => n.remove()); };
+    const aoSair = (snap) => { atualizarContador(); $(`.aviso[data-id="${CSS.escape(snap.key)}"]`)?.remove(); S.car?.atualizar(); $$(`#notifs [data-n="${CSS.escape(snap.key)}"]`).forEach((n) => n.remove()); };
     const todos = ref('avisos');
     todos.on('child_changed', aoMudar);
     todos.on('child_removed', aoSair);
@@ -2208,7 +2572,7 @@
       document.addEventListener('click', () => Notification.requestPermission(), { once: true });
     }
   }
-  function pararAvisos() { if (S.offAvisos) { S.offAvisos(); S.offAvisos = null; } $('#notifs')?.remove(); }
+  function pararAvisos() { pararTemperatura(); if (S.offAvisos) { S.offAvisos(); S.offAvisos = null; } $('#notifs')?.remove(); $('#sino')?.remove(); S.sinoNovos = null; }
 
   // ---------- administração ----------
   async function paginaAdmin(pg, sub) {
@@ -2216,6 +2580,7 @@
       ['usuarios', 'Usuários', 'usuarios.gerenciar'],
       ['grupos', 'Grupos e permissões', 'grupos.gerenciar'],
       ['modulos', 'Módulos e links', 'modulos.gerenciar'],
+      ['feriados', 'Feriados', 'feriados.gerenciar'],
       ['auditoria', 'Auditoria', 'auditoria.ver'],
     ].filter((a) => pode(a[2]));
     const atual = abas.find((a) => a[0] === sub) ? sub : abas[0][0];
@@ -2224,7 +2589,7 @@
       <div id="adm"></div>`;
     $$('.abas button').forEach((b) => b.onclick = () => location.hash = `admin/${b.dataset.a}`);
     const el = $('#adm');
-    await ({ usuarios: admUsuarios, grupos: admGrupos, modulos: admModulos, auditoria: admAuditoria })[atual](el);
+    await ({ usuarios: admUsuarios, grupos: admGrupos, modulos: admModulos, feriados: admFeriados, auditoria: admAuditoria })[atual](el);
   }
 
   const optGrupos = (sel) => S.grupos.map((g) => `<option value="${esc(g.id)}" ${g.id === sel ? 'selected' : ''}>${esc(g.nome)}</option>`).join('');
@@ -3258,6 +3623,121 @@
       img.onerror = () => erro(new Error('Não foi possível ler a imagem.'));
       img.src = URL.createObjectURL(arq);
     });
+  }
+
+  // ---------- feriados (únicos para o portal, Agenda de Exames, LAMIC Vacinas e Temperatura) ----------
+  // feriados/fixos/{MM-DD}: dia fixo, repete todo ano.  feriados/datas/{AAAA-MM-DD}: só naquele ano (ex.: Carnaval).
+  // Os módulos leem os dois nós; domingo não precisa ser cadastrado.
+  const MESES_FER = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  async function admFeriados(el) {
+    if (!document.getElementById('fer-css')) {
+      const st = document.createElement('style');
+      st.id = 'fer-css';
+      st.textContent = `.fer-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.fer-top h3{margin:0;color:var(--navy);min-width:70px;text-align:center}
+        .fer-leg{display:flex;gap:14px;font-size:12px;color:var(--txt-2);margin-left:auto;flex-wrap:wrap}.fer-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+        .fer-lay{display:grid;grid-template-columns:1fr 300px;gap:16px}@media(max-width:1000px){.fer-lay{grid-template-columns:1fr}}
+        .fer-ano{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+        .fer-mes{border:1px solid var(--borda,#e2e8f0);border-radius:10px;padding:10px}.fer-mes h4{margin:0 0 6px;font-size:13px;color:var(--navy)}
+        .fer-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12px}.fer-g b{font-size:10px;color:var(--txt-2);font-weight:600}
+        .fer-d{border:0;background:none;padding:5px 0;border-radius:6px;cursor:pointer;font:inherit;color:inherit}.fer-d:hover{background:rgba(42,167,190,.15)}
+        .fer-d.dom{color:#a0aec0}.fer-d.hoje{outline:1.5px solid #2AA7BE}.fer-d.fixo{background:#7C3AED;color:#fff;font-weight:700}.fer-d.data{background:#C8372D;color:#fff;font-weight:700}
+        .fer-lista li{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--borda,#e2e8f0);font-size:13px;cursor:pointer}.fer-lista ul{list-style:none;margin:0;padding:0}
+        .fer-lista .dt{font-weight:700;min-width:44px}.fer-lista .tp{margin-left:auto;font-size:11px;color:var(--txt-2)}`;
+      document.head.appendChild(st);
+    }
+    let ano = new Date().getFullYear();
+    let fer = (await ler('feriados')) || {};
+    const [velhaAgenda, velhaVac] = await Promise.all([ler('agenda/holidays').catch(() => null), ler('vacinas/holidays').catch(() => null)]);
+    let velha = { a: velhaAgenda, v: velhaVac };
+    const p2 = (n) => String(n).padStart(2, '0');
+    const hojeStr = (() => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; })();
+    const deDia = (iso) => fer.datas?.[iso] ? { tipo: 'data', ...fer.datas[iso] } : fer.fixos?.[iso.slice(5)] ? { tipo: 'fixo', ...fer.fixos[iso.slice(5)] } : null;
+
+    const datasVelhas = () => {
+      const { a: va, v: vv } = velha;
+      const a = Array.isArray(va) ? va : Object.keys(va || {}).filter((k) => va[k]);
+      const v = Array.isArray(vv) ? vv : Object.values(vv || {});
+      return [...new Set([...a, ...v].filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d))))].sort();
+    };
+
+    function desenhar() {
+      const doAno = [];
+      for (let m = 0; m < 12; m++) for (let d = 1; d <= 31; d++) {
+        const dt = new Date(ano, m, d); if (dt.getMonth() !== m) break;
+        const iso = `${ano}-${p2(m + 1)}-${p2(d)}`, f = deDia(iso);
+        if (f) doAno.push({ iso, ...f });
+      }
+      const velhas = datasVelhas();
+      el.innerHTML = `${velhas.length ? `<div class="card" style="margin-bottom:16px;border-left:4px solid #D98E04">
+          <b><i class="fas fa-file-import"></i> ${velhas.length} feriado(s) ainda guardados nas agendas antigas</b>
+          <p style="font-size:13px;color:var(--txt-2);margin:6px 0 10px">Agenda de Exames e LAMIC Vacinas passam a usar só os feriados daqui. Importe para trazer as datas e apagar a cópia antiga.</p>
+          <button class="btn sm turq" data-imp><i class="fas fa-file-import"></i> Importar e apagar das agendas</button></div>` : ''}
+        <div class="card"><div class="fer-top">
+          <button class="btn sm ghost" data-ano="-1" title="Ano anterior"><i class="fas fa-chevron-left"></i></button><h3>${ano}</h3>
+          <button class="btn sm ghost" data-ano="1" title="Próximo ano"><i class="fas fa-chevron-right"></i></button>
+          <span class="fer-leg"><span><i style="background:#7C3AED"></i>Fixo (todo ano)</span><span><i style="background:#C8372D"></i>Só neste ano</span><span><i style="background:#e2e8f0"></i>Domingo (automático)</span></span></div>
+          <p style="font-size:13px;color:var(--txt-2);margin:0 0 12px">Clique em um dia para marcar ou desmarcar. Vale para Agenda de Exames, LAMIC Vacinas e Temperatura.</p>
+          <div class="fer-lay"><div class="fer-ano">${MESES_FER.map((nm, m) => {
+            const pri = new Date(ano, m, 1).getDay(), dias = new Date(ano, m + 1, 0).getDate();
+            let g = 'DSTQQSS'.split('').map((c) => `<b>${c}</b>`).join('') + '<span></span>'.repeat(pri);
+            for (let d = 1; d <= dias; d++) {
+              const iso = `${ano}-${p2(m + 1)}-${p2(d)}`, f = deDia(iso), dom = new Date(ano, m, d).getDay() === 0;
+              g += `<button class="fer-d ${dom ? 'dom' : ''} ${f ? f.tipo : ''} ${iso === hojeStr ? 'hoje' : ''}" data-dia="${iso}" title="${f ? esc(f.nome || 'Feriado') : ''}">${d}</button>`;
+            }
+            return `<div class="fer-mes"><h4>${nm}</h4><div class="fer-g">${g}</div></div>`;
+          }).join('')}</div>
+          <div class="fer-lista"><h4 style="margin:0 0 6px;color:var(--navy)">Feriados de ${ano} <small style="color:var(--txt-2);font-weight:400">(${doAno.length})</small></h4>
+            <ul>${doAno.map((f) => `<li data-dia="${f.iso}"><span class="dt">${f.iso.slice(8)}/${f.iso.slice(5, 7)}</span><span>${esc(f.nome || 'Feriado')}</span>
+              <span class="tp"><i class="fas ${f.tipo === 'fixo' ? 'fa-rotate' : 'fa-calendar-day'}"></i> ${f.tipo === 'fixo' ? 'todo ano' : 'só ' + ano}</span></li>`).join('') || '<li class="vazio" style="cursor:default">Nenhum feriado cadastrado.</li>'}</ul></div></div></div>`;
+      $$('[data-ano]', el).forEach((b) => b.onclick = () => { ano += +b.dataset.ano; desenhar(); });
+      $$('[data-dia]', el).forEach((b) => b.onclick = () => editar(b.dataset.dia));
+      const bi = $('[data-imp]', el); if (bi) bi.onclick = importar;
+    }
+
+    function editar(iso) {
+      const f = deDia(iso), [y, mo, d] = iso.split('-');
+      const m = modal(`<h2 style="margin-bottom:4px"><i class="fas fa-calendar-xmark"></i> ${d}/${mo}/${y}</h2>
+        <form class="fer-form"><label class="field"><span>Nome do feriado</span><input name="nome" required maxlength="80" value="${esc(f?.nome || '')}" placeholder="Ex.: Tiradentes"></label>
+        <label class="field"><span>Repetição</span><select name="tipo"><option value="fixo" ${f?.tipo !== 'data' ? 'selected' : ''}>Todo ano em ${d}/${mo} (dia fixo)</option><option value="data" ${f?.tipo === 'data' ? 'selected' : ''}>Só em ${y} (data muda todo ano)</option></select></label>
+        <div class="modal-acoes">${f ? '<button type="button" class="btn ghost" data-rm style="margin-right:auto;color:#C8372D"><i class="fas fa-trash"></i> Remover</button>' : ''}
+        <button type="button" class="btn ghost" data-x>Cancelar</button><button class="btn turq">Salvar</button></div></form>`);
+      $('[data-x]', m).onclick = () => m.remove();
+      const caminho = (tipo) => tipo === 'fixo' ? `feriados/fixos/${iso.slice(5)}` : `feriados/datas/${iso}`;
+      const rm = $('[data-rm]', m);
+      if (rm) rm.onclick = async () => {
+        if (!await confirmarAcao(`Remover o feriado ${f.nome || ''}?${f.tipo === 'fixo' ? ' Ele sai de todos os anos.' : ''}`)) return;
+        try { await ref(caminho(f.tipo)).remove(); auditar('feriado.remover', `${iso} ${f.nome || ''}`); m.remove(); await recarregar(); toast('Feriado removido.'); } catch (e) { toast(traduz(e)); }
+      };
+      $('form', m).onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target), tipo = fd.get('tipo'), nome = String(fd.get('nome')).trim();
+        const up = { [caminho(tipo)]: { nome, por: S.me.login, em: TS() } };
+        if (f && f.tipo !== tipo) up[caminho(f.tipo)] = null; // trocou de fixo para só-este-ano (ou o contrário)
+        try { await ref().update(up); auditar('feriado.salvar', `${iso} ${nome} (${tipo})`); m.remove(); await recarregar(); toast('Feriado salvo.'); } catch (er) { toast(traduz(er)); }
+      };
+      setTimeout(() => $('input[name=nome]', m)?.focus(), 30);
+    }
+
+    async function importar() {
+      const velhas = datasVelhas();
+      if (!await confirmarAcao(`Importar ${velhas.length} feriado(s) e apagar das agendas? As datas entram como "só neste ano"; ajuste depois as que repetem todo ano. Os nós agenda/holidays e vacinas/holidays serão apagados.`, { ok: 'Importar', perigo: true })) return;
+      const up = {};
+      velhas.forEach((iso) => { if (!deDia(iso)) up[`feriados/datas/${iso}`] = { nome: 'Feriado', por: S.me.login, em: TS(), origem: 'agendas' }; });
+      try {
+        if (Object.keys(up).length) await ref().update(up);
+        await Promise.all([ref('agenda/holidays').remove(), ref('vacinas/holidays').remove()]);
+        auditar('feriado.importar', `${Object.keys(up).length} datas das agendas`);
+        toast(`${Object.keys(up).length} feriado(s) importado(s).`);
+        await recarregar(true);
+      } catch (e) { toast(traduz(e)); }
+    }
+
+    async function recarregar(tudo) {
+      fer = (await ler('feriados')) || {};
+      if (tudo) velha = {};
+      desenhar();
+    }
+    desenhar();
   }
 
   async function admAuditoria(el) {

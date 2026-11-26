@@ -336,7 +336,7 @@ window.LAMIC_SEED_MODULOS = [
    },
    {
     "nome": "Temperatura",
-    "url": "seeds/Temperatura/index.html",
+    "url": "seeds/manutencao/index.html#temperatura",
     "icone": "fas fa-temperature-high",
     "modo": "iframe",
     "ordem": 1

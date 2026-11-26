@@ -2794,6 +2794,15 @@
     window.viewPublicacao(pubId);
   };
 
+  window.verAtividadesPubView = function () {
+    const p = _pubViewId ? arqBuscarPublicacao(_pubViewId) : null;
+    if (!p || !p.tarefaId) return;
+    _pubViewFromAgenda = false;
+    window.closePubView();
+    openTarefaDetalhe(p.tarefaId);
+    switchTarefaDetalheTab('atividades');
+  };
+
   function editarPubView() {
     if (!_pubViewId) return;
     closeModal('modal-pub-view');
