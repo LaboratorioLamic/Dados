@@ -12,7 +12,8 @@ const OC_KEY = 'gestao-ocorrencias-v1';
 
 const OC_CATALOGOS_PADRAO = {
   subtipos: {
-    falha:             ['Não liga', 'Erro / alarme do equipamento', 'Resultado ou leitura inconsistente', 'Parada durante a rotina', 'Falha de software / interface', 'Ruído ou aquecimento anormal'],
+    falha:             ['Não liga', 'Erro / alarme do equipamento', 'Resultado ou leitura inconsistente', 'Falha de software / interface', 'Ruído ou aquecimento anormal'],
+    parada:            ['Parada durante a rotina', 'Em manutenção corretiva', 'Aguardando peça / técnico', 'Desligado / sem uso', 'Queda de energia'],
     ambiental:         ['Temperatura fora da faixa', 'Umidade fora da faixa', 'Queda de energia', 'Oscilação elétrica', 'Falha do nobreak / gerador', 'Água reagente fora da especificação', 'Falha de climatização'],
     dano:              ['Queda / impacto', 'Derramamento de líquido', 'Dano no transporte', 'Dano estrutural'],
     acidente:          ['Acidente com operador', 'Exposição a material biológico', 'Choque elétrico', 'Corte / perfuração'],
@@ -25,17 +26,33 @@ const OC_CATALOGOS_PADRAO = {
   motivosRetirada:    ['Conserto inviável técnica ou economicamente', 'Fim de vida útil / obsolescência', 'Substituído por outro equipamento', 'Aguardando peça ou reparo sem previsão', 'Aguardando decisão da gestão', 'Devolvido ao fornecedor / comodato encerrado'],
 };
 
+// Subtipos usados pela aba Temperatura (o mini-formulário mostra só estes). Entram também no catálogo geral.
+const OC_SUBTIPOS_TEMPERATURA = {
+  falha:     ['Temperatura fora da faixa', 'Falha de refrigeração / aquecimento', 'Porta aberta ou vedação com defeito', 'Termômetro / sensor com defeito', 'Queda de energia'],
+  parada:    ['Em manutenção corretiva', 'Aguardando peça / técnico', 'Desligado / sem uso', 'Queda de energia'],
+  ambiental: ['Temperatura fora da faixa', 'Falha de climatização', 'Queda de energia'],
+};
+function _ocGarantirSubtiposTemp() {
+  Object.entries(OC_SUBTIPOS_TEMPERATURA).forEach(([t, lista]) => {
+    const atual = ocState.catalogos.subtipos[t] = ocState.catalogos.subtipos[t] || [];
+    lista.forEach(v => { if (!atual.includes(v)) atual.push(v); });
+  });
+}
+
 let ocState = {
   ocorrencias: {},
   catalogos: JSON.parse(JSON.stringify(OC_CATALOGOS_PADRAO)),
 };
 
 // Flag: true após o Firebase responder pela primeira vez
+_ocGarantirSubtiposTemp();
+
 let _ocFirebaseReady = false;
 
 // ── CONSTANTES ────────────────────────────────────────────────
 const OC_TIPOS = {
-  falha:             { label: 'Falha / Parada',             cls: 'oc-tipo-falha'     },
+  falha:             { label: 'Falha',                      cls: 'oc-tipo-falha'     },
+  parada:            { label: 'Parada',                     cls: 'oc-tipo-parada'    },
   ambiental:         { label: 'Ambiental / Infraestrutura', cls: 'oc-tipo-ambiental' },
   dano:              { label: 'Dano',                       cls: 'oc-tipo-dano'      },
   acidente:          { label: 'Acidente',                   cls: 'oc-tipo-acidente'  },
@@ -202,6 +219,7 @@ function _ocApplyData(d) {
       });
     }
   }
+  _ocGarantirSubtiposTemp();
 }
 
 // O Firebase descarta arrays e objetos vazios e pode devolver arrays como objetos
@@ -2527,28 +2545,32 @@ async function _ocCriarDeOT(ot) {
 }
 
 // Gerada automaticamente pela aba Temperatura (leitura fora da faixa ou equipamento sem leitura).
-// opts: { ativoId?, tipo: 'ambiental'|'falha', titulo, descricao, acao, dataIso, especificos?, origem }
+// opts: { ativoId?, tipo, subtipo?, metodoDetec?, parado?, titulo, descricao, acao, dataIso, especificos?, origem }
+// Impacto já vem avaliado como "não afeta resultados / sem risco ao paciente" (pode ser revisto na ocorrência).
 async function ocGerarDeTemperatura(opts) {
   const u = _ocSess(), agora = _ocNowLocal();
   const ativo = opts.ativoId && typeof _ativoById === 'function' ? _ativoById(opts.ativoId) : null;
   const oc = _ocNormalizar({
     id: _ocUid(),
     numero: await _ocProximoNumero(),
-    ativos: ativo ? [{ ativoId: ativo.id, snapshot: _ocSnapshotAtivo(ativo), liberacao: {}, parado: false, dataHoraParada: '' }] : [],
-    tipo: opts.tipo || 'falha', subtipo: '',
+    ativos: ativo ? [{ ativoId: ativo.id, snapshot: _ocSnapshotAtivo(ativo), liberacao: {}, parado: !!opts.parado, dataHoraParada: opts.parado ? agora : '' }] : [],
+    tipo: opts.tipo || 'falha', subtipo: opts.subtipo || '',
     titulo: opts.titulo, descricao: opts.descricao,
     dataHoraOcorrencia: opts.dataIso ? `${opts.dataIso}T${agora.slice(11, 16) || '00:00'}` : agora,
-    dataHoraDeteccao: agora, metodoDetec: 'Controle de temperatura',
+    dataHoraDeteccao: agora, metodoDetec: opts.metodoDetec || 'Monitoramento de temperatura',
     severidade: 'media',
     dadosEspecificos: opts.especificos || {},
     detectadoPorId: u.id, detectadoPorNome: u.nome,
     acaoImediata: { texto: opts.acao || 'Registrado no controle de temperatura.', ..._ocAssinatura() },
+    impacto: { afetaResultados: 'nao', riscoPaciente: false, riscoOperador: false, laudosLiberadosAfetados: false,
+      justificativa: 'Registro do controle de temperatura: não afeta resultados nem o paciente.', ..._ocAssinatura() },
     origem: opts.origem || { tipo: 'temperatura' },
     status: 'aberta',
     criadoEm: _ocAgora(), criadoPorId: u.id, criadoPorNome: u.nome,
   });
   _ocTrilha(oc, 'criacao', 'Ocorrência gerada automaticamente pelo controle de temperatura');
   await _ocCommit(oc, null);
+  if (oc.ativos.some(a => a.parado)) _ocAplicarPausa(oc);
   return oc;
 }
 

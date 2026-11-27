@@ -25,7 +25,7 @@ const TEMP_RAIZ = 'temperatura';
 const TEMP_CORTE = { manha: 12, tarde: 17 };       // hora a partir da qual o turno de hoje fica atrasado
 const TEMP_TURNOS = { manha: 'Manhã', tarde: 'Tarde' };
 // dia sem leitura justificado (abono): conta como preenchido, observação obrigatória
-const TEMP_ABONOS = { manutencao: 'Em manutenção', inoperante: 'Fora de funcionamento', desligado: 'Desligado / sem uso', outro: 'Outro motivo' };
+const TEMP_ABONOS = { limpeza: 'Limpeza', manutencao: 'Em manutenção', inoperante: 'Fora de funcionamento', desligado: 'Desligado / sem uso', outro: 'Outro motivo' };
 const _tOk = (l) => l != null && (l.atual != null || !!l.abono);
 const TEMP_ICON_TURNO = { manha: 'fa-cloud-sun', tarde: 'fa-sun' };
 const TEMP_MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -508,7 +508,7 @@ function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloquei
   const fora = l?.atual != null && (l.atual < e.min || l.atual > e.max);
   const ab = !!l?.abono, obs = ab || !!l?.justificativa;
   const podeOc = typeof ocGerarDeTemperatura === 'function' && !l?.ocorrenciaId;
-  const motivos = Object.entries(TEMP_ABONOS).map(([k, t]) => `<label class="temp-chipr"><input type="radio" name="ab-${e.id}" data-f="abono" value="${k}" ${(l?.abono || 'manutencao') === k ? 'checked' : ''}><span>${t}</span></label>`).join('');
+  const motivos = Object.entries(TEMP_ABONOS).map(([k, t]) => `<label class="temp-chipr"><input type="radio" name="ab-${e.id}" data-f="abono" value="${k}" onchange="tempValidar(this)" ${(l?.abono || 'manutencao') === k ? 'checked' : ''}><span>${t}</span></label>`).join('');
   return `<tr data-eq="${e.id}" class="temp-lin ${ab ? 'abn' : ''} ${obs || (fora && podeOc) ? 'det-on' : ''} ${l?.justificativa ? 'obs-on' : ''}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div>
       <div class="temp-acts"><button type="button" class="temp-pill" onclick="tempObsToggle(this)"><i class="fas fa-comment-dots"></i> Observação</button><button type="button" class="temp-pill amb temp-abn-bt" onclick="tempAbonoToggle(this)"><i class="fas ${ab ? 'fa-rotate-left' : 'fa-screwdriver-wrench'}"></i> <span>${ab ? 'Voltar à leitura' : 'Sem leitura'}</span></button></div></td>
     <td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>
@@ -519,13 +519,80 @@ function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloquei
   <tr class="temp-det"><td colspan="5"><div class="temp-det-in">
       <div class="temp-abn"><span class="temp-det-lb">Motivo</span><div class="temp-chips">${motivos}</div>
 </div>
-      <div class="temp-obs"><i class="fas fa-comment-dots"></i><input type="text" data-f="just" maxlength="300" placeholder="${ab ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : 'Observação (opcional)'}" value="${_tEsc(l?.justificativa || '')}" oninput="tempValidar(this)"></div>
+      <div class="temp-obs"><i class="fas fa-comment-dots"></i><input type="text" data-f="just" maxlength="300" placeholder="${ab && l?.abono !== 'limpeza' ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : 'Observação (opcional)'}" value="${_tEsc(l?.justificativa || '')}" oninput="tempValidar(this)"></div>
       <div class="temp-sws">
         <label class="temp-swl temp-dia-sw ${outro?.atual != null ? 'off' : ''}" ${outro?.atual != null ? `title="Já há leitura no outro turno (${_tFmt(outro.atual)} ºC)"` : ''}><input type="checkbox" data-f="dia" ${outro?.atual != null ? 'disabled' : ''}><span class="temp-sw"></span>
           <span>Aplicar ao dia todo (manhã e tarde)${outro?.atual != null ? ` <small><i class="fas fa-lock"></i> outro turno já tem leitura</small>` : ''}</span></label>
-      ${podeOc ? `<label class="temp-swl temp-oc-sw ${fora || ab ? '' : 'hide'}" title="Cria a ocorrência no módulo Ocorrências usando o texto da observação"><input type="checkbox" data-f="oc"><span class="temp-sw red"></span>
+      ${podeOc ? `<label class="temp-swl temp-oc-sw ${fora || ab ? '' : 'hide'}" title="Cria a ocorrência no módulo Ocorrências usando o texto da observação"><input type="checkbox" data-f="oc" onchange="tempOcToggle(this)"><span class="temp-sw red"></span>
         <span>Gerar Ocorrência</span></label>` : ''}</div>
+      ${podeOc ? _tOcForm(e, fora, ab) : ''}
     </div></td></tr>`;
+}
+// mini-formulário da ocorrência (abre ao ligar "Gerar Ocorrência"); observação vira a descrição
+function _tOcForm(e, fora, ab) {
+  const cat = (typeof ocState !== 'undefined' && ocState.catalogos) || {};
+  const todos = typeof OC_TIPOS !== 'undefined' ? OC_TIPOS : {};
+  const tipos = Object.fromEntries(['falha', 'parada', 'ambiental'].map(k => [k, todos[k] || { label: k }]));   // só tipos que fazem sentido aqui
+  const tipo = ab ? 'parada' : 'falha';
+  const subs = _tSubtiposOc(tipo);
+  const sub = fora ? 'Temperatura fora da faixa' : '';
+  const dets = cat.metodosDetec || ['Monitoramento de temperatura'];
+  return `<div class="temp-ocf">
+    <div class="temp-ocf-h"><span class="temp-ocf-ic"><i class="fas fa-triangle-exclamation"></i></span><div><b>Nova ocorrência</b><small>A observação acima vira a descrição · impacto: não afeta o paciente</small></div></div>
+    <div class="temp-ocf-g">
+      ${_tPick('ocTipo', 'Tipo', Object.entries(tipos).map(([k, t]) => ({ v: k, t: t.label, i: TEMP_OC_ICO[k] })), tipo)}
+      ${_tPick('ocSub', 'Subtipo', subs.map(v => ({ v, t: v })), sub, 'Selecione')}
+      <div class="temp-pk"><span class="temp-pk-l">Detecção</span><input type="hidden" data-f="ocDet" value="Monitoramento de temperatura">
+        <div class="temp-pk-bt fixo" title="Fixo para ocorrências da Temperatura"><i class="fas fa-temperature-half"></i><span>Monitoramento de temperatura</span><i class="fas fa-lock temp-pk-c"></i></div></div>
+    </div>
+    <label class="temp-ocf-campo"><span>O que foi feito de imediato</span><div class="temp-ocf-in"><i class="fas fa-bolt"></i><input type="text" data-f="ocAcao" maxlength="300" placeholder="ex.: amostras transferidas para o freezer reserva"></div></label>
+    <label class="temp-swl temp-ocf-par"><input type="checkbox" data-f="ocParado"><span class="temp-sw red"></span><span><b>O equipamento está sem funcionar?</b><small>marca o ativo como parado na ocorrência</small></span></label>
+  </div>`;
+}
+const TEMP_OC_ICO = { falha: 'fa-plug-circle-xmark', parada: 'fa-circle-pause', ambiental: 'fa-temperature-half', dano: 'fa-burst', acidente: 'fa-user-injured', uso_indevido: 'fa-user-xmark', alerta_fabricante: 'fa-bullhorn' };
+// seletor em popover (botão + lista estilizada); valor fica num input hidden data-f
+function _tPick(f, rot, ops, val, vazio = '') {
+  const at = ops.find(o => o.v === val);
+  return `<div class="temp-pk"><span class="temp-pk-l">${rot}</span><input type="hidden" data-f="${f}" value="${_tEsc(at ? val : '')}">
+    <button type="button" class="temp-pk-bt ${at ? '' : 'vz'}" data-op="${_tEsc(JSON.stringify(ops))}" onclick="tempPk(this)">
+      ${at?.i ? `<i class="fas ${at.i}"></i>` : ''}<span>${_tEsc(at ? at.t : (vazio || '—'))}</span><i class="fas fa-chevron-down temp-pk-c"></i></button></div>`;
+}
+function tempPk(btn) {
+  const velho = document.getElementById('temp-pk-pop'); if (velho) { velho.remove(); if (velho._btn === btn) return; }
+  const ops = JSON.parse(btn.dataset.op || '[]'), inp = btn.parentElement.querySelector('input[type=hidden]');
+  const p = document.createElement('div'); p.id = 'temp-pk-pop'; p.className = 'temp-pk-pop'; p._btn = btn;
+  p.innerHTML = ops.length ? ops.map((o, i) => `<button type="button" class="${o.v === inp.value ? 'on' : ''}" data-i="${i}">${o.i ? `<i class="fas ${o.i}"></i>` : ''}<span>${_tEsc(o.t)}</span>${o.v === inp.value ? '<i class="fas fa-check temp-pk-ok"></i>' : ''}</button>`).join('') : '<div class="temp-pk-vz">Sem opções</div>';
+  document.body.appendChild(p);
+  const r = btn.getBoundingClientRect();
+  p.style.minWidth = r.width + 'px'; p.style.left = r.left + 'px';
+  p.style.top = (r.bottom + 6 + p.offsetHeight > innerHeight ? r.top - p.offsetHeight - 6 : r.bottom + 6) + 'px';
+  p.onclick = (ev) => {
+    const b = ev.target.closest('button[data-i]'); if (!b) return;
+    const o = ops[+b.dataset.i]; inp.value = o.v;
+    btn.classList.remove('vz');
+    btn.innerHTML = `${o.i ? `<i class="fas ${o.i}"></i>` : ''}<span>${_tEsc(o.t)}</span><i class="fas fa-chevron-down temp-pk-c"></i>`;
+    p.remove();
+    if (inp.dataset.f === 'ocTipo') tempOcTipo(btn);
+  };
+  setTimeout(() => document.addEventListener('mousedown', function f(x) { if (!p.contains(x.target) && !btn.contains(x.target)) { p.remove(); document.removeEventListener('mousedown', f); } }), 0);
+}
+function _tSubtiposOc(tipo) { return (typeof OC_SUBTIPOS_TEMPERATURA !== 'undefined' && OC_SUBTIPOS_TEMPERATURA[tipo]) || []; }
+function tempOcTipo(el) {
+  const cat = (typeof ocState !== 'undefined' && ocState.catalogos) || {};
+  const box = el.closest('.temp-ocf'), tipo = box.querySelector('[data-f=ocTipo]').value;
+  const pk = box.querySelector('[data-f=ocSub]').closest('.temp-pk');
+  pk.outerHTML = _tPick('ocSub', 'Subtipo', _tSubtiposOc(tipo).map(v => ({ v, t: v })), '', 'Selecione');
+}
+function tempOcToggle(cb) {
+  const tr = _tLinTr(cb);
+  tr.classList.toggle('ocf-on', cb.checked);
+  if (cb.checked) {   // remonta com os padrões do momento (fora da faixa → Falha / Temperatura fora da faixa; sem leitura → Parada)
+    const e = tempState.equipamentos[tr.dataset.eq], at = _tNum(tr.querySelector('[data-f=atual]').value);
+    const box = _tDet(tr)?.querySelector('.temp-ocf');
+    if (e && box) box.outerHTML = _tOcForm(e, at != null && (at < e.min || at > e.max), tr.classList.contains('abn'));
+  }
+  tempValidar(tr.querySelector('[data-f=atual]'));
+  if (cb.checked) _tDet(tr)?.querySelector('[data-f=just]')?.focus();
 }
 function _tLinTr(el) { const tr = el.closest('tr'); return tr?.classList.contains('temp-det') ? tr.previousElementSibling : tr; }
 function _tDet(tr) { return tr.nextElementSibling?.classList.contains('temp-det') ? tr.nextElementSibling : null; }
@@ -561,7 +628,10 @@ function tempValidar(inp) {
   const det = _tDet(tr), jt = det?.querySelector('[data-f=just]');
   const sw = det?.querySelector('.temp-oc-sw');
   tr.classList.toggle('det-on', ab || tr.classList.contains('obs-on') || (fora && !!sw));
-  if (jt) jt.placeholder = ab ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : 'Observação (opcional)';
+  if (!(fora || ab) && tr.classList.contains('ocf-on')) { tr.classList.remove('ocf-on'); const c = det?.querySelector('[data-f=oc]'); if (c) c.checked = false; }
+  const ocf = tr.classList.contains('ocf-on');
+  const limp = det?.querySelector('[data-f=abono]:checked')?.value === 'limpeza';   // limpeza: observação opcional
+  if (jt) jt.placeholder = ocf ? 'Descrição da ocorrência — o que aconteceu?' : ab && !limp ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : 'Observação (opcional)';
   sw?.classList.toggle('hide', !(fora || ab));
 }
 function _tValidarInput(i) { if (i) tempValidar(i); }
@@ -580,21 +650,25 @@ async function tempSalvarRegistro() {
     const mn = _tNum(g('min').value), mx = _tNum(g('max').value), at = _tNum(g('atual').value);
     const just = (g('just')?.value || '').trim();
     const nome = e.codigo;
+    const ocOn = !!g('oc')?.checked;
+    const ocf = ocOn ? { tipo: g('ocTipo')?.value, subtipo: g('ocSub')?.value || '', metodoDetec: g('ocDet')?.value || '', acao: (g('ocAcao')?.value || '').trim(), parado: !!g('ocParado')?.checked } : null;
+    if (ocOn && just.length < 3) { erros.push(`${nome}: descreva a ocorrência na observação`); return; }
+    if (ocOn && !ocf.acao) { erros.push(`${nome}: informe o que foi feito de imediato`); return; }
     if (tr.classList.contains('abn')) {      // sem leitura justificada: abona o turno (ou o dia todo)
-      if (just.length < 3) { erros.push(`${nome}: descreva na observação por que não há leitura`); return; }
       const abono = _tDet(tr)?.querySelector('[data-f=abono]:checked')?.value || 'outro';
+      if (abono !== 'limpeza' && just.length < 3) { erros.push(`${nome}: descreva na observação por que não há leitura`); return; }
       const turnos = g('dia')?.checked ? ['manha', 'tarde'] : [turno];
       turnos.forEach(t => {
         const chave = _tChave(e.id, data, t), ant = mes[chave];
         if (t !== turno && ant?.atual != null) return;     // não apaga leitura já feita no outro turno
-        const reg = { equipId: e.id, data, turno: t, min: null, max: null, atual: null, abono, justificativa: just,
+        const reg = { equipId: e.id, data, turno: t, min: null, max: null, atual: null, abono, justificativa: just || null,
           ocorrenciaId: ant?.ocorrenciaId || null,
           login: ant?.login || _tLogin(), nome: ant?.nome || currentSession?.nomeCompleto || _tLogin(),
           gravadoEm: ant?.gravadoEm || dbServerTs() };
         if (ant) { reg.editadoEm = dbServerTs(); reg.editadoPor = _tLogin(); }
         up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = reg;
       });
-      if (g('oc')?.checked) ocorrer.push({ e, abono, just, turnos, caminhos: turnos.map(t => `${TEMP_RAIZ}/leituras/${uid}/${ym}/${_tChave(e.id, data, t)}`).filter(c => up[c]) });
+      if (ocOn) ocorrer.push({ e, abono, just, turnos, ocf, caminhos: turnos.map(t => `${TEMP_RAIZ}/leituras/${uid}/${ym}/${_tChave(e.id, data, t)}`).filter(c => up[c]) });
       return;
     }
     if (mn == null && mx == null && at == null) return;     // linha em branco: ignora
@@ -608,7 +682,7 @@ async function tempSalvarRegistro() {
       gravadoEm: ant?.gravadoEm || dbServerTs() };
     if (ant) { reg.editadoEm = dbServerTs(); reg.editadoPor = _tLogin(); }
     up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = reg;
-    if (fora && g('oc')?.checked) ocorrer.push({ e, at, mn, mx, just, caminhos: [`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] });
+    if (fora && ocOn) ocorrer.push({ e, at, mn, mx, just, ocf, caminhos: [`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] });
   });
   if (erros.length) { const m = document.getElementById('temp-m-msg'); m.innerHTML = `<span class="temp-ic-red"><i class="fas fa-circle-xmark"></i> ${_tEsc(erros.join(' · '))}</span>`; return; }
   if (!Object.keys(up).length) { _tToast('Nenhuma leitura preenchida.', 'info'); return; }
@@ -619,15 +693,15 @@ async function tempSalvarRegistro() {
     try {
       const un = _tNomeUnidade(uid), quando = `${_tBR(data)}${o.abono ? '' : ' · ' + TEMP_TURNOS[turno]}`;
       const oc = await ocGerarDeTemperatura(o.abono ? {
-        ativoId: o.e.ativoId || null, tipo: 'falha', dataIso: data,
+        ativoId: o.e.ativoId || null, ...o.ocf, dataIso: data,
         titulo: `${TEMP_ABONOS[o.abono] || 'Sem leitura'} — ${o.e.codigo}`,
-        descricao: `Equipamento ${o.e.codigo} (${un}) sem leitura de temperatura em ${quando}${o.turnos.length > 1 ? ' (manhã e tarde)' : ' (' + TEMP_TURNOS[turno].toLowerCase() + ')'}.\nMotivo: ${TEMP_ABONOS[o.abono] || o.abono}.\nObservação: ${o.just}`,
-        acao: o.just, origem: { tipo: 'temperatura', unidadeId: uid, equipId: o.e.id, data },
+        descricao: `${o.just}\n\nEquipamento ${o.e.codigo} (${un}) sem leitura de temperatura em ${quando}${o.turnos.length > 1 ? ' (manhã e tarde)' : ' (' + TEMP_TURNOS[turno].toLowerCase() + ')'}.\nMotivo: ${TEMP_ABONOS[o.abono] || o.abono}.`,
+        acao: o.ocf.acao, origem: { tipo: 'temperatura', unidadeId: uid, equipId: o.e.id, data },
       } : {
-        ativoId: o.e.ativoId || null, tipo: 'ambiental', dataIso: data,
+        ativoId: o.e.ativoId || null, ...o.ocf, dataIso: data,
         titulo: `Temperatura fora da faixa — ${o.e.codigo}`,
-        descricao: `${quando} (${un}): atual ${_tFmt(o.at)} ºC${o.mn != null ? `, mín ${_tFmt(o.mn)}` : ''}${o.mx != null ? `, máx ${_tFmt(o.mx)}` : ''} — faixa ${_tFmt(o.e.min)} a ${_tFmt(o.e.max)} ºC.${o.just ? `\nObservação: ${o.just}` : ''}`,
-        acao: o.just || 'Leitura fora da faixa registrada no controle de temperatura.',
+        descricao: `${o.just}\n\n${quando} (${un}): atual ${_tFmt(o.at)} ºC${o.mn != null ? `, mín ${_tFmt(o.mn)}` : ''}${o.mx != null ? `, máx ${_tFmt(o.mx)}` : ''} — faixa ${_tFmt(o.e.min)} a ${_tFmt(o.e.max)} ºC.`,
+        acao: o.ocf.acao,
         especificos: { leitura: `${_tFmt(o.at)} ºC`, faixaAceitavel: `${_tFmt(o.e.min)} a ${_tFmt(o.e.max)} ºC`, unidade: 'ºC', duracaoMin: '' },
         origem: { tipo: 'temperatura', unidadeId: uid, equipId: o.e.id, data },
       });

@@ -63,6 +63,7 @@
 }
 .oc-badge svg { width: 11px; height: 11px; }
 .oc-tipo-falha     { background: rgba(230,57,70,0.1);   color: var(--red);  border-color: rgba(230,57,70,0.25); }
+.oc-tipo-parada    { background: rgba(217,131,36,0.12); color: #c06d12;  border-color: rgba(217,131,36,0.3); }
 .oc-tipo-ambiental { background: rgba(0,168,204,0.1);   color: var(--cyan); border-color: rgba(0,168,204,0.25); }
 .oc-tipo-dano      { background: rgba(244,162,97,0.12); color: #b45309;     border-color: rgba(244,162,97,0.3); }
 .oc-tipo-acidente  { background: rgba(190,24,93,0.1);   color: #be185d;     border-color: rgba(190,24,93,0.25); }

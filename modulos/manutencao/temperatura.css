@@ -364,3 +364,37 @@ tr.abn + tr.temp-det .temp-dia-sw { display: inline-flex !important; }
 .temp-nota-oc.sim { color: #e63946; font-weight: 600; }
 .temp-nota-oc a { color: #e63946; text-decoration: underline; }
 .temp-nota-por { display: block; margin-top: 4px; color: var(--text-muted, #94a3b8); font-size: 11px; }
+
+/* mini-formulário da ocorrência */
+.temp-ocf { display: none; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(230,57,70,.28); background: linear-gradient(180deg, rgba(230,57,70,.06), rgba(230,57,70,.02)); }
+tr.ocf-on + tr.temp-det .temp-ocf { display: flex; animation: tempCalIn .16s ease-out; }
+tr.ocf-on + tr.temp-det .temp-obs { display: flex; }
+.temp-ocf-h { display: flex; gap: 10px; align-items: center; }
+.temp-ocf-h b { display: block; color: #c1121f; font-size: 13.5px; }
+.temp-ocf-h small { color: var(--text-muted, #94a3b8); font-size: 11.5px; }
+.temp-ocf-ic { width: 32px; height: 32px; border-radius: 9px; background: #e63946; color: #fff; display: grid; place-items: center; box-shadow: 0 4px 10px rgba(230,57,70,.3); flex: none; }
+.temp-ocf-g { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.temp-pk { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.temp-pk-l, .temp-ocf-campo > span { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted, #64748b); }
+.temp-pk-bt { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border: 1px solid var(--border, #e2e8f0); border-radius: 10px; background: var(--bg-card, #fff); color: var(--text-primary, #1f2937); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left; transition: .15s; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+.temp-pk-bt span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.temp-pk-bt > i:first-child { color: #e63946; }
+.temp-pk-bt.vz { color: var(--text-muted, #94a3b8); font-weight: 500; }
+.temp-pk-bt:hover { border-color: #e63946; box-shadow: 0 0 0 3px rgba(230,57,70,.10); }
+.temp-pk-c { font-size: 10px; color: var(--text-muted, #94a3b8); }
+.temp-pk-pop { position: fixed; z-index: 10060; max-height: 280px; overflow: auto; padding: 6px; border-radius: 12px; background: var(--bg-card, #fff); border: 1px solid var(--border, #e5e7eb); box-shadow: 0 16px 36px rgba(15,23,42,.18), 0 2px 6px rgba(15,23,42,.08); animation: tempCalIn .14s ease-out; font-size: 13px; }
+.temp-pk-pop button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text-primary, #1f2937); font: inherit; text-align: left; cursor: pointer; white-space: nowrap; }
+.temp-pk-pop button:hover { background: rgba(230,57,70,.08); }
+.temp-pk-pop button.on { background: rgba(230,57,70,.10); color: #c1121f; font-weight: 600; }
+.temp-pk-pop button > i:first-child { width: 16px; text-align: center; color: #e63946; }
+.temp-pk-ok { margin-left: auto; color: #e63946; }
+.temp-pk-vz { padding: 10px 12px; color: var(--text-muted, #94a3b8); }
+.temp-ocf-campo { display: flex; flex-direction: column; gap: 5px; }
+.temp-ocf-in { position: relative; display: flex; align-items: center; }
+.temp-ocf-in i { position: absolute; left: 12px; color: #e63946; font-size: 12px; }
+.temp-mb .temp-ocf-in input[type=text] { width: 100%; height: 38px; box-sizing: border-box; text-align: left; padding: 0 12px 0 32px; border: 1px solid var(--border, #e2e8f0); border-radius: 10px; background: var(--bg-card, #fff); font-size: 13px; }
+.temp-mb .temp-ocf-in input[type=text]:focus { outline: none; border-color: #e63946; box-shadow: 0 0 0 3px rgba(230,57,70,.12); }
+.temp-ocf-par > span:last-child { display: flex; flex-direction: column; line-height: 1.25; }
+.temp-ocf-par b { color: var(--text-primary, #1f2937); font-size: 13px; }
+.temp-ocf-par small { color: var(--text-muted, #94a3b8); font-size: 11.5px; }
+.temp-pk-bt.fixo { cursor: default; background: rgba(230,57,70,.04); box-shadow: none; } .temp-pk-bt.fixo:hover { border-color: var(--border, #e2e8f0); box-shadow: none; }
