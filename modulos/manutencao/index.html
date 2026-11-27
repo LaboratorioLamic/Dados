@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script>/* aberto pelo portal em #temperatura: já nasce na aba Temperatura (sem passar pelo Início) */
+    if (/^#temperatura/.test(location.hash)) document.documentElement.classList.add('boot-temp');</script>
+  <style>
+    html.boot-temp #tab-inicio { display: none !important; }
+    html.boot-temp #tab-temperatura { display: block !important; min-height: 60vh; position: relative; }
+    html.boot-temp #tab-temperatura:empty::after { content: ''; position: absolute; top: 120px; left: 50%; width: 34px; height: 34px; margin-left: -17px; border: 3px solid rgba(6,182,212,.25); border-top-color: #06b6d4; border-radius: 50%; animation: bootTempGira .8s linear infinite; }
+    @keyframes bootTempGira { to { transform: rotate(360deg); } }
+  </style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manutenções — Gestão de Ativos</title>

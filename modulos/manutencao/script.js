@@ -242,7 +242,8 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) refreshTaskFlagsUI();
     });
-    switchTab('inicio');
+    // aberto em #temperatura: a aba é ligada pelo boot da Temperatura (temperatura.js) assim que as permissões chegam
+    if (!document.documentElement.classList.contains('boot-temp')) switchTab('inicio');
   });
 
   // ── SIDEBAR OVERLAY ──

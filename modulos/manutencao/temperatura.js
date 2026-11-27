@@ -850,7 +850,15 @@ setTimeout(function _tBoot() {
   rootDb.ref(`grupos/${g}/perms`).on('value', snap => {
     tempState.perms = snap.val() || {};
     if (typeof applyPermissions === 'function') applyPermissions();
-    if (!tempPodeVer()) return;
+    if (!tempPodeVer()) {
+      // aberto em #temperatura sem permissão: volta ao Início
+      if (document.documentElement.classList.contains('boot-temp')) {
+        document.documentElement.classList.remove('boot-temp');
+        history.replaceState(null, '', location.pathname + location.search);
+        if (typeof switchTab === 'function') switchTab('inicio');
+      }
+      return;
+    }
     tempIniciar();
     if (!tempState.unidadeId) tempState.unidadeId = (_tUnidadesVisiveis().find(u => u.id === _tMinhaUnidadeId()) || _tUnidadesVisiveis()[0])?.id || null;
     _tOuvirLeituras();
@@ -860,6 +868,7 @@ setTimeout(function _tBoot() {
       history.replaceState(null, '', location.pathname + location.search);   // não reabre ao recarregar
       switchTab('temperatura');
     }
+    document.documentElement.classList.remove('boot-temp');
   }, e => console.warn('[temperatura] perms do grupo:', e && e.code));
 }, 800);
 
