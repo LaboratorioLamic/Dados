@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="css/admin-report.css?v=202611231200">
     <!-- Camada de override mobile: precisa ser SEMPRE a ultima folha. -->
     <link rel="stylesheet" href="css/mobile.css?v=202611231200">
+    <link rel="stylesheet" href="css/pendentes.css?v=202611271400">
 </head>
 <body>
 <script src="lamic-carregando.js" data-nome="UniLAMIC"></script>
@@ -44,6 +45,9 @@
             </a>
             <button id="student-account-btn" class="header-account" title="Minha conta" aria-label="Minha conta">
                 <i class="fas fa-user"></i><span id="student-account-label">Entrar</span>
+            </button>
+            <button type="button" id="pend-sino" class="header-sino" title="Treinamentos pendentes" aria-label="Treinamentos pendentes" aria-haspopup="dialog" hidden>
+                <i class="fas fa-bell"></i><span class="pend-badge" hidden></span>
             </button>
             <button id="settings-btn" class="header-settings" title="Configurações" aria-label="Abrir configurações">
                 <i class="fas fa-cog"></i>
@@ -164,6 +168,11 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Cursos ainda não concluídos (js/pendentes-ui.js). -->
+            <button type="button" id="pend-btn" class="pend-btn" title="Mostrar só os cursos pendentes" aria-pressed="false" hidden>
+                <i class="fas fa-list-check"></i><span>Pendentes</span><em class="pend-badge" hidden></em>
+            </button>
 
             <div class="selection-divider" id="selection-divider" style="display:none;">
                 <i class="fas fa-chevron-right"></i>
@@ -2800,7 +2809,7 @@
     <!-- Carrega xlsx/jspdf/html2canvas sob demanda (js/vendor-loader.js). -->
     <script defer src="js/vendor-loader.js?v=202611231200"></script>
     <script defer src="js/firebase-config.js?v=202611231200"></script>
-    <script defer src="js/main.js?v=202611231200"></script>
+    <script defer src="js/main.js?v=202611271400"></script>
     <script defer src="js/connection-guard.js?v=202611231200"></script>
     <script defer src="js/db-sync.js?v=202611231200"></script>
     <script defer src="js/crypto-utils.js?v=202611231200"></script>
@@ -2825,5 +2834,7 @@
     <script defer src="js/student-header.js?v=202611231200"></script>
     <!-- Depois de admin-history.js (U.getHistoryRows) e student-auth.js (sessão). -->
     <script defer src="js/ranking.js?v=202611231200"></script>
+    <script defer src="../../js/unilamic-pendentes.js?v=202611271400"></script>
+    <script defer src="js/pendentes-ui.js?v=202611271400"></script>
 </body>
 </html>

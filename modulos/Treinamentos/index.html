@@ -15,13 +15,19 @@
     <link rel="stylesheet" href="css/home.css?v=202611231200">
     <link rel="stylesheet" href="css/auth.css?v=202611231200">
     <link rel="stylesheet" href="css/mobile.css?v=202611231200">
+    <link rel="stylesheet" href="css/pendentes.css?v=202611271300">
 </head>
 <body>
 <script src="lamic-carregando.js" data-nome="UniLAMIC"></script>
 
-    <button type="button" id="student-account-btn" class="home-account" title="Minha conta" aria-label="Minha conta">
-        <i class="fas fa-user"></i><span id="student-account-label">Entrar</span>
-    </button>
+    <div class="home-topo">
+        <button type="button" id="pend-sino" class="header-sino home-sino" title="Treinamentos pendentes" aria-label="Treinamentos pendentes" aria-haspopup="dialog" hidden>
+            <i class="fas fa-bell"></i><span class="pend-badge" hidden></span>
+        </button>
+        <button type="button" id="student-account-btn" class="home-account" title="Minha conta" aria-label="Minha conta">
+            <i class="fas fa-user"></i><span id="student-account-label">Entrar</span>
+        </button>
+    </div>
 
     <div class="home-head">
         <div class="home-logo"><i class="fas fa-graduation-cap"></i></div>
@@ -152,5 +158,7 @@
     <script defer src="js/student-profile.js?v=202611231200"></script>
     <script defer src="js/student-header.js?v=202611231200"></script>
     <script defer src="js/home.js?v=202611231200"></script>
+    <script defer src="../../js/unilamic-pendentes.js?v=202611271300"></script>
+    <script defer src="js/pendentes-ui.js?v=202611271300"></script>
 </body>
 </html>

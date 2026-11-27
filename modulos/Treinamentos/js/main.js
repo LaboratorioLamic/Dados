@@ -125,6 +125,7 @@
                 loadProgression();
                 showWelcomeRanking();
                 openCourseFromQuery();
+                document.dispatchEvent(new CustomEvent('uniadmin:cursos-prontos'));
             }
 
             // Link direto vindo do Portal LAMIC (vínculo de aviso): ?tema=<id>&curso=<id>.
@@ -2010,6 +2011,7 @@
         }
 
         function showCourseGallery(subjectId) {
+            pendingMode = false;
             pauseActiveCourseTimer(true);
             hideExpectedTimePanel();
             currentTrainingId = subjectId;
@@ -2031,6 +2033,81 @@
             setBackToCoursesVisible(false);
             themeBtn.textContent = 'Escolha um Assunto';
         }
+
+        /* ─── FILTRO "PENDENTES" (js/pendentes-ui.js) ───
+           Mostra na galeria só os cursos não concluídos desta plataforma, de
+           todos os temas. Pendências de outra plataforma viram um aviso com
+           link (portal.html?cat=…&pend=1 abre direto neste filtro). */
+        let pendingMode = false;
+        let pendingPrev = null; // galeria/tema em que o aluno estava antes do filtro
+
+        function showPendingGallery(lista) {
+            if (!trainingData || !Object.keys(trainingData).length) return false;
+            if (!pendingMode) pendingPrev = { subjectId: currentTrainingId, label: getSubjectLabel(), gallery: courseGallery.style.display === 'block' };
+            pauseActiveCourseTimer(true);
+            hideExpectedTimePanel();
+            currentThemeId = null;
+            courseGrid.innerHTML = '';
+            const daqui = (lista || []).filter(c => c.slug === currentCategorySlug && c.prazo !== 'closed');
+            const fora = (lista || []).filter(c => c.slug !== currentCategorySlug && c.prazo !== 'closed');
+            let n = 0;
+            daqui.forEach(c => {
+                const theme = trainingData[c.subjectId]?.themes?.[c.themeId];
+                if (!theme) return;
+                const card = buildCourseCard(c.subjectId, { ...theme, id: c.themeId });
+                card.onclick = () => {
+                    pendingMode = false;
+                    currentTrainingId = c.subjectId;
+                    setSubjectLabel(trainingData[c.subjectId]?.name || '');
+                    openCourse(c.subjectId, c.themeId, theme.name);
+                };
+                courseGrid.appendChild(card);
+                n++;
+            });
+            const porCat = {};
+            fora.forEach(c => { (porCat[c.catNome] = porCat[c.catNome] || []).push(c); });
+            Object.keys(porCat).forEach(cat => {
+                const k = porCat[cat].length;
+                const a = document.createElement('a');
+                a.className = 'pend-outra-cat';
+                a.href = `portal.html?cat=${encodeURIComponent(cat)}&pend=1`;
+                a.innerHTML = `<i class="fas fa-arrow-up-right-from-square"></i><span><strong>${k} pendente${k === 1 ? '' : 's'} em ${cat}</strong><small>Abrir a plataforma já filtrada</small></span>`;
+                courseGrid.appendChild(a);
+            });
+            setSubjectLabel('Pendentes');
+            galleryTitle.textContent = 'Treinamentos pendentes';
+            gallerySub.textContent = n === 0 ? 'Nenhum curso pendente nesta plataforma'
+                : `${n} curso${n === 1 ? '' : 's'} não concluído${n === 1 ? '' : 's'} — clique no card para continuar`;
+            galleryEmpty.style.display = (n || fora.length) ? 'none' : 'flex';
+            if (galleryFilter) galleryFilter.value = '';
+            document.getElementById('welcome-screen').style.display = 'none';
+            contentDiv.style.display = 'none';
+            courseGallery.style.display = 'block';
+            setBackToCoursesVisible(false);
+            pendingMode = true;
+            return true;
+        }
+
+        function leavePendingGallery() {
+            if (!pendingMode) return;
+            pendingMode = false;
+            const prev = pendingPrev; pendingPrev = null;
+            if (prev?.subjectId && trainingData[prev.subjectId]) {
+                setSubjectLabel(prev.label);
+                showCourseGallery(prev.subjectId);
+            } else {
+                setSubjectLabel('Escolha um Tema');
+                courseGallery.style.display = 'none';
+                document.getElementById('welcome-screen').style.display = '';
+            }
+        }
+
+        window.UniAdmin.PendingGallery = {
+            show: showPendingGallery,
+            hide: leavePendingGallery,
+            isActive: () => pendingMode && courseGallery.style.display === 'block',
+            ready: () => !!(trainingData && Object.keys(trainingData).length)
+        };
 
         function openCourse(subjectId, themeId, themeName) {
             themeBtn.textContent = themeName;

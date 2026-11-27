@@ -205,8 +205,9 @@ function tempRender() {
   };
   tempState._statusHoje = statusHoje;
   const leiturasMes = Object.values(tempState.leituras || {});
-  const fora = leiturasMes.filter(l => { const e = tempState.equipamentos[l.equipId]; return e && l.atual != null && (l.atual < e.min || l.atual > e.max); }).length;
-  const eqsObrig = eqs.filter(e => e.obrigatorio !== false);
+  const kEqs = eqSel ? [eqSel] : eqs;   // KPIs: só o mnemônico selecionado
+  const fora = leiturasMes.filter(l => { if (eqSel && l.equipId !== eqSel.id) return false; const e = tempState.equipamentos[l.equipId]; return e && l.atual != null && (l.atual < e.min || l.atual > e.max); }).length;
+  const eqsObrig = kEqs.filter(e => e.obrigatorio !== false);
   const hojeCompletos = eqsObrig.filter(e => statusHoje(e).cls === 'ok').length;
 
   tab.innerHTML = `
@@ -232,9 +233,9 @@ function tempRender() {
     ${_tCan('lancarLeituras') && eqSel ? `<button class="temp-btn pri" onclick="tempAbrirRegistro(null, null, tempState.equipSel)" title="Registrar leituras de ${_tEsc(eqSel.codigo)}"><i class="fas fa-plus"></i>Registrar ${_tEsc(eqSel.codigo)}</button>` : ''}
   </div>
   <div class="temp-kpis">
-    <div class="temp-kpi"><div class="v">${eqs.length}</div><div class="l">Equipamentos monitorados</div></div>
-    <div class="temp-kpi grn"><div class="v">${hojeCompletos}/${eqsObrig.length}</div><div class="l">Completos hoje${eqs.length > eqsObrig.length ? ` · ${eqs.length - eqsObrig.length} sob rotina` : ''}</div></div>
-    <div class="temp-kpi red"><div class="v">${atrUn.length}</div><div class="l">Pendências atrasadas no mês</div></div>
+    <div class="temp-kpi"><div class="v">${eqSel ? _tEsc(eqSel.codigo) : eqs.length}</div><div class="l">${eqSel ? 'Equipamento selecionado' : 'Equipamentos monitorados'}</div></div>
+    <div class="temp-kpi grn"><div class="v">${hojeCompletos}/${eqsObrig.length}</div><div class="l">Completos hoje${kEqs.length > eqsObrig.length ? ` · sob rotina` : ''}</div></div>
+    <div class="temp-kpi red"><div class="v">${atr.length}</div><div class="l">Pendências atrasadas no mês</div></div>
     <div class="temp-kpi amb"><div class="v">${fora}</div><div class="l">Leituras fora da faixa no mês</div></div>
   </div>
   ${eqs.length ? `<div class="temp-grid">
@@ -509,7 +510,7 @@ function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloquei
   const ab = !!l?.abono, obs = ab || !!l?.justificativa;
   const podeOc = typeof ocGerarDeTemperatura === 'function' && !l?.ocorrenciaId;
   const motivos = Object.entries(TEMP_ABONOS).map(([k, t]) => `<label class="temp-chipr"><input type="radio" name="ab-${e.id}" data-f="abono" value="${k}" onchange="tempValidar(this)" ${(l?.abono || 'limpeza') === k ? 'checked' : ''}><span>${t}</span></label>`).join('');
-  return `<tr data-eq="${e.id}" class="temp-lin ${ab ? 'abn' : ''} ${obs || (fora && podeOc) ? 'det-on' : ''} ${l?.justificativa ? 'obs-on' : ''}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div>
+  return `<tr data-eq="${e.id}" class="temp-lin ${ab ? 'abn' : ''} ${obs || fora ? 'det-on' : ''} ${fora ? 'fora' : ''} ${l?.justificativa ? 'obs-on' : ''}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div>
       <div class="temp-acts"><button type="button" class="temp-pill" onclick="tempObsToggle(this)"><i class="fas fa-comment-dots"></i> Observação</button><button type="button" class="temp-pill amb temp-abn-bt" onclick="tempAbonoToggle(this)"><i class="fas ${ab ? 'fa-rotate-left' : 'fa-screwdriver-wrench'}"></i> <span>${ab ? 'Voltar à leitura' : 'Sem leitura'}</span></button></div></td>
     <td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>
     <td class="c-num"><input type="text" inputmode="decimal" data-f="min" value="${ab ? '' : v(l?.min)}" oninput="tempValidar(this)"></td>
@@ -523,7 +524,7 @@ function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloquei
       <div class="temp-sws">
         <label class="temp-swl temp-dia-sw ${outro?.atual != null ? 'off' : ''}" ${outro?.atual != null ? `title="Já há leitura no outro turno (${_tFmt(outro.atual)} ºC)"` : ''}><input type="checkbox" data-f="dia" ${outro?.atual != null ? 'disabled' : ''}><span class="temp-sw"></span>
           <span>Aplicar ao dia todo (manhã e tarde)${outro?.atual != null ? ` <small><i class="fas fa-lock"></i> outro turno já tem leitura</small>` : ''}</span></label>
-      ${podeOc ? `<label class="temp-swl temp-oc-sw ${fora || ab ? '' : 'hide'}" title="Cria a ocorrência no módulo Ocorrências usando o texto da observação"><input type="checkbox" data-f="oc" onchange="tempOcToggle(this)"><span class="temp-sw red"></span>
+      ${podeOc ? `<label class="temp-swl temp-oc-sw ${ab ? '' : 'hide'}" title="Cria a ocorrência no módulo Ocorrências usando o texto da observação"><input type="checkbox" data-f="oc" onchange="tempOcToggle(this)"><span class="temp-sw red"></span>
         <span>Gerar Ocorrência</span></label>` : ''}</div>
       ${podeOc ? _tOcForm(e, fora, ab) : ''}
     </div></td></tr>`;
@@ -627,12 +628,13 @@ function tempValidar(inp) {
   const fora = at != null && (at < e.min || at > e.max), ab = tr.classList.contains('abn');
   const det = _tDet(tr), jt = det?.querySelector('[data-f=just]');
   const sw = det?.querySelector('.temp-oc-sw');
-  tr.classList.toggle('det-on', ab || tr.classList.contains('obs-on') || (fora && !!sw));
-  if (!(fora || ab) && tr.classList.contains('ocf-on')) { tr.classList.remove('ocf-on'); const c = det?.querySelector('[data-f=oc]'); if (c) c.checked = false; }
+  tr.classList.toggle('fora', fora && !ab);
+  tr.classList.toggle('det-on', ab || tr.classList.contains('obs-on') || fora);   // fora da faixa: só sugere observação (sem ocorrência)
+  if (!ab && tr.classList.contains('ocf-on')) { tr.classList.remove('ocf-on'); const c = det?.querySelector('[data-f=oc]'); if (c) c.checked = false; }
   const ocf = tr.classList.contains('ocf-on');
   const limp = det?.querySelector('[data-f=abono]:checked')?.value === 'limpeza';   // limpeza: observação opcional
-  if (jt) jt.placeholder = ocf ? 'Descrição da ocorrência — o que aconteceu?' : ab && !limp ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : 'Observação (opcional)';
-  sw?.classList.toggle('hide', !(fora || ab));
+  if (jt) jt.placeholder = ocf ? 'Descrição da ocorrência — o que aconteceu?' : ab && !limp ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : fora ? 'Fora da faixa — sugerimos anotar o motivo (ex.: porta ficou aberta) · opcional' : 'Observação (opcional)';
+  sw?.classList.toggle('hide', !ab);
 }
 function _tValidarInput(i) { if (i) tempValidar(i); }
 
@@ -674,7 +676,6 @@ async function tempSalvarRegistro() {
     if (mn == null && mx == null && at == null) return;     // linha em branco: ignora
     if (at == null) { erros.push(`${nome}: informe a temperatura atual`); return; }
     if ((mn != null && mn > at) || (mx != null && mx < at) || (mn != null && mx != null && mn > mx)) { erros.push(`${nome}: mínima ≤ atual ≤ máxima`); return; }
-    const fora = at < e.min || at > e.max;
     const chave = _tChave(e.id, data, turno), ant = mes[chave];
     const reg = { equipId: e.id, data, turno, min: mn, max: mx, atual: at, abono: null, justificativa: just || null,
       ocorrenciaId: ant?.ocorrenciaId || null,
@@ -682,7 +683,6 @@ async function tempSalvarRegistro() {
       gravadoEm: ant?.gravadoEm || dbServerTs() };
     if (ant) { reg.editadoEm = dbServerTs(); reg.editadoPor = _tLogin(); }
     up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = reg;
-    if (fora && ocOn) ocorrer.push({ e, at, mn, mx, just, ocf, caminhos: [`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] });
   });
   if (erros.length) { const m = document.getElementById('temp-m-msg'); m.innerHTML = `<span class="temp-ic-red"><i class="fas fa-circle-xmark"></i> ${_tEsc(erros.join(' · '))}</span>`; return; }
   if (!Object.keys(up).length) { _tToast('Nenhuma leitura preenchida.', 'info'); return; }

@@ -28,7 +28,7 @@
   const pode = (p) => S.perms.has(p);
   const dataBR = (d) => d ? new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
   const iniciais = (n) => (n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
-  // aceita http(s), páginas internas da pasta seeds/ e imagens embutidas (bloqueia javascript: etc.)
+  // aceita http(s), páginas internas da pasta modulos/ (e links antigos seeds/) e imagens embutidas (bloqueia javascript: etc.)
   const urlSegura = (u) => /^(https?:\/\/|seeds\/|modulos\/|data:image\/)/i.test(u || '') ? u : '#';
 
   // Realtime Database
@@ -47,7 +47,7 @@
   const auditar = (acao, alvo = '') => ref('auditoria_log').push({ por: S.me?.login, acao, alvo, em: TS() }).catch(() => {});
 
   // Permissões do sistema. No banco a chave usa "_" no lugar de "." (o RTDB não aceita ponto em chave).
-  // Organizadas por categoria (como em seeds/manutencao): cada categoria vira um cartão com interruptores.
+  // Organizadas por categoria (como em modulos/manutencao): cada categoria vira um cartão com interruptores.
   const CATEGORIAS = [
     { id: 'usuarios', nome: 'Usuários', icone: 'fas fa-users', perms: [['usuarios.gerenciar', 'Criar usuários, alterar senha, grupo e desativar']] },
     { id: 'grupos', nome: 'Grupos', icone: 'fas fa-user-shield', perms: [['grupos.gerenciar', 'Criar grupos e definir permissões']] },
@@ -62,16 +62,14 @@
   ];
   const PERMISSOES = CATEGORIAS.flatMap((c) => c.perms);
   const chavePerm = (p) => p.replace('.', '_');
-  // Os módulos vivem em seeds/ (local) e são copiados para modulos/ (node ferramentas/sincronizar-modulos.js),
-  // que vai no GitHub Pages do Dados. Publicado: abre modulos/{repo}/; local: seeds/{repo}/.
-  // Links antigos para laboratoriolamic.github.io/{repo}/ também caem na cópia do Dados.
+  // Os módulos vivem em modulos/ (editados ali mesmo e publicados no GitHub Pages do Dados).
+  // Links gravados como seeds/{repo}/ (formato antigo) ou laboratoriolamic.github.io/{repo}/ também abrem modulos/{repo}/.
   const SEEDS = ['Iamicproposta', 'Iamicvacinas', 'L2L', 'Planilhas', 'Pops', 'Protocolos', 'TabeIasIamic', 'Temperatura', 'Termos', 'Treinamentos',
     'auditoriaIamic', 'checkguias', 'comercial', 'conveniosIamic', 'curricuIoIamic', 'docadmin', 'manutencao', 'propagandismolamic', 'respIamic', 'valor', 'wpp'];
-  const PUBLICADO = /\.github\.io$/.test(location.hostname);
   // nomes de repo trocam "l" por "I" maiúsculo (TabeIasIamic); compara ignorando essa troca
   const chaveRepo = (s) => String(s || '').replace(/I/g, 'l').toLowerCase();
   const repoDe = (u, soGithub = false) => {
-    const sd = soGithub ? null : /^seeds\/([^/?#]+)\/?(index\.html)?(#[\w/-]*)?$/.exec(u || '');
+    const sd = soGithub ? null : /^(?:seeds|modulos)\/([^/?#]+)\/?(index\.html)?(#[\w/-]*)?$/.exec(u || '');
     const gh = /^https:\/\/laboratoriolamic\.github\.io\/([^/?#]+)\/?(index\.html)?$/i.exec(u || '');
     const nome = (sd || gh)?.[1];
     return nome ? SEEDS.find((r) => chaveRepo(r) === chaveRepo(nome)) : undefined;
@@ -80,9 +78,9 @@
     const repo = repoDe(u);
     if (!repo) return u;
     // O Controle de Temperatura antigo virou a aba Temperatura do Manutenção: o link Operacional › Temperatura abre direto nela
-    if (repo === 'Temperatura') return `${PUBLICADO ? 'modulos' : 'seeds'}/manutencao/index.html#temperatura`;
+    if (repo === 'Temperatura') return 'modulos/manutencao/index.html#temperatura';
     const hash = (String(u).match(/#[\w/-]+$/) || [''])[0];   // ex.: manutencao/index.html#temperatura
-    return (PUBLICADO ? `modulos/${repo}/index.html` : `seeds/${repo}/index.html`) + hash;
+    return `modulos/${repo}/index.html${hash}`;
   };
   // Link liberado ao grupo: grupos/{g}/links/{linkId}. Grupo antigo sem a lista usa o módulo inteiro (modulos/{m}/grupos).
   function linkLiberado(grupo, m, l) {
@@ -431,6 +429,8 @@
     montarShell();
     ouvirAvisos();
     iniciarTemperatura();
+    iniciarComercial();
+    iniciarUnilamic();
     window.onhashchange = rotear;
     await rotear();
     // não aguarda: a troca de senha e a fila de avisos esperam o usuário, e o loader só sai quando entrar() termina
@@ -578,17 +578,21 @@
   // ---------- Temperatura: bolinha vermelha em Operacional › Temperatura enquanto houver pendência atrasada ----------
   // Mesmas regras da aba (js/temperatura-calc.js): unidade do RH + unidades do índice temperatura/acesso/{login};
   // só para quem tem temperatura.ver (grupo do portal ou índice). Caixas de transporte (obrigatorio:false) não contam.
+  const CS_ = { n: 0, off: null };   // Comercial: propostas pendentes (ver iniciarComercial)
   const TS_ = { offs: [], offLeit: [], equip: {}, acesso: null, fer: {}, rh: {}, leit: {}, mesUn: '', ligado: false, n: 0, t: null };
   const ouvirT = (p, cb) => { const r = ref(p); const h = r.on('value', (sn) => cb(sn.val()), () => cb(null)); return () => r.off('value', h); };
   const ehLinkTemp = (url) => /#temperatura\b/.test(urlLink(url || ''));
-  function marcarTemperatura() {
-    const on = TS_.n > 0;
+  // Bolinha única por link/aba: Temperatura, Comercial e UniLAMIC acendem juntos sem um apagar o outro.
+  const linkPend = (url) => (TS_.n > 0 && ehLinkTemp(url)) || (CS_.n > 0 && ehLinkComercial(url)) || (US_.n > 0 && ehLinkUni(url));
+  function marcarPend() {
     $$('.lat-item[data-mod]').forEach((b) => {
       const m = (S.mods || []).find((x) => x.id === b.dataset.mod);
-      b.classList.toggle('tem-pend', on && !!m?._links.some((l) => ehLinkTemp(l.url)));
+      b.classList.toggle('tem-pend-t', TS_.n > 0 && !!m?._links.some((l) => ehLinkTemp(l.url)));
+      b.classList.toggle('tem-pend', !!m?._links.some((l) => linkPend(l.url)));
     });
-    $$('#painel-links .pl-links a').forEach((a) => a.classList.toggle('tem-pend', on && /#temperatura\b/.test(a.getAttribute('href') || '')));
+    $$('#painel-links .pl-links a').forEach((a) => a.classList.toggle('tem-pend', linkPend(a.getAttribute('href'))));
   }
+  function marcarTemperatura() { marcarPend(); }
   function recontarT() {
     clearTimeout(TS_.t);
     TS_.t = setTimeout(() => {
@@ -644,6 +648,38 @@
     clearInterval(TS_.relogio); marcarTemperatura();
   }
 
+  // Comercial: propostas de preço aguardando aprovação acendem a bolinha em Financeiro > Comercial.
+  // Sem acesso ao Comercial a leitura é negada e nada acende.
+  const ehLinkComercial = (url) => /(^|\/)comercial(\/|$|\?|#)/.test(urlLink(url || ''));
+  function marcarComercial() { marcarPend(); }
+  // O sino do Comercial grava em localStorage('comercialSino') o total de todas as abas
+  // (propostas, atualizar no UniLab, fora do catálogo), já sem as silenciadas: vale esse total.
+  // Sem ele (Comercial nunca aberto neste navegador), conta só as propostas pendentes no Firebase.
+  const sinoComercial = () => { try { const v = JSON.parse(localStorage.getItem('comercialSino')); return typeof v?.n === 'number' ? v.n : null; } catch { return null; } };
+  function iniciarComercial() {
+    pararComercial();
+    if (!S.me) return;
+    let fb = 0;
+    const calc = () => { const l = sinoComercial(); CS_.n = l ?? fb; marcarComercial(); };
+    const r = ref('comercial/propostas').orderByChild('status').equalTo('pendente');
+    const h = r.on('value', (sn) => { fb = sn.numChildren(); calc(); }, () => { fb = 0; calc(); });
+    const st = (ev) => { if (ev.key === 'comercialSino') calc(); };
+    addEventListener('storage', st);
+    calc();
+    CS_.off = () => { r.off('value', h); removeEventListener('storage', st); };
+  }
+  function pararComercial() { CS_.off?.(); CS_.off = null; CS_.n = 0; marcarComercial(); }
+
+  // UniLAMIC: treinamentos pendentes do usuário (js/unilamic-pendentes.js) acendem UniLAMIC › Universidade LAMIC.
+  const US_ = { n: 0, off: null };
+  const ehLinkUni = (url) => /(^|\/)modulos\/Treinamentos\//i.test(urlLink(url || ''));
+  function iniciarUnilamic() {
+    pararUnilamic();
+    if (!S.me || !window.UniPendentes) return;
+    US_.off = UniPendentes.observar(S.db, { login: S.me.login, role: S.me.cargo || '', fullName: S.me.nome || '' }, (l) => { US_.n = UniPendentes.contaAlerta(l); marcarPend(); });
+  }
+  function pararUnilamic() { US_.off?.(); US_.off = null; US_.n = 0; marcarPend(); }
+
   function fecharPainel() {
     $('#painel-links')?.classList.add('hidden');
     $$('.lat-item[data-mod]').forEach((x) => x.classList.remove('on'));
@@ -662,7 +698,7 @@
     // nunca passa da margem inferior da tela
     p.style.setProperty('--pl-max', `${Math.max(200, innerHeight - topo - 16)}px`);
     p.classList.remove('hidden');
-    marcarTemperatura();
+    marcarTemperatura(); marcarComercial();
     $('.pl-x', p).onclick = fecharPainel;
     $$('a', p).forEach((a) => a.onclick = (e) => {
       if (a.dataset.modo === 'iframe') { e.preventDefault(); abrirViewer(a.href, a.dataset.nome); }
@@ -756,8 +792,8 @@
       for (const m of S.mods || []) for (const l of m._links || [])
         if (/auditoria[il]amic/i.test(l.url || '')) return {
           url: new URL(urlSegura(urlLink(l.url)), location.href).href, nome: l.nome, modo: l.modo,
-          // chat: sempre a Auditoria do mesmo endereço do portal (local = seeds/, publicado = github.io)
-          chat: new URL(PUBLICADO ? 'modulos/auditoriaIamic/index.html' : 'seeds/auditoriaIamic/index.html', location.href).href,
+          // chat: sempre a Auditoria do mesmo endereço do portal
+          chat: new URL('modulos/auditoriaIamic/index.html', location.href).href,
         };
       return null;
     },
@@ -821,7 +857,7 @@
     if (f?.tagName === 'IFRAME' && f.closest('#viewer') && document.body.classList.contains('lat-viewer')) { fecharPainel(); lateralSuspensa(false); }
   }, 0));
 
-  // ---------- anexos (Google Drive via Apps Script, mesmo modelo de seeds/respIamic) ----------
+  // ---------- anexos (Google Drive via Apps Script, mesmo modelo de modulos/respIamic) ----------
   const ANEXO_MAX = 30 * 1024 * 1024;
   const EXT_IMG = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
   const EXT_VID = ['webm', 'mp4'];
@@ -916,7 +952,7 @@
     return { nome, ext: extFinal, tipo: imagem ? 'imagem' : EXT_VID.includes(ext) ? 'video' : 'arquivo', fileId, url };
   }
 
-  // Visualizador de imagens (inspirado em seeds/respIamic): zoom (botões, roda, clique, pinça),
+  // Visualizador de imagens (inspirado em modulos/respIamic): zoom (botões, roda, clique, pinça),
   // arrastar com zoom, girar, anterior/próxima, baixar, abrir original e tela cheia. Sem legenda.
   // itens = [{ src, id, nome }]
   function lightbox(itens, inicio = 0) {
@@ -1362,7 +1398,7 @@
     unilamic: { nome: 'Cursos UniLAMIC', ic: 'fa-graduation-cap', dica: 'Plataforma › Tema › Assunto' },
   };
   const grupoDe = (tipo) => VINC_TIPOS[tipo]?.grupo || 'docs';
-  // plataformas do UniLAMIC (mesmo mapeamento de seeds/Treinamentos/js/home.js)
+  // plataformas do UniLAMIC (mesmo mapeamento de modulos/Treinamentos/js/home.js)
   const UNI_PLATS = {
     treinamentos: { nome: 'Treinamentos', ic: 'fa-chalkboard-user', cor: '#2E7DC7' },
     educacao_continuada: { nome: 'Educação Continuada', ic: 'fa-book-open-reader', cor: '#8B5CF6' },
@@ -1403,9 +1439,9 @@
     const T = VINC_TIPOS[v.tipo]; if (!T) return;
     if (v.tipo === 'curso') {
       const P = UNI_PLATS[v.plat]; if (!P) return;
-      return abrirViewer(`${PUBLICADO ? 'modulos' : 'seeds'}/Treinamentos/portal.html?cat=${encodeURIComponent(P.nome)}&tema=${encodeURIComponent(v.tema)}&curso=${encodeURIComponent(v.curso)}`, `UniLAMIC · ${v.titulo}`);
+      return abrirViewer(`modulos/Treinamentos/portal.html?cat=${encodeURIComponent(P.nome)}&tema=${encodeURIComponent(v.tema)}&curso=${encodeURIComponent(v.curso)}`, `UniLAMIC · ${v.titulo}`);
     }
-    abrirViewer(`${PUBLICADO ? 'modulos' : 'seeds'}/${T.seed}/index.html?doc=${encodeURIComponent(v.titulo)}`, `${T.nome} · ${v.titulo}`);
+    abrirViewer(`modulos/${T.seed}/index.html?doc=${encodeURIComponent(v.titulo)}`, `${T.nome} · ${v.titulo}`);
   }
   // card do curso no aviso: miniatura (imagem do curso, carregada depois), plataforma, tema e descrição
   function cardCurso(v) {
@@ -2572,7 +2608,7 @@
       document.addEventListener('click', () => Notification.requestPermission(), { once: true });
     }
   }
-  function pararAvisos() { pararTemperatura(); if (S.offAvisos) { S.offAvisos(); S.offAvisos = null; } $('#notifs')?.remove(); $('#sino')?.remove(); S.sinoNovos = null; }
+  function pararAvisos() { pararTemperatura(); pararComercial(); pararUnilamic(); if (S.offAvisos) { S.offAvisos(); S.offAvisos = null; } $('#notifs')?.remove(); $('#sino')?.remove(); S.sinoNovos = null; }
 
   // ---------- administração ----------
   async function paginaAdmin(pg, sub) {
@@ -3428,7 +3464,7 @@
       <p style="font-size:12px;color:var(--txt-2);margin-top:10px">Criar, renomear ou excluir cargo é feito no RH LAMIC (Configurações › Cargos). A lista aqui se atualiza sozinha.</p></div>`;
   }
 
-  // Grupos: lista + editor em janela com cartões por categoria (inspirado em seeds/manutencao).
+  // Grupos: lista + editor em janela com cartões por categoria (inspirado em modulos/manutencao).
   async function admGrupos(el) {
     await carregarGrupos();
     const users = lista(await ler('usuarios'));
@@ -3519,11 +3555,11 @@
 
   async function admModulos(el) {
     const mods = lista(await ler('modulos')).sort(porOrdem);
-    // migra links antigos laboratoriolamic.github.io/{repo}/ para seeds/{repo}/ (abre o index do módulo)
+    // migra links antigos laboratoriolamic.github.io/{repo}/ para modulos/{repo}/ (abre o index do módulo)
     const mig = {};
     mods.forEach((m) => Object.entries(m.links || {}).forEach(([lid, l]) => {
       const repo = repoDe(l?.url, true);
-      if (repo) { mig[`${m.id}/links/${lid}/url`] = `seeds/${repo}/`; l.url = `seeds/${repo}/`; }
+      if (repo) { mig[`${m.id}/links/${lid}/url`] = `modulos/${repo}/`; l.url = `modulos/${repo}/`; }
     }));
     if (Object.keys(mig).length) await ref('modulos').update(mig).catch((e) => toast(traduz(e)));
     el.innerHTML = `<div class="card"><p style="font-size:13px;color:var(--txt-2)">Quem vê cada link é definido em <a href="#admin/grupos">Grupos e permissões</a>. Link novo começa oculto para todos os grupos (exceto Administradores).</p></div>
@@ -3536,7 +3572,7 @@
         </tbody></table></div>
         <form class="row flink" data-mod="${esc(m.id)}" style="align-items:end;margin-top:10px">
           <label class="field"><span>Nome</span><input name="nome" required></label>
-          <label class="field"><span>URL</span><input name="url" required pattern="(https?://|seeds/).+" placeholder="https://... ou seeds/pasta/"></label>
+          <label class="field"><span>URL</span><input name="url" required pattern="(https?://|seeds/|modulos/).+" placeholder="https://... ou modulos/pasta/"></label>
           <label class="field"><span>Abrir</span><select name="modo"><option value="iframe">no portal</option><option value="nova_aba">nova aba</option></select></label>
           <div class="field"><button class="btn sm turq">Adicionar link</button></div></form></div>`).join('')}`;
 

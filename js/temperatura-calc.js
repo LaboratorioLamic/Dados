@@ -1,5 +1,5 @@
 // temperatura-calc.js — regras de pendência da Temperatura, usadas pelo portal (sino)
-// e pela aba Temperatura do Manutenção (seeds/manutencao → ../../js/temperatura-calc.js).
+// e pela aba Temperatura do Manutenção (modulos/manutencao → ../../js/temperatura-calc.js).
 // Sem dependências: só funções puras sobre os dados do banco.
 //
 // Banco (applamic, nó raiz "temperatura"):

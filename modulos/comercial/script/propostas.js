@@ -226,9 +226,9 @@ function htmlQuadroProposta(cx, ls, o) {
 // ── Arredondamento (envio e aprovação) ────────────────────────
 // Para cima no múltiplo escolhido (R$ 1, 5, 10 ou 100), como no simulador; clicar de novo no ativo desliga.
 let _ppArred = '0';
-const arredPP = v => v != null && _ppArred !== '0' ? arredSim(v, +_ppArred) : v;
-const htmlArredPP = fn => `<div class="pp-arred"><span><i class="fa-solid fa-coins"></i>Arredondar para cima</span><div class="seg">${ARRED_CMP.map(v =>
-  `<button type="button" class="${_ppArred === v ? 'on' : ''}" title="Múltiplo de R$ ${v},00 · clique de novo para não arredondar" onclick="${fn}('${v}')">R$ ${v},00</button>`).join('')}</div></div>`;
+const arredPP = v => v != null && _ppArred !== '0' ? Math.max(+_ppArred, Math.round(v / +_ppArred) * +_ppArred) : v;   // múltiplo mais próximo
+const htmlArredPP = fn => `<div class="pp-arred"><span><i class="fa-solid fa-coins"></i>Arredondar</span><div class="seg">${ARRED_CMP.map(v =>
+  `<button type="button" class="${_ppArred === v ? 'on' : ''}" title="Múltiplo mais próximo de R$ ${v},00 · clique de novo para não arredondar" onclick="${fn}('${v}')">R$ ${v},00</button>`).join('')}</div></div>`;
 
 // Chave UniLab só onde se aplica: o valor proposto difere do que está hoje no sistema do laboratório
 const precisaVs = (cx, k, para) => sistemaSuportado(cx) && precoDifere(cx.sistema(k), para ?? null);
@@ -499,6 +499,10 @@ function abrirLote(id, pend) {
   if (!L) return;
   _ppRascPart = false;
   if (L.ps.length === 1) return abrirProposta(L.ps[0].id);
+  // lote pendente: quem aprova revisa os valores aqui mesmo (_loteRev: idProposta → { exame: valor })
+  const revisa = pend && pode('tabelas', 'aprovar');
+  if (_loteId !== id) _loteRev = {};
+  _loteId = id;
   L.ps.sort((a, b) => String(a.alvoNome).localeCompare(String(b.alvoNome)));
   const marca = x => x.de == null ? ' <span class="tag" style="color:var(--green)">entra</span>' : x.para == null ? ' <span class="tag" style="color:var(--red)">sai</span>'
     : x.para > x.de ? ' <i class="fa-solid fa-arrow-up delta-dn"></i>' : x.para < x.de ? ' <i class="fa-solid fa-arrow-down delta-up"></i>' : '';
@@ -506,32 +510,66 @@ function abrirLote(id, pend) {
   const grupos = [];
   L.ps.forEach(p => {
     const g = grupos.find(x => x.alvo === p.alvo && x.status === p.status);
-    if (g) { g.ids.push(p.id); Object.assign(g.itens, p.itens); } else grupos.push({ ...p, ids: [p.id], itens: { ...p.itens } });
+    const dono = Object.fromEntries(Object.keys(p.itens || {}).map(k => [k, p.id]));
+    if (g) { g.ids.push(p.id); Object.assign(g.itens, p.itens); Object.assign(g.dono, dono); } else grupos.push({ ...p, ids: [p.id], itens: { ...p.itens }, dono });
   });
   grupos.forEach(p => {
     p.cx = ctxAlvo(p.alvo);
-    p.ls = Object.entries(p.itens || {}).map(([k, it]) => Object.assign(linhaProposta(p.cx, k, it.de ?? null, it.para ?? null), { it, mn: it.mn }))
+    p.ls = Object.entries(p.itens || {}).map(([k, it]) => { const pid = p.dono[k], rv = _loteRev[pid] && k in _loteRev[pid];
+      return Object.assign(linhaProposta(p.cx, k, it.de ?? null, rv ? _loteRev[pid][k] : it.para ?? null), { it, mn: it.mn, pid, rv }); })
       .sort((a, b) => String(a.mn).localeCompare(String(b.mn)));
   });
-  const quadros = ppSint() ? htmlSintetico(grupos.map(p => ({ cx: p.cx, nome: p.alvoNome, itens: p.ls, rot: p.status !== 'aprovada' ? ` <small>${ST_PROPOSTA[p.status]?.nome || ''}</small>` : '' })))
+  // campo de valor revisável (lote pendente, quem aprova)
+  const campoLote = (x, cx) => `<div class="price-in ${x.rv ? 'on' : ''}"><span>R$</span><input type="text" inputmode="numeric" autocomplete="off" data-pid="${esc(x.pid)}" data-k="${esc(x.k)}" value="${moedaCampo(x.para)}" placeholder="${cx.base ? '' : cx.lab ? 'sem valor' : 'fora'}" oninput="mascaraMoeda(this);revisarLote(this)" onfocus="this.select()"></div>`;
+  const quadros = ppSint() ? htmlSintetico(grupos.map(p => ({ cx: p.cx, nome: p.alvoNome, itens: p.ls, status: p.status, rot: p.status !== 'aprovada' ? ` <small>${ST_PROPOSTA[p.status]?.nome || ''}</small>` : '' })),
+      revisa ? { cel: (x, g) => g.status === 'pendente' && g.cx && x.e
+        ? `<td class="num" data-sint="1">${campoLote(x, g.cx)}<div class="pp-var">${ppVar(x)}</div><div class="delta">${x.rv ? `<span class="muted">proposto ${fmtOuFora(x.it.para ?? null, g.cx.lab)}</span>` : ''}</div><small class="pp-sinf">${sintInfo(x)}</small></td>`
+        : sintCel(x, g.cx),
+        // lote com uma tabela só (vários envios dela): quadro simples
+        celPara: x => grupos[0].status === 'pendente' && grupos[0].cx && x.e ? `${campoLote(x, grupos[0].cx)}<div class="pp-var">${ppVar(x)}</div><div class="delta"></div>` : `<b>${fmtOuFora(x.para, grupos[0].cx?.lab)}</b>${ppVar(x)}` } : {})
     : grupos.map(p => {
     const cx = p.cx, itens = p.ls;
     return `<div style="margin-top:16px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">${badgeSt(p.status)}
         ${p.decisao ? `<small class="muted">por ${esc(p.decisao.por)} em ${dataHora(p.decisao.em)}${p.decisao.motivo ? ` · ${esc(p.decisao.motivo)}` : ''}</small>` : ''}
         ${p.ids.length === 1 ? `<a href="#" style="margin-left:auto;font-size:12px" onclick="abrirProposta('${p.id}');return false">detalhe <i class="fa-solid fa-chevron-right"></i></a>` : `<small class="muted" style="margin-left:auto">${p.ids.length} envios</small>`}</div>
       ${htmlQuadroProposta(cx, itens, { nome: p.alvoNome, colDe: 'Antes', colPara: p.status === 'aprovada' ? 'Publicado' : 'Proposto', marca,
-        celPara: x => `${x.it.revisado ? `<s class="muted">${fmtOuFora(x.it.proposto, cx?.lab)}</s> ` : ''}<b>${fmtOuFora(x.para, cx?.lab)}</b>${ppVar(x)}` })}</div>`;
+        celPara: x => revisa && p.status === 'pendente' && cx && x.e
+          ? `${campoLote(x, cx)}<div class="pp-var">${ppVar(x)}</div><div class="delta">${x.rv ? `<span class="muted">proposto ${fmtOuFora(x.it.para ?? null, cx.lab)}</span>` : ''}</div>`
+          : `${x.it.revisado ? `<s class="muted">${fmtOuFora(x.it.proposto, cx?.lab)}</s> ` : ''}<b>${fmtOuFora(x.para, cx?.lab)}</b>${ppVar(x)}` })}</div>`;
   }).join('');
   abrirGaveta({
     larga: true, centro: true, sobre: `Histórico · ${dataHora(L.em)}`, titulo: `${new Set(L.ps.map(p => p.alvo)).size} tabela(s) alterada(s)`,
     meta: `${L.status ? badgeSt(L.status) : ''}<span class="tag"><i class="fa-solid fa-user"></i>${esc(L.autor)}</span><span class="tag"><i class="fa-solid fa-tag"></i>${L.n} preço(s)</span><span class="tag">${resumoMudancas(L.cont)}</span>`,
     corpo: `${L.justificativa ? `<div class="pp-just"><i class="fa-solid fa-quote-left"></i><div><span>Justificativa · ${esc(L.autor)}</span><p>${esc(L.justificativa)}</p></div></div>` : ''}
-      ${pend ? `<div class="hint" style="margin:12px 0 0"><i class="fa-solid fa-layer-group"></i> Enviadas juntas: aprove o lote inteiro ou abra o <b>detalhe</b> de uma tabela para revisar, editar ou rejeitar só ela.</div>` : ''}
+      ${pend ? `<div class="hint" style="margin:12px 0 0"><i class="fa-solid fa-layer-group"></i> Enviadas juntas: aprove o lote inteiro ou abra o <b>detalhe</b> de uma tabela para editar ou rejeitar só ela.${revisa ? ' Ajuste o valor proposto, se precisar: ao aprovar, vale o valor revisado.' : ''}</div>` : ''}
       <div class="pp-barra">${htmlVistaPP(`() => abrirLote('${id}', ${!!pend})`)}</div>${quadros}`,
     rodape: pend && pode('tabelas', 'aprovar') ? `<button class="btn" style="margin-right:auto" onclick="fecharGaveta()">Fechar</button>
-      <button class="btn pri" onclick="aprovarLote('${id}')"><i class="fa-solid fa-stamp"></i>Aprovar lote (${L.ps.length} tabelas)</button>`
+      <button class="btn pri" id="lote-aprovar" onclick="aprovarLote('${id}')">${rotuloAprovarLote(L.ps.length)}</button>`
       : `${L.ps.every(podeReverterProp) ? `<button class="btn perigo-txt" style="margin-right:auto" onclick="reverterPropostas(${esc(JSON.stringify(L.ps.map(p => p.id)))})" title="Volta os preços ao valor de antes e marca como cancelada"><i class="fa-solid fa-clock-rotate-left"></i>Reverter</button>` : ''}${L.ps.every(podeExcluirProp) ? `<button class="btn perigo-txt" style="margin-right:auto" onclick="excluirPropostas(${esc(JSON.stringify(L.ps.map(p => p.id)))})"><i class="fa-solid fa-trash"></i>Excluir do histórico</button>` : ''}<button class="btn" onclick="fecharGaveta()">Fechar</button>`
   });
+}
+
+let _loteRev = {}, _loteId = null;
+const nRevLote = () => Object.values(_loteRev).reduce((s, r) => s + Object.keys(r).length, 0);
+const rotuloAprovarLote = nt => { const n = nRevLote(); return `<i class="fa-solid fa-stamp"></i>${n ? `Aprovar lote com ${n} revisão(ões)` : `Aprovar lote (${nt} tabelas)`}`; };
+// Valor revisado no lote: guarda e recalcula a linha (variação, desconto e margem)
+function revisarLote(inp) {
+  // sintético: a célula da tabela; analítico: a linha inteira
+  const pid = inp.dataset.pid, p = ESTADO.propostas[pid], cx = p && ctxAlvo(p.alvo), tr = inp.closest('td[data-sint]') || inp.closest('tr'), k = inp.dataset.k, it = p?.itens?.[k];
+  if (!it || !cx) return;
+  const lido = lerMoeda(inp.value), v = lido == null ? null : Math.round(lido * 100) / 100, orig = it.para ?? null;
+  const r = _loteRev[pid] ||= {};
+  if ((v != null && (isNaN(v) || v < 0)) || (v == null && cx.base) || v === orig) delete r[k]; else r[k] = v;
+  if (!Object.keys(r).length) delete _loteRev[pid];
+  const rev = !!_loteRev[pid] && k in _loteRev[pid], x = linhaProposta(cx, k, it.de ?? null, rev ? v : orig);
+  tr.querySelector('.price-in').classList.toggle('on', rev);
+  tr.querySelector('.pp-var').innerHTML = ppVar(x);
+  tr.querySelector('.delta').innerHTML = rev ? `<span class="muted">proposto ${fmtOuFora(orig, cx.lab)}</span>` : '';
+  const d = tr.querySelector('.pp-desc'); if (d) d.innerHTML = ppDesc(x);
+  const m = tr.querySelector('.pp-mrg'); if (m) m.innerHTML = ppMrg(x);
+  const si = tr.querySelector('.pp-sinf'); if (si && tr.dataset.sint) si.innerHTML = sintInfo(x);
+  const L = lotesHistorico(false, true).find(l => l.id === _loteId), b = document.getElementById('lote-aprovar');
+  if (b && L) b.innerHTML = rotuloAprovarLote(L.ps.length);
 }
 
 // ── Detalhe ───────────────────────────────────────────────────
@@ -849,17 +887,30 @@ async function decidirProposta(id, status) {
 async function aprovarLote(id) {
   const L = lotesHistorico(false, true).find(l => l.id === id);
   if (!L) return toast('Lote já decidido', 'erro');
-  const ps = L.ps.map(p => [p.id, ESTADO.propostas[p.id]]).filter(([, p]) => p?.status === 'pendente' && ctxAlvo(p.alvo));
-  const marc = await perguntarUnilab(ps.flatMap(([, p]) => Object.entries(p.itens || {}).filter(([, it]) => !it.sistemaOk)
+  // valor digitado ainda no campo: vale o que está lá
+  if (_loteId === id) document.querySelectorAll('#g-corpo .pp-tab tr input[data-pid]').forEach(revisarLote);
+  const rev = _loteId === id ? _loteRev : {};
+  // valores revisados por quem aprova: guarda o proposto original para auditoria
+  const ps = L.ps.map(p => [p.id, ESTADO.propostas[p.id]]).filter(([, p]) => p?.status === 'pendente' && ctxAlvo(p.alvo)).map(([pid, p]) => {
+    const itens = { ...p.itens };
+    Object.entries(rev[pid] || {}).forEach(([k, v]) => { if (itens[k]) itens[k] = { ...itens[k], para: v, proposto: itens[k].para ?? null, revisado: true }; });
+    return [pid, p, itens];
+  });
+  // UniLab: pergunta pelos não marcados no envio e pelos revisados aqui
+  const marc = await perguntarUnilab(ps.flatMap(([pid, p, itens]) => Object.entries(itens).filter(([k, it]) => !it.sistemaOk || (rev[pid] && k in rev[pid]))
     .map(([k, it]) => ({ alvo: p.alvo, k, mn: it.mn, para: it.para ?? null }))), 'Aprovar lote');
   if (!marc) return;
-  let n = 0;
-  for (const [id, p] of ps) {
-    const itens = Object.fromEntries(Object.entries(p.itens || {}).map(([k, it]) => [k, marc.has(`${p.alvo}|${k}`) ? { ...it, sistemaOk: true } : it]));
-    n += await aplicarProposta(id, { ...p, itens });
+  let n = 0, nRev = 0;
+  for (const [pid, p, itens0] of ps) {
+    const r = rev[pid] || {};
+    const itens = Object.fromEntries(Object.entries(itens0).map(([k, it]) => [k, marc.has(`${p.alvo}|${k}`) ? { ...it, sistemaOk: true } : k in r ? { ...it, sistemaOk: null } : it]));
+    if (Object.keys(r).length) { nRev += Object.keys(r).length; await DB.mesclar(`propostas/${pid}/itens`, Object.fromEntries(Object.keys(r).map(k => [k, itens[k]]))); }
+    n += await aplicarProposta(pid, { ...p, itens });
+    if (Object.keys(r).length) await DB.mesclar(`propostas/${pid}/decisao`, { revisados: Object.keys(r).length });
   }
+  _loteRev = {}; _loteId = null;
   fecharGaveta();
-  toast(`${n} preço(s) publicados em ${L.ps.length} tabela(s)`);
+  toast(`${n} preço(s) publicados em ${L.ps.length} tabela(s)${nRev ? ` · ${nRev} revisado(s)` : ''}`);
   renderTela();
 }
 
@@ -943,6 +994,6 @@ function atualizarBadgePropostas() {
   const a = document.querySelector('#nav a[data-s="tabelas"]');
   if (!a) return;
   a.querySelector('.badge')?.remove();
-  const n = pode('tabelas', 'aprovar') ? lista(ESTADO.propostas).filter(p => p.status === 'pendente').length : 0;
+  const n = pode('tabelas', 'aprovar') ? lotesHistorico(false, true).length : 0;
   if (n) a.insertAdjacentHTML('beforeend', `<span class="badge aviso" title="Propostas aguardando aprovação">${n}</span>`);
 }

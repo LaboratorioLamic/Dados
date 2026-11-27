@@ -321,6 +321,9 @@
     "comercial": {
       ".read": "((auth != null && root.child('uids').child(auth.uid).isString() && root.child('logins').child(root.child('uids').child(auth.uid).val()).child('uid').val() === auth.uid && root.child('usuarios').child(root.child('uids').child(auth.uid).val()).child('ativo').val() === true) && (root.child('usuarios').child(root.child('uids').child(auth.uid).val()).child('grupo').val() === 'admin' || root.child('grupos').child(root.child('usuarios').child(root.child('uids').child(auth.uid).val()).child('grupo').val()).child('perms').child('comercial_acessar').val() === true || root.child('comercial_acesso').child(root.child('uids').child(auth.uid).val()).val() === true))",
       ".write": "((auth != null && root.child('uids').child(auth.uid).isString() && root.child('logins').child(root.child('uids').child(auth.uid).val()).child('uid').val() === auth.uid && root.child('usuarios').child(root.child('uids').child(auth.uid).val()).child('ativo').val() === true) && (root.child('usuarios').child(root.child('uids').child(auth.uid).val()).child('grupo').val() === 'admin' || root.child('grupos').child(root.child('usuarios').child(root.child('uids').child(auth.uid).val()).child('grupo').val()).child('perms').child('comercial_acessar').val() === true || root.child('comercial_acesso').child(root.child('uids').child(auth.uid).val()).val() === true))",
+      "propostas": {
+        ".indexOn": ["status"]
+      },
       "exames": {
         ".read": true
       },

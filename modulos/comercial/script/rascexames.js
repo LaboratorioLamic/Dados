@@ -4,8 +4,8 @@
 // ═══════════════════════════════════════════════════════════════
 //
 // Junta, por exame, o que está no rascunho do usuário em cada tabela (rascunhos/{alvo}/{usuario}).
-// Abre pelo botão "Rascunho" da tela de exames ou pelo "Enviar proposta" da ficha, já no exame,
-// para confirmar o envio. Envio: uma proposta por tabela, todas no mesmo lote (como na ficha).
+// Abre pelo botão "Rascunho" da tela de exames ou pelo "Rascunho" da ficha, já no exame,
+// para confirmar o envio. Envio: uma proposta por tabela, todas no mesmo lote (uma única aprovação).
 
 let _rx = null, _rxVolta = null;   // _rxVolta: estado guardado ao abrir a ficha de um exame (a janela volta igual)   // { foco: chave do exame vindo da ficha, soFoco, sel: Set de chaves marcadas, q }
 
@@ -62,7 +62,7 @@ async function abrirRascunhoExames(foco = null, just = '') {
     larga: true, centro: true, sobre: 'Rascunho de exames', titulo: temFoco ? `Confirmar envio · ${ESTADO.exames[foco].mn}` : 'Preços alterados nas fichas',
     meta: '<span id="rx-meta" style="display:contents"></span>',
     corpo: `
-      <div class="alert x"><i class="fa-solid fa-pen-to-square"></i><div>Preços alterados na ficha dos exames ficam aqui até serem enviados. Marque os exames, confira os valores e envie: <b>uma proposta por tabela</b>, todas no mesmo lote.</div></div>
+      <div class="alert x"><i class="fa-solid fa-pen-to-square"></i><div>Preços alterados na ficha dos exames ficam aqui até serem enviados. Marque os exames, confira os valores e envie: tudo vai num <b>lote</b> só, uma única aprovação.</div></div>
       <div class="toolbar rx-bar">
         <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="rx-q" placeholder="Filtrar mnemônico ou nome…" autocomplete="off" oninput="_rx.q=this.value;desenharRascExames()"></div>
         <span id="rx-foco"></span>
@@ -111,7 +111,7 @@ function desenharRascExames() {
       ${htmlQuadroProposta(cx, itens, { colDe: 'Atual', colPara: 'Proposto', marcaEsq: marca, celPara: x => campoRx(a, x),
         colExtra: { th: podeVs ? 'UniLab' : '', td: x => `<span class="rx-acts"><button type="button" class="icon-btn" title="Tirar do rascunho (volta ao valor publicado)" onclick="tirarItemRx('${esc(x.k)}','${esc(a)}')"><i class="fa-solid fa-rotate-left"></i></button>${podeVs && `${a}|${x.k}` in _envVs ? `<span data-vs="${esc(a)}|${esc(x.k)}" title="Valor já lançado no UniLab">${chave(_envVs[`${a}|${x.k}`], `envVs('${esc(a)}|${esc(x.k)}')`)}</span>` : ''}</span>` } })}</div>`;
   }).join('');
-  el.innerHTML ||= vazio('fa-pen-to-square', ls.length ? 'Nenhum exame com esse filtro' : 'Rascunho vazio<br><span class="muted">Altere o preço na ficha de um exame e escolha <b>Rascunho</b> ou <b>Enviar proposta</b>.</span>');
+  el.innerHTML ||= vazio('fa-pen-to-square', ls.length ? 'Nenhum exame com esse filtro' : 'Rascunho vazio<br><span class="muted">Altere o preço na ficha de um exame e clique em <b>Rascunho</b>.</span>');
   el.querySelectorAll('tr[data-k]').forEach(tr => tr.classList.toggle('rx-off', !_rx.sel.has(tr.dataset.k)));
 
   const sel = ls.filter(x => _rx.sel.has(x.k)), n = sel.reduce((s, x) => s + x.itens.length, 0);
@@ -195,9 +195,9 @@ async function enviarRascExames(publicar) {
   if (por.particular && !pode('exames', 'editar')) return toast('Seu grupo não pode alterar o preço praticado', 'erro');
   if (alvos.some(a => a !== 'particular') && !pode('tabelas', 'editar')) return toast('Seu grupo não pode alterar tabelas de preço', 'erro');
   if (publicar && !pode('tabelas', 'aprovar')) return toast('Seu grupo não pode publicar preços', 'erro');
-  // publicar: UniLab dos divergentes ainda não marcados na janela
-  const marc = publicar ? await perguntarUnilab(alvos.flatMap(a => Object.entries(por[a].itens).filter(([k]) => _envVs[`${a}|${k}`] !== true)
-    .map(([k, it]) => ({ alvo: a, k, mn: it.mn, para: it.para })))) : new Set();
+  // UniLab dos divergentes ainda não marcados na janela (no envio, a marca vale quando a proposta for aprovada)
+  const marc = await perguntarUnilab(alvos.flatMap(a => Object.entries(por[a].itens).filter(([k]) => _envVs[`${a}|${k}`] !== true)
+    .map(([k, it]) => ({ alvo: a, k, mn: it.mn, para: it.para }))), publicar ? 'Publicar' : 'Enviar para aprovação');
   if (!marc) return;
   const u = usuarioAtual(), just = valorCampo('rx-just').trim() || null, lote = DB.novaChave('propostas');   // um lote só por envio
   for (const a of alvos) {

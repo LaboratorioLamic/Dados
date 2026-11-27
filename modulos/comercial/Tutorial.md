@@ -1,6 +1,6 @@
 # COMERCIAL LAMIC — Tutoriais
 
-Revisão: 23/11/2026 · 30 tutoriais · fonte de verdade: [`script/tutoriais.js`](script/tutoriais.js)
+Revisão: 27/11/2026 · 30 tutoriais · fonte de verdade: [`script/tutoriais.js`](script/tutoriais.js)
 
 > **Regra de manutenção (para pessoas e para o Claude)**
 >
@@ -183,13 +183,13 @@ Revisão: 23/11/2026 · 30 tutoriais · fonte de verdade: [`script/tutoriais.js`
 | # | Alvo | Ação | Legenda |
 |---|---|---|---|
 | 1 | `#ex-body tr.row` | clique | **Abra um exame** — Clique em um exame para abrir a ficha. |
-| 2 | `#fx-preco` | digitar (sugestão: calculada) · espera `#gaveta.open` · condicional | **Novo preço praticado** — Digite só os números: a vírgula entra sozinha pelos centavos (5730 vira 57,30). A margem, o status e a composição são recalculados na hora. Os preços das outras tabelas, logo abaixo, funcionam igual. |
-| 3 | `#fx-st` | ver | **Confira a margem** — Veja a nova margem e o status. Preço abaixo do mínimo fica em vermelho. |
-| 4 | `#fx-just` | digitar (sugestão: "Reajuste anual (treinamento)") | **Justificativa** — Explique o motivo. Quem aprova vê este texto. |
-| 5 | `#gaveta .dr-f` | ver | **Opções de envio** — Rascunho guarda para enviar depois · Enviar proposta abre o rascunho para conferir e confirmar · Aprovar e publicar (só para quem aprova) publica na hora e fecha a ficha. Se algum valor ficar diferente do UniLab, antes aparece a janela para marcar os já lançados lá. |
-| 6 | `#gaveta [onclick="salvarFicha('confirmar')"]` | clique · avança se deu certo | **Enviar proposta** — Clique em Enviar proposta. O preço vai para o seu rascunho e abre o Rascunho de exames, já neste exame. |
+| 2 | `#fx-preco` | digitar (sugestão: calculada) · espera `#gaveta.open` · condicional | **Novo preço praticado** — Digite só os números: a vírgula entra sozinha pelos centavos (5730 vira 57,30). A margem, o status e a composição são recalculados na hora. Os preços das outras tabelas, logo abaixo, funcionam igual. Se a Particular já tem valor aguardando aprovação, ele aparece em amarelo no lugar do praticado e é a base das sugestões das outras tabelas. |
+| 3 | `#fx-arred .pp-arred` | ver · condicional | **Arredondar** — Arredonda ao múltiplo mais próximo de R$ 1, 5, 10 ou 100 os valores recomendados: Usar sugerido, margem alvo () e desconto de referência () das outras tabelas. Clique de novo no ativo para desligar. |
+| 4 | `#fx-st` | ver | **Confira a margem** — Veja a nova margem e o status. Preço abaixo do mínimo fica em vermelho. |
+| 5 | `#fx-just` | digitar (sugestão: "Reajuste anual (treinamento)") | **Justificativa** — Explique o motivo. Quem aprova vê este texto. |
+| 6 | `#gaveta [onclick="salvarFicha('confirmar')"]` | clique · avança se deu certo | **Rascunho** — Clique em Rascunho. O preço vai para o seu rascunho e abre o Rascunho de exames, já neste exame, para conferir e enviar. |
 | 7 | `#rx-lista` | ver · espera `#rx-lista` | **Confira o rascunho** — Um quadro por tabela alterada, como no envio da proposta: atual, proposto (editável aqui mesmo), desconto, margem e médias. A chave UniLab só aparece nos exames cujo valor difere do UniLab. A justificativa da ficha já vem preenchida abaixo. |
-| 8 | `#rx-enviar` | clique · avança se deu certo | **Confirmar envio** — Clique em Enviar para aprovação. Uma proposta é criada para cada tabela alterada, todas num lote só. |
+| 8 | `#rx-enviar` | clique · avança se deu certo | **Confirmar envio** — Clique em Enviar para aprovação. Se algum valor ficar diferente do UniLab, antes aparece a janela para marcar os já lançados lá (a marca vale quando a proposta for aprovada). Tudo vai num lote só: uma única aprovação. |
 | 9 | `#sino .sino-btn` | ver · condicional | **Proposta criada** — A proposta (simulada) aparece no sino de quem aprova e em Tabelas de Preço › Propostas. O preço só muda depois da aprovação. |
 | 10 | — (cartão central) | ver | **Pronto!** — Preço alterado e enviado para aprovação. Na simulação nada foi gravado de verdade. |
 
@@ -230,11 +230,11 @@ Revisão: 23/11/2026 · 30 tutoriais · fonte de verdade: [`script/tutoriais.js`
 | 4 | `#ex-rasc` | clique · avança se deu certo | **Botão Rascunho** — O número mostra quantos exames têm preço no seu rascunho. No filtro Controle interno › No meu rascunho a lista mostra só eles. Clique em Rascunho. |
 | 5 | `#rx-lista` | ver · espera `#rx-lista` | **Exames no rascunho** — Um quadro por tabela, como no envio da proposta: Particular, custo, atual, proposto, desconto e margem, com as médias e a tabela toda. Se o exame ainda está no rascunho da Particular, o desconto das outras tabelas já usa esse valor. A chave UniLab aparece só nos exames cujo valor difere do UniLab. Clique no exame para abrir a ficha (ao fechar, volta aqui); tira a linha do rascunho. |
 | 6 | `#rx-lista .price-in input` | digitar (sugestão: calculada) · condicional | **Edite o valor** — O valor proposto pode ser alterado aqui mesmo, com a vírgula automática. Vale na hora para o envio, mesmo sem sair do campo; ao sair, margem e desconto são recalculados. Vazio retira o exame da tabela. |
-| 7 | `#rx-arred .pp-arred` | ver · condicional | **Arredondar** — Arredonda para cima todos os valores propostos no múltiplo de R$ 1, 5, 10 ou 100. Clique de novo no botão ativo para voltar aos centavos. |
+| 7 | `#rx-arred .pp-arred` | ver · condicional | **Arredondar** — Arredonda todos os valores propostos ao múltiplo mais próximo de R$ 1, 5, 10 ou 100. Clique de novo no botão ativo para voltar aos centavos. |
 | 8 | `#rx-arred .pp-vista` | ver · condicional | **Analítico ou sintético** — Analítico: um quadro completo por tabela. Sintético: uma linha por exame e uma coluna por tabela, com o valor editável e margem e desconto logo abaixo (+ sem custo abre a aba de custos do exame). A escolha fica lembrada neste navegador; a chave UniLab só existe no Analítico. |
 | 9 | `.rx-ck` | ver · condicional | **Marque o que enviar** — A caixa à esquerda do mnemônico marca o exame (cinza = desmarcado): só os marcados são enviados ou descartados. Marcar todos e o filtro agilizam. |
 | 10 | `#rx-just` | digitar (sugestão: "Reajuste de treinamento") | **Justificativa** — Explique o motivo. Quem aprova vê este texto. |
-| 11 | `#gaveta .dr-f` | ver | **Enviar** — Enviar para aprovação cria uma proposta por tabela, todas num lote só (uma linha nas pendentes). Aprovar e publicar (só para quem aprova) publica direto; se algum valor ficar diferente do UniLab, antes aparece a janela para marcar os já lançados lá. |
+| 11 | `#gaveta .dr-f` | ver | **Enviar** — Enviar para aprovação manda tudo num lote só: uma única aprovação (uma linha no sino e nas pendentes). Aprovar e publicar (só para quem aprova) publica direto. Nos dois, se algum valor ficar diferente do UniLab, antes aparece a janela para marcar os já lançados lá. |
 | 12 | `#rx-enviar` | clique · condicional · avança se deu certo | **Enviar para aprovação** — Clique em Enviar para aprovação. |
 | 13 | — (cartão central) | ver | **Pronto!** — Rascunho enviado (na simulação). As propostas aparecem em Tabelas de Preço › Propostas e no sino de quem aprova. |
 
@@ -306,7 +306,7 @@ Revisão: 23/11/2026 · 30 tutoriais · fonte de verdade: [`script/tutoriais.js`
 | 6 | `#gr-body tr.ed .acts, #gr-body tr[data-k] .acts` | ver | **Atalhos da linha** — Botões para usar o preço sugerido, levar ao piso, aplicar o desconto de referência, desfazer ou retirar da tabela. |
 | 7 | `#gr-bar` | ver · espera `#gr-bar.on` | **Seu rascunho** — Resumo do rascunho: quantos sobem, descem e a margem média antes e depois. |
 | 8 | `#gr-bar [onclick="abrirEnvioProposta()"]` | clique | **Revisar e enviar** — Clique em Revisar e enviar. |
-| 9 | `#gaveta .pp-barra` | ver · espera `#gaveta.open` · condicional | **Vista e arredondamento** — Analítico mostra o quadro completo; Sintético, uma linha por exame com o essencial. Os botões R$ 1, 5, 10 e 100 arredondam para cima todos os valores propostos (clique de novo para desligar). A chave UniLab aparece só nos exames cujo valor difere do UniLab. |
+| 9 | `#gaveta .pp-barra` | ver · espera `#gaveta.open` · condicional | **Vista e arredondamento** — Analítico mostra o quadro completo; Sintético, uma linha por exame com o essencial. Os botões R$ 1, 5, 10 e 100 arredondam ao múltiplo mais próximo todos os valores propostos (clique de novo para desligar). A chave UniLab aparece só nos exames cujo valor difere do UniLab. |
 | 10 | `#pp-just` | digitar (sugestão: "Reajuste de treinamento") · espera `#gaveta.open` | **Justificativa** — Confira os preços e explique o motivo da proposta. |
 | 11 | `#gaveta [onclick="enviarProposta(true)"]` | ver · condicional | **Aprovar e publicar** — Só para quem aprova: publica na hora, sem passar por outra pessoa. Se algum valor ficar diferente do UniLab, antes aparece a janela para marcar os já lançados lá; senão, publica direto. |
 | 12 | `#gaveta [onclick="enviarProposta(false)"]` | clique · avança se deu certo | **Enviar para aprovação** — Clique em Enviar para aprovação. |
@@ -342,8 +342,8 @@ Revisão: 23/11/2026 · 30 tutoriais · fonte de verdade: [`script/tutoriais.js`
 | 2 | — (cartão central) | ver · condicional | **Nenhuma proposta pendente** — Não há propostas aguardando agora. Faça antes o tutorial Editar preços na tabela e escolha Explorar livremente no final: a proposta simulada aparece aqui e você volta a este tutorial. |
 | 3 | `#prop-corpo tbody tr.row[onclick^="abrirProposta"]` | clique · condicional | **Abra a proposta** — Clique em uma proposta pendente. |
 | 4 | `#gaveta .dr-b` | ver · espera `#gaveta.open` · condicional | **Revise** — Preço de hoje → preço proposto, margem e alertas de piso de cada exame, com a justificativa do autor. O valor proposto pode ser revisado no campo, com a vírgula automática: vale o que estiver digitado, mesmo sem Enter. |
-| 5 | `#gaveta [onclick^="aprovarLote"]` | ver · condicional | **Aprovar o lote** — Abriu um lote: as tabelas enviadas juntas. Aprovar lote publica todas de uma vez; o link detalhe de cada tabela abre a proposta dela para revisar, editar ou rejeitar só ela. |
-| 6 | `#pp-arred-w` | ver · condicional | **Arredondar** — Arredonda para cima todos os valores propostos no múltiplo de R$ 1, 5, 10 ou 100: viram valores revisados. Clique de novo no ativo para voltar ao proposto. |
+| 5 | `#gaveta [onclick^="aprovarLote"]` | ver · condicional | **Aprovar o lote** — Abriu um lote: as tabelas enviadas juntas. Os valores propostos podem ser revisados aqui mesmo, no Analítico ou no Sintético; ao aprovar, vale o revisado. Aprovar lote publica todas de uma vez; o link detalhe de cada tabela abre a proposta dela para editar ou rejeitar só ela. |
+| 6 | `#pp-arred-w` | ver · condicional | **Arredondar** — Arredonda todos os valores propostos ao múltiplo mais próximo de R$ 1, 5, 10 ou 100: viram valores revisados. Clique de novo no ativo para voltar ao proposto. |
 | 7 | `#pp-motivo` | digitar (sugestão: "Aprovado no treinamento") · condicional | **Observação** — Opcional para aprovar; obrigatória para rejeitar. |
 | 8 | `#gaveta .dr-f` | ver · condicional | **Decida** — Rejeitar devolve ao autor com a observação. Aprovar e publicar aplica os preços na tabela: se nenhum valor ficar diferente do UniLab, publica direto. |
 | 9 | `#pp-aprovar` | clique · condicional · avança se deu certo | **Aprovar e publicar** — Clique em Aprovar e publicar. |

@@ -3,8 +3,6 @@ uniadmin-corrigido.json
 agendaresp.json
 respiroLamic_backup_*.json
 
-# Cada módulo em seeds/ é um repositório próprio (publicado no próprio GitHub Pages)
-seeds/
 
 # backup do Controle de Temperatura antigo (dados de leitura e hash de senha): não publicar
 temperatura.json

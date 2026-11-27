@@ -14,6 +14,6 @@ window.LAMIC_CONFIG = {
   // Domínio interno usado só para montar a conta no Firebase Auth (login → login.N@dominio).
   // Não é um e-mail real e nenhum e-mail é enviado.
   dominioInterno: 'dados-lamic.app',
-  // Apps Script que grava anexos dos avisos no Google Drive (mesmo modelo de seeds/respIamic).
+  // Apps Script que grava anexos dos avisos no Google Drive (mesmo modelo de modulos/respIamic).
   driveEndpoint: 'https://script.google.com/macros/s/AKfycbxXwMuVBeWw_sByJjjHvzkc_OyEPSO7gxXYYDJYqDi5YPo9MXks1dXsQkXBPzxSQ1c/exec',
 };

@@ -8,7 +8,8 @@ let _iniHist = null, _iniHistEm = 0;
 
 // ── Sininho: propostas aguardando aprovação ───────────────────
 let _sinoAberto = false, _sinoFiltro = '';
-const sinoPendentes = () => lista(ESTADO.propostas, (a, b) => (b.em || 0) - (a.em || 0)).filter(p => p.status === 'pendente');
+// Pendentes agrupadas por lote: cada envio (várias tabelas) é uma notificação só
+const sinoPendentes = () => lotesHistorico(false, true);
 const propostaMinha = p => { const u = usuarioAtual(); return p.autorId === u.id || p.autor === u.nome; };
 
 function haQuanto(ts) {
@@ -116,8 +117,10 @@ function sinoPainelPropostas() {
   return `
     ${_sinoFiltro || (minhas && minhas < todas.length) ? `<div class="chips sino-chips">${chip('', 'Todas', todas.length)}${chip('minhas', 'Minhas', minhas)}${chip('outros', 'De outros', todas.length - minhas)}</div>` : ''}
     <div class="sino-l">${ls.map((p, i) => {
-      const a = alvoInfo(p.alvo), r = resumoProposta(p), velha = Date.now() - (p.em || 0) > 3 * 864e5;
-      return `<button class="sino-it" style="animation-delay:${Math.min(i, 8) * 35}ms" onclick="fecharSino();abrirProposta('${p.id}')">
+      const um = p.ps.length === 1, a = um ? alvoInfo(p.ps[0].alvo) : { icone: 'fa-layer-group', cor: 'var(--cyan)', nome: `Lote · ${p.ps.length} tabelas` }, velha = Date.now() - (p.em || 0) > 3 * 864e5;
+      const rs = p.ps.map(resumoProposta), r = { n: rs.reduce((s, x) => s + x.n, 0), sobe: rs.reduce((s, x) => s + x.sobe, 0), desce: rs.reduce((s, x) => s + x.desce, 0), abaixo: rs.reduce((s, x) => s + x.abaixo, 0),
+        media: um ? rs[0].media : null, pisoNome: um ? rs[0].pisoNome : 'piso' };
+      return `<button class="sino-it" style="animation-delay:${Math.min(i, 8) * 35}ms" onclick="fecharSino();${um ? `abrirProposta('${p.ps[0].id}')` : `abrirLote('${p.id}',true)`}">
         <span class="avatar" style="background:${corAvatar(p.autorId || p.autor)}">${esc(iniciais(p.autor))}</span>
         <span class="sino-c">
           <span class="sino-t"><i class="fa-solid ${a.icone}" style="color:${a.cor}"></i><b>${esc(a.nome)}</b><em class="${velha ? 'velha' : ''}" title="${dataHora(p.em)}">${velha ? '<i class="fa-solid fa-clock"></i> ' : ''}${haQuanto(p.em)}</em></span>
@@ -144,7 +147,10 @@ const sinoHtml = n => `<div class="sino ${_sinoAberto ? 'open' : ''}" id="sino">
 // Sino na barra do topo: redesenha a cada mudança nos dados
 function atualizarSino() {
   const el = document.getElementById('tb-sino');
-  if (el) el.innerHTML = usuarioAtual() && (pode('tabelas') || pode('exames')) ? sinoHtml(sinoTotal()) : '';
+  const ok = usuarioAtual() && (pode('tabelas') || pode('exames')), n = ok ? sinoTotal() : 0;
+  if (el) el.innerHTML = ok ? sinoHtml(n) : '';
+  // portal (mesma origem) lê este total para a bolinha do menu: já respeita as abas silenciadas
+  try { localStorage.setItem('comercialSino', JSON.stringify({ n, em: Date.now() })); } catch {}
 }
 
 function alternarSino() {
@@ -174,7 +180,7 @@ function renderInicio() {
   const irPend = k => pode('pendencias') ? `pendAba='${k}';pendPag=1;irPara('pendencias')` : '';
   const irTab = aba => pode('tabelas') ? `tabAba='${aba}';irPara('tabelas')` : '';
   const mMin = parametro('margemMinima'), mAlvo = parametro('margemAlvo');
-  const propostas = lista(ESTADO.propostas).filter(p => p.status === 'pendente');
+  const propostas = lotesHistorico(false, true);   // pendentes por lote (um envio = uma aprovação)
   const minhas = propostas.filter(p => p.autorId === u.id || p.autor === u.nome).length;
 
   // Situação dos exames (barra empilhada)

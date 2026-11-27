@@ -8,28 +8,28 @@ window.LAMIC_SEED_MODULOS = [
   "links": [
    {
     "nome": "Pop's",
-    "url": "seeds/Pops/index.html",
+    "url": "modulos/Pops/index.html",
     "icone": "fas fa-rocket",
     "modo": "iframe",
     "ordem": 0
    },
    {
     "nome": "Protocolos",
-    "url": "seeds/Protocolos/index.html",
+    "url": "modulos/Protocolos/index.html",
     "icone": "fas fa-file-lines",
     "modo": "iframe",
     "ordem": 1
    },
    {
     "nome": "Termos",
-    "url": "seeds/Termos/index.html",
+    "url": "modulos/Termos/index.html",
     "icone": "fas fa-file-contract",
     "modo": "iframe",
     "ordem": 2
    },
    {
     "nome": "Planilhas",
-    "url": "seeds/Planilhas/index.html",
+    "url": "modulos/Planilhas/index.html",
     "icone": "fas fa-table",
     "modo": "iframe",
     "ordem": 3
@@ -50,7 +50,7 @@ window.LAMIC_SEED_MODULOS = [
    },
    {
     "nome": "Configurações",
-    "url": "seeds/docadmin/index.html",
+    "url": "modulos/docadmin/index.html",
     "icone": "fas fa-sliders",
     "modo": "iframe",
     "ordem": 6
@@ -72,28 +72,28 @@ window.LAMIC_SEED_MODULOS = [
    },
    {
     "nome": "Tabelas de Preço",
-    "url": "seeds/TabeIasIamic/index.html",
+    "url": "modulos/TabeIasIamic/index.html",
     "icone": "fas fa-file-invoice-dollar",
     "modo": "iframe",
     "ordem": 1
    },
    {
     "nome": "Lamic to Lab",
-    "url": "seeds/L2L/index.html",
+    "url": "modulos/L2L/index.html",
     "icone": "fas fa-money-check-dollar",
     "modo": "iframe",
     "ordem": 2
    },
    {
     "nome": "Propostas",
-    "url": "seeds/Iamicproposta/index.html",
+    "url": "modulos/Iamicproposta/index.html",
     "icone": "fas fa-file-signature",
     "modo": "iframe",
     "ordem": 3
    },
    {
     "nome": "Comparar Orçamentos",
-    "url": "seeds/valor/index.html",
+    "url": "modulos/valor/index.html",
     "icone": "fas fa-scale-balanced",
     "modo": "iframe",
     "ordem": 4
@@ -158,14 +158,14 @@ window.LAMIC_SEED_MODULOS = [
   "links": [
    {
     "nome": "Checklist de Guias",
-    "url": "seeds/checkguias/index.html",
+    "url": "modulos/checkguias/index.html",
     "icone": "fas fa-check-to-slot",
     "modo": "iframe",
     "ordem": 0
    },
    {
     "nome": "Glosas",
-    "url": "seeds/conveniosIamic/index.html",
+    "url": "modulos/conveniosIamic/index.html",
     "icone": "fas fa-chart-line",
     "modo": "iframe",
     "ordem": 1
@@ -314,7 +314,7 @@ window.LAMIC_SEED_MODULOS = [
   "links": [
    {
     "nome": "Universidade LAMIC",
-    "url": "seeds/Treinamentos/index.html",
+    "url": "modulos/Treinamentos/index.html",
     "icone": "fas fa-chalkboard-user",
     "modo": "iframe",
     "ordem": 0
@@ -336,35 +336,35 @@ window.LAMIC_SEED_MODULOS = [
    },
    {
     "nome": "Temperatura",
-    "url": "seeds/manutencao/index.html#temperatura",
+    "url": "modulos/manutencao/index.html#temperatura",
     "icone": "fas fa-temperature-high",
     "modo": "iframe",
     "ordem": 1
    },
    {
     "nome": "Auditoria Geral",
-    "url": "seeds/auditoriaIamic/index.html",
+    "url": "modulos/auditoriaIamic/index.html",
     "icone": "fas fa-layer-group",
     "modo": "iframe",
     "ordem": 3
    },
    {
     "nome": "Manutenções",
-    "url": "seeds/manutencao/index.html",
+    "url": "modulos/manutencao/index.html",
     "icone": "fas fa-tools",
     "modo": "iframe",
     "ordem": 4
    },
    {
     "nome": "RH LAMIC",
-    "url": "seeds/curricuIoIamic/index.html",
+    "url": "modulos/curricuIoIamic/index.html",
     "icone": "fas fa-users",
     "modo": "iframe",
     "ordem": 5
    },
    {
     "nome": "Comercial",
-    "url": "seeds/comercial/index.html",
+    "url": "modulos/comercial/index.html",
     "icone": "fas fa-briefcase",
     "modo": "iframe",
     "ordem": 6
@@ -379,28 +379,28 @@ window.LAMIC_SEED_MODULOS = [
   "links": [
    {
     "nome": "Agendas de Exames",
-    "url": "seeds/respIamic/index.html",
+    "url": "modulos/respIamic/index.html",
     "icone": "fas fa-calendar",
     "modo": "iframe",
     "ordem": 0
    },
    {
     "nome": "LAMIC Vacinas",
-    "url": "seeds/Iamicvacinas/index.html",
+    "url": "modulos/Iamicvacinas/index.html",
     "icone": "fas fa-syringe",
     "modo": "iframe",
     "ordem": 1
    },
    {
     "nome": "Propagandismo",
-    "url": "seeds/propagandismolamic/index.html",
+    "url": "modulos/propagandismolamic/index.html",
     "icone": "fas fa-bullhorn",
     "modo": "iframe",
     "ordem": 2
    },
    {
     "nome": "Contato",
-    "url": "seeds/wpp/index.html",
+    "url": "modulos/wpp/index.html",
     "icone": "fab fa-whatsapp",
     "modo": "iframe",
     "ordem": 3

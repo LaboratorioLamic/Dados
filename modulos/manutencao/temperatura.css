@@ -337,7 +337,7 @@ tr.abn + tr.temp-det .temp-abn { display: flex; }
 @keyframes tempShake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(3px); } 30%, 50%, 70% { transform: translateX(-5px); } 40%, 60% { transform: translateX(5px); } }
 /* observação só aparece com "Observação" ligado ou em "Sem leitura" */
 .temp-det .temp-obs { display: none; }
-tr.abn + tr.temp-det .temp-obs, tr.obs-on + tr.temp-det .temp-obs { display: flex; }
+tr.abn + tr.temp-det .temp-obs, tr.obs-on + tr.temp-det .temp-obs, tr.fora + tr.temp-det .temp-obs { display: flex; }
 .temp-swl.hide { display: none; }
 .temp-swl input:checked + .temp-sw.red { background: #e63946; }
 .temp-sws { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; }
