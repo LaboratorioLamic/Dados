@@ -1,5 +1,5 @@
 /* temperatura.css — aba Temperatura (Manutenção LAMIC) */
-#tab-temperatura { --t-amb: #d98324; --t-amb-bg: rgba(244,162,97,.16); --t-red-bg: rgba(230,57,70,.12); --t-grn-bg: rgba(42,157,143,.14); }
+#tab-temperatura, .temp-ov, .temp-cal { --t-amb: #d98324; --t-amb-bg: rgba(244,162,97,.16); --t-red-bg: rgba(230,57,70,.12); --t-grn-bg: rgba(42,157,143,.14); }
 .temp-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
 .temp-sp { flex: 1; }
 .temp-btn { border: 1px solid var(--border); background: var(--bg-card); padding: 8px 14px; border-radius: var(--radius); cursor: pointer; font: inherit; font-size: 13px; display: inline-flex; gap: 8px; align-items: center; color: var(--text-primary); }
@@ -101,8 +101,8 @@ tr.temp-arq td { opacity: .55; }
 .temp-x { background: none; border: 0; font-size: 20px; cursor: pointer; color: var(--text-muted); margin-left: auto; }
 .temp-mb { overflow: auto; padding: 4px 18px 10px; }
 .temp-mb td input[type=text] { width: 84px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font: inherit; text-align: right; background: var(--bg); color: var(--text-primary); }
-.temp-mb input.bad { border-color: var(--red); background: var(--t-red-bg); }
-.temp-mb input.good { border-color: var(--green); background: var(--t-grn-bg); }
+.temp-mb td input.bad, .temp-mb input.bad { border-color: var(--red); background: var(--t-red-bg); }
+.temp-mb td input.good, .temp-mb input.good { border-color: var(--green); background: var(--t-grn-bg); }
 .temp-fx { color: var(--text-muted); font-size: 12px; }
 .temp-done { color: var(--green); font-size: 12px; }
 .temp-lnk { border: 0; background: none; color: var(--cyan); cursor: pointer; font: inherit; font-size: 12px; margin-left: 8px; }
@@ -327,3 +327,4 @@ tr.abn + tr.temp-det .temp-abn { display: flex; }
 .temp-cal-f .temp-cal-dot { left: 0; top: 50%; bottom: auto; margin: -2px 0 0; }
 .temp-cal-f button { border: 0; background: rgba(0,172,193,.10); color: var(--cyan, #00acc1); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
 .temp-cal-f button:hover { background: rgba(0,172,193,.18); }
+#tab-temperatura td.temp-abn-c { color: #c06d12; background: rgba(244,162,97,.16); font-size: 12.5px; font-weight: 600; text-align: center; }
