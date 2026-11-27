@@ -312,13 +312,15 @@ async function _tDesenharGrafico() {
   try { await _tChartJs(); } catch { return; }
   if (vez !== _tChartVez || !document.body.contains(cv)) return;
   const a = tempState.ano, m = tempState.mes, ultimo = new Date(a, m + 1, 0).getDate();
-  const dias = [], man = [], tar = [];
+  const dias = [], man = [], tar = [], faixa = { manha: [[], []], tarde: [[], []] };   // [mín[], máx[]] registrados por turno
   const rotina = e.obrigatorio === false;   // caixas: só os dias com leitura, sem buracos no eixo
   for (let d = 1; d <= ultimo; d++) {
     const iso = _tIso(a, m, d);
-    const vm = _tLeitura(e.id, iso, 'manha')?.atual ?? null, vt = _tLeitura(e.id, iso, 'tarde')?.atual ?? null;
+    const lm = _tLeitura(e.id, iso, 'manha'), lt = _tLeitura(e.id, iso, 'tarde');
+    const vm = lm?.atual ?? null, vt = lt?.atual ?? null;
     if (rotina ? (vm == null && vt == null) : !_tDiaUtil(a, m, d)) continue;
     dias.push(rotina ? `${_tP2(d)}/${_tP2(m + 1)}` : d); man.push(vm); tar.push(vt);
+    [['manha', lm], ['tarde', lt]].forEach(([t, l]) => { const ok = l?.atual != null && l.min != null && l.max != null; faixa[t][0].push(ok ? l.min : null); faixa[t][1].push(ok ? l.max : null); });
   }
   // o canvas é recriado a cada render: o gráfico anterior pode estar em canvas já removido
   try { _tChart?.destroy(); } catch (err) { /* canvas antigo já saiu da página */ }
@@ -330,8 +332,23 @@ async function _tDesenharGrafico() {
       { label: 'Tarde', data: tar, borderColor: '#f4a261', backgroundColor: '#f4a261', tension: .3, pointRadius: 3, spanGaps: rotina },
       { label: 'Máx', data: dias.map(() => e.max), borderColor: '#e63946', borderDash: [6, 4], pointRadius: 0, borderWidth: 1.5 },
       { label: 'Mín', data: dias.map(() => e.min), borderColor: '#2a9d8f', borderDash: [6, 4], pointRadius: 0, borderWidth: 1.5 },
+      // faixa mín–máx registrada em cada turno (área na cor do turno)
+      // manhã: azul sólido; tarde: laranja tracejado — cores e bordas distintas para destacar uma da outra
+      ...[['manha', 'Manhã', '0,150,199', [], .22], ['tarde', 'Tarde', '231,111,31', [5, 4], .20]].flatMap(([t, grupo, c, dash, a]) => [
+        { label: `_max_${t}`, grupo, data: faixa[t][1], borderColor: `rgba(${c},.75)`, borderDash: dash, borderWidth: 1.2, pointRadius: 0, tension: .3, spanGaps: rotina, fill: '+1', backgroundColor: `rgba(${c},${a})`, order: 5 },
+        { label: `_min_${t}`, grupo, data: faixa[t][0], borderColor: `rgba(${c},.75)`, borderDash: dash, borderWidth: 1.2, pointRadius: 0, tension: .3, spanGaps: rotina, fill: false, order: 5 },
+      ]),
     ] },
-    options: { maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } },
+    options: { maintainAspectRatio: false, animation: false, plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, filter: (it) => !it.text.startsWith('_') },
+        onClick: (ev, it, lg) => {   // ocultar a linha do turno oculta também a faixa dele
+          const ch = lg.chart, vis = !ch.isDatasetVisible(it.datasetIndex);
+          ch.setDatasetVisibility(it.datasetIndex, vis);
+          ch.data.datasets.forEach((d, i) => { if (d.grupo === it.text) ch.setDatasetVisibility(i, vis); });
+          ch.update();
+        } },
+      tooltip: { filter: (it) => !it.dataset.label.startsWith('_') },
+    } },
   });
 }
 

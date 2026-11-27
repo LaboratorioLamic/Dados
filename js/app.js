@@ -1404,29 +1404,50 @@
     educacao_continuada: { nome: 'Educação Continuada', ic: 'fa-book-open-reader', cor: '#8B5CF6' },
     estagios: { nome: 'Estágios', ic: 'fa-user-graduate', cor: '#16A34A' },
   };
-  const UNI_DB = 'https://uniadmin-708f5-default-rtdb.firebaseio.com/uniadmin/';
-  const cacheCursos = {};
+  // listas de vínculos em tempo real: cada chave ('curso:<plat>' / 'doc:<tipo>') fica escutando o banco;
+  // a promessa resolve no primeiro valor e, a cada mudança, o cache é trocado e os ouvintes avisados.
+  const vincVivo = {}, vincOuvintes = new Set();
+  const ouvirVinculos = (fn) => { vincOuvintes.add(fn); return () => vincOuvintes.delete(fn); };
+  function vivo(chave, ligar) {
+    if (vincVivo[chave]) return vincVivo[chave].p;
+    const e = (vincVivo[chave] = {});
+    e.p = new Promise((ok, falhou) => {
+      let primeiro = true;
+      e.parar = ligar((lista) => {
+        if (primeiro) { primeiro = false; ok(lista); return; }
+        e.p = Promise.resolve(lista);
+        vincOuvintes.forEach((fn) => { try { fn(chave, lista); } catch (x) { console.error(x); } });
+      }, (err) => { if (primeiro) { delete vincVivo[chave]; e.parar?.(); falhou(err); } });
+    });
+    return e.p;
+  }
+  const cursosMap = (plat, d) => Object.entries(d || {}).flatMap(([tema, s]) => (!s?.name?.trim() ? [] : Object.entries(s.themes || {})
+    .filter(([, t]) => t?.name?.trim() && t.active !== false)
+    .map(([curso, t]) => ({ tipo: 'curso', plat, tema, temaNome: String(s.name).trim(), curso, titulo: String(t.name).trim(),
+      desc: String(t.description || '').trim(), img: typeof t.image === 'string' && /^(data:image\/|https:)/.test(t.image) ? t.image : '' }))))
+    .sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR', { numeric: true }));
   // cursos de uma plataforma: [{ tipo:'curso', plat, tema, temaNome, curso, titulo, desc, img }]
+  // UniLAMIC vive no mesmo banco (applamic), nó /uniadmin: escuta o trainingData da plataforma em tempo real
   function cursosDe(plat) {
-    cacheCursos[plat] ||= fetch(`${UNI_DB}${plat}/trainingData.json`).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then((d) => Object.entries(d || {}).flatMap(([tema, s]) => (!s?.name?.trim() ? [] : Object.entries(s.themes || {})
-        .filter(([, t]) => t?.name?.trim() && t.active !== false)
-        .map(([curso, t]) => ({ tipo: 'curso', plat, tema, temaNome: String(s.name).trim(), curso, titulo: String(t.name).trim(),
-          desc: String(t.description || '').trim(), img: typeof t.image === 'string' && /^(data:image\/|https:)/.test(t.image) ? t.image : '' }))))
-        .sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR', { numeric: true })))
-      .catch((e) => { delete cacheCursos[plat]; throw e; });
-    return cacheCursos[plat];
+    return vivo(`curso:${plat}`, (emitir, erro) => {
+      const r = ref(`uniadmin/${plat}/trainingData`);
+      const cb = (snap) => emitir(cursosMap(plat, snap.val()));
+      r.on('value', cb, erro);
+      return () => r.off('value', cb);
+    });
   }
   const VINC_MAX = 12;
-  const cacheDocs = {};
-  // acervo do DocAdmin (docs/categories, mesmo banco); guardado em memória durante a sessão
+  // acervo do DocAdmin (docs/categories, mesmo banco), escutado em tempo real
   function docsDe(tipo) {
-    cacheDocs[tipo] ||= ler(`docs/categories/${VINC_TIPOS[tipo].cat}`)
-      .then((d) => (Array.isArray(d) ? d : Object.values(d || {})).filter((x) => x && x.title)
-        .map((x) => ({ tipo, titulo: String(x.title).trim(), setor: String(x.sector || '').trim() }))
-        .sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR', { numeric: true })))
-      .catch((e) => { delete cacheDocs[tipo]; throw e; });
-    return cacheDocs[tipo];
+    return vivo(`doc:${tipo}`, (emitir, erro) => {
+      const r = ref(`docs/categories/${VINC_TIPOS[tipo].cat}`);
+      const cb = (snap) => { const d = snap.val();
+        emitir((Array.isArray(d) ? d : Object.values(d || {})).filter((x) => x && x.title)
+          .map((x) => ({ tipo, titulo: String(x.title).trim(), setor: String(x.sector || '').trim() }))
+          .sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR', { numeric: true }))); };
+      r.on('value', cb, erro);
+      return () => r.off('value', cb);
+    });
   }
   const vinculosDe = (a) => (Array.isArray(a.vinculos) ? a.vinculos : Object.values(a.vinculos || {}))
     .filter((v) => v && VINC_TIPOS[v.tipo] && v.titulo && (v.tipo !== 'curso' || (UNI_PLATS[v.plat] && v.tema && v.curso)));
@@ -1942,7 +1963,8 @@
       }).join('') : '<div class="msel-vazio">Nada encontrado.</div>';
       $$('.msel-op', pop).forEach((d) => d.onmousedown = (e) => { e.preventDefault(); alternar(d.dataset.v); });
     };
-    const alternar = (v) => { sel.has(v) ? sel.delete(v) : sel.add(v); inp.value = ''; desenharChips(); desenharPop(); reposicionar?.(); inp.focus(); };
+    const alternar = (v) => {   // mantém o texto da busca e a lista aberta: dá para marcar vários seguidos
+      const st = pop.scrollTop; sel.has(v) ? sel.delete(v) : sel.add(v); desenharChips(); desenharPop(); pop.scrollTop = st; reposicionar?.(); inp.focus(); };
     let reposicionar = null;
     const abrir = () => { const ja = !pop.classList.contains('hidden'); pop.classList.remove('hidden'); el.classList.add('aberto'); desenharPop();
       if (!ja) reposicionar = flutuar(pop, caixa); else reposicionar?.(); };
@@ -2098,7 +2120,7 @@
     // curso: com busca digitada procura em todos os temas da plataforma; sem busca, só no tema escolhido
     const filtrados = () => {
       const q = normal(vcBusca.value.trim());
-      if (vcGrupo === 'unilamic') return vcDocs.filter((d) => (q ? normal(`${d.titulo} ${d.temaNome} ${d.desc}`).includes(q) : d.tema === vcSetor));
+      if (vcGrupo === 'unilamic') return vcDocs.filter((d) => (q ? normal(`${d.titulo} ${d.temaNome} ${d.desc}`).includes(q) : !vcSetor || d.tema === vcSetor));
       return vcDocs.filter((d) => (!vcSetor || d.setor === vcSetor) && (!q || normal(`${d.titulo} ${d.setor}`).includes(q)));
     };
     const desenharLista = () => {
@@ -2108,7 +2130,7 @@
       vcLista.innerHTML = itens.length ? itens.slice(0, 200).map((d, i) => `<li><button type="button" role="option" aria-selected="${escolhido(d)}" class="vc-it ${d.tipo === 'curso' ? 'vc-it-curso' : ''} ${escolhido(d) ? 'on' : ''}" data-i="${i}" style="--c:${cor};animation-delay:${Math.min(i, 12) * 18}ms">
           ${d.tipo === 'curso'
             ? `<span class="vc-it-th">${d.img ? `<img src="${esc(d.img)}" alt="" loading="lazy">` : esc(iniciais(d.titulo))}</span>
-               <span class="vc-it-tx"><b>${esc(d.titulo)}</b><small>${vcBusca.value.trim() ? `${esc(d.temaNome)} · ` : ''}${esc(d.desc || 'Sem descrição cadastrada.')}</small></span>`
+               <span class="vc-it-tx"><b>${esc(d.titulo)}</b><small>${vcBusca.value.trim() || !vcSetor ? `${esc(d.temaNome)} · ` : ''}${esc(d.desc || 'Sem descrição cadastrada.')}</small></span>`
             : `<span class="vc-it-ic"><i class="fas ${T.ic}"></i></span>
                <span class="vc-it-tx"><b>${esc(d.titulo)}</b>${d.setor ? `<small>${esc(d.setor)}</small>` : ''}</span>`}
           <span class="vc-it-ck"><i class="fas fa-check"></i></span></button></li>`).join('')
@@ -2121,18 +2143,53 @@
       else { if (vincs.length >= VINC_MAX) return toast(`Máximo de ${VINC_MAX} vínculos.`); vincs.push(vincSalvo(d)); }
       desenharSel(); desenharLista();
     };
-    // chips: setores (documentos) ou temas (cursos — sempre um tema escolhido)
+    // filtro em popover: temas (cursos) ou setores (documentos); padrão "Todos"
     const desenharSetores = () => {
-      if (vcGrupo === 'unilamic') {
-        const temas = [...new Map(vcDocs.map((d) => [d.tema, d.temaNome])).entries()].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR', { numeric: true }));
-        if (!temas.some(([id]) => id === vcSetor)) vcSetor = temas[0]?.[0] || '';
-        vcSet.innerHTML = `<span class="vc-set-rot"><i class="fas fa-bookmark"></i> Tema</span>` + temas.map(([id, nome]) => `<button type="button" data-setor="${esc(id)}" class="${id === vcSetor ? 'on' : ''}">${esc(nome)}</button>`).join('');
-      } else {
-        const setores = [...new Set(vcDocs.map((d) => d.setor).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-        vcSet.innerHTML = setores.length > 1 ? ['', ...setores].map((x) => `<button type="button" data-setor="${esc(x)}" class="${x === vcSetor ? 'on' : ''}">${x ? esc(x) : 'Todos'}</button>`).join('') : '';
-      }
-      $$('[data-setor]', vcSet).forEach((b) => b.onclick = () => { vcSetor = b.dataset.setor; desenharSetores(); desenharLista(); });
+      const uni = vcGrupo === 'unilamic', rot = uni ? 'Tema' : 'Setor';
+      const conta = new Map();
+      vcDocs.forEach((d) => { const id = uni ? d.tema : d.setor; if (!id) return;
+        const c = conta.get(id) || { nome: uni ? d.temaNome : d.setor, n: 0 }; c.n++; conta.set(id, c); });
+      const ops = [...conta.entries()].sort((a, b) => a[1].nome.localeCompare(b[1].nome, 'pt-BR', { numeric: true }));
+      if (vcSetor && !conta.has(vcSetor)) vcSetor = '';
+      if (ops.length < 2) { vcSet.innerHTML = ''; return; }
+      const atual = vcSetor ? conta.get(vcSetor).nome : 'Todos';
+      const op = (id, nome, n) => `<button type="button" role="option" aria-selected="${id === vcSetor}" class="vc-fp-op ${id === vcSetor ? 'on' : ''}" data-setor="${esc(id)}">
+          <span class="vc-fp-ic"><i class="fas ${id ? (uni ? 'fa-bookmark' : 'fa-building') : 'fa-layer-group'}"></i></span>
+          <span class="vc-fp-nm">${esc(nome)}</span><span class="vc-fp-n">${n}</span><i class="fas fa-check vc-fp-ck"></i></button>`;
+      const aberto = vcSet.querySelector('.vc-filtro.aberto');
+      vcSet.innerHTML = `<div class="vc-filtro ${aberto ? 'aberto' : ''}">
+          <button type="button" class="vc-filtro-bt ${vcSetor ? 'ativo' : ''}" aria-haspopup="listbox" aria-expanded="${!!aberto}">
+            <i class="fas fa-filter"></i><span class="vc-filtro-rot">${rot}</span><b>${esc(atual)}</b><i class="fas fa-chevron-down vc-filtro-seta"></i></button>
+          ${vcSetor ? `<button type="button" class="vc-filtro-x" data-setor="" title="Limpar filtro"><i class="fas fa-xmark"></i></button>` : ''}
+          <div class="vc-filtro-pop" role="listbox" ${aberto ? '' : 'hidden'}>
+            <div class="vc-fp-cab">Filtrar por ${rot.toLowerCase()}</div>
+            ${op('', 'Todos', vcDocs.length)}${ops.map(([id, c]) => op(id, c.nome, c.n)).join('')}
+          </div></div>`;
+      const fl = $('.vc-filtro', vcSet), bt = $('.vc-filtro-bt', fl), pop = $('.vc-filtro-pop', fl);
+      bt.onclick = (e) => { e.stopPropagation(); const abrir = pop.hidden; pop.hidden = !abrir; fl.classList.toggle('aberto', abrir); bt.setAttribute('aria-expanded', abrir);
+        if (abrir) $('.vc-fp-op.on', pop)?.scrollIntoView({ block: 'nearest' }); };
+      $$('[data-setor]', vcSet).forEach((b) => b.onclick = (e) => { e.stopPropagation(); vcSetor = b.dataset.setor; fecharFiltro(); desenharSetores(); desenharLista(); });
     };
+    const fecharFiltro = () => { const fl = $('.vc-filtro', vcSet); if (!fl) return; fl.classList.remove('aberto'); $('.vc-filtro-pop', fl).hidden = true; $('.vc-filtro-bt', fl).setAttribute('aria-expanded', 'false'); };
+    m.addEventListener('click', (e) => { if (!e.target.closest('.vc-filtro')) fecharFiltro(); });
+    vcSet.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); fecharFiltro(); $('.vc-filtro-bt', vcSet)?.focus(); } });
+    // tempo real: lista aberta redesenha; contadores das abas se atualizam; título de vínculo escolhido acompanha renomeações de curso
+    const pararVivo = ouvirVinculos((chave, lista) => {
+      if (!document.body.contains(m)) return pararVivo();
+      const [k, id] = chave.split(':');
+      $(`[data-${k === 'curso' ? 'qtp' : 'qt'}="${id}"]`, vc)?.replaceChildren(String(lista.length));
+      if (k === 'curso') vincs.forEach((v) => { if (v.tipo === 'curso' && v.plat === id) { const c = lista.find((x) => x.tema === v.tema && x.curso === v.curso);
+        if (c) { v.titulo = c.titulo; v.temaNome = c.temaNome; } } });
+      desenharSel();
+      const atual = vcGrupo === 'unilamic' ? `curso:${vcPlat}` : `doc:${vcTipo}`;
+      if (chave !== atual || !vcPronto) return;
+      const rol = vcLista.scrollTop;
+      vcDocs = lista;
+      if (!vcDocs.length) { vcSet.innerHTML = ''; vcLista.innerHTML = `<li class="vc-msg">Nenhum ${vcGrupo === 'unilamic' ? 'curso' : 'documento'} cadastrado.</li>`; return; }
+      desenharSetores(); desenharLista();
+      $$('.vc-it', vcLista).forEach((b) => { b.style.animation = 'none'; });
+      vcLista.scrollTop = rol;
+    });
     const carregar = async (busca, rotulo, aoTentar) => {
       vcSetor = ''; vcDocs = [];
       vcBusca.placeholder = `Pesquisar ${rotulo}…`;
