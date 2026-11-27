@@ -1,0 +1,64 @@
+/* Busca digitável do painel (js/admin-busca.js): Cursos e Dashboard > Por curso. */
+.admin-busca {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: 0 1 280px;
+    min-width: 180px;
+    height: 44px;
+    padding: 0 12px;
+    gap: 8px;
+    background: var(--card, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 12px;
+    cursor: text;
+    transition: border-color .16s, box-shadow .16s;
+}
+.admin-busca:focus-within { border-color: var(--accent, #4f8ef7); box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.15); }
+.admin-busca > i { color: var(--text-muted, #94a3b8); font-size: 0.9em; }
+.admin-busca input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 0.9em;
+    color: var(--text-primary, #0f172a);
+}
+.admin-busca input::-webkit-search-cancel-button { display: none; }
+.admin-busca-x {
+    border: 0;
+    background: #f1f5f9;
+    color: var(--text-secondary, #475569);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.75em;
+    display: grid;
+    place-items: center;
+}
+.admin-busca-x[hidden] { display: none; }
+.admin-busca-x:hover { background: #e2e8f0; }
+
+/* Dashboard: a caixa fica na mesma linha do seletor de tema e do chip da categoria */
+#cfg-dash-course-picker .admin-busca { height: 40px; }
+
+.busca-oculto { display: none !important; }
+.admin-busca-vazio {
+    grid-column: 1 / -1;
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.9em;
+}
+.admin-busca-vazio[hidden] { display: none; }
+
+@media (max-width: 720px) {
+    .admin-busca { flex: 1 1 100%; }
+}
+
+/* .dashboard-picker limita a 560px e estiliza todo input interno (css/admin.css) */
+#cfg-root #cfg-dash-course-picker { max-width: none; flex-wrap: wrap; }
+#cfg-root .dashboard-picker .admin-busca input { padding: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; }

@@ -24,6 +24,7 @@
     <!-- Camada de override mobile: precisa ser SEMPRE a ultima folha. -->
     <link rel="stylesheet" href="css/mobile.css?v=202611231200">
     <link rel="stylesheet" href="css/pendentes.css?v=202611271400">
+    <link rel="stylesheet" href="css/admin-busca.css?v=202611271500">
 </head>
 <body>
 <script src="lamic-carregando.js" data-nome="UniLAMIC"></script>
@@ -1898,6 +1899,11 @@
                             <button type="button" class="status-segment-btn" data-status="inactive">Inativos</button>
                             <button type="button" class="status-segment-btn" data-status="all">Ambos</button>
                         </div>
+                        <label class="admin-busca">
+                            <i class="fas fa-magnifying-glass"></i>
+                            <input type="search" id="cfg-courses-search" placeholder="Buscar curso..." autocomplete="off" aria-label="Buscar curso...">
+                            <button type="button" class="admin-busca-x" aria-label="Limpar busca" hidden><i class="fas fa-xmark"></i></button>
+                        </label>
                         <div class="courses-toolbar-spacer"></div>
                         <button type="button" class="add-course-btn" id="cfg-courses-add-btn">
                             <i class="fas fa-plus"></i> Adicionar curso
@@ -2654,6 +2660,11 @@
                             </button>
                             <div class="dash-theme-popover" id="cfg-dash-subject-popover"></div>
                         </div>
+                        <label class="admin-busca">
+                            <i class="fas fa-magnifying-glass"></i>
+                            <input type="search" id="cfg-dash-course-search" placeholder="Buscar curso..." autocomplete="off" aria-label="Buscar curso...">
+                            <button type="button" class="admin-busca-x" aria-label="Limpar busca" hidden><i class="fas fa-xmark"></i></button>
+                        </label>
                         <span class="dash-category-chip" id="cfg-dash-category-chip">
                             <i class="fas fa-folder-open"></i> <span id="cfg-dash-category-label">—</span>
                         </span>
@@ -2828,6 +2839,7 @@
     <script defer src="js/admin-xlsx-charts.js?v=202611231200"></script>
     <script defer src="js/admin-pdf-report.js?v=202611231200"></script>
     <script defer src="js/admin-dashboard.js?v=202611251300"></script>
+    <script defer src="js/admin-busca.js?v=202611271500"></script>
     <script defer src="js/admin-history.js?v=202611231200"></script>
     <script defer src="js/portal-auth.js?v=202611231200"></script>
     <script defer src="js/student-profile.js?v=202611231200"></script>

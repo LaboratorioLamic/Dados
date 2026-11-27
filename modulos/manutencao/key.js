@@ -1334,6 +1334,7 @@ function renderUsersTable() {
   if (!tbody) return;
 
   renderRegistrationToggle();
+  _ufRenderPops();
 
   const meId = currentSession?.userId;
 
@@ -1343,6 +1344,7 @@ function renderUsersTable() {
       if (_usersFilter === 'inativo') return u.ativo === false;
       return true;
     })
+    .filter(u => _ufPassa(u))
     .sort((a, b) => {
       if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
       return a.nomeCompleto.localeCompare(b.nomeCompleto, 'pt-BR');
@@ -1420,6 +1422,46 @@ function renderRegistrationToggle() {
   if (!btn) return;
   btn.classList.toggle('cfg-toggle-on', authIsRegistrationAllowed());
 }
+
+// ── busca + popovers (cargo, grupo, setor) da lista de usuários ──
+const _uf = { q: '', cargo: '', grupo: '', setor: '' };
+const _ufSem = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const _ufGrupo = (u) => u.isAdmin ? 'Admin' : (authState.groups.find(g => g.id === u.grupoId)?.nome || '');
+function _ufPassa(u, ignora) {   // ignora = filtro que não entra (para montar as opções do próprio popover)
+  if (_uf.q) { const q = _ufSem(_uf.q), dig = _uf.q.replace(/\D/g, '');
+    if (!(_ufSem(`${u.nomeCompleto} ${u.username}`).includes(q) || (dig && String(u.cpf || '').replace(/\D/g, '').includes(dig)))) return false; }
+  if (ignora !== 'cargo' && _uf.cargo && (u.cargo || '') !== _uf.cargo) return false;
+  if (ignora !== 'grupo' && _uf.grupo && _ufGrupo(u) !== _uf.grupo) return false;
+  if (ignora !== 'setor' && _uf.setor && !(u.setores || []).includes(_uf.setor)) return false;
+  return true;
+}
+function setUsersBusca(v) { _uf.q = v.trim(); renderUsersTable(); }
+function _ufRenderPops() {
+  const box = document.getElementById('uf-pops'); if (!box) return;
+  // opções em cascata: cada popover só lista o que existe com status, busca e os outros filtros aplicados
+  const st = (u) => _usersFilter === 'ativo' ? u.ativo !== false : _usersFilter === 'inativo' ? u.ativo === false : true;
+  const us = (k) => (authState.users || []).filter(u => st(u) && _ufPassa(u, k));
+  const uniq = (arr) => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const defs = [['cargo', 'Cargo', 'fa-briefcase', uniq(us('cargo').map(u => u.cargo))], ['grupo', 'Grupo', 'fa-users', uniq(us('grupo').map(_ufGrupo))], ['setor', 'Setor', 'fa-sitemap', uniq(us('setor').flatMap(u => u.setores || []))]];
+  box.innerHTML = defs.map(([k, lb, ic]) => `<button type="button" class="uf-pill ${_uf[k] ? 'on' : ''}" onclick="ufAbrir('${k}', this)"><i class="fas ${ic}"></i> ${lb}: <b>${_uf[k] ? _uf[k].replace(/</g, '&lt;') : 'Todos'}</b> <i class="fas fa-chevron-down"></i></button>`).join('')
+    + (_uf.cargo || _uf.grupo || _uf.setor || _uf.q ? `<button type="button" class="uf-limpar" onclick="ufLimpar()"><i class="fas fa-xmark"></i> Limpar</button>` : '');
+  box._defs = defs;
+}
+function ufAbrir(k, btn) {
+  document.querySelector('.uf-pop')?.remove();
+  const opts = (document.getElementById('uf-pops')._defs.find(d => d[0] === k) || [])[3] || [];
+  const pop = document.createElement('div'); pop.className = 'uf-pop';
+  pop.innerHTML = `<input type="text" placeholder="Filtrar...">` + `<div class="uf-pop-l">${['', ...opts].map(o => `<div class="uf-op ${_uf[k] === o ? 'sel' : ''}" data-v="${o.replace(/"/g, '&quot;')}">${o ? o.replace(/</g, '&lt;') : 'Todos'}${_uf[k] === o ? ' <i class="fas fa-check"></i>' : ''}</div>`).join('')}</div>`;
+  document.body.appendChild(pop);
+  const r = btn.getBoundingClientRect(); pop.style.left = r.left + 'px'; pop.style.top = (r.bottom + 6) + 'px';
+  const inp = pop.querySelector('input'); inp.focus();
+  inp.oninput = () => pop.querySelectorAll('.uf-op').forEach(d => d.style.display = !d.dataset.v || _ufSem(d.dataset.v).includes(_ufSem(inp.value)) ? '' : 'none');
+  pop.querySelectorAll('.uf-op').forEach(d => d.onclick = () => { _uf[k] = d.dataset.v; fechar(); renderUsersTable(); });
+  const fora = (e) => { if (!pop.contains(e.target) && !btn.contains(e.target)) fechar(); };
+  function fechar() { pop.remove(); document.removeEventListener('mousedown', fora); }
+  setTimeout(() => document.addEventListener('mousedown', fora), 0);
+}
+function ufLimpar() { Object.assign(_uf, { q: '', cargo: '', grupo: '', setor: '' }); const i = document.getElementById('uf-q'); if (i) i.value = ''; renderUsersTable(); }
 
 function setUsersFilter(filter) {
   _usersFilter = filter;

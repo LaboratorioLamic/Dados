@@ -3904,3 +3904,21 @@ body.dark-mode .hkm-danger         { background: rgba(230,57,70,0.18);   color: 
 .emp-resp-tag-vinc { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-light, #e0f5fa); }
 .emp-list-item .toggle-switch { transform: scale(.8); }
 .emp-list-item .ot-sub-del-btn svg { width: 14px; height: 14px; }
+
+/* Usuários: busca + popovers de filtro */
+.uf-busca { position: relative; flex: 1; max-width: 320px; }
+.uf-busca i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted, #94a3b8); font-size: 12px; }
+.uf-busca input { width: 100%; box-sizing: border-box; padding: 8px 12px 8px 32px; border: 1px solid var(--border, #e2e8f0); border-radius: 10px; font-size: 13px; background: var(--card-bg, #fff); color: inherit; }
+.uf-busca input:focus { outline: none; border-color: #00acc1; box-shadow: 0 0 0 3px rgba(0,172,193,.15); }
+.uf-pops { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.uf-pill { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--border, #e2e8f0); border-radius: 999px; background: var(--card-bg, #fff); font-size: 12.5px; color: inherit; cursor: pointer; }
+.uf-pill b { font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uf-pill .fa-chevron-down { font-size: 10px; opacity: .6; }
+.uf-pill.on { border-color: #00acc1; background: rgba(0,172,193,.08); color: #00838f; }
+.uf-limpar { border: 0; background: none; color: #e63946; font-size: 12.5px; cursor: pointer; }
+.uf-pop { position: fixed; z-index: 9999; width: 250px; max-height: 320px; display: flex; flex-direction: column; background: var(--card-bg, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: 12px; box-shadow: 0 12px 32px rgba(15,23,42,.16); padding: 8px; }
+.uf-pop input { padding: 7px 10px; border: 1px solid var(--border, #e2e8f0); border-radius: 8px; font-size: 12.5px; margin-bottom: 6px; background: transparent; color: inherit; }
+.uf-pop-l { overflow: auto; }
+.uf-op { padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.uf-op:hover { background: rgba(0,172,193,.08); }
+.uf-op.sel { color: #00838f; font-weight: 600; }

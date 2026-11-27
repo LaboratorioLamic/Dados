@@ -745,6 +745,8 @@
                 <button class="status-filter-btn"                     id="sfbtn-user-inativo" onclick="setUsersFilter('inativo')">Inativos</button>
                 <button class="status-filter-btn"                     id="sfbtn-user-ambos"   onclick="setUsersFilter('ambos')">Ambos</button>
               </div>
+              <div class="uf-busca"><i class="fas fa-magnifying-glass"></i><input type="text" id="uf-q" placeholder="Buscar nome, login ou CPF..." oninput="setUsersBusca(this.value)"></div>
+              <div class="uf-pops" id="uf-pops"></div>
             </div>
 
             <!-- Tabela de usuários (dinâmica) -->
