@@ -243,7 +243,7 @@
       if (!document.hidden) refreshTaskFlagsUI();
     });
     // aberto em #temperatura: a aba é ligada pelo boot da Temperatura (temperatura.js) assim que as permissões chegam
-    if (!document.documentElement.classList.contains('boot-temp')) switchTab('inicio');
+    if (!window.__bootTemp) switchTab('inicio');
   });
 
   // ── SIDEBAR OVERLAY ──

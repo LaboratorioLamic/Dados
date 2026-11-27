@@ -851,14 +851,26 @@ setTimeout(function _tBoot() {
     tempState.perms = snap.val() || {};
     if (typeof applyPermissions === 'function') applyPermissions();
     if (!tempPodeVer()) {
-      // aberto em #temperatura sem permissão: volta ao Início
-      if (document.documentElement.classList.contains('boot-temp')) {
-        document.documentElement.classList.remove('boot-temp');
-        history.replaceState(null, '', location.pathname + location.search);
-        if (typeof switchTab === 'function') switchTab('inicio');
+      // aberto em #temperatura: permissões (grupo/índice/sessão) podem chegar depois — espera até 10s antes de voltar ao Início
+      if (window.__bootTemp && !_tBoot.espera) {
+        const t0 = Date.now();
+        _tBoot.espera = setInterval(() => {
+          if (!window.__bootTemp) { clearInterval(_tBoot.espera); return; }
+          if (tempPodeVer()) { clearInterval(_tBoot.espera); _tBoot.abrir(); return; }
+          if (Date.now() - t0 > 10000) {
+            clearInterval(_tBoot.espera);
+            window.__bootTemp = false;
+            document.documentElement.classList.remove('boot-temp');
+            history.replaceState(null, '', location.pathname + location.search);
+            if (typeof switchTab === 'function') switchTab('inicio');
+          }
+        }, 300);
       }
       return;
     }
+    _tBoot.abrir();
+  }, e => console.warn('[temperatura] perms do grupo:', e && e.code));
+  _tBoot.abrir = function () {
     tempIniciar();
     if (!tempState.unidadeId) tempState.unidadeId = (_tUnidadesVisiveis().find(u => u.id === _tMinhaUnidadeId()) || _tUnidadesVisiveis()[0])?.id || null;
     _tOuvirLeituras();
@@ -868,8 +880,8 @@ setTimeout(function _tBoot() {
       history.replaceState(null, '', location.pathname + location.search);   // não reabre ao recarregar
       switchTab('temperatura');
     }
-    document.documentElement.classList.remove('boot-temp');
-  }, e => console.warn('[temperatura] perms do grupo:', e && e.code));
+    if (_tAbaAtiva() || !window.__bootTemp) { window.__bootTemp = false; document.documentElement.classList.remove('boot-temp'); }
+  };
 }, 800);
 
 // ── mnemônicos visíveis: seletor usado em Grupos e Usuários (Configurações) ──
