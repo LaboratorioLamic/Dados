@@ -477,7 +477,7 @@ function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloquei
   const ab = !!l?.abono, obs = fora || ab || !!l?.justificativa;
   const motivos = Object.entries(TEMP_ABONOS).map(([k, t]) => `<label class="temp-chipr"><input type="radio" name="ab-${e.id}" data-f="abono" value="${k}" ${(l?.abono || 'manutencao') === k ? 'checked' : ''}><span>${t}</span></label>`).join('');
   return `<tr data-eq="${e.id}" class="temp-lin ${ab ? 'abn' : ''} ${obs ? 'det-on' : ''} ${l?.justificativa ? 'obs-on' : ''}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div>
-      <div class="temp-acts"><button type="button" class="temp-pill" onclick="tempObsToggle(this)"><i class="fas fa-comment-dots"></i> Observação</button><button type="button" class="temp-pill amb temp-abn-bt" onclick="tempAbonoToggle(this)"><i class="fas ${ab ? 'fa-rotate-left' : 'fa-screwdriver-wrench'}"></i> <span>${ab ? 'Voltar à leitura' : 'Sem leitura'}</span></button></div></td>
+      <div class="temp-acts"><button type="button" class="temp-pill" onclick="tempObsToggle(this)"><i class="fas fa-comment-dots"></i> Observação</button><button type="button" class="temp-pill amb temp-abn-bt" onclick="tempAbonoToggle(this)"><i class="fas ${ab ? 'fa-rotate-left' : 'fa-screwdriver-wrench'}"></i> <span>${ab ? 'Voltar à leitura' : 'Sem leitura'}</span></button>${l ? `<button type="button" class="temp-pill" title="Excluir leitura deste turno" onclick="tempLimparLinha(this)"><i class="fas fa-trash"></i> Excluir</button>` : ''}</div></td>
     <td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>
     <td class="c-num"><input type="text" inputmode="decimal" data-f="min" value="${ab ? '' : v(l?.min)}" oninput="tempValidar(this)"></td>
     <td class="c-num"><input type="text" inputmode="decimal" data-f="max" value="${ab ? '' : v(l?.max)}" oninput="tempValidar(this)"></td>
@@ -505,6 +505,16 @@ function tempAbonoToggle(b) {
   b.querySelector('i').className = 'fas ' + (on ? 'fa-rotate-left' : 'fa-screwdriver-wrench');
   tempValidar(tr.querySelector('[data-f=atual]'));
   if (on) _tDet(tr)?.querySelector('[data-f=just]')?.focus(); else tr.querySelector('[data-f=atual]').focus();
+}
+function tempLimparLinha(b) {   // limpa leitura + observação + "sem leitura"; Salvar apaga o registro
+  const tr = _tLinTr(b), det = _tDet(tr);
+  tr.querySelectorAll('[data-f=min],[data-f=max],[data-f=atual]').forEach(i => { i.value = ''; i.classList.remove('bad', 'good'); });
+  if (det) { det.querySelector('[data-f=just]').value = ''; det.querySelectorAll('[data-f=dia],[data-f=oc]').forEach(c => { c.checked = false; }); }
+  tr.classList.remove('abn', 'obs-on');
+  const ab = tr.querySelector('.temp-abn-bt'); if (ab) { ab.querySelector('span').textContent = 'Sem leitura'; ab.querySelector('i').className = 'fas fa-screwdriver-wrench'; }
+  tr.dataset.limpa = '1';
+  tempValidar(tr.querySelector('[data-f=atual]'));
+  _tToast('Campos limpos. Clique em Salvar para excluir.', 'info');
 }
 function tempValidar(inp) {
   const tr = _tLinTr(inp); const e = tempState.equipamentos[tr?.dataset.eq]; if (!e) return;
@@ -553,7 +563,11 @@ async function tempSalvarRegistro() {
       });
       return;
     }
-    if (mn == null && mx == null && at == null) return;     // linha em branco: ignora
+    if (mn == null && mx == null && at == null) {           // linha em branco
+      const chave = _tChave(e.id, data, turno);
+      if (mes[chave] && (tr.dataset.limpa === '1' || !just)) up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = null;   // excluída: apaga leitura, observação e "sem leitura"
+      return;
+    }
     if (at == null) { erros.push(`${nome}: informe a temperatura atual`); return; }
     if ((mn != null && mn > at) || (mx != null && mx < at) || (mn != null && mx != null && mn > mx)) { erros.push(`${nome}: mínima ≤ atual ≤ máxima`); return; }
     const fora = at < e.min || at > e.max;
