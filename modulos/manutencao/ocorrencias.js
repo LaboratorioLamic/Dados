@@ -2526,6 +2526,32 @@ async function _ocCriarDeOT(ot) {
   return oc;
 }
 
+// Gerada automaticamente pela aba Temperatura (leitura fora da faixa ou equipamento sem leitura).
+// opts: { ativoId?, tipo: 'ambiental'|'falha', titulo, descricao, acao, dataIso, especificos?, origem }
+async function ocGerarDeTemperatura(opts) {
+  const u = _ocSess(), agora = _ocNowLocal();
+  const ativo = opts.ativoId && typeof _ativoById === 'function' ? _ativoById(opts.ativoId) : null;
+  const oc = _ocNormalizar({
+    id: _ocUid(),
+    numero: await _ocProximoNumero(),
+    ativos: ativo ? [{ ativoId: ativo.id, snapshot: _ocSnapshotAtivo(ativo), liberacao: {}, parado: false, dataHoraParada: '' }] : [],
+    tipo: opts.tipo || 'falha', subtipo: '',
+    titulo: opts.titulo, descricao: opts.descricao,
+    dataHoraOcorrencia: opts.dataIso ? `${opts.dataIso}T${agora.slice(11, 16) || '00:00'}` : agora,
+    dataHoraDeteccao: agora, metodoDetec: 'Controle de temperatura',
+    severidade: 'media',
+    dadosEspecificos: opts.especificos || {},
+    detectadoPorId: u.id, detectadoPorNome: u.nome,
+    acaoImediata: { texto: opts.acao || 'Registrado no controle de temperatura.', ..._ocAssinatura() },
+    origem: opts.origem || { tipo: 'temperatura' },
+    status: 'aberta',
+    criadoEm: _ocAgora(), criadoPorId: u.id, criadoPorNome: u.nome,
+  });
+  _ocTrilha(oc, 'criacao', 'Ocorrência gerada automaticamente pelo controle de temperatura');
+  await _ocCommit(oc, null);
+  return oc;
+}
+
 // ── SUB-ABA NO MODAL DO ATIVO ────────────────────────────────
 function ocAtivoModo(modo) { _ocAtivoModo = modo; _renderAtivoOcorrencias(); }
 

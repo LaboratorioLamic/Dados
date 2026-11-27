@@ -328,3 +328,39 @@ tr.abn + tr.temp-det .temp-abn { display: flex; }
 .temp-cal-f button { border: 0; background: rgba(0,172,193,.10); color: var(--cyan, #00acc1); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
 .temp-cal-f button:hover { background: rgba(0,172,193,.18); }
 #tab-temperatura td.temp-abn-c { color: #c06d12; background: rgba(244,162,97,.16); font-size: 12.5px; font-weight: 600; text-align: center; }
+
+/* validação: laranja = fora da faixa; vermelho + balanço = mín/máx/atual incoerentes */
+.temp-mb td input.warn { border-color: #e08a1e; background: rgba(244,162,97,.16); color: #b45f06; font-weight: 600; }
+.temp-mb td input.bad { border-color: #e63946; background: rgba(230,57,70,.12); color: #c1121f; font-weight: 600; }
+.temp-mb td input.good { border-color: #2a9d8f; background: rgba(42,157,143,.12); }
+.temp-mb td input.shake { animation: tempShake .42s cubic-bezier(.36,.07,.19,.97); }
+@keyframes tempShake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(3px); } 30%, 50%, 70% { transform: translateX(-5px); } 40%, 60% { transform: translateX(5px); } }
+/* observação só aparece com "Observação" ligado ou em "Sem leitura" */
+.temp-det .temp-obs { display: none; }
+tr.abn + tr.temp-det .temp-obs, tr.obs-on + tr.temp-det .temp-obs { display: flex; }
+.temp-swl.hide { display: none; }
+.temp-swl input:checked + .temp-sw.red { background: #e63946; }
+.temp-sws { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; }
+.temp-sws:not(:has(.temp-swl:not(.hide))) { display: none; }
+.temp-dia-sw { display: none !important; }
+tr.abn + tr.temp-det .temp-dia-sw { display: inline-flex !important; }
+
+/* balão de observação na tabela */
+.temp-nota-bt { border: 0; background: rgba(244,162,97,.16); color: #d98324; width: 24px; height: 22px; border-radius: 6px; cursor: pointer; margin-left: 4px; font-size: 12px; vertical-align: middle; transition: .15s; }
+.temp-nota-bt:hover { background: #d98324; color: #fff; }
+.temp-nota-bt.oc { background: rgba(230,57,70,.12); color: #e63946; }
+.temp-nota-bt.oc:hover { background: #e63946; color: #fff; }
+.temp-nota-pop { position: fixed; z-index: 10050; width: 340px; background: var(--bg-card, #fff); color: var(--text-primary, #1f2937); border: 1px solid var(--border, #e5e7eb); border-radius: 12px; box-shadow: 0 16px 36px rgba(15,23,42,.18); font-size: 13px; overflow: hidden; animation: tempCalIn .14s ease-out; }
+.temp-nota-h { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border, #e5e7eb); }
+.temp-nota-h button { border: 0; background: none; font-size: 18px; cursor: pointer; color: var(--text-muted, #94a3b8); }
+.temp-nota-b { padding: 10px 14px; border-bottom: 1px solid var(--border, #eef1f4); }
+.temp-nota-b:last-child { border-bottom: 0; }
+.temp-nota-t { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.temp-nota-val { margin-left: auto; color: var(--text-secondary, #475569); }
+.temp-nota-tag { margin-left: auto; font-size: 11.5px; color: #c06d12; background: rgba(244,162,97,.16); padding: 2px 8px; border-radius: 999px; }
+.temp-nota-b p { margin: 6px 0; line-height: 1.4; }
+.temp-nota-vz { color: var(--text-muted, #94a3b8); font-style: italic; }
+.temp-nota-oc { font-size: 12px; color: var(--text-muted, #94a3b8); display: flex; gap: 6px; align-items: center; }
+.temp-nota-oc.sim { color: #e63946; font-weight: 600; }
+.temp-nota-oc a { color: #e63946; text-decoration: underline; }
+.temp-nota-por { display: block; margin-top: 4px; color: var(--text-muted, #94a3b8); font-size: 11px; }

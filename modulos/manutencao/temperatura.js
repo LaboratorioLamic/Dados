@@ -290,8 +290,8 @@ function _tDetalheHtml() {
     const resp = [lm, lt].filter(Boolean).map(l => l.nome || l.login).filter((v, i, arr) => arr.indexOf(v) === i).join(', ');
     const bloco = (l, t) => l?.abono ? `<td colspan="3" class="temp-abn-c" title="${_tEsc(l.justificativa || '')}"><i class="fas fa-wrench"></i> ${_tEsc(TEMP_ABONOS[l.abono] || l.abono)}</td>`
       : l && l.atual != null ? cel(l.min) + cel(l.max) + cel(l.atual) : quick(iso, t);
-    const just = [lm, lt].filter(l => l?.justificativa).map(l => `${TEMP_TURNOS[l.turno]}: ${l.justificativa}`).join(' | ');
-    linhas.push(`<tr><td>${iso.slice(8)}/${iso.slice(5, 7)}${just ? ` <i class="fas fa-comment-dots temp-ic-amb" title="${_tEsc(just)}"></i>` : ''}</td><td>${_tEsc(resp || '—')}</td>${bloco(lm, 'manha')}${bloco(lt, 'tarde')}
+    const just = [lm, lt].some(l => l?.justificativa || l?.ocorrenciaId);   // balão: observação e/ou ocorrência
+    linhas.push(`<tr><td>${iso.slice(8)}/${iso.slice(5, 7)}${just ? ` <button type="button" class="temp-nota-bt ${[lm, lt].some(l => l?.ocorrenciaId) ? 'oc' : ''}" title="Ver observação" onclick="tempVerNotas(event,'${e.id}','${iso}')"><i class="fas fa-comment-dots"></i></button>` : ''}</td><td>${_tEsc(resp || '—')}</td>${bloco(lm, 'manha')}${bloco(lt, 'tarde')}
       <td class="temp-act">${podeLancar && (lm || lt) ? `<i class="fas fa-pen" title="Editar" onclick="tempAbrirRegistro('${iso}','${lm ? 'manha' : 'tarde'}','${e.id}',true)"></i><i class="fas fa-trash" title="Excluir" onclick="tempExcluirLeitura('${e.id}','${iso}')"></i>` : ''}</td></tr>`);
   }
   const vinc = _tVinculo(e);
@@ -373,6 +373,38 @@ function tempSelecionarEquip(id) {
   const nova = document.getElementById('temp-eq-lista'); if (nova) nova.scrollTop = top;
 }
 
+// ── balão da linha: observações, motivo do "sem leitura" e ocorrência vinculada ──
+function tempVerNotas(ev, equipId, iso) {
+  ev.stopPropagation();
+  const velho = document.getElementById('temp-nota-pop');
+  if (velho) { velho.remove(); if (velho.dataset.k === equipId + iso) return; }
+  const e = tempState.equipamentos[equipId] || {};
+  const ocs = (typeof ocState !== 'undefined' && ocState.ocorrencias) || {};
+  const blocos = ['manha', 'tarde'].map(t => {
+    const l = _tLeitura(equipId, iso, t); if (!l) return '';
+    const oc = l.ocorrenciaId ? ocs[l.ocorrenciaId] : null;
+    const ocHtml = l.ocorrenciaId
+      ? `<div class="temp-nota-oc sim"><i class="fas fa-triangle-exclamation"></i> Ocorrência vinculada: ${typeof ocOpenView === 'function'
+          ? `<a href="#" onclick="document.getElementById('temp-nota-pop')?.remove();switchTab('ocorrencias');setTimeout(()=>ocOpenView('${l.ocorrenciaId}'),80);return false;">${_tEsc(oc?.numero || 'abrir')}</a>`
+          : `<b>${_tEsc(oc?.numero || l.ocorrenciaId)}</b>`}${oc?.status ? ` <small>· ${_tEsc(oc.status)}</small>` : ''}</div>`
+      : `<div class="temp-nota-oc"><i class="fas fa-circle-check"></i> Sem ocorrência vinculada</div>`;
+    return `<div class="temp-nota-b"><div class="temp-nota-t"><i class="fas ${TEMP_ICON_TURNO[t]}"></i> ${TEMP_TURNOS[t]}
+        ${l.abono ? `<span class="temp-nota-tag"><i class="fas fa-screwdriver-wrench"></i> ${_tEsc(TEMP_ABONOS[l.abono] || l.abono)}</span>` : `<span class="temp-nota-val">${_tFmt(l.atual)} ºC</span>`}</div>
+      <p>${l.justificativa ? _tEsc(l.justificativa) : '<span class="temp-nota-vz">Sem observação</span>'}</p>
+      ${ocHtml}<small class="temp-nota-por">${_tEsc(l.nome || l.login || '')}${l.editadoPor ? ' · editado por ' + _tEsc(l.editadoPor) : ''}</small></div>`;
+  }).join('');
+  const p = document.createElement('div');
+  p.id = 'temp-nota-pop'; p.className = 'temp-nota-pop'; p.dataset.k = equipId + iso;
+  p.innerHTML = `<div class="temp-nota-h"><b>${_tEsc(e.codigo || '')} · ${_tBR(iso)}</b><button onclick="this.closest('.temp-nota-pop').remove()">&times;</button></div>${blocos}`;
+  document.body.appendChild(p);
+  const r = ev.currentTarget.getBoundingClientRect();
+  p.style.top = Math.min(r.bottom + 6, innerHeight - p.offsetHeight - 10) + 'px';
+  p.style.left = Math.min(r.left, innerWidth - p.offsetWidth - 10) + 'px';
+  setTimeout(() => document.addEventListener('mousedown', function f(x) {
+    if (!p.contains(x.target)) { p.remove(); document.removeEventListener('mousedown', f); }
+  }), 0);
+}
+
 // ── modal de registro ──────────────────────────────────────────
 function tempAbrirRegistro(iso, turno, equipId, edicao) {
   if (!_tCan('lancarLeituras')) { _tToast('Sem permissão para lançar leituras.', 'error'); return; }
@@ -391,7 +423,7 @@ function tempAbrirRegistro(iso, turno, equipId, edicao) {
         <label>Responsável <span class="temp-ro"><i class="fas fa-user-lock"></i> ${_tEsc(nome)}</span></label>
       </div></div>
     <div class="temp-mb"><table><thead><tr><th>Equipamento</th><th>Faixa</th><th>Mín</th><th>Máx</th><th>Atual</th></tr></thead><tbody id="temp-m-tb"></tbody></table></div>
-    <div class="temp-mf"><span class="temp-msg" id="temp-m-msg">Tab/Enter avança. Vermelho = fora da faixa (exige justificativa). Equipamento parado: "Sem leitura".</span><div class="temp-sp"></div>
+    <div class="temp-mf"><span class="temp-msg" id="temp-m-msg">Tab/Enter avança. <b style="color:#e08a1e">Laranja</b> = fora da faixa · <b style="color:#e63946">Vermelho</b> = mín/máx/atual incoerentes. Parado: "Sem leitura".</span><div class="temp-sp"></div>
       <button class="temp-btn" onclick="tempFecharRegistro()">Cancelar</button><button class="temp-btn pri" id="temp-m-salvar" onclick="tempSalvarRegistro()"><i class="fas fa-check"></i>Salvar</button></div></div>`;
   ov.classList.add('open');
   tempModalMudou();
@@ -474,10 +506,11 @@ function tempEditarLinha(equipId) { _tempModal.equipId = equipId; _tempModal.edi
 function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloqueia 'dia todo')
   const v = (x) => x == null ? '' : String(x).replace('.', ',');
   const fora = l?.atual != null && (l.atual < e.min || l.atual > e.max);
-  const ab = !!l?.abono, obs = fora || ab || !!l?.justificativa;
+  const ab = !!l?.abono, obs = ab || !!l?.justificativa;
+  const podeOc = typeof ocGerarDeTemperatura === 'function' && !l?.ocorrenciaId;
   const motivos = Object.entries(TEMP_ABONOS).map(([k, t]) => `<label class="temp-chipr"><input type="radio" name="ab-${e.id}" data-f="abono" value="${k}" ${(l?.abono || 'manutencao') === k ? 'checked' : ''}><span>${t}</span></label>`).join('');
-  return `<tr data-eq="${e.id}" class="temp-lin ${ab ? 'abn' : ''} ${obs ? 'det-on' : ''} ${l?.justificativa ? 'obs-on' : ''}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div>
-      <div class="temp-acts"><button type="button" class="temp-pill" onclick="tempObsToggle(this)"><i class="fas fa-comment-dots"></i> Observação</button><button type="button" class="temp-pill amb temp-abn-bt" onclick="tempAbonoToggle(this)"><i class="fas ${ab ? 'fa-rotate-left' : 'fa-screwdriver-wrench'}"></i> <span>${ab ? 'Voltar à leitura' : 'Sem leitura'}</span></button>${l ? `<button type="button" class="temp-pill" title="Excluir leitura deste turno" onclick="tempLimparLinha(this)"><i class="fas fa-trash"></i> Excluir</button>` : ''}</div></td>
+  return `<tr data-eq="${e.id}" class="temp-lin ${ab ? 'abn' : ''} ${obs || (fora && podeOc) ? 'det-on' : ''} ${l?.justificativa ? 'obs-on' : ''}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div>
+      <div class="temp-acts"><button type="button" class="temp-pill" onclick="tempObsToggle(this)"><i class="fas fa-comment-dots"></i> Observação</button><button type="button" class="temp-pill amb temp-abn-bt" onclick="tempAbonoToggle(this)"><i class="fas ${ab ? 'fa-rotate-left' : 'fa-screwdriver-wrench'}"></i> <span>${ab ? 'Voltar à leitura' : 'Sem leitura'}</span></button></div></td>
     <td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>
     <td class="c-num"><input type="text" inputmode="decimal" data-f="min" value="${ab ? '' : v(l?.min)}" oninput="tempValidar(this)"></td>
     <td class="c-num"><input type="text" inputmode="decimal" data-f="max" value="${ab ? '' : v(l?.max)}" oninput="tempValidar(this)"></td>
@@ -485,10 +518,13 @@ function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloquei
     <td class="c-abn" colspan="3"><span class="temp-abn-tag"><i class="fas fa-screwdriver-wrench"></i> Sem leitura — informe o motivo abaixo</span></td></tr>
   <tr class="temp-det"><td colspan="5"><div class="temp-det-in">
       <div class="temp-abn"><span class="temp-det-lb">Motivo</span><div class="temp-chips">${motivos}</div>
-        <label class="temp-swl ${outro?.atual != null ? 'off' : ''}" ${outro?.atual != null ? `title="Já há leitura no outro turno (${_tFmt(outro.atual)} ºC)"` : ''}><input type="checkbox" data-f="dia" ${outro?.atual != null ? 'disabled' : ''}><span class="temp-sw"></span>
-          <span>Aplicar ao dia todo (manhã e tarde)${outro?.atual != null ? ` <small><i class="fas fa-lock"></i> outro turno já tem leitura</small>` : ''}</span></label></div>
-      <div class="temp-obs"><i class="fas fa-comment-dots"></i><input type="text" data-f="just" maxlength="300" placeholder="${fora || ab ? 'Observação obrigatória — ex.: OS 123, aguardando técnico' : 'Observação (opcional)'}" value="${_tEsc(l?.justificativa || '')}" oninput="tempValidar(this)"></div>
-      ${typeof ocOpenForm === 'function' && !l?.ocorrenciaId ? `<label class="temp-chk temp-oc-fora ${fora ? '' : 'hide'}"><input type="checkbox" data-f="oc"> Abrir ocorrência de falha</label>` : ''}
+</div>
+      <div class="temp-obs"><i class="fas fa-comment-dots"></i><input type="text" data-f="just" maxlength="300" placeholder="${ab ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : 'Observação (opcional)'}" value="${_tEsc(l?.justificativa || '')}" oninput="tempValidar(this)"></div>
+      <div class="temp-sws">
+        <label class="temp-swl temp-dia-sw ${outro?.atual != null ? 'off' : ''}" ${outro?.atual != null ? `title="Já há leitura no outro turno (${_tFmt(outro.atual)} ºC)"` : ''}><input type="checkbox" data-f="dia" ${outro?.atual != null ? 'disabled' : ''}><span class="temp-sw"></span>
+          <span>Aplicar ao dia todo (manhã e tarde)${outro?.atual != null ? ` <small><i class="fas fa-lock"></i> outro turno já tem leitura</small>` : ''}</span></label>
+      ${podeOc ? `<label class="temp-swl temp-oc-sw ${fora || ab ? '' : 'hide'}" title="Cria a ocorrência no módulo Ocorrências usando o texto da observação"><input type="checkbox" data-f="oc"><span class="temp-sw red"></span>
+        <span>Gerar Ocorrência</span></label>` : ''}</div>
     </div></td></tr>`;
 }
 function _tLinTr(el) { const tr = el.closest('tr'); return tr?.classList.contains('temp-det') ? tr.previousElementSibling : tr; }
@@ -500,36 +536,33 @@ function tempObsToggle(b) {   // abre/fecha o campo (fica aberto se obrigatório
 }
 function tempAbonoToggle(b) {
   const tr = _tLinTr(b), on = tr.classList.toggle('abn');
-  tr.querySelectorAll('[data-f=min],[data-f=max],[data-f=atual]').forEach(i => { if (on) { i.value = ''; i.classList.remove('bad', 'good'); } });
+  tr.querySelectorAll('[data-f=min],[data-f=max],[data-f=atual]').forEach(i => { if (on) { i.value = ''; i.classList.remove('bad', 'warn', 'good'); } });
   b.querySelector('span').textContent = on ? 'Voltar à leitura' : 'Sem leitura';
   b.querySelector('i').className = 'fas ' + (on ? 'fa-rotate-left' : 'fa-screwdriver-wrench');
   tempValidar(tr.querySelector('[data-f=atual]'));
   if (on) _tDet(tr)?.querySelector('[data-f=just]')?.focus(); else tr.querySelector('[data-f=atual]').focus();
 }
-function tempLimparLinha(b) {   // limpa leitura + observação + "sem leitura"; Salvar apaga o registro
-  const tr = _tLinTr(b), det = _tDet(tr);
-  tr.querySelectorAll('[data-f=min],[data-f=max],[data-f=atual]').forEach(i => { i.value = ''; i.classList.remove('bad', 'good'); });
-  if (det) { det.querySelector('[data-f=just]').value = ''; det.querySelectorAll('[data-f=dia],[data-f=oc]').forEach(c => { c.checked = false; }); }
-  tr.classList.remove('abn', 'obs-on');
-  const ab = tr.querySelector('.temp-abn-bt'); if (ab) { ab.querySelector('span').textContent = 'Sem leitura'; ab.querySelector('i').className = 'fas fa-screwdriver-wrench'; }
-  tr.dataset.limpa = '1';
-  tempValidar(tr.querySelector('[data-f=atual]'));
-  _tToast('Campos limpos. Clique em Salvar para excluir.', 'info');
-}
 function tempValidar(inp) {
   const tr = _tLinTr(inp); const e = tempState.equipamentos[tr?.dataset.eq]; if (!e) return;
   const g = (f) => _tNum(tr.querySelector(`[data-f=${f}]`).value);
   const mn = g('min'), mx = g('max'), at = g('atual');
-  tr.querySelectorAll('[data-f=min],[data-f=max],[data-f=atual]').forEach(i => i.classList.remove('bad', 'good'));
-  const marca = (f, ok) => { const i = tr.querySelector(`[data-f=${f}]`); if (i.value.trim()) i.classList.add(ok ? 'good' : 'bad'); };
-  if (at != null) marca('atual', at >= e.min && at <= e.max);
-  if (mn != null) marca('min', (at == null || mn <= at) && (mx == null || mn <= mx));
-  if (mx != null) marca('max', (at == null || mx >= at) && (mn == null || mx >= mn));
+  // vermelho + balanço = regra quebrada (mín ≤ atual ≤ máx); laranja = fora da faixa do equipamento; verde = ok
+  const marca = (f, v, incoerente) => {
+    const i = tr.querySelector(`[data-f=${f}]`), era = i.classList.contains('bad');
+    i.classList.remove('bad', 'warn', 'good');
+    if (v == null || !i.value.trim()) return;
+    if (incoerente) { i.classList.add('bad'); if (!era) { i.classList.remove('shake'); void i.offsetWidth; i.classList.add('shake'); } }
+    else i.classList.add(v < e.min || v > e.max ? 'warn' : 'good');
+  };
+  marca('atual', at, (mn != null && at != null && mn > at) || (mx != null && at != null && mx < at));
+  marca('min', mn, (at != null && mn > at) || (mx != null && mn > mx));
+  marca('max', mx, (at != null && mx < at) || (mn != null && mx < mn));
   const fora = at != null && (at < e.min || at > e.max), ab = tr.classList.contains('abn');
   const det = _tDet(tr), jt = det?.querySelector('[data-f=just]');
-  tr.classList.toggle('det-on', fora || ab || tr.classList.contains('obs-on'));
-  if (jt) jt.placeholder = fora || ab ? 'Observação obrigatória — ex.: OS 123, aguardando técnico' : 'Observação (opcional)';
-  det?.querySelector('.temp-oc-fora')?.classList.toggle('hide', !fora);
+  const sw = det?.querySelector('.temp-oc-sw');
+  tr.classList.toggle('det-on', ab || tr.classList.contains('obs-on') || (fora && !!sw));
+  if (jt) jt.placeholder = ab ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : 'Observação (opcional)';
+  sw?.classList.toggle('hide', !(fora || ab));
 }
 function _tValidarInput(i) { if (i) tempValidar(i); }
 
@@ -561,17 +594,13 @@ async function tempSalvarRegistro() {
         if (ant) { reg.editadoEm = dbServerTs(); reg.editadoPor = _tLogin(); }
         up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = reg;
       });
+      if (g('oc')?.checked) ocorrer.push({ e, abono, just, turnos, caminhos: turnos.map(t => `${TEMP_RAIZ}/leituras/${uid}/${ym}/${_tChave(e.id, data, t)}`).filter(c => up[c]) });
       return;
     }
-    if (mn == null && mx == null && at == null) {           // linha em branco
-      const chave = _tChave(e.id, data, turno);
-      if (mes[chave] && (tr.dataset.limpa === '1' || !just)) up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = null;   // excluída: apaga leitura, observação e "sem leitura"
-      return;
-    }
+    if (mn == null && mx == null && at == null) return;     // linha em branco: ignora
     if (at == null) { erros.push(`${nome}: informe a temperatura atual`); return; }
     if ((mn != null && mn > at) || (mx != null && mx < at) || (mn != null && mx != null && mn > mx)) { erros.push(`${nome}: mínima ≤ atual ≤ máxima`); return; }
     const fora = at < e.min || at > e.max;
-    if (fora && !just) { erros.push(`${nome}: fora da faixa, justifique`); return; }
     const chave = _tChave(e.id, data, turno), ant = mes[chave];
     const reg = { equipId: e.id, data, turno, min: mn, max: mx, atual: at, abono: null, justificativa: just || null,
       ocorrenciaId: ant?.ocorrenciaId || null,
@@ -579,25 +608,37 @@ async function tempSalvarRegistro() {
       gravadoEm: ant?.gravadoEm || dbServerTs() };
     if (ant) { reg.editadoEm = dbServerTs(); reg.editadoPor = _tLogin(); }
     up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = reg;
-    if (fora && g('oc')?.checked) ocorrer.push({ e, at, just, caminho: `${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}` });
+    if (fora && g('oc')?.checked) ocorrer.push({ e, at, mn, mx, just, caminhos: [`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] });
   });
   if (erros.length) { const m = document.getElementById('temp-m-msg'); m.innerHTML = `<span class="temp-ic-red"><i class="fas fa-circle-xmark"></i> ${_tEsc(erros.join(' · '))}</span>`; return; }
   if (!Object.keys(up).length) { _tToast('Nenhuma leitura preenchida.', 'info'); return; }
   const btn = document.getElementById('temp-m-salvar'); btn.disabled = true;
+  // ocorrências automáticas (texto = observação); o id vai junto na leitura
+  const geradas = [];
+  for (const o of ocorrer) {
+    try {
+      const un = _tNomeUnidade(uid), quando = `${_tBR(data)}${o.abono ? '' : ' · ' + TEMP_TURNOS[turno]}`;
+      const oc = await ocGerarDeTemperatura(o.abono ? {
+        ativoId: o.e.ativoId || null, tipo: 'falha', dataIso: data,
+        titulo: `${TEMP_ABONOS[o.abono] || 'Sem leitura'} — ${o.e.codigo}`,
+        descricao: `Equipamento ${o.e.codigo} (${un}) sem leitura de temperatura em ${quando}${o.turnos.length > 1 ? ' (manhã e tarde)' : ' (' + TEMP_TURNOS[turno].toLowerCase() + ')'}.\nMotivo: ${TEMP_ABONOS[o.abono] || o.abono}.\nObservação: ${o.just}`,
+        acao: o.just, origem: { tipo: 'temperatura', unidadeId: uid, equipId: o.e.id, data },
+      } : {
+        ativoId: o.e.ativoId || null, tipo: 'ambiental', dataIso: data,
+        titulo: `Temperatura fora da faixa — ${o.e.codigo}`,
+        descricao: `${quando} (${un}): atual ${_tFmt(o.at)} ºC${o.mn != null ? `, mín ${_tFmt(o.mn)}` : ''}${o.mx != null ? `, máx ${_tFmt(o.mx)}` : ''} — faixa ${_tFmt(o.e.min)} a ${_tFmt(o.e.max)} ºC.${o.just ? `\nObservação: ${o.just}` : ''}`,
+        acao: o.just || 'Leitura fora da faixa registrada no controle de temperatura.',
+        especificos: { leitura: `${_tFmt(o.at)} ºC`, faixaAceitavel: `${_tFmt(o.e.min)} a ${_tFmt(o.e.max)} ºC`, unidade: 'ºC', duracaoMin: '' },
+        origem: { tipo: 'temperatura', unidadeId: uid, equipId: o.e.id, data },
+      });
+      if (oc) { o.caminhos.forEach(c => { if (up[c]) up[c].ocorrenciaId = oc.id; }); geradas.push(oc.numero); }
+    } catch (err) { console.warn('[temperatura] ocorrência', err); _tToast(`Não foi possível gerar a ocorrência de ${o.e.codigo}.`, 'error'); }
+  }
   const ok = await dbUpdateT(up);
   btn.disabled = false;
   if (!ok) { _tToast('Erro ao salvar leituras.', 'error'); return; }
-  _tToast(`${Object.keys(up).length} leitura(s) salva(s).`, 'success');
+  _tToast(`${Object.keys(up).length} leitura(s) salva(s).${geradas.length ? ` Ocorrência ${geradas.join(', ')} gerada.` : ''}`, 'success');
   tempFecharRegistro();
-  if (ocorrer.length) {
-    const o = ocorrer[0];
-    tempState._ocPendente = o.caminho;
-    ocOpenForm(null, { ativoId: o.e.ativoId || undefined, tipo: 'falha',
-      titulo: `Temperatura fora da faixa — ${o.e.codigo}`,
-      descricao: `${TEMP_TURNOS[turno]} de ${_tBR(data)}: ${_tFmt(o.at)} ºC (faixa ${_tFmt(o.e.min)} a ${_tFmt(o.e.max)} ºC).\nJustificativa: ${o.just}`,
-      origem: { tipo: 'temperatura', caminho: o.caminho } });
-    if (ocorrer.length > 1) _tToast(`Outras ${ocorrer.length - 1} ocorrência(s) marcadas: abra pela linha depois.`, 'info');
-  }
 }
 
 async function tempExcluirLeitura(equipId, iso) {
