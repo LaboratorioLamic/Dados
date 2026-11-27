@@ -237,11 +237,12 @@ function htmlApoioDetalhe() {
     <div class="rt">${t.importadoEm ? `<span class="muted" style="font-size:12px">importada em ${dataHora(t.importadoEm)} por ${esc(t.importadoPor || '—')}</span>` : ''}
       ${modelo && podeImp && apo.passo === 0 ? `<button class="btn pri" onclick="apo.passo=1;apo.erro='';desenharApoioDet()"><i class="fa-solid fa-file-import"></i>${t.precos ? 'Importar nova tabela' : 'Importar tabela'}</button>` : ''}</div></div>`;
   if (apo.passo >= 1) return cab + htmlImportacaoApoio();
-  const nAt = Object.values(t.precos || {}).filter(it => !it.inativo).length, nHist = Object.keys(t.historico || {}).length;
-  const abas = `<div style="padding:14px 18px 0"><div class="seg">${[['vinc', 'Vínculos', 'fa-link', null], ['itens', 'Itens da tabela', 'fa-list', nAt], ['hist', 'Histórico', 'fa-clock-rotate-left', nHist || null]]
+  const nAt = Object.values(t.precos || {}).filter(it => !it.inativo).length, nHist = lotesHistApoio().length, nVig = vigenciasApoio().length;
+  const abas = `<div style="padding:14px 18px 0"><div class="seg">${[['vinc', 'Vínculos', 'fa-link', null], ['itens', 'Itens da tabela', 'fa-list', nAt], ['hist', 'Histórico', 'fa-clock-rotate-left', nHist || null], ['vig', 'Vigência', 'fa-calendar-day', nVig || null]]
     .map(([k, tx, ic, n]) => `<button class="${apo.aba === k ? 'on' : ''}" onclick="apo.aba='${k}';desenharApoioDet()"><i class="fa-solid ${ic}"></i>${tx}${n != null ? ` <b>${n}</b>` : ''}</button>`).join('')}</div></div>`;
   if (apo.aba === 'itens') return cab + abas + htmlItensApoio();
   if (apo.aba === 'hist') return cab + abas + htmlHistoricoApoio();
+  if (apo.aba === 'vig') return cab + abas + htmlVigenciaApoio();
   cab += abas;
   if (!modelo) return cab + vazio('fa-file-excel', `<b>Nenhum modelo de importação escolhido</b><br>Escolha o modelo no cadastro do setor. Se o apoio ainda não tem modelo, envie um arquivo de exemplo da tabela para criarmos. Enquanto isso, dá para cadastrar os itens à mão em "Itens da tabela".${pode('params', 'editar') ? `<br><button class="btn sm" style="margin-top:10px" onclick="abrirSetor('${apo.sel}')"><i class="fa-solid fa-pen"></i>Editar setor</button>` : ''}`);
   if (!t.precos) return cab + vazio('fa-file-import', `Importe a tabela (${esc(MODELOS_APOIO[modelo].exemplo)}) para vincular os exames e atualizar os custos.`);
@@ -745,23 +746,57 @@ const TIPOS_HIST_APOIO = {
   reativado: { t: 'Reativado', c: 'ok',   ic: 'fa-rotate-left' }
 };
 const HIST_ITENS_MAX = 300;
+const diaLocal = ts => { const d = new Date(ts || 0); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+// Lotes do histórico, do mais recente: as alterações à mão do mesmo dia viram um lote só
+function lotesHistApoio(id = apo.sel) {
+  const lotes = lista(ESTADO.apoios[id]?.historico, (a, b) => (b.em || 0) - (a.em || 0)), out = [], dia = {};
+  lotes.forEach(l => {
+    if (l.tipo === 'importacao') return out.push(l);
+    const k = diaLocal(l.em), g = dia[k];
+    const its = Object.values(l.itens || {}).map(x => ({ ...x, em: l.em, por: l.por }));
+    if (!g) { dia[k] = { ...l, dia: true, pors: [l.por], itens: its }; out.push(dia[k]); }
+    else { g.itens.push(...its); if (!g.pors.includes(l.por)) g.pors.push(l.por); }
+  });
+  return out;
+}
+// Itens com vigência alterada (de uma data para outra), do mais recente
+function vigenciasApoio(id = apo.sel) {
+  const r = [];
+  lista(ESTADO.apoios[id]?.historico).forEach(l => Object.values(l.itens || {}).forEach(x => {
+    if (x.vigDe && x.vigPara && x.vigDe !== x.vigPara) r.push({ ...x, em: l.em, por: l.por, imp: l.tipo === 'importacao', arquivo: l.arquivo });
+  }));
+  return r.sort((a, b) => (b.em || 0) - (a.em || 0));
+}
+function htmlVigenciaApoio() {
+  const ls = vigenciasApoio();
+  if (!ls.length) return vazio('fa-calendar-day', '<b>Nenhuma alteração de vigência</b><br>Itens que mudarem de vigência, na importação ou à mão, aparecem aqui.');
+  return `<div class="tbl-wrap"><table><thead><tr><th>Quando</th><th>Item</th><th>Descrição</th><th>Vigência do custo</th><th class="num">Preço</th><th>Origem</th></tr></thead><tbody>
+    ${ls.slice(0, HIST_ITENS_MAX * 2).map(x => {
+      const mudou = x.de != null && x.para != null && x.de !== x.para;
+      return `<tr><td style="white-space:nowrap">${dataHora(x.em)}</td><td><span class="mn">${esc(x.codigo)}</span> ${x.material ? `<span class="tag">${esc(x.material)}</span>` : ''}</td>
+        <td class="desc" title="${esc(x.descricao || '')}">${esc(x.descricao || '')}</td>
+        <td style="white-space:nowrap">${dataBR(x.vigDe)} → <b>${dataBR(x.vigPara)}</b></td>
+        <td class="num">${mudou ? `<span class="muted">${fmt(x.de)}</span> → <b>${fmt(x.para)}</b>` : x.para != null ? fmt(x.para) : '—'}</td>
+        <td><span class="badge-s ${x.imp ? 'base' : 'warn'}"><i class="fa-solid ${x.imp ? 'fa-file-import' : 'fa-hand'}"></i>${x.imp ? 'Importação' : 'À mão'}</span> <small class="muted">${esc(x.por || '—')}</small></td></tr>`;
+    }).join('')}</tbody></table></div>${ls.length > HIST_ITENS_MAX * 2 ? `<div class="hint" style="padding:8px 18px">Mostrando ${HIST_ITENS_MAX * 2} de ${num(ls.length, 0)}</div>` : ''}`;
+}
 function htmlHistoricoApoio() {
-  const lotes = lista(ESTADO.apoios[apo.sel]?.historico, (a, b) => (b.em || 0) - (a.em || 0));
+  const lotes = lotesHistApoio();
   if (!lotes.length) return vazio('fa-clock-rotate-left', '<b>Sem histórico ainda</b><br>As próximas importações e alterações à mão desta tabela aparecem aqui, lote a lote.');
   const vig = (de, para) => de && para && de !== para ? `${dataBR(de)} → <b>${dataBR(para)}</b>` : para || de ? dataBR(para || de) : '<span class="muted">—</span>';
   return `<div class="ah-l">${lotes.map((l, i) => {
-    const imp = l.tipo === 'importacao', itens = Object.values(l.itens || {}).sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)));
+    const imp = l.tipo === 'importacao', itens = l.dia ? l.itens.slice().sort((a, b) => (b.em || 0) - (a.em || 0)) : Object.values(l.itens || {}).sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)));
     const cnt = {}; itens.forEach(x => { cnt[x.tipo] = (cnt[x.tipo] || 0) + 1; });
     if (imp && l.n) Object.assign(cnt, { novo: l.n.novos || 0, alterado: l.n.alterados || 0, inativado: l.n.inativados || 0, reativado: l.n.reativados || 0 });
     const resumo = Object.keys(TIPOS_HIST_APOIO).filter(t => cnt[t]).map(t => `<span class="badge-s ${TIPOS_HIST_APOIO[t].c}"><i class="fa-solid ${TIPOS_HIST_APOIO[t].ic}"></i>${cnt[t]} ${TIPOS_HIST_APOIO[t].t.toLowerCase()}</span>`).join('');
     return `<details class="ah" ${i === 0 ? 'open' : ''}><summary><span class="po-ic" style="--c:${imp ? 'var(--cyan)' : 'var(--amber)'}"><i class="fa-solid ${imp ? 'fa-file-import' : 'fa-hand'}"></i></span>
-        <div class="ah-t"><b>${imp ? `Importação${l.arquivo ? ` · ${esc(l.arquivo)}` : ''}` : 'Alteração à mão'}</b><small>${dataHora(l.em)} · ${esc(l.por || '—')}${imp && l.vigencia ? ` · vigência ${dataBR(l.vigencia)}` : ''}${imp && l.total != null ? ` · ${num(l.total, 0)} itens ativos` : ''}</small></div>
+        <div class="ah-t"><b>${imp ? `Importação${l.arquivo ? ` · ${esc(l.arquivo)}` : ''}` : 'Alteração à mão'}</b><small>${l.dia ? new Date(l.em).toLocaleDateString('pt-BR') : dataHora(l.em)} · ${esc(l.dia ? l.pors.join(', ') : l.por || '—')}${l.dia && l.itens.length > 1 ? ` · ${l.itens.length} alterações` : ''}${imp && l.vigencia ? ` · vigência ${dataBR(l.vigencia)}` : ''}${imp && l.total != null ? ` · ${num(l.total, 0)} itens ativos` : ''}</small></div>
         <span class="ah-r">${resumo || '<span class="muted" style="font-size:12px">sem alterações de valor</span>'}</span><i class="fa-solid fa-chevron-down ah-chev"></i></summary>
-      ${itens.length ? `<div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Descrição</th><th>Alteração</th><th class="num">Preço</th><th>Vigência do custo</th></tr></thead><tbody>
+      ${itens.length ? `<div class="tbl-wrap"><table><thead><tr>${l.dia ? '<th>Hora</th>' : ''}<th>Item</th><th>Descrição</th><th>Alteração</th><th class="num">Preço</th><th>Vigência do custo</th></tr></thead><tbody>
         ${itens.slice(0, HIST_ITENS_MAX).map(x => {
           const tp = TIPOS_HIST_APOIO[x.tipo] || TIPOS_HIST_APOIO.alterado, so = x.de != null && x.para != null && x.de === x.para;
           const d = x.de > 0 && x.para != null && !so ? x.para / x.de - 1 : null;
-          return `<tr><td><span class="mn">${esc(x.codigo)}</span> ${x.material ? `<span class="tag">${esc(x.material)}</span>` : ''}</td><td class="desc" title="${esc(x.descricao || '')}">${esc(x.descricao || '')}</td>
+          return `<tr>${l.dia ? `<td style="white-space:nowrap">${new Date(x.em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} <small class="muted">${esc(x.por || '')}</small></td>` : ''}<td><span class="mn">${esc(x.codigo)}</span> ${x.material ? `<span class="tag">${esc(x.material)}</span>` : ''}</td><td class="desc" title="${esc(x.descricao || '')}">${esc(x.descricao || '')}</td>
             <td><span class="badge-s ${tp.c}"><i class="fa-solid ${tp.ic}"></i>${so ? 'Vigência' : tp.t}</span></td>
             <td class="num">${x.de != null && x.para != null && !so ? `<span class="muted">${fmt(x.de)}</span> → <b>${fmt(x.para)}</b>${d ? ` <small style="color:var(--${d > 0 ? 'red' : 'green'})">${d > 0 ? '+' : ''}${pct(d)}</small>` : ''}` : x.para != null ? fmt(x.para) : x.de != null ? `<span class="muted">${fmt(x.de)}</span>` : '—'}</td>
             <td>${vig(x.vigDe, x.vigPara)}</td></tr>`;

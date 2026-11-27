@@ -922,6 +922,7 @@ html:has(#viewer), html:has(#viewer) body { overflow: hidden; }
 .sino-ic { width: 36px; height: 36px; flex: none; border-radius: 11px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #3FA4E6, #2470CF); }
 .sino-item.importante .sino-ic { background: linear-gradient(135deg, #F2B33D, var(--alerta)); }
 .sino-item.urgente .sino-ic { background: linear-gradient(135deg, #E8604F, var(--erro)); }
+.sino-item.curso .sino-ic { background: linear-gradient(135deg, #F08A5D, #D9483B); }
 .sino-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .sino-txt small { font-size: 11px; color: var(--txt-2); }
 .sino-txt small em { font-style: normal; font-weight: 800; color: var(--azul-cl); text-transform: uppercase; letter-spacing: .06em; }

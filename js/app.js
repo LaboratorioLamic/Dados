@@ -671,14 +671,14 @@
   function pararComercial() { CS_.off?.(); CS_.off = null; CS_.n = 0; marcarComercial(); }
 
   // UniLAMIC: treinamentos pendentes do usuário (js/unilamic-pendentes.js) acendem UniLAMIC › Universidade LAMIC.
-  const US_ = { n: 0, off: null };
+  const US_ = { n: 0, off: null, atrasados: [] };
   const ehLinkUni = (url) => /(^|\/)modulos\/Treinamentos\//i.test(urlLink(url || ''));
   function iniciarUnilamic() {
     pararUnilamic();
     if (!S.me || !window.UniPendentes) return;
-    US_.off = UniPendentes.observar(S.db, { login: S.me.login, role: S.me.cargo || '', fullName: S.me.nome || '' }, (l) => { US_.n = UniPendentes.contaAlerta(l); marcarPend(); });
+    US_.off = UniPendentes.observar(S.db, { login: S.me.login, role: S.me.cargo || '', fullName: S.me.nome || '' }, (l) => { US_.n = UniPendentes.contaAlerta(l); US_.atrasados = l.filter((c) => c.prazo === 'late'); marcarPend(); desenharSino(); });
   }
-  function pararUnilamic() { US_.off?.(); US_.off = null; US_.n = 0; marcarPend(); }
+  function pararUnilamic() { US_.off?.(); US_.off = null; US_.n = 0; US_.atrasados = []; marcarPend(); }
 
   function fecharPainel() {
     $('#painel-links')?.classList.add('hidden');
@@ -813,6 +813,7 @@
     $$('.vhome.on').forEach((b) => b.classList.remove('on'));   // botão home não fica pressionado ao trocar de sistema
     marcarTopo(true);
     limparGuardados();
+    if (S.me) desenharSino();
   }
   function limparGuardados() {
     const agora = Date.now();
@@ -830,6 +831,7 @@
     fecharViewer();
     fecharPainel();
     marcarTopo(false);
+    if (S.me) queueMicrotask(desenharSino);   // roda depois que o #viewer existe
     let g = guardados.get(url);
     if (g) { g.el.hidden = false; g.el.id = 'viewer'; g.usado = Date.now(); return; }
     const v = document.createElement('div');
@@ -1341,7 +1343,8 @@
     const avs = await avisosPendentes().catch(() => []);
     const pend = avs;
     const n = pend.length;
-    if (S.me) desenharSino(pend);
+    S.sinoAvisos = pend;
+    if (S.me) desenharSino();
     const c = $('#cont-avisos');
     if (!c) return;
     c.textContent = n;
@@ -2528,6 +2531,8 @@
       e.stopPropagation();
       const it = e.target.closest('[data-aviso]');
       if (it) { abrir(false); fecharViewer(); irParaAviso(it.dataset.aviso); }
+      const cu = e.target.closest('[data-curso]');
+      if (cu) { abrir(false); abrirViewer(`modulos/Treinamentos/${cu.dataset.curso}`, `UniLAMIC · ${cu.dataset.nome}`); }
     });
     document.addEventListener('click', () => abrir(false));
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') abrir(false); });
@@ -2543,15 +2548,25 @@
     w.style.right = `${innerWidth - r.left + 8}px`;
   }
   addEventListener('resize', () => posicionarSino());
-  function desenharSino(pend) {
+  // Avisos pendentes + cursos do UniLAMIC em atraso (só os atrasados; ver iniciarUnilamic).
+  // Se só houver curso atrasado, o sino aparece apenas no portal (quadro de avisos etc.),
+  // não por cima de um sistema aberto.
+  function desenharSino() {
     const w = montarSino();
-    const n = pend.length;
-    if (!n) { w.hidden = true; w.classList.remove('aberto'); $('.sino-painel', w).hidden = true; return; }
+    const pend = S.sinoAvisos || [];
+    const cursos = US_.atrasados || [];
+    const n = pend.length + cursos.length;
+    if (!n || (!pend.length && $('#viewer'))) { w.hidden = true; w.classList.remove('aberto'); $('.sino-painel', w).hidden = true; return; }
     const novos = S.sinoNovos || new Set();
     $('.sino-n', w).textContent = n > 99 ? '99+' : n;
     w.classList.toggle('urgente', pend.some((a) => a.prioridade === 'urgente'));
     $('.sino-topo small', w).textContent = `${n} pendente${n > 1 ? 's' : ''}`;
-    $('.sino-lista', w).innerHTML = pend.slice().sort((a, b) => (b.criado_em || 0) - (a.criado_em || 0)).slice(0, 20).map((a) => {
+    const itensCursos = cursos.map((c) => `<button type="button" class="sino-item curso" data-curso="${esc(c.url)}" data-nome="${esc(c.nome)}">
+        <span class="sino-ic"><i class="fas fa-graduation-cap"></i></span>
+        <span class="sino-txt"><small>UniLAMIC · ${esc(c.catNome)}${c.fim ? ` · prazo ${esc(dataBR(c.fim))}` : ''}</small>
+          <b>${esc(c.nome)}</b><span class="sino-conf"><i class="fas fa-clock"></i> Curso em atraso</span></span>
+        <span class="tag urgente">Atrasado</span></button>`).join('');
+    $('.sino-lista', w).innerHTML = itensCursos + pend.slice().sort((a, b) => (b.criado_em || 0) - (a.criado_em || 0)).slice(0, 20).map((a) => {
       const pr = a.prioridade || 'normal';
       return `<button type="button" class="sino-item ${esc(pr)}" data-aviso="${esc(a.id)}">
         <span class="sino-ic"><i class="fas ${pr === 'urgente' ? 'fa-triangle-exclamation' : pr === 'importante' ? 'fa-circle-exclamation' : 'fa-bell'}"></i></span>
