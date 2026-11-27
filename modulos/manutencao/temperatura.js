@@ -690,7 +690,11 @@ async function tempSalvarRegistro() {
       if (ocOn) ocorrer.push({ e, abono, just, turnos, ocf, caminhos: turnos.map(t => `${TEMP_RAIZ}/leituras/${uid}/${ym}/${_tChave(e.id, data, t)}`).filter(c => up[c]) });
       return;
     }
-    if (mn == null && mx == null && at == null) return;     // linha em branco: ignora
+    if (mn == null && mx == null && at == null && !just) {   // linha totalmente em branco: na edição apaga o registro do turno; no lançamento ignora
+      const chave = _tChave(e.id, data, turno);
+      if (_tempModal.edicao && mes[chave]) up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = null;
+      return;
+    }
     if (at == null) { erros.push(`${nome}: informe a temperatura atual`); return; }
     if ((mn != null && mn > at) || (mx != null && mx < at) || (mn != null && mx != null && mn > mx)) { erros.push(`${nome}: mínima ≤ atual ≤ máxima`); return; }
     const chave = _tChave(e.id, data, turno), ant = mes[chave];
@@ -728,7 +732,8 @@ async function tempSalvarRegistro() {
   const ok = await dbUpdateT(up);
   btn.disabled = false;
   if (!ok) { _tToast('Erro ao salvar leituras.', 'error'); return; }
-  _tToast(`${Object.keys(up).length} leitura(s) salva(s).${geradas.length ? ` Ocorrência ${geradas.join(', ')} gerada.` : ''}`, 'success');
+  const apag = Object.values(up).filter(v => v === null).length, salv = Object.keys(up).length - apag;
+  _tToast(`${salv ? salv + ' leitura(s) salva(s).' : ''}${apag ? ' ' + apag + ' registro(s) apagado(s).' : ''}${geradas.length ? ` Ocorrência ${geradas.join(', ')} gerada.` : ''}`, 'success');
   tempFecharRegistro();
 }
 
