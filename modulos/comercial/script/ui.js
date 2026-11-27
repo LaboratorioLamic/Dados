@@ -48,10 +48,10 @@ function fecharGaveta() {
 // confirmar({ titulo, texto, botao, perigo }) → Promise<boolean>
 // icone/tom (opcionais) trocam o ícone e a cor do círculo: tom 'pausa' (âmbar) ou 'play' (verde)
 // Esc ou clique fora resolvem null (dispensou sem escolher); o botão de cancelar resolve false
-function confirmar({ titulo = 'Confirmar', texto = '', botao = 'Confirmar', perigo = false, icone = '', tom = '', cancelar = 'Cancelar' } = {}) {
+function confirmar({ titulo = 'Confirmar', texto = '', botao = 'Confirmar', perigo = false, icone = '', tom = '', cancelar = 'Cancelar', largura = '' } = {}) {
   return new Promise(resolve => {
     const m = document.getElementById('modal');
-    m.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true">
+    m.innerHTML = `<div class="modal-card"${largura ? ` style="max-width:min(${largura},94vw);width:100%"` : ''} role="dialog" aria-modal="true">
         <button class="modal-x" data-x title="Fechar"><i class="fa-solid fa-xmark"></i></button>
         <div class="modal-ic ${perigo ? 'perigo' : tom}"><i class="fa-solid ${icone || (perigo ? 'fa-triangle-exclamation' : 'fa-circle-question')}"></i></div>
         <h3>${esc(titulo)}</h3><p>${texto}</p>

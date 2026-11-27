@@ -256,10 +256,11 @@ function desenharAnexosIns() {
       ${urlValida(a.url) ? `<a class="icon-btn" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" title="Abrir o link"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
       ${ed ? `<button type="button" class="icon-btn" title="Remover anexo" onclick="_iEd.anexos.splice(${i},1);desenharAnexosIns()"><i class="fa-solid fa-trash"></i></button>` : ''}</div>`).join('')
     || '<div class="muted" style="font-size:12.5px">Nenhum anexo cadastrado</div>')
-    + (ed ? `<div class="anx-ac"><button type="button" class="btn sm" onclick="adicionarAnexoIns()"><i class="fa-solid fa-plus"></i>Adicionar anexo</button>
+    + (ed ? `<div class="anx-ac"><button type="button" class="btn sm" onclick="adicionarAnexoIns()"><i class="fa-solid fa-plus"></i>Adicionar anexo</button>${htmlBotaoDrive('anexoDriveIns')}
       <button type="button" class="btn sm" id="in-extrair" onclick="extrairAnexosDoTexto()"><i class="fa-solid fa-wand-magic-sparkles"></i>Converter links do texto</button></div>` : '');
   atualizarExtrairAnexos();
 }
+function anexoDriveIns(a) { _iEd.anexos.push({ nome: a.nome, url: a.url }); desenharAnexosIns(); }
 function adicionarAnexoIns() {
   _iEd.anexos.push({ nome: '', url: '' });
   desenharAnexosIns();

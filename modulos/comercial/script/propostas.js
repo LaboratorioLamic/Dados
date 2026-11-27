@@ -340,7 +340,7 @@ async function perguntarUnilab(ls, botao = 'Publicar') {
   if (!div.length) return new Set();
   const varias = new Set(div.map(x => x.alvo)).size > 1, v = x => x != null ? fmt(x) : 'sem valor';
   _uniVs = Object.fromEntries(div.map(x => [`${x.alvo}|${x.k}`, false]));
-  const r = await confirmar({ titulo: 'Valor atualizado no UniLab?', icone: 'fa-clock-rotate-left', botao, cancelar: 'Voltar',
+  const r = await confirmar({ titulo: 'Valor atualizado no UniLab?', icone: 'fa-clock-rotate-left', botao, cancelar: 'Voltar', largura: '680px',
     texto: `${div.length} exame(s) ficam com valor diferente do UniLab. Marque os que <b>já foram lançados</b> lá: a tabela do sistema no banco recebe o valor publicado. Os desmarcados ficam pendentes nas notificações (Atualizar no UniLab).
       <span style="display:flex;gap:6px;justify-content:center;margin:10px 0"><button type="button" class="btn sm" onclick="uniVsTodos(true)"><i class="fa-solid fa-check-double"></i>Marcar todos</button><button type="button" class="btn sm" onclick="uniVsTodos(null)"><i class="fa-solid fa-right-left"></i>Inverter</button></span>
       <span class="fx-conf" style="max-height:260px;overflow:auto">${div.map(x => { const kv = `${x.alvo}|${x.k}`;

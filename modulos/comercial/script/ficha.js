@@ -706,7 +706,7 @@ let _dx = null;
 function abrirDadosExame(id) {
   const e = id ? ESTADO.exames[id] : null;
   _dx = { id: id || null, setorId: e?.setorId || '', origem: e?.origem || origemLembrada(), ativo: e ? e.ativo !== false : true, negociado: false, auditar: false, fora: false, checks: { site: false, unilab: false, revisado: false },
-    mnUlt: '', mnDup: null, auto: {}, anexos: [], anexosAuto: false, apoioChave: '', novoItem: false, popApoio: null };
+    mnUlt: '', mnDup: null, auto: {}, anexos: [], anexosAuto: false, apoioChave: '', novoItem: false, popApoio: null, outras: false, tab: {} };
   const novo = !id;
   // Exame novo: instrução cadastrada junto (catálogo de instruções)
   const comIns = !id && pode('instrucoes', 'editar');
@@ -723,11 +723,26 @@ function abrirDadosExame(id) {
         ${campo('dx-preco', 'Preço praticado', e?.precoPraticado ?? '', { pre: 'R$', moeda: true, ph: '0,00', desab: !!id, dica: id ? 'altere na ficha' : '', aoMudar: novo ? 'previaDadosExame()' : '' })}
       </div>
       ${novo ? `<div class="dx-prev" id="dx-calc"></div>` : ''}
+      ${novo && pode('tabelas', 'editar') ? `<div class="casc"><div class="casc-r"><div class="lft"><i class="fa-solid fa-table-list"></i><div>Outras tabelas<div class="s">preço do exame nas outras tabelas, enviado no mesmo lote</div></div></div>${chave(false, '_dx.outras=!_dx.outras;this.classList.toggle(\'on\');desenharTabsDx()')}</div></div><div id="dx-tabs"></div>` : ''}
       ${campo('dx-desc', 'Nome do exame', e?.descricao || '', { tipo: 'text', ph: 'Ex.: Glicose' })}
       <div class="field"><label>Setor</label><div id="pop-dxsetor" class="block"></div></div>
       <div class="field"><label>Origem</label><div class="opt-cards" id="dx-origem">
         ${[['interno', 'Interno', 'Executado no LAMIC', 'fa-microscope'], ['apoio', 'Apoio', 'Enviado a laboratório de apoio', 'fa-truck-medical']].map(([v, t, d, ic]) =>
           `<button type="button" class="oc ${_dx.origem === v ? 'on' : ''}" data-v="${v}" onclick="_dx.origem='${v}';lembrarOrigem();marcarOc('dx-origem', this);atualizarControlesDx()"><span class="po-ic"><i class="fa-solid ${ic}"></i></span><span><b>${t}</b><small>${d}</small></span><i class="fa-solid fa-circle-check ck"></i></button>`).join('')}</div></div>
+      ${novo ? `<div class="casc" id="dx-neg-box"><div class="casc-r" id="dx-neg-r"><div class="lft"><i class="fa-solid fa-handshake" style="color:var(--green)"></i><div>Valor negociado com o apoio<div class="s">cadastra o item na tabela do apoio, com o custo informado, e vincula o exame</div></div></div>${chave(false, '_dx.negociado=!_dx.negociado;this.classList.toggle(\'on\');atualizarControlesDx()')}</div>
+        <div id="dx-neg-campos" class="dx-neg" style="display:none">
+          <div class="casc-r" id="dx-neg-vinc"><div class="lft"><i class="fa-solid fa-link"></i><div><span id="dx-neg-sel">Sem vínculo</span><div class="s" id="dx-neg-sels">escolha o item da tabela do apoio</div></div></div><div id="pop-dxapoio" style="min-width:200px"></div></div>
+          <div class="casc-r" id="dx-neg-novo-r"><div class="lft"><i class="fa-solid fa-plus"></i><div>Item fora da tabela<div class="s" id="dx-neg-novo-s"></div></div></div><button type="button" class="btn sm" onclick="novoItemDx(true)"><i class="fa-solid fa-plus"></i>Novo item</button></div>
+          <div id="dx-neg-novo">
+            <div class="fgrid sem-pad" style="grid-template-columns:1fr 2fr 1fr">
+              ${campo('dx-ap-cod', 'Mnemônico no apoio', '', { tipo: 'text', ph: 'Código no apoio' })}
+              ${campo('dx-ap-desc', 'Nome no apoio', '', { tipo: 'text', ph: 'Descrição na tabela do apoio' })}
+              ${campo('dx-ap-val', 'Valor negociado', '', { pre: 'R$', moeda: true, ph: '0,00', aoMudar: "document.getElementById('dx-custo').value=this.value;previaDadosExame()" })}
+            </div>
+            <div style="display:flex;justify-content:flex-end" id="dx-neg-cancel"><button type="button" class="btn sm" onclick="novoItemDx(false)">Cancelar</button></div>
+          </div>
+          <div class="hint" id="dx-neg-hint"></div>
+        </div></div>` : ''}
       <div class="fgrid sem-pad" style="grid-template-columns:2fr 1fr">
         ${campo('dx-mat', 'Material', e?.material || '', { tipo: 'text', ph: 'Ex.: Soro' })}
         ${campo('dx-dias', 'Prazo (dias)', (id ? diasPrazo(id) : null) ?? '', { passo: '1', ph: 'Ex.: 2', dica: '0 = 24 Horas' })}
@@ -740,20 +755,7 @@ function abrirDadosExame(id) {
         <span class="hint">Links (Drive, PDF, formulário) da instrução do exame: aparecem clicáveis para os laboratórios apoiados no L2L.</span></div>` : ''}
       ${novo ? '<div class="sec-t"><i class="fa-solid fa-sliders"></i>Controles</div>' : ''}
       <div class="casc">
-        ${novo ? `<div class="casc-r" id="dx-neg-r"><div class="lft"><i class="fa-solid fa-handshake" style="color:var(--green)"></i><div>Valor negociado com o apoio<div class="s">cadastra o item na tabela do apoio, com o custo informado, e vincula o exame</div></div></div>${chave(false, '_dx.negociado=!_dx.negociado;this.classList.toggle(\'on\');atualizarControlesDx()')}</div>
-        <div id="dx-neg-campos" class="dx-neg" style="display:none">
-          <div class="casc-r" id="dx-neg-vinc"><div class="lft"><i class="fa-solid fa-link"></i><div><span id="dx-neg-sel">Sem vínculo</span><div class="s" id="dx-neg-sels">escolha o item da tabela do apoio</div></div></div><div id="pop-dxapoio" style="min-width:200px"></div></div>
-          <div class="casc-r" id="dx-neg-novo-r"><div class="lft"><i class="fa-solid fa-plus"></i><div>Item fora da tabela<div class="s" id="dx-neg-novo-s"></div></div></div><button type="button" class="btn sm" onclick="novoItemDx(true)"><i class="fa-solid fa-plus"></i>Novo item</button></div>
-          <div id="dx-neg-novo">
-            <div class="fgrid sem-pad" style="grid-template-columns:1fr 2fr">
-              ${campo('dx-ap-cod', 'Mnemônico no apoio', '', { tipo: 'text', ph: 'Código no apoio' })}
-              ${campo('dx-ap-desc', 'Nome no apoio', '', { tipo: 'text', ph: 'Descrição na tabela do apoio' })}
-            </div>
-            <div style="display:flex;justify-content:flex-end" id="dx-neg-cancel"><button type="button" class="btn sm" onclick="novoItemDx(false)">Cancelar</button></div>
-          </div>
-          <div class="hint" id="dx-neg-hint"></div>
-        </div>
-        <div class="casc-r"><div class="lft"><i class="fa-solid fa-plug-circle-xmark"></i><div>Fora do sistema do laboratório<div class="s">mnemônico não existe no catálogo</div></div></div>${chave(false, '_dx.fora=!_dx.fora;this.classList.toggle(\'on\')')}</div>` : ''}
+        ${novo ? `<div class="casc-r"><div class="lft"><i class="fa-solid fa-plug-circle-xmark"></i><div>Fora do sistema do laboratório<div class="s">mnemônico não existe no catálogo</div></div></div>${chave(false, '_dx.fora=!_dx.fora;this.classList.toggle(\'on\')')}</div>` : ''}
         <div class="casc-r"><div class="lft"><i class="fa-solid fa-eye"></i><div>Exame ativo<div class="s">inativo sai das listas e das tabelas</div></div></div>${chave(_dx.ativo, '_dx.ativo=!_dx.ativo;this.classList.toggle(\'on\')')}</div></div>
     </div>`,
     rodape: `<button class="btn" onclick="${id ? `abrirFicha('${id}')` : 'fecharGaveta()'}">${id ? '<i class="fa-solid fa-arrow-left"></i>Voltar' : 'Cancelar'}</button>
@@ -801,8 +803,11 @@ function novoItemDx(v) {
 }
 // Cadastro novo: "negociado" só vale para apoio; prévia de custo e margem
 function atualizarControlesDx() {
-  const r = document.getElementById('dx-neg-r');
+  const r = document.getElementById('dx-neg-box');
   if (r) r.style.display = _dx.origem === 'apoio' ? '' : 'none';
+  // negociado ativo: o custo vem do item do apoio (vinculado ou o valor negociado do item novo), sem digitação
+  const ci = document.getElementById('dx-custo');
+  if (ci) { const trava = _dx.origem === 'apoio' && _dx.negociado; ci.readOnly = trava; ci.closest('.inp').style.opacity = trava ? '.6' : ''; ci.title = trava ? 'Vem do valor negociado com o apoio' : ''; }
   // negociado: item manual na tabela do apoio (mnemônico e nome sugeridos a partir do exame)
   const cp = document.getElementById('dx-neg-campos');
   if (cp) {
@@ -839,11 +844,14 @@ function atualizarControlesDx() {
         const cod = document.getElementById('dx-ap-cod'), nome = document.getElementById('dx-ap-desc');
         if (!cod.value) cod.value = valorCampo('dx-mn').trim();
         if (!nome.value) nome.value = valorCampo('dx-desc').trim();
+        const av = document.getElementById('dx-ap-val');
+        if (av && !av.value && ci?.value) av.value = ci.value;
+        else if (av && ci) ci.value = av.value;
       }
       document.getElementById('dx-neg-hint').innerHTML = !apoio
         ? '<i class="fa-solid fa-triangle-exclamation" style="color:var(--amber)"></i> Escolha no campo Setor o laboratório de apoio que recebe este item.'
         : it ? `<i class="fa-solid fa-circle-info"></i> O exame fica vinculado a <b>${esc(it.codigo)}</b> e acompanha as importações da tabela de <b>${esc(setor.nome)}</b>.`
-        : novo ? `<i class="fa-solid fa-circle-info"></i> O "Custo do teste" informado acima entra na tabela de <b>${esc(setor.nome)}</b> como item manual.` : '';
+        : novo ? `<i class="fa-solid fa-circle-info"></i> O valor negociado entra na tabela de <b>${esc(setor.nome)}</b> como item manual e vira o custo do teste.` : '';
     }
   }
   previaDadosExame();
@@ -862,6 +870,58 @@ function previaDadosExame() {
     + `<div class="dp-acts"><div class="dp-top"><span class="dp-l"><i class="fa-solid fa-wand-magic-sparkles"></i>Precificar</span>
           <span class="dp-arr" title="Arredonda o preço dos botões Piso e Alvo ao múltiplo mais próximo; para baixo só se a margem não sair da tolerância"><span class="dp-arr-l">Arredondar</span>${ARRED_DX.map(a => `<button type="button" class="${a === arredDx() ? 'on' : ''}" onclick="definirArredDx(${a})">R$ ${a},00</button>`).join('')}</span></div>
         ${btnPrecificarDx('fa-shield-halved', 'Piso', precoArredDx(c, 'piso'), c.min, preco)}${btnPrecificarDx('fa-bullseye', 'Alvo', precoArredDx(c, 'alvo'), c.alvo, preco)}</div>`;
+  atualizarTabsDx();
+}
+
+// ── Cadastro: outras tabelas (como na ficha) ──────────────────
+const exameDx = () => { const c = numCampo('dx-custo'); return { setorId: _dx.setorId || null, origem: _dx.origem, custoTeste: c >= 0 ? c : null }; };
+const arredTabDx = v => { const a = arredDx(); return v == null ? null : Math.max(a, Math.round(v / a) * a); };
+function desenharTabsDx() {
+  const el = document.getElementById('dx-tabs');
+  if (!el) return;
+  if (!_dx.outras) { el.innerHTML = ''; return; }
+  const ts = tabelasLista(false);
+  el.innerHTML = `<div class="casc fx-tabs">${ts.map(t => `<div class="casc-r ${t.ativa === false ? 'skip' : ''}"><div class="lft"><i class="fa-solid ${t.icone}" style="color:${t.cor}"></i><div>${esc(t.nome)}<div class="s" id="dxt-s-${t.id}"></div></div></div>
+      <div class="fx-tv"><div class="fx-tv-l"><div class="price-in" id="dxt-pi-${t.id}"><span>R$</span><input type="text" inputmode="numeric" autocomplete="off" data-t="${t.id}" value="${moedaCampo(_dx.tab[t.id] ?? null)}" placeholder="—" oninput="editarTabDx(this)" onfocus="this.select()"></div>
+        <div class="acts"><button type="button" title="Margem alvo da tabela" onclick="margemTabDx('${t.id}')"><i class="fa-solid fa-bullseye"></i></button><button type="button" title="Particular − desconto de referência" onclick="refTabDx('${t.id}')"><i class="fa-solid fa-percent"></i></button><button type="button" title="Não incluir" onclick="definirTabDx('${t.id}', null)"><i class="fa-solid fa-xmark"></i></button></div></div></div></div>`).join('')
+    || '<div class="casc-r muted">Nenhuma tabela cadastrada</div>'}</div>
+    ${ts.length ? '<div class="hint" style="margin-top:6px"><i class="fa-solid fa-circle-info"></i> Vazio: o exame não entra na tabela. Os botões usam o arredondamento de Precificar.</div>' : ''}`;
+  atualizarTabsDx();
+}
+function definirTabDx(id, v) {
+  if (v == null) delete _dx.tab[id]; else _dx.tab[id] = Math.round(v * 100) / 100;
+  const inp = document.querySelector(`#dx-tabs input[data-t="${id}"]`);
+  if (inp) inp.value = moedaCampo(_dx.tab[id] ?? null);
+  atualizarTabsDx();
+}
+function editarTabDx(inp) {
+  mascaraMoeda(inp);
+  const v = lerMoeda(inp.value);
+  if (v == null) delete _dx.tab[inp.dataset.t]; else if (!isNaN(v) && v > 0) _dx.tab[inp.dataset.t] = Math.round(v * 100) / 100;
+  atualizarTabsDx();
+}
+function margemTabDx(id) {
+  const t = ESTADO.tabelas[id], e = exameDx(), c = calcular(e, null, t);
+  const v = precoParaMargem(c, c.margemSug ?? alvoExame(e));
+  if (v == null) return toast('Informe o custo do teste', 'erro');
+  definirTabDx(id, arredTabDx(v));
+}
+function refTabDx(id) {
+  const part = numCampo('dx-preco');
+  if (!(part > 0)) return toast('Informe o preço praticado', 'erro');
+  definirTabDx(id, arredTabDx(Math.round(part * (1 - calcular(exameDx(), null, ESTADO.tabelas[id]).descRef))));
+}
+function atualizarTabsDx() {
+  if (!_dx?.outras || !document.getElementById('dx-tabs')) return;
+  const e = exameDx(), part = numCampo('dx-preco') > 0 ? numCampo('dx-preco') : null;
+  tabelasLista(false).forEach(t => {
+    const sEl = document.getElementById('dxt-s-' + t.id);
+    if (!sEl) return;
+    const p = _dx.tab[t.id] ?? null, c = p != null ? calcular(e, p, t) : null, dr = calcular(e, null, t).descRef;
+    sEl.innerHTML = p == null ? (part && dr ? `ref. ${fmt(arredTabDx(Math.round(part * (1 - dr))))}` : '')
+      : `${c.semCusto ? 'sem custo' : `<span style="color:${c.status === 'r' ? 'var(--red)' : 'inherit'}">margem ${pct(c.margem)}</span>`} · piso ${pct(c.min, 0)}${part ? ` · desc. ${pct(1 - p / part)}` : ''}`;
+    document.getElementById('dxt-pi-' + t.id).className = `price-in ${p != null ? 'on' : ''}`;
+  });
 }
 // Arredondamento dos preços de piso e alvo (múltiplo mais próximo, ver precoArredDx): múltiplos de R$ 1, 5, 10 ou 100; a escolha fica lembrada neste navegador
 const ARRED_DX = [1, 5, 10, 100];
@@ -955,8 +1015,9 @@ function desenharAnexosDx() {
       <div class="inp"><span class="pre"><i class="fa-solid fa-link"></i></span><input class="txt" value="${esc(a.url)}" placeholder="https://…" oninput="_dx.anexos[${i}].url=this.value;_dx.anexosAuto=false"></div>
       ${urlValida(a.url) ? `<a class="icon-btn" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" title="Abrir o link"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
       <button type="button" class="icon-btn" title="Remover anexo" onclick="_dx.anexos.splice(${i},1);_dx.anexosAuto=false;desenharAnexosDx()"><i class="fa-solid fa-trash"></i></button></div>`).join('')
-    + `<div class="anx-ac"><button type="button" class="btn sm" id="dx-anx-add" onclick="adicionarAnexoDx()"><i class="fa-solid fa-plus"></i>Adicionar anexo</button></div>`;
+    + `<div class="anx-ac"><button type="button" class="btn sm" id="dx-anx-add" onclick="adicionarAnexoDx()"><i class="fa-solid fa-plus"></i>Adicionar anexo</button>${htmlBotaoDrive('anexoDriveDx')}</div>`;
 }
+function anexoDriveDx(a) { _dx.anexos.push({ nome: a.nome, url: a.url }); _dx.anexosAuto = false; desenharAnexosDx(); }
 function adicionarAnexoDx() {
   _dx.anexos.push({ nome: '', url: '' });
   _dx.anexosAuto = false;
@@ -1014,8 +1075,9 @@ async function gravarDadosExame() {
     const preco = numCampo('dx-preco');
     const custo = numCampo('dx-custo');
     if (!isNaN(custo) && custo < 0) return toast('Custo do teste inválido', 'erro');
-    // preço praticado: janela para escolher entre proposta (padrão) e publicar direto
-    if (preco > 0) {
+    const tabs = _dx.outras ? Object.entries(_dx.tab).filter(([t, v]) => ESTADO.tabelas[t] && v > 0) : [];
+    // preço praticado / outras tabelas: janela para escolher entre proposta (padrão) e publicar direto
+    if (preco > 0 || tabs.length) {
       const esc = await escolherModoPrecoDx(preco, custo >= 0 && calcular({ setorId: _dx.setorId || null, origem: _dx.origem, custoTeste: custo }, preco).status === 'r');
       if (!esc) return;
       modoPreco = esc.modo; justProposta = esc.just;
@@ -1041,16 +1103,24 @@ async function gravarDadosExame() {
       custoTeste: custo >= 0 ? Math.round(custo * 100) / 100 : null, custoOrigem: custo >= 0 ? 'manual' : null,
       negociado: _dx.origem === 'apoio' && _dx.negociado ? true : null, auditar: _dx.auditar || null, foraDoSistema: _dx.fora || null });
     await DB.gravar(`${CAMINHOS.exames}/${id}`, dados);
+    ESTADO.exames[id] = { ...dados, atualizadoEm: Date.now() };
     if (itemApoio) {
       await DB.gravar(`${CAMINHOS.apoios}/${_dx.setorId}/precos/${itemApoio.k}`, itemApoio.item);
       registrar('apoios', `${ESTADO.setores[_dx.setorId].nome}: item ${itemApoio.item.codigo} cadastrado manualmente (${fmt(itemApoio.item.preco)}) no cadastro do exame ${mn}`);
     }
     await gravarCatalogoNovoExame(id, mn, desc);
-    if (modoPreco === 'proposta') {
-      const u = usuarioAtual(), pid = DB.novaChave('propostas');
-      await DB.gravar(`propostas/${pid}`, { alvo: 'particular', alvoNome: 'Particular', itens: { [id]: { mn, de: null, para: Math.round(preco * 100) / 100 } }, n: 1,
-        justificativa: justProposta || 'Exame recém criado', autor: u.nome, autorId: u.id, em: DB.agora(), status: 'pendente', origem: 'cadastro' });
-      registrar('tabelas', `Particular: proposta de preço do exame novo ${mn} enviada (cadastro)`, { proposta: pid });
+    // Particular (se proposta) e outras tabelas: um lote só, uma única aprovação
+    if (modoPreco) {
+      const u = usuarioAtual(), lote = DB.novaChave('propostas');
+      const alvos = [...(modoPreco === 'proposta' && preco > 0 ? [['particular', 'Particular', preco]] : []), ...tabs.map(([t, v]) => [t, ESTADO.tabelas[t].nome, v])];
+      for (const [alvo, nome, v] of alvos) {
+        const pid = DB.novaChave('propostas');
+        const p = { alvo, alvoNome: nome, itens: { [id]: { mn, de: null, para: Math.round(v * 100) / 100 } }, n: 1,
+          justificativa: justProposta || 'Exame recém criado', autor: u.nome, autorId: u.id, em: Date.now(), status: 'pendente', origem: 'cadastro', lote };
+        await DB.gravar(`propostas/${pid}`, { ...p, em: DB.agora() });
+        if (modoPreco === 'publicar') await aplicarProposta(pid, p);
+        else registrar('tabelas', `${nome}: proposta de preço do exame novo ${mn} enviada (cadastro)`, { proposta: pid });
+      }
     }
   } else {
     // prazo em dias substitui o texto antigo, no exame e no catálogo de instruções
@@ -1083,8 +1153,8 @@ function escolherModoPrecoDx(preco, abaixoPiso) {
     m.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true">
         <button class="modal-x" data-x title="Fechar"><i class="fa-solid fa-xmark"></i></button>
         <div class="modal-ic pausa"><i class="fa-solid fa-tag"></i></div>
-        <h3>Preço praticado de ${fmt(preco)}</h3>
-        <p>Como o preço da Particular deste exame novo passa a valer?
+        <h3>${preco > 0 ? `Preço praticado de ${fmt(preco)}` : 'Preços das tabelas'}</h3>
+        <p>Como os preços deste exame novo passam a valer?
           ${abaixoPiso ? '<span class="modal-li"><span style="color:var(--red)"><i class="fa-solid fa-circle-xmark" style="color:var(--red)"></i>Preço abaixo da margem mínima</span></span>' : ''}</p>
         <div class="opt-cards dx-pmodo" id="dx-pmodo">
           ${oc('proposta', 'Enviar como proposta', 'Vale depois da aprovação; até lá o exame fica sem preço', 'fa-paper-plane', true)}
