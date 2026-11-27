@@ -116,10 +116,12 @@ function empOpenForm(id) {
   _empContatos = e?.contatos  ? JSON.parse(JSON.stringify(e.contatos))  : [];
   _empResps    = e?.responsaveis ? JSON.parse(JSON.stringify(e.responsaveis)) : [];
   _empAnexos   = e?.anexos    ? JSON.parse(JSON.stringify(e.anexos))    : [];
+  _empRespEdit = null; _empRespFiltro = 'ativos';
 
   // Aba padrão
   _empSwitchTab('dados');
   _empRenderContatos();
+  _empRespFormSet(null);
   _empRenderResps();
   _empRenderAnexosForm();
 
@@ -192,25 +194,90 @@ function _empRemoveContato(i) {
 }
 
 // ── RESPONSÁVEIS TÉCNICOS ─────────────────────────────────────
+// Responsáveis: editar (lápis), ativar/inativar (liga/desliga) e remover só sem vínculo.
+// Vínculo = nome usado em tarefas (resp. padrão), publicações (técnico) ou OTs (resp. da empresa).
+let _empRespFiltro = 'ativos';   // ativos | inativos | ambos
+let _empRespEdit   = null;       // índice em edição
+
+function _empRespAtivo(r) { return r.ativo !== false; }
+function _empNomeOriginal() {
+  return _empFormId ? (empState.empresas.find(x => x.id === _empFormId)?.nome || '') : '';
+}
+function _empRespVinculos(respNome) {
+  const emp = _empNomeOriginal();
+  if (!emp || !respNome) return 0;
+  const n = s => String(s || '').trim().toLowerCase();
+  const E = n(emp), R = n(respNome);
+  let c = 0;
+  if (typeof state !== 'undefined') {
+    (state.tarefas || []).forEach(t => { if (n(t.empresaPadrao) === E && n(t.respPadrao) === R) c++; });
+    const pubs = typeof todasPublicacoes === 'function' ? todasPublicacoes() : (state.publicacoes || []);
+    pubs.forEach(p => { if (n(p.empresaResponsavel) === E && n(p.tecnicoResponsavel) === R) c++; });
+  }
+  if (typeof otState !== 'undefined') (otState.ordens || []).forEach(o => { if (n(o.empresa) === E && n(o.respEmpresa) === R) c++; });
+  return c;
+}
+
+function empRespFiltro(f) { _empRespFiltro = f; _empRenderResps(); }
+
 function _empRenderResps() {
   const list = document.getElementById('emp-resps-list');
   if (!list) return;
-  if (_empResps.length === 0) {
-    list.innerHTML = `<div class="emp-list-empty">Nenhum responsável adicionado.</div>`;
+  const nAt = _empResps.filter(_empRespAtivo).length, nIn = _empResps.length - nAt;
+  const sub = (k, l, n) => `<button type="button" class="emp-resp-sub${_empRespFiltro === k ? ' active' : ''}" onclick="empRespFiltro('${k}')">${l}<span>${n}</span></button>`;
+  const abas = `<div class="emp-resp-subs">${sub('ativos', 'Ativos', nAt)}${sub('inativos', 'Inativos', nIn)}${sub('ambos', 'Ambos', _empResps.length)}</div>`;
+  const vis = _empResps.map((r, i) => ({ r, i })).filter(({ r }) =>
+    _empRespFiltro === 'ambos' || (_empRespFiltro === 'ativos') === _empRespAtivo(r));
+  if (!vis.length) {
+    list.innerHTML = abas + `<div class="emp-list-empty">${_empResps.length ? 'Nenhum responsável nesta aba.' : 'Nenhum responsável adicionado.'}</div>`;
     return;
   }
-  list.innerHTML = _empResps.map((r, i) => `
-    <div class="emp-list-item">
+  const ICO_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>';
+  const ICO_DEL  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  list.innerHTML = abas + vis.map(({ r, i }) => {
+    const ativo = _empRespAtivo(r), vinc = _empRespVinculos(r.nome);
+    return `
+    <div class="emp-list-item${ativo ? '' : ' emp-resp-inativo'}${_empRespEdit === i ? ' emp-resp-editando' : ''}">
       <div class="emp-list-item-body">
-        <span class="emp-list-item-val" style="font-weight:600;">${_empEsc(r.nome)}</span>
+        <span class="emp-list-item-val" style="font-weight:600;">${_empEsc(r.nome)}${ativo ? '' : ' <span class="emp-resp-tag">Inativo</span>'}${vinc ? ` <span class="emp-resp-tag emp-resp-tag-vinc" title="Usado em ${vinc} registro(s): não pode ser removido">${vinc} vínculo${vinc > 1 ? 's' : ''}</span>` : ''}</span>
         ${r.cargo   ? `<span class="emp-list-item-label">${_empEsc(r.cargo)}</span>` : ''}
         ${r.contato ? `<span class="emp-list-item-label" style="color:var(--cyan);display:flex;align-items:center;gap:4px;">${_empEsc(r.contato)}${_empWhatsappIcon(r.contato)}</span>` : ''}
         ${r.email   ? `<span class="emp-list-item-label" style="color:var(--text-muted);">${_empEsc(r.email)}</span>` : ''}
       </div>
-      <button class="ot-sub-del-btn" onclick="_empRemoveResp(${i})">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>`).join('');
+      <label class="toggle-switch" title="${ativo ? 'Ativo: clique para inativar' : 'Inativo: clique para ativar'}" style="flex-shrink:0;">
+        <input type="checkbox" ${ativo ? 'checked' : ''} onchange="_empToggleResp(${i}, this.checked)"><span class="toggle-slider"></span>
+      </label>
+      <button class="ot-sub-del-btn" onclick="_empEditResp(${i})" title="Editar">${ICO_EDIT}</button>
+      ${vinc ? '' : `<button class="ot-sub-del-btn" onclick="_empRemoveResp(${i})" title="Remover">${ICO_DEL}</button>`}
+    </div>`;
+  }).join('');
+}
+
+function _empRespFormSet(r) {
+  ['nome', 'cargo', 'contato', 'email'].forEach(k => { const el = document.getElementById('emp-r-' + k); if (el) el.value = r?.[k] || ''; });
+  const nome = document.getElementById('emp-r-nome');
+  const vinc = r && _empRespEdit !== null ? _empRespVinculos(_empResps[_empRespEdit].nome) : 0;
+  if (nome) { nome.disabled = !!vinc; nome.title = vinc ? 'Nome bloqueado: responsável já vinculado a registros' : ''; }
+  const lbl = document.getElementById('emp-r-btn-lbl');
+  if (lbl) lbl.textContent = _empRespEdit !== null ? 'Salvar' : 'Adicionar';
+  const canc = document.getElementById('emp-r-cancel');
+  if (canc) canc.style.display = _empRespEdit !== null ? '' : 'none';
+}
+function _empEditResp(i) {
+  _empRespEdit = i;
+  _empRespFormSet(_empResps[i]);
+  _empRenderResps();
+  document.getElementById('emp-r-cargo')?.focus();
+}
+function empCancelEditResp() {
+  _empRespEdit = null;
+  _empRespFormSet(null);
+  _empRenderResps();
+}
+function _empToggleResp(i, ativo) {
+  if (!_empResps[i]) return;
+  _empResps[i].ativo = ativo;
+  _empRenderResps();
 }
 
 function empAddResp() {
@@ -225,16 +292,26 @@ function empAddResp() {
   if (email && !_empValidateEmail(email)) {
     showToast('E-mail inválido.', 'error'); return;
   }
-  _empResps.push({ nome, cargo, contato, email });
-  document.getElementById('emp-r-nome').value    = '';
-  document.getElementById('emp-r-cargo').value   = '';
-  document.getElementById('emp-r-contato').value = '';
-  document.getElementById('emp-r-email').value   = '';
+  const dup = _empResps.findIndex((r, k) => k !== _empRespEdit && r.nome.trim().toLowerCase() === nome.toLowerCase());
+  if (dup >= 0) { showToast('Já existe um responsável com esse nome.', 'error'); return; }
+  if (_empRespEdit !== null && _empResps[_empRespEdit]) {
+    Object.assign(_empResps[_empRespEdit], { nome, cargo, contato, email });
+  } else {
+    _empResps.push({ nome, cargo, contato, email, ativo: true });
+    if (_empRespFiltro === 'inativos') _empRespFiltro = 'ativos';
+  }
+  _empRespEdit = null;
+  _empRespFormSet(null);
   _empRenderResps();
 }
 
 function _empRemoveResp(i) {
+  const r = _empResps[i];
+  if (!r) return;
+  if (_empRespVinculos(r.nome)) { showToast('Responsável vinculado a registros: inative em vez de remover.', 'error'); return; }
   _empResps.splice(i, 1);
+  if (_empRespEdit === i) _empRespEdit = null; else if (_empRespEdit > i) _empRespEdit--;
+  _empRespFormSet(_empRespEdit !== null ? _empResps[_empRespEdit] : null);
   _empRenderResps();
 }
 
@@ -308,6 +385,33 @@ function empSaveForm() {
   empCloseModal('modal-emp-form');
   empRenderTable();
   showToast(_empFormId ? 'Empresa atualizada.' : 'Empresa cadastrada!', 'success');
+  const cb = _empAposSalvar; _empAposSalvar = null;
+  if (cb) setTimeout(cb, 0);
+}
+
+// ── ATALHO "ADICIONAR RESPONSÁVEL" NOS POPOVERS DE RESPONSÁVEL PELA EMPRESA ──
+// Item final do popover (só para quem gerencia empresas). Abre o cadastro da empresa na aba
+// Responsáveis; ao salvar, refaz o filtro (refiltrar = nome da função global) e foca o campo.
+let _empAposSalvar = null;
+function empRespAddItemHTML(empresaId, refiltrar, inputId) {
+  if (empresaId == null || empresaId === '' || !_empCanManage()) return '';
+  return `<div class="autocomplete-opt emp-resp-add" onmousedown="event.preventDefault();empAbrirNovoResp('${_empEsc(String(empresaId))}','${refiltrar}','${inputId}')">
+    <div class="autocomplete-opt-name">+ Adicionar responsável</div></div>`;
+}
+function empAbrirNovoResp(empresaId, refiltrar, inputId) {
+  const e = empState.empresas.find(x => String(x.id) === empresaId) || empState.empresas[+empresaId];
+  if (!e) return;
+  document.querySelectorAll('.autocomplete-dropdown.open, .open[id$="-drop"], .open[id$="-dd"]').forEach(d => d.classList.remove('open'));
+  empOpenForm(e.id);
+  const ov = document.getElementById('modal-emp-form');
+  if (ov) ov.style.zIndex = '900';
+  _empSwitchTab('responsaveis');
+  setTimeout(() => document.querySelector('.emp-tab-panel[data-tab="responsaveis"] input')?.focus(), 80);
+  _empAposSalvar = () => {
+    const inp = document.getElementById(inputId);
+    if (inp) { inp.focus(); }
+    if (typeof window[refiltrar] === 'function') window[refiltrar]();
+  };
 }
 
 // ── VIEW ──────────────────────────────────────────────────────
@@ -336,10 +440,10 @@ function _empRenderView(e) {
     : `<div class="emp-list-empty">Nenhum contato registrado.</div>`;
 
   const respsHtml = e.responsaveis?.length
-    ? e.responsaveis.map(r => `<div class="emp-list-item">
+    ? e.responsaveis.map(r => `<div class="emp-list-item${r.ativo === false ? " emp-resp-inativo" : ""}">
         <div class="emp-list-item-body">
           <div style="display:flex;align-items:center;gap:6px;">
-            <span class="emp-list-item-val" style="font-weight:600;">${_empEsc(r.nome)}</span>
+            <span class="emp-list-item-val" style="font-weight:600;">${_empEsc(r.nome)}${r.ativo === false ? " <span class=\"emp-resp-tag\">Inativo</span>" : ""}</span>
           </div>
           ${r.cargo   ? `<span class="emp-list-item-label">${_empEsc(r.cargo)}</span>` : ''}
           ${r.contato ? `<span class="emp-list-item-label" style="color:var(--cyan);display:flex;align-items:center;gap:4px;">${_empEsc(r.contato)}${_empWhatsappIcon(r.contato)}</span>` : ''}
@@ -577,9 +681,10 @@ function _empModalsHTML() {
               <input type="email" id="emp-r-email" class="field-input" placeholder="email@empresa.com"
                 onkeydown="if(event.key==='Enter')empAddResp()">
             </div>
+            <button id="emp-r-cancel" class="btn btn-outline" onclick="empCancelEditResp()" style="flex-shrink:0;height:40px;display:none;">Cancelar</button>
             <button class="btn btn-primary" onclick="empAddResp()" style="flex-shrink:0;height:40px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar
+              <span id="emp-r-btn-lbl">Adicionar</span>
             </button>
           </div>
         </div>
@@ -716,7 +821,7 @@ function empPopulateTecnicoSelect(tecnicoSelectId, empresaSelectId, selectedNome
   if (!empSel || !tecSel) return;
   const empId = empSel.selectedOptions[0]?.dataset?.id;
   const emp   = empId ? empState.empresas.find(e => e.id === empId) : null;
-  const resps = emp?.responsaveis || [];
+  const resps = (emp?.responsaveis || []).filter(r => r.ativo !== false || r.nome === selectedNome);
   tecSel.innerHTML = '<option value="">— Selecione o responsável —</option>' +
     resps.map(r =>
       `<option value="${_empEsc(r.nome)}" ${r.nome === selectedNome ? 'selected' : ''}>${_empEsc(r.nome)}${r.cargo ? ' · ' + _empEsc(r.cargo) : ''}</option>`

@@ -48,8 +48,9 @@ function setupRealtimeSync() {
         if (!cancelReasons.length) cancelReasons = ['Paciente desistiu','Contraindicação médica','Falta de estoque','Não compareceu','Aplicou em outro local'];
         if (_appReady) populateCancelReasons();
     });
-    db.ref('holidays').on('value', snap => {
-        holidays = _normalizeSimpleArr(snap.val());
+    // Feriados vêm do portal (Administração › Feriados), nó raiz "feriados" — só leitura aqui
+    rootDb.ref('feriados').on('value', snap => {
+        holidays = montarFeriadosPortal(snap.val());
         if (_appReady) renderCalendar();
     });
     db.ref('vaccineLots').on('value', snap => {
@@ -108,6 +109,16 @@ function setupRealtimeSync() {
     });
 }
 
+// fixos/{MM-DD} repete todo ano · datas/{AAAA-MM-DD} só naquele ano → lista ['AAAA-MM-DD', ...]
+function montarFeriadosPortal(raw) {
+    const out = new Set();
+    const fixos = (raw && raw.fixos) || {}, datas = (raw && raw.datas) || {};
+    const ano = new Date().getFullYear();
+    for (let y = ano - 3; y <= ano + 5; y++) Object.keys(fixos).forEach(md => out.add(`${y}-${md}`));
+    Object.keys(datas).forEach(iso => out.add(iso));
+    return [...out].sort();
+}
+
 function initFromFirebase() {
     return db.ref().once('value').then(snap => {
         const data = snap.val() || {};
@@ -116,7 +127,7 @@ function initFromFirebase() {
         appointments  = _fbToArr(data.appointments);
         cancelReasons = _normalizeSimpleArr(data.cancelReasons);
         if (!cancelReasons.length) cancelReasons = ['Paciente desistiu','Contraindicação médica','Falta de estoque','Não compareceu','Aplicou em outro local'];
-        holidays      = _normalizeSimpleArr(data.holidays);
+        // holidays: carregado do portal pelo listener de rootDb.ref('feriados')
         vaccineLots   = _fbToArr(data.vaccineLots);
         stockMovements = _fbToArr(data.stockMovements);
         patientContacts = _fbToArr(data.patientContacts);
@@ -137,7 +148,6 @@ function _fbSaveNow() {
         vaccines:      _arrToFbObj(vaccines),
         appointments:  _arrToFbObj(appointments),
         cancelReasons: cancelReasons,
-        holidays:      holidays,
         vaccineLots:   _arrToFbObj(vaccineLots),
         stockMovements: _arrToFbObj(stockMovements),
         patientContacts: _arrToFbObj(patientContacts),

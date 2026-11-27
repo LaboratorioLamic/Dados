@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODELO — Aba Temperatura</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--night:#162036;--cyan:#00a8cc;--cyan-light:rgba(0,168,204,.12);--bg:#f4f7f6;--card:#fff;--tx:#0e1628;--tx2:#4a5568;--mut:#718096;--bd:#e2e8f0;--red:#e63946;--amber:#f4a261;--green:#2a9d8f;--r:8px;--sh:0 1px 3px rgba(14,22,40,.08);--shm:0 8px 32px rgba(14,22,40,.18)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;min-height:100vh;font-size:14px}
+.side{width:230px;background:var(--night);color:#cbd5e1;padding:16px 10px;flex-shrink:0}
+.side h3{color:#fff;margin:4px 10px 18px;font-size:15px}
+.nav{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:var(--r);cursor:default;margin-bottom:2px}
+.nav.on{background:var(--cyan-light);color:var(--cyan);font-weight:600}
+.nav .new{margin-left:auto;font-size:10px;background:var(--cyan);color:#fff;border-radius:10px;padding:1px 7px}
+main{flex:1;padding:22px 26px;min-width:0}
+.banner{background:#fff7e6;border:1px dashed var(--amber);padding:8px 12px;border-radius:var(--r);margin-bottom:14px;font-size:12px;color:#8a5a12}
+.head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.head h2{margin:0;font-size:20px;display:flex;gap:8px;align-items:center}
+.head h2 i{color:var(--cyan)}
+.sp{flex:1}
+.btn{border:1px solid var(--bd);background:var(--card);padding:8px 14px;border-radius:var(--r);cursor:pointer;font:inherit;display:inline-flex;gap:8px;align-items:center;color:var(--tx)}
+.btn:hover{border-color:var(--cyan)}
+.btn.pri{background:var(--cyan);color:#fff;border-color:var(--cyan);font-weight:600}
+.btn.pri:hover{background:#0090b0}
+.chip{position:relative}
+.chip .btn b{color:var(--cyan)}
+.pop{position:absolute;top:calc(100% + 6px);left:0;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--shm);width:290px;z-index:20;display:none;padding:8px}
+.pop.open{display:block}
+.pop input{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:6px;margin-bottom:6px;font:inherit}
+.pop .it{padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.pop .it:hover{background:var(--bg)}.pop .it.sel{background:var(--cyan-light);color:var(--cyan);font-weight:600}
+.pop .it small{color:var(--mut)}
+.pop .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.mgrid .it{justify-content:center}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+.kpi .v{font-size:24px;font-weight:700}.kpi .l{color:var(--mut);font-size:12px;margin-top:2px}
+.kpi.red .v{color:var(--red)}.kpi.amb .v{color:#d98324}.kpi.grn .v{color:var(--green)}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh)}
+.card h4{margin:0;padding:12px 14px;border-bottom:1px solid var(--bd);font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.eq{padding:10px 14px;border-bottom:1px solid var(--bd);cursor:pointer;display:flex;gap:10px;align-items:center}
+.eq:hover{background:var(--bg)}.eq.sel{background:var(--cyan-light);box-shadow:inset 3px 0 var(--cyan)}
+.eq .n{font-weight:600}.eq .s{color:var(--mut);font-size:12px}
+.eq .st{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.ok{background:#e3f5f2;color:var(--green)}.pend{background:#fdecee;color:var(--red)}.meio{background:#fff3e3;color:#c46f12}
+.info{display:flex;gap:22px;padding:12px 14px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.info div small{display:block;color:var(--mut);font-size:11px}.info b{font-size:14px}
+.chartw{padding:12px 14px;height:240px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--bg);text-align:left;padding:8px 10px;color:var(--tx2);font-weight:600;font-size:12px;position:sticky;top:0}
+td{padding:7px 10px;border-top:1px solid var(--bd)}
+td.out{color:var(--red);font-weight:700}td.miss{color:var(--mut)}
+.tw{max-height:300px;overflow:auto}
+tr.hol td{color:var(--mut);background:repeating-linear-gradient(45deg,transparent 0 6px,#f6f8fa 6px 12px)}
+.act i{color:var(--mut);cursor:pointer;margin-left:8px}.act i:hover{color:var(--cyan)}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(14,22,40,.45);display:none;align-items:center;justify-content:center;z-index:50}
+.ov.open{display:flex}
+.modal{background:var(--card);border-radius:12px;width:min(94vw,860px);max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shm)}
+.mh{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.mh h3{margin:0;font-size:16px}
+.mh label{font-size:12px;color:var(--mut);display:flex;gap:6px;align-items:center}
+.mh input,.mh select{padding:6px 8px;border:1px solid var(--bd);border-radius:6px;font:inherit}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:none;padding:6px 12px;cursor:pointer;font:inherit}
+.seg button.on{background:var(--cyan);color:#fff}
+.mb{overflow:auto;padding:4px 18px 10px}
+.mb table td input{width:78px;padding:6px 8px;border:1px solid var(--bd);border-radius:6px;font:inherit;text-align:right}
+.mb input.bad{border-color:var(--red);background:#fdecee}.mb input.good{border-color:var(--green);background:#eef9f6}
+.mb .fx{color:var(--mut);font-size:12px;white-space:nowrap}
+.mb .done{color:var(--green);font-size:12px}
+.mf{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:10px;align-items:center}
+.mf .msg{color:var(--mut);font-size:12px}
+.just{display:none;margin-top:4px}.just.show{display:block}
+.just input{width:100%!important;text-align:left!important}
+.bell{position:relative}.bell .btn{padding:8px 11px}.bell .bdg{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
+.bell .pop{left:auto;right:0;width:330px;padding:0}.bell .ph{padding:10px 12px;border-bottom:1px solid var(--bd);font-weight:600;display:flex;justify-content:space-between}
+.ni{display:flex;gap:10px;padding:9px 12px;border-bottom:1px solid var(--bd);cursor:pointer;align-items:center}.ni:hover{background:var(--bg)}
+.ni .dd{font-weight:600;font-size:13px}.ni .ll{font-size:12px;color:var(--mut)}.ni i.fa-chevron-right{margin-left:auto;color:var(--mut)}
+.tag{font-size:10px;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:0 5px;color:var(--tx2);margin-left:6px;font-weight:500}
+.ro{padding:6px 10px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx2)}
+.oc{font-size:12px;color:var(--tx2);display:flex;gap:6px;align-items:center;margin-top:4px}
+.qf{border:1px dashed var(--red);background:#fdecee;color:var(--red);border-radius:6px;padding:3px 8px;font:inherit;font-size:12px;cursor:pointer;display:inline-flex;gap:5px;align-items:center;white-space:nowrap}
+.qf:hover{background:var(--red);color:#fff;border-style:solid}.qf.wait{border-color:#d98324;background:#fff3e3;color:#c46f12}.qf.wait:hover{background:#d98324;color:#fff}
+.ic-red{color:var(--red)}.ic-amb{color:#d98324}.ic-grn{color:var(--green)}
+.nav .cnt{margin-left:auto;background:var(--red);color:#fff;font-size:10px;border-radius:10px;padding:1px 7px;font-weight:700}
+.nav .cnt:empty{display:none}
+.pbell{position:fixed;top:10px;right:14px;background:var(--night);color:#fff;border-radius:20px;padding:6px 12px;font-size:12px;display:flex;gap:8px;align-items:center;box-shadow:var(--shm);z-index:30}
+.pbell b{background:var(--red);border-radius:10px;padding:0 6px}
+.x{background:none;border:0;font-size:18px;cursor:pointer;color:var(--mut);margin-left:auto}
+</style>
+</head>
+<body>
+<div class="pbell" title="Sino do portal (mock)"><i class="fas fa-bell"></i> Portal · Temperatura <b id="pCnt"></b></div>
+<aside class="side">
+  <h3><i class="fas fa-screwdriver-wrench"></i> Manutenção</h3>
+  <div class="nav"><i class="fas fa-house"></i>Início</div>
+  <div class="nav"><i class="fas fa-box"></i>Ativos</div>
+  <div class="nav"><i class="fas fa-rotate"></i>Rotina</div>
+  <div class="nav"><i class="fas fa-file-lines"></i>OS</div>
+  <div class="nav"><i class="fas fa-triangle-exclamation"></i>Ocorrências</div>
+  <div class="nav on"><i class="fas fa-temperature-half"></i>Temperatura<span class="cnt" id="navCnt"></span></div>
+  <div class="nav"><i class="fas fa-gear"></i>Configurações</div>
+</aside>
+
+<main>
+  <div class="banner"><b>MODELO TEMPORÁRIO</b> — dados fictícios, nada salva. Hora simulada: <select id="hSim" onchange="render()"><option value="9">09:00</option><option value="14" selected>14:00</option><option value="18">18:00</option></select> (corte manhã 12h, tarde 17h). Banco final: Firebase applamic, nó manutencao/temperatura (base nova). Só para validar layout e fluxo.</div>
+
+  <div class="head">
+    <h2><i class="fas fa-temperature-half"></i>Temperatura</h2>
+    <div class="chip">
+      <button class="btn" onclick="tog('popU',event)"><i class="fas fa-building"></i>Unidade: <b id="lblU"></b><i class="fas fa-chevron-down"></i></button>
+      <div class="pop" id="popU">
+        <input placeholder="Buscar unidade..." oninput="renderUnits(this.value)">
+        <div id="listU"></div>
+      </div>
+    </div>
+    <div class="chip">
+      <button class="btn" onclick="tog('popM',event)"><i class="fas fa-calendar"></i><b id="lblM"></b><i class="fas fa-chevron-down"></i></button>
+      <div class="pop" id="popM" style="width:250px"><div class="mgrid" id="listM"></div></div>
+    </div>
+    <div class="sp"></div>
+    <div class="chip bell">
+      <button class="btn" onclick="tog('popN',event)" title="Dias não preenchidos"><i class="fas fa-bell"></i></button><span class="bdg" id="bdg"></span>
+      <div class="pop" id="popN"><div class="ph"><span>Dias não preenchidos</span><small style="color:var(--mut);font-weight:400">mês do filtro · sem dom./feriados</small></div><div id="listN" style="max-height:340px;overflow:auto"></div></div>
+    </div>
+    <div class="chip">
+      <button class="btn" onclick="tog('popB',event)"><i class="fas fa-database"></i>Backup<i class="fas fa-chevron-down"></i></button>
+      <div class="pop" id="popB" style="left:auto;right:0;width:270px">
+        <div class="it" onclick="expXlsx('unid')"><span><i class="fas fa-file-export"></i> Exportar unidade (.xlsx)</span></div>
+        <div class="it" onclick="expXlsx('tudo')"><span><i class="fas fa-file-zipper"></i> Exportar todas unidades</span></div>
+        <div class="it" onclick="expXlsx('modelo')"><span><i class="fas fa-file-circle-plus"></i> Baixar planilha modelo</span></div>
+        <div class="it" onclick="document.getElementById('fImp').click()"><span><i class="fas fa-file-import"></i> Importar planilha...</span></div>
+        <input type="file" id="fImp" accept=".xlsx,.xls,.csv" style="display:none" onchange="impXlsx(this)">
+      </div>
+    </div>
+    <button class="btn pri" onclick="openModal()"><i class="fas fa-plus"></i>Registrar leituras</button>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="kEq"></div><div class="l">Equipamentos monitorados</div></div>
+    <div class="kpi grn"><div class="v" id="kHoje"></div><div class="l">Leituras de hoje</div></div>
+    <div class="kpi red"><div class="v" id="kPend"></div><div class="l">Dias pendentes no mês</div></div>
+    <div class="kpi amb"><div class="v" id="kFora"></div><div class="l">Leituras fora da faixa</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h4>Equipamentos <small style="color:var(--mut);font-weight:400">status de hoje</small></h4>
+      <div id="listEq"></div>
+    </div>
+    <div class="card">
+      <div class="info" id="info"></div>
+      <div class="chartw"><canvas id="ch"></canvas></div>
+      <div class="tw"><table><thead><tr><th>Data</th><th>Responsável</th><th><i class="fas fa-cloud-sun" style="color:#00a8cc"></i> Mín</th><th><i class="fas fa-cloud-sun" style="color:#00a8cc"></i> Máx</th><th><i class="fas fa-cloud-sun" style="color:#00a8cc"></i> Atual</th><th><i class="fas fa-sun" style="color:#f4a261"></i> Mín</th><th><i class="fas fa-sun" style="color:#f4a261"></i> Máx</th><th><i class="fas fa-sun" style="color:#f4a261"></i> Atual</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+    </div>
+  </div>
+</main>
+
+<div class="ov" id="ov" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mh">
+      <h3><i class="fas fa-plus" style="color:var(--cyan)"></i> Registrar leituras — <span id="mU"></span></h3>
+      <button class="x" onclick="closeModal()">&times;</button>
+      <div style="flex-basis:100%;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <label>Data <input type="date" id="mData"></label>
+        <label>Turno <span class="seg" id="seg"><button class="on" data-t="manha"><i class="fas fa-cloud-sun"></i> Manhã</button><button data-t="tarde"><i class="fas fa-sun"></i> Tarde</button></span></label>
+        <label>Responsável <span class="ro"><i class="fas fa-user-lock"></i> Pedro Fellipe (login)</span></label>
+      </div>
+    </div>
+    <div class="mb">
+      <table><thead><tr><th>Equipamento</th><th>Faixa</th><th>Mín</th><th>Máx</th><th>Atual</th><th></th></tr></thead><tbody id="mtb"></tbody></table>
+    </div>
+    <div class="mf"><span class="msg" id="mMsg"></span><div class="sp"></div><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn pri" onclick="closeModal()"><i class="fas fa-check"></i>Salvar</button></div>
+  </div>
+</div>
+
+<div class="ov" id="ovI" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="mh"><h3><i class="fas fa-file-import" style="color:var(--cyan)"></i> Importar planilha — prévia</h3><button class="x" onclick="document.getElementById('ovI').classList.remove('open')">&times;</button>
+      <div style="flex-basis:100%;display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px" id="iRes"></div>
+      <div style="flex-basis:100%;display:flex;gap:14px;align-items:center"><label>Conflito (mesmo equip./data/turno) <span class="seg" id="segI"><button class="on">Manter atual</button><button>Sobrescrever</button></span></label></div>
+    </div>
+    <div class="mb"><table><thead><tr><th>Linha</th><th>Unidade</th><th>Equip.</th><th>Data</th><th>Turno</th><th>Mín</th><th>Máx</th><th>Atual</th><th>Status</th></tr></thead><tbody id="itb"></tbody></table></div>
+    <div class="mf"><span class="msg">Linhas com erro são ignoradas. Nada grava até confirmar.</span><div class="sp"></div><button class="btn" onclick="document.getElementById('ovI').classList.remove('open')">Cancelar</button><button class="btn pri" onclick="document.getElementById('ovI').classList.remove('open')"><i class="fas fa-check"></i>Importar válidas</button></div>
+  </div>
+</div>
+<script>
+const UNID=[{id:1,n:'01 - Unidade NTO'},{id:3,n:'03 - Unidade Crato'},{id:5,n:'05 - Unidade Novo Juazeiro'},{id:6,n:'06 - Unidade Milagres'},{id:9,n:'09 - Unidade Barro'},{id:2,n:'Caixas de Transporte'}];
+const MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const EQ={
+ 1:[{id:1,at:'AT-0012',m:'GEL-01',t:'Geladeira',l:'Vacinas sala 2',min:2,max:8},{id:2,at:null,m:'AMB-01',t:'Ambiente',l:'Sala de coleta',min:18,max:26},{id:3,at:'AT-0031',m:'FRZ-01',t:'Freezer',l:'Amostras',min:-25,max:-15}],
+ 3:[{id:4,at:'AT-0045',m:'GEL-02',t:'Geladeira',l:'Reagentes',min:2,max:8},{id:5,at:null,m:'AMB-02',t:'Ambiente',l:'Recepção',min:18,max:26}]
+};
+let U=1,M=10,Y=2026,EQS=1,turno='manha';
+const pend={1:'pend',2:'ok',3:'meio',4:'ok',5:'pend'};
+function seed(e){const r=[];const mid=(e.min+e.max)/2,sp=(e.max-e.min)/2;for(let d=1;d<=26;d++){const dt=new Date(Y,M,d);if(dt.getDay()===0)continue;const hol=d===20;const miss=d===12||d===25;const f=v=>Math.round(v*10)/10;const a=(d===19&&e.id%2)||(d===26&&e.id!==2)?null:f(mid+Math.sin(d+e.id)*sp*.8+(d===8?sp*1.6:0));const b=a===null?f(mid):a;r.push({d,hol,miss,mn:a===null?null:f(b-1.2),mx:a===null?null:f(b+1.4),a,tmn:miss||d===26?null:f(b-1),tmx:miss||d===26?null:f(b+1.8),ta:miss||d===26?null:f(b+.6),resp:['Ana','Carlos','Pedro'][d%3]})}return r}
+function tog(id,e){e.stopPropagation();document.querySelectorAll('.pop').forEach(p=>p.id!==id&&p.classList.remove('open'));document.getElementById(id).classList.toggle('open')}
+document.addEventListener('click',e=>{if(!e.target.closest('.pop'))document.querySelectorAll('.pop').forEach(p=>p.classList.remove('open'))});
+function renderUnits(q=''){document.getElementById('listU').innerHTML=UNID.filter(u=>u.n.toLowerCase().includes(q.toLowerCase())).map(u=>{const n=(EQ[u.id]||[]).length;const st=n?(u.id===1?'var(--red)':'var(--green)'):'var(--bd)';return`<div class="it ${u.id===U?'sel':''}" onclick="setU(${u.id})"><span>${u.n}</span><small><span class="dot" style="background:${st}"></span> ${n} eq.</small></div>`}).join('')}
+function setU(id){U=id;EQS=(EQ[id]||[])[0]?.id;document.querySelectorAll('.pop').forEach(p=>p.classList.remove('open'));render()}
+function renderMonths(){document.getElementById('listM').innerHTML=MES.map((m,i)=>`<div class="it ${i===M?'sel':''}" onclick="M=${i};render()">${m}</div>`).join('')}
+let chart;
+function render(){
+ document.getElementById('lblU').textContent=UNID.find(u=>u.id===U).n;
+ document.getElementById('lblM').textContent=MES[M]+' / '+Y;
+ renderUnits();renderMonths();renderNotif();
+ const eqs=EQ[U]||[];
+ document.getElementById('kEq').textContent=eqs.length;
+ document.getElementById('kHoje').textContent=eqs.filter(e=>pend[e.id]==='ok').length+'/'+eqs.length;
+ document.getElementById('kPend').textContent=calcNotif().filter(x=>x.lt).length;document.querySelector('#kPend+.l').textContent='Pendências atrasadas no mês';
+ document.getElementById('kFora').textContent=eqs.length?2:0;
+ const lab={ok:'<i class="fas fa-check"></i> completo',pend:'falta manhã e tarde',meio:'falta tarde'};
+ document.getElementById('listEq').innerHTML=eqs.length?eqs.map(e=>`<div class="eq ${e.id===EQS?'sel':''}" onclick="EQS=${e.id};render()"><div><div class="n">${e.m}${e.at?`<span class="tag"><i class="fas fa-box"></i> ${e.at}</span>`:`<span class="tag" style="color:#c46f12">sem ativo</span>`}</div><div class="s">${e.t} · ${e.l} · ${e.min}~${e.max}ºC</div></div><span class="st ${pend[e.id]}">${lab[pend[e.id]]}</span></div>`).join(''):'<div class="eq s">Nenhum equipamento cadastrado nesta unidade.</div>';
+ const e=eqs.find(x=>x.id===EQS);
+ if(!e){document.getElementById('info').innerHTML='';document.getElementById('tb').innerHTML='';chart&&chart.destroy();return}
+ document.getElementById('info').innerHTML=`<div><small>Equipamento</small><b>${e.m}</b></div><div><small>Tipo</small><b>${e.t}</b></div><div><small>Legenda</small><b>${e.l}</b></div><div><small>Faixa</small><b>${e.min} a ${e.max} ºC</b></div>`;
+ const rows=seed(e);const o=v=>v===null?'<td class="miss">—</td>':`<td class="${v<e.min||v>e.max?'out':''}">${v.toFixed(1)}</td>`;
+ document.getElementById('tb').innerHTML=rows.slice().reverse().map(r=>r.hol?`<tr class="hol"><td>${String(r.d).padStart(2,'0')}/${M+1}</td><td colspan="8">Feriado</td></tr>`:`<tr><td>${String(r.d).padStart(2,'0')}/${M+1}</td><td>${r.resp}</td>${r.a===null?qcell(r.d,'manha',e.id):o(r.mn)+o(r.mx)+o(r.a)}${r.ta===null?qcell(r.d,'tarde',e.id):o(r.tmn)+o(r.tmx)+o(r.ta)}<td class="act"><i class="fas fa-pen" title="Editar"></i><i class="fas fa-trash" title="Excluir"></i></td></tr>`).join('');
+ const rr=rows.filter(r=>!r.hol);chart&&chart.destroy();
+ chart=new Chart(document.getElementById('ch'),{type:'line',data:{labels:rr.map(r=>r.d),datasets:[{label:'Manhã',data:rr.map(r=>r.a),borderColor:'#00a8cc',tension:.3,pointRadius:3},{label:'Tarde',data:rr.map(r=>r.ta),borderColor:'#f4a261',tension:.3,pointRadius:3,spanGaps:false},{label:'Máx',data:rr.map(()=>e.max),borderColor:'#e63946',borderDash:[6,4],pointRadius:0},{label:'Mín',data:rr.map(()=>e.min),borderColor:'#2a9d8f',borderDash:[6,4],pointRadius:0}]},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12}}}}});
+}
+const NOTIF_OLD=[{d:'26/11',e:'GEL-01',f:'manhã e tarde',hoje:1},{d:'26/11',e:'FRZ-01',f:'tarde',hoje:1},{d:'25/11',e:'GEL-01',f:'manhã e tarde'},{d:'25/11',e:'AMB-01',f:'manhã e tarde'},{d:'25/11',e:'FRZ-01',f:'manhã e tarde'},{d:'12/11',e:'GEL-01',f:'manhã e tarde'},{d:'12/11',e:'AMB-01',f:'tarde'}];
+const TODAY=26;
+function late(d,t){const h=+document.getElementById('hSim').value;if(d<TODAY)return true;if(d>TODAY)return false;return t==='manha'?h>=12:h>=17}
+function qcell(d,t,id){const lt=late(d,t),nm=t==='manha'?'manhã':'tarde';if(d===TODAY&&!lt)return`<td colspan="3"><button class="qf wait" onclick="openModal('${d}/${M+1}','${t}',${id})"><i class="fas fa-clock"></i> Preencher ${nm} (até ${t==='manha'?'12h':'17h'})</button></td>`;return`<td colspan="3"><button class="qf" onclick="openModal('${d}/${M+1}','${t}',${id})"><i class="fas fa-plus"></i> Preencher ${nm}</button></td>`}
+function calcNotif(){const out=[];if(M!==10)return out;(EQ[U]||[]).forEach(e=>seed(e).filter(r=>!r.hol).forEach(r=>{const f=[];if(r.a===null)f.push('manha');if(r.ta===null)f.push('tarde');if(!f.length)return;out.push({d:r.d,eq:e,f,lt:f.some(t=>late(r.d,t))})}));return out.sort((a,b)=>b.d-a.d)}
+function renderNotif(){const n=calcNotif();const atr=n.filter(x=>x.lt).length;
+ document.getElementById('navCnt').textContent=n.length||'';document.getElementById('pCnt').textContent=n.length;const b=document.getElementById('bdg');b.textContent=n.length;b.style.display=n.length?'':'none';b.style.background=atr?'var(--red)':'#d98324';
+ document.getElementById('listN').innerHTML=n.map(x=>`<div class="ni" onclick="openModal('${x.d}/${M+1}','${x.f[0]}',${x.eq.id})"><i class="fas ${x.lt?'fa-circle-exclamation ic-red':'fa-clock ic-amb'}"></i><div><div class="dd">${String(x.d).padStart(2,'0')}/${M+1} — ${x.eq.m}</div><div class="ll">${x.lt?'Atrasado':'Hoje, no prazo'} · falta ${x.f.map(t=>t==='manha'?'manhã':'tarde').join(' e ')}</div></div><i class="fas fa-chevron-right"></i></div>`).join('')||'<div class="ni ll"><i class="fas fa-circle-check ic-grn"></i> Tudo preenchido</div>'}
+function openModal(dia,tq,eqId){document.querySelectorAll('.pop').forEach(p=>p.classList.remove('open'));
+ const eqs=(EQ[U]||[]).filter(e=>!eqId||e.id===eqId);document.getElementById('mU').textContent=UNID.find(u=>u.id===U).n;
+ document.getElementById('mData').value=dia?'2026-'+dia.split('/').reverse().map(x=>x.padStart(2,'0')).join('-'):'2026-11-26';
+ turno=tq||(+document.getElementById('hSim').value<12?'manha':'tarde');setSeg();
+ document.getElementById('mtb').innerHTML=eqs.map(e=>{const done=!eqId&&turno==='manha'&&pend[e.id]!=='pend';return`<tr><td><b>${e.m}</b><div class="fx">${e.t} · ${e.l}</div></td><td class="fx">${e.min} ~ ${e.max} ºC</td>${done?'<td colspan="3" class="done"><i class="fas fa-check"></i> já registrado neste turno (Ana, 07:42)</td><td></td>':`<td><input type="number" step="0.1" oninput="val(this,${e.min},${e.max})"></td><td><input type="number" step="0.1" oninput="val(this,${e.min},${e.max})"></td><td><input type="number" step="0.1" oninput="val(this,${e.min},${e.max})"><div class="just"><input placeholder="Justificativa obrigatória"><label class="oc"><input type="checkbox" style="width:auto!important"> Abrir ocorrência</label></div></td><td></td>`}</tr>`}).join('')||'<tr><td colspan="6">Sem equipamentos.</td></tr>';
+ document.getElementById('mMsg').textContent='Tab/Enter avança. Campo vermelho = fora da faixa (exige justificativa).';
+ document.getElementById('ov').classList.add('open');
+ setTimeout(()=>document.querySelector('#mtb input')?.focus(),50);
+}
+function val(i,mn,mx){const v=parseFloat(i.value);i.classList.remove('bad','good');if(isNaN(v))return;const bad=v<mn||v>mx;i.classList.add(bad?'bad':'good');const j=i.parentElement.querySelector('.just');if(j)j.classList.toggle('show',bad)}
+function setSeg(){document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.t===turno))}
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{turno=b.dataset.t;setSeg()});
+function closeModal(){document.getElementById('ov').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.target.matches('#mtb input')){const all=[...document.querySelectorAll('#mtb input')];all[all.indexOf(e.target)+1]?.focus();e.preventDefault()}});
+const COLS=['unidade','equipamento','ativo','data','turno','min','max','atual','responsavel','justificativa'];
+function linhas(u){const o=[];(EQ[u]||[]).forEach(e=>seed(e).filter(r=>!r.hol).forEach(r=>{const dt=`${Y}-${String(M+1).padStart(2,'0')}-${String(r.d).padStart(2,'0')}`;if(r.a!==null)o.push([UNID.find(x=>x.id===u).n,e.m,e.at||'',dt,'manha',r.mn,r.mx,r.a,r.resp,'']);if(r.ta!==null)o.push([UNID.find(x=>x.id===u).n,e.m,e.at||'',dt,'tarde',r.tmn,r.tmx,r.ta,r.resp,''])}));return o}
+function eqRows(u){return(EQ[u]||[]).map(e=>[UNID.find(x=>x.id===u).n,e.m,e.at||'',e.t,e.l,e.min,e.max,'ativo'])}
+function expXlsx(k){document.querySelectorAll('.pop').forEach(p=>p.classList.remove('open'));const wb=XLSX.utils.book_new();const us=k==='tudo'?UNID.map(u=>u.id):[U];
+ const L=k==='modelo'?[['01 - Unidade NTO','GEL-01','AT-0012','2026-11-26','manha',3.1,5.4,4.2,'Pedro Fellipe','']]:us.flatMap(linhas);
+ const E=k==='modelo'?[['01 - Unidade NTO','GEL-01','AT-0012','Geladeira','Vacinas sala 2',2,8,'ativo']]:us.flatMap(eqRows);
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([COLS,...L]),'Leituras');
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['unidade','equipamento','ativo','tipo','legenda','min','max','status'],...E]),'Equipamentos');
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['data','descricao'],['2026-11-20','Consciência Negra']]),'Feriados');
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Campo','Regra'],['data','AAAA-MM-DD'],['turno','manha ou tarde'],['min/max/atual','número, ponto ou vírgula'],['justificativa','obrigatória se atual fora da faixa do equipamento'],['chave','unidade+equipamento+data+turno']]),'Instruções');
+ XLSX.writeFile(wb,k==='modelo'?'temperatura-modelo-importacao.xlsx':`temperatura-backup-${k==='tudo'?'todas':U}-${Y}-${M+1}.xlsx`)}
+function impXlsx(inp){const f=inp.files[0];if(!f)return;document.querySelectorAll('.pop').forEach(p=>p.classList.remove('open'));const rd=new FileReader();rd.onload=ev=>{const wb=XLSX.read(ev.target.result,{type:'array'});const ws=wb.Sheets['Leituras']||wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+ let ok=0,er=0,cf=0;const all=Object.values(EQ).flat();
+ const html=rows.map((r,i)=>{const e=all.find(x=>x.m===String(r.equipamento).trim());const n=v=>v===''?null:parseFloat(String(v).replace(',','.'));const a=n(r.atual),mn=n(r.min),mx=n(r.max);let st,c='ok';
+  if(!e){st='Equipamento não encontrado';c='pend'}else if(!/^\d{4}-\d{2}-\d{2}$/.test(String(r.data))){st='Data inválida';c='pend'}else if(!['manha','tarde'].includes(String(r.turno).toLowerCase())){st='Turno inválido';c='pend'}else if(a===null||isNaN(a)){st='Atual vazio';c='pend'}else if((mn!==null&&mn>a)||(mx!==null&&mx<a)){st='Mín/Máx incoerente';c='pend'}else if((a<e.min||a>e.max)&&!r.justificativa){st='Fora da faixa sem justificativa';c='pend'}else if(i%4===0){st='Já existe (conflito)';c='meio'}else st='Nova';
+  c==='ok'?ok++:c==='meio'?cf++:er++;
+  return`<tr><td>${i+2}</td><td>${r.unidade}</td><td>${r.equipamento}</td><td>${r.data}</td><td>${r.turno}</td><td>${r.min}</td><td>${r.max}</td><td>${r.atual}</td><td><span class="st ${c}" style="font-size:11px;padding:2px 8px;border-radius:10px">${st}</span></td></tr>`}).join('');
+ document.getElementById('itb').innerHTML=html||'<tr><td colspan="9">Planilha vazia ou sem aba Leituras.</td></tr>';
+ document.getElementById('iRes').innerHTML=`<span><i class="fas fa-file-excel"></i> ${f.name}</span><span class="ic-grn"><i class="fas fa-circle-check"></i> ${ok} novas</span><span class="ic-amb"><i class="fas fa-code-merge"></i> ${cf} conflitos</span><span class="ic-red"><i class="fas fa-circle-xmark"></i> ${er} com erro</span>`;
+ document.getElementById('ovI').classList.add('open');inp.value=''};rd.readAsArrayBuffer(f)}
+document.querySelectorAll('#segI button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#segI button').forEach(x=>x.classList.toggle('on',x===b))});
+render();
+</script>
+</body>
+</html>

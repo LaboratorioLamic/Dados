@@ -1278,7 +1278,7 @@ const PRESENCA = {
 };
 
 const _SHORTCUTS = [
-    ['Adicionar', [['Shift + Enter', 'nova linha abaixo, do mesmo tipo'], ['Ctrl + Enter', 'nova tarefa abaixo'], ['Alt + Enter', 'novo tópico'], ['Enter', 'quebra de linha no texto (mantém o marcador)']]],
+    ['Adicionar', [['Shift + Enter', 'nova linha de texto abaixo'], ['Ctrl + Enter', 'nova tarefa abaixo'], ['Alt + Enter', 'novo tópico'], ['Enter', 'quebra de linha no texto (mantém o marcador)']]],
     ['Linha', [['End', 'marcar / desmarcar tarefa'], ['Shift + End', 'alternar texto ↔ tarefa'], ['Shift + ↑ / ↓', 'mover para cima / baixo'], ['Shift + →', 'virar subitem'], ['Shift + ←', 'subir nível'], ['Tab / Shift + Tab', 'marcador • no texto (mais / menos nível)'], ['Shift + Del', 'excluir item'], ['Backspace (vazio)', 'excluir linha vazia'], ['↑ / ↓', 'navegar entre linhas'], ['Ctrl + M', 'marcadores']]],
     ['Geral', [['Ctrl + Z', 'desfazer'], ['Ctrl + Shift + Z / Ctrl + Y', 'refazer']]]
 ];
@@ -2292,10 +2292,10 @@ function _tabPauta(r, o, ed, topics) {
             <div class="reu-blocks">
                 ${_collapsed.has('T' + t._id) ? `<button class="reu-topic-hidden" onclick="reuToggleCollapse('T${t._id}')"><i class="fas fa-eye"></i> ${_flatTree(tree).length} itens ocultos — mostrar</button>` : _renderNodes(r, tp, tree, edT)}
                 ${edT ? `<div class="reu-blk-add">
-                    <button class="reu-blk-add-type reu-blk-add-plus" title="Adicionar nova linha (mesmo tipo da última)" onclick="reuAddBtn('${tp}','${t._id}')"><i class="fas fa-plus"></i></button>
+                    <button class="reu-blk-add-type reu-blk-add-plus" title="Adicionar nova linha de texto" onclick="reuAddBtn('${tp}','${t._id}')"><i class="fas fa-plus"></i></button>
                     <button class="reu-blk-add-type" title="Adicionar tarefa" onclick="reuItemAdd('${tp}','',null,'tarefa',true)"><i class="far fa-square-check"></i></button>
                     <button class="reu-blk-add-type" title="Adicionar texto" onclick="reuItemAdd('${tp}','',null,'texto',true)"><i class="fas fa-paragraph"></i></button>
-                    <textarea class="reu-autogrow" rows="1" data-fk="add-${t._id}" placeholder="Nova linha · Shift+Enter (mesmo tipo da última) · Ctrl+Enter tarefa · Alt+Enter novo tópico · Enter quebra linha" oninput="reuAutogrow(this)" onkeydown="reuAddKey(event,this,'${tp}')"></textarea>
+                    <textarea class="reu-autogrow" rows="1" data-fk="add-${t._id}" placeholder="Nova linha · Shift+Enter texto · Ctrl+Enter tarefa · Alt+Enter novo tópico · Enter quebra linha" oninput="reuAutogrow(this)" onkeydown="reuAddKey(event,this,'${tp}')"></textarea>
                 </div>` : ''}
             </div>
             ${nAnx ? `<div class="reu-topic-anxs"><i class="fas fa-paperclip"></i>${_anexoChips(tp, t, ed)}</div>` : ''}
@@ -2304,7 +2304,7 @@ function _tabPauta(r, o, ed, topics) {
     }).join('');
     const empty = `<div class="reu-empty-sm"><i class="fas fa-list-ol"></i><p>${ed ? 'Monte a pauta da reunião.' : 'Nenhum tópico registrado.'}</p></div>`;
     return `<div class="reu-pauta">${html || empty}
-        ${ed ? `<button class="reu-add-topic" onclick="reuTopicAdd()"><i class="fas fa-plus"></i> Adicionar tópico</button>` : ''}</div>`;
+        ${ed && (_isOrg(r) || _canEdit(r)) ? `<button class="reu-add-topic" onclick="reuTopicAdd()"><i class="fas fa-plus"></i> Adicionar tópico</button>` : ''}</div>`;
 }
 
 function _tabAcoes(r, o, ed, items) {
@@ -2506,7 +2506,7 @@ function reuBlkKey(e, inp, tp, bid) {
         if (inp.value !== (it.texto || '')) reuItemSet(ip, 'texto', inp.value);
         const nid = _uid('i');
         const cur = Object.assign({ _id: bid }, ((_getAt(tp) || {}).itens || {})[bid] || it);
-        _write(tp + '/itens/' + nid, { texto: '', tipo: (e.ctrlKey || e.metaKey) ? 'tarefa' : (cur.tipo || 'tarefa'), checked: false, responsavel: '', pai: cur.pai || null, ordem: _ordemAfter((_getAt(tp) || {}).itens || {}, cur) });
+        _write(tp + '/itens/' + nid, { texto: '', tipo: (e.ctrlKey || e.metaKey) ? 'tarefa' : 'texto', checked: false, responsavel: '', pai: cur.pai || null, ordem: _ordemAfter((_getAt(tp) || {}).itens || {}, cur) });
         if (it.pai) _syncParentCheck(tp + '/itens/' + nid);
         _focusBlock(nid);
     } else if (e.key === 'Tab') {
@@ -2735,8 +2735,7 @@ function reuPrazoSet(d) {
 function reuAddBtn(tp, tid) {
     const inp = document.querySelector(`#reuDrawer [data-fk="add-${tid}"]`);
     const v = inp && inp.value.trim() ? inp.value.replace(/\s+$/, '') : '';
-    const last = _flatTree(_tree((_getAt(tp) || {}).itens || {})).pop();
-    const tipo = last ? (last.it.tipo || 'tarefa') : 'texto';
+    const tipo = 'texto';
     if (v) { inp.value = ''; inp.style.height = ''; reuItemAdd(tp, v, null, tipo); }
     else reuItemAdd(tp, '', null, tipo, true);
 }
@@ -2751,8 +2750,7 @@ function reuAddKey(e, inp, tp) {
     const v = inp.value.trim() ? inp.value.replace(/\s+$/, '') : '';   // mantém o recuo do marcador inicial
     if (!v) return;
     inp.value = ''; inp.style.height = '';
-    const last = _flatTree(_tree((_getAt(tp) || {}).itens || {})).pop();
-    reuItemAdd(tp, v, null, (e.ctrlKey || e.metaKey) ? 'tarefa' : (last ? (last.it.tipo || 'tarefa') : 'texto'));
+    reuItemAdd(tp, v, null, (e.ctrlKey || e.metaKey) ? 'tarefa' : 'texto');
 }
 
 // participantes com organizador primeiro, depois co-organizadores, depois os demais (ordem original)
@@ -3001,6 +2999,7 @@ function reuToggleParticipant(uid) {
 }
 function reuTopicAdd() {
     const r = _guard(); if (!r) return;
+    if (!_isOrg(r) && !_canEdit(r)) { _toast('Só o organizador ou co-organizadores podem adicionar tópicos.', 'error'); return; }
     const o = _occ(r, _open.date);
     const n = Object.keys(o.topicos || {}).length;
     const tid = _uid('t');

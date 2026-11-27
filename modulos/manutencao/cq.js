@@ -1590,6 +1590,12 @@ function _cqLotesVencendo(u, dias = 30, testes = null) {
   return out.sort((a, b) => a.v.diasRestantes - b.v.diasRestantes);
 }
 
+let _cqPainelAba = 'equip';
+function cqPainelAba(k) {
+  _cqPainelAba = k;
+  const body = document.getElementById('cq-body');
+  if (body) _cqRenderPainel(body);
+}
 function _cqRenderPainel(body) {
   const u = _cqUnidadeAtivaId();
   const un = _cqUnidade();
@@ -1673,18 +1679,35 @@ function _cqRenderPainel(body) {
       <div class="cq-pend-sub">${x.v.vencido ? 'Vencido' : `Vence em ${x.v.diasRestantes} dia(s)`} (${x.v.motivo === 'estabilidade' ? 'estabilidade após abertura' : 'validade'}: ${_cqFmtData(x.v.dataLimite)})</div></div></div>`;
   }).join('');
 
-  // Preparos da área (cq-trocas.js); sem testes na área, vêm antes dos equipamentos
-  const preparos = (typeof _cqPainelPreparosHTML === 'function' ? _cqPainelPreparosHTML(u) : '')
-    + (typeof _cqPainelControlesHTML === 'function' ? _cqPainelControlesHTML(u) : '')
-    + (typeof _cqPainelInsumosHTML === 'function' ? _cqPainelInsumosHTML(u) : '');
-  const equipamentos = `<div class="cq-sec-titulo">Equipamentos e testes · ${_cqEsc(un.sigla)}${fSetor ? ' · ' + _cqEsc(_cqRotuloSetor(fSetor === '__sem__' ? '' : fSetor)) : ''}</div>
-      ${cards || `<div class="cq-vazio">Nenhum teste cadastrado ${fSetor ? 'neste setor' : 'nesta área'}. ${_cqCan('configurar') ? `<a href="#" onclick="cqNav('cadastros');return false;">Cadastrar testes</a>` : ''}</div>`}
+  // Seções do painel em subabas: equipamentos, preparos (cq-trocas.js), controles e insumos
+  const fn = f => (typeof window[f] === 'function' ? window[f](u) : '');
+  const secPrep = fn('_cqPainelPreparosHTML'), secCtl = fn('_cqPainelControlesHTML'), secIns = fn('_cqPainelInsumosHTML');
+  const equipamentos = `${cards || `<div class="cq-vazio">Nenhum teste cadastrado ${fSetor ? 'neste setor' : 'nesta área'}. ${_cqCan('configurar') ? `<a href="#" onclick="cqNav('cadastros');return false;">Cadastrar testes</a>` : ''}</div>`}
       ${cards ? '<div class="cq-tc-legenda"><span class="cq-tc-leg aceito"><i></i>Aceito</span><span class="cq-tc-leg alerta"><i></i>Alerta / sem alvo</span><span class="cq-tc-leg rejeitado"><i></i>Rejeitado</span><span class="cq-tc-leg nenhum"><i></i>Sem registro</span><span class="cq-tc-tag">sem CQ hoje</span></div>' : ''}`;
+  // contagem das abas: números destacados (vermelho/amarelo/ciano) dos quadros da seção
+  const alertas = html => {
+    let red = 0, amb = 0;
+    html.replace(/cq-pp-stat (vermelho|amarelo|ciano)"[^>]*><b>(\d+)<\/b>/g, (_, c, v) => { c === 'vermelho' ? red += +v : amb += +v; return _; });
+    return { red, amb };
+  };
+  const rejeitados = testes.filter(t => { const ul = ultimo[t.id]; return ul && (ul.decisao === 'R' || ul.status === 'rejeitado'); }).length;
+  const abas = [
+    { k: 'equip', l: `Equipamentos e testes`, html: equipamentos, n: { red: rejeitados, amb: semHoje.length } },
+    secPrep && { k: 'prep', l: 'Preparos', html: secPrep, n: alertas(secPrep) },
+    secCtl && { k: 'ctl', l: 'Controles e materiais', html: secCtl, n: alertas(secCtl) },
+    secIns && { k: 'ins', l: 'Reagentes e insumos', html: secIns, n: alertas(secIns) },
+  ].filter(Boolean);
+  if (!abas.some(a => a.k === _cqPainelAba)) _cqPainelAba = cards || abas.length === 1 ? 'equip' : abas[1].k;
+  const ativa = abas.find(a => a.k === _cqPainelAba);
+  const badge = n => n.red ? `<span class="cq-pab-n red">${n.red}</span>` : n.amb ? `<span class="cq-pab-n amb">${n.amb}</span>` : '';
+  const abasHTML = `<div class="cq-pabas" role="tablist">${abas.map(a => `<button type="button" role="tab" class="cq-paba${a.k === _cqPainelAba ? ' on' : ''}" onclick="cqPainelAba('${a.k}')">${a.l}${badge(a.n)}</button>`).join('')}
+    <span class="cq-pabas-ctx">${_cqEsc(un.sigla)}${fSetor ? ' · ' + _cqEsc(_cqRotuloSetor(fSetor === '__sem__' ? '' : fSetor)) : ''}</span></div>`;
   body.innerHTML = `
   ${kpis}
   <div class="cq-painel-grid">
     <div class="cq-painel-main">
-      ${cards ? equipamentos + preparos : preparos + equipamentos}
+      ${abasHTML}
+      <div class="cq-paba-corpo cq-paba-${ativa.k}">${ativa.html}</div>
     </div>
     <div class="cq-painel-side">
       ${ciclosPend.length ? `<div class="cq-card"><div class="cq-card-tit">${CQ_ICO.clock} Ciclos de esterilização em análise</div>

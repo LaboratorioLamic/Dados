@@ -121,7 +121,7 @@ async function doBackupUpload() {
     vaccines       = novosVaccines;
     appointments   = allAppointments.filter(a => vaccineIds.has(a.vaccineId));
     cancelReasons  = _normalizeSimpleArr(d.cancelReasons);
-    holidays       = _normalizeSimpleArr(d.holidays);
+    // feriados não são restaurados: vêm do portal (Administração › Feriados)
     vaccineLots    = arr(d.vaccineLots);
     stockMovements = arr(d.stockMovements);
     if (temContatos) patientContacts = arr(d.patientContacts);
@@ -133,7 +133,7 @@ async function doBackupUpload() {
 
     const up = {
         patients: _arrToFbObj(patients), vaccines: _arrToFbObj(vaccines), appointments: _arrToFbObj(appointments),
-        cancelReasons, holidays, vaccineLots: _arrToFbObj(vaccineLots), stockMovements: _arrToFbObj(stockMovements),
+        cancelReasons, vaccineLots: _arrToFbObj(vaccineLots), stockMovements: _arrToFbObj(stockMovements),
         patientContacts: _arrToFbObj(patientContacts), cpniImunoMap,
         appUsers: _arrToFbObj(appUsers), appGroups: _arrToFbObj(appGroups), unidades: _arrToFbObj(unidadesLegado)
     };

@@ -181,7 +181,7 @@ async function doUploadAnexo(ctx, onSuccess, getPrefixo) {
 
     if (titleInput) titleInput.value = '';
     _clearUploadFile(ctx);
-    if (typeof onSuccess === 'function') onSuccess({ titulo: title, url: fileUrl, fileId });
+    if (typeof onSuccess === 'function') onSuccess({ titulo: title, url: fileUrl, fileId, ext: ext.slice(1).toLowerCase() });
     if (typeof showToast === 'function') showToast('Arquivo enviado com sucesso!', 'success');
   } catch (err) {
     if (typeof showToast === 'function') showToast('Erro ao enviar: ' + err.message, 'error');

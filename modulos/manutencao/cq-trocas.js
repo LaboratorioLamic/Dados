@@ -634,6 +634,17 @@ function _cqTrocasFaixaHTML(u) {
   </div>`;
 }
 
+// Cor da barra pela validade restante (100% = recém-preparado, 0% = vencido):
+// verde do sistema → amarelo → laranja → vermelho, com transição suave entre as faixas
+function _cqCorValidade(rest) {
+  const r = Math.max(0, Math.min(100, Number(rest) || 0));
+  const stops = [[5, [230, 57, 70]], [20, [244, 162, 97]], [45, [233, 196, 106]], [100, [42, 157, 143]]];
+  if (r <= stops[0][0]) return `rgb(${stops[0][1].join(',')})`;
+  let i = 0; while (i < stops.length - 2 && r > stops[i + 1][0]) i++;
+  const [a, b] = [stops[i], stops[i + 1]];
+  const t = Math.min(1, (r - a[0]) / (b[0] - a[0]));
+  return `rgb(${a[1].map((v, k) => Math.round(v + (b[1][k] - v) * t)).join(',')})`;
+}
 // ── PAINEL: PREPAROS DA ÁREA ─────────────────────────────────
 // Bloco do painel do CQ: números do dia, conjuntos de troca e o preparo em uso de cada produto
 // (mais urgentes primeiro). Vazio quando a área não tem produto preparado no laboratório.
@@ -715,7 +726,7 @@ function _cqPainelPreparosHTML(u) {
     return `<button type="button" class="cq-tc cq-tc-${CQ_PAINEL_PREP_TC[s.tipo]} cq-pp-tc" title="${dica}" onclick="${clique}">
       <div class="cq-tc-top"><span class="cq-tc-nome">${_cqEsc(prod.nome)}${prod.ctl ? ' <span class="cq-tc-tag">controle</span>' : ''}</span><span class="cq-tc-st"><i></i>${_cqEsc(s.txt)}</span></div>
       <div class="cq-tc-sub">${_cqEsc(sub)}</div>
-      ${pct !== null ? `<div class="cq-pp-barra" title="${pct}% da validade de uso decorrida"><i style="width:${pct}%"></i></div>` : ''}
+      ${pct !== null ? `<div class="cq-pp-barra" title="${100 - pct}% da validade de uso restante"><i style="width:${100 - pct}%;background:${_cqCorValidade(100 - pct)}"></i></div>` : ''}
       <div class="cq-tc-pe"><span>${CQ_ICO.clock}${_cqEsc(pe)}</span>${p?.situacao === 'em_avaliacao' ? '<span class="cq-tc-tag aguarda">aguardando avaliação</span>' : ''}</div>
     </button>`;
   };

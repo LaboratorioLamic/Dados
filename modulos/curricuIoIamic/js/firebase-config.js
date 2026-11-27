@@ -107,6 +107,9 @@ const DB = {
     watch(path, cb) { db.ref(path).on('value', snap => cb(snap.val())); }
 };
 
+// Ao abrir o RH, completa uma vez o unidadeId de quem ainda não tem (cadastros anteriores a esse campo).
+if (typeof firebase !== 'undefined') firebase.auth().onAuthStateChanged(u => { if (u) setTimeout(() => sincronizarDados(null), 4000); });
+
 // Copia cargo e unidade (nomes) do funcionário vinculado para usuarios/{login} no Dados LAMIC.
 // ids = lista de funcionários alterados; null = todos os vinculados (renomeou cargo/unidade).
 // Falha aqui não pode travar o salvamento do RH: só registra no console.
@@ -123,9 +126,12 @@ async function sincronizarDados(ids) {
         funcs.forEach(([, f]) => {
             if (!f || !f.login || !usuarios[f.login]) return;   // conta inexistente no Dados: não cria registro parcial
             const u = usuarios[f.login];
-            if (u.cargo === (cargos[f.cargoId]?.nome || '') && u.unidade === (unidades[f.unidadeId]?.nome || '')) return;
+            const unidadeId = unidades[f.unidadeId] ? f.unidadeId : '';
+            if (u.cargo === (cargos[f.cargoId]?.nome || '') && u.unidade === (unidades[f.unidadeId]?.nome || '') && (u.unidadeId || '') === unidadeId) return;
             up[`usuarios/${f.login}/cargo`] = cargos[f.cargoId]?.nome || '';
             up[`usuarios/${f.login}/unidade`] = unidades[f.unidadeId]?.nome || '';
+            // id da unidade (rh_unidades): as regras do banco usam para liberar dados por unidade (ex.: Temperatura)
+            up[`usuarios/${f.login}/unidadeId`] = unidadeId;
         });
         if (Object.keys(up).length) await db.ref().update(up);
     } catch (e) { console.warn('Sincronização com o Dados LAMIC falhou:', e); }

@@ -363,54 +363,8 @@ function openDayDetails(dateStr) {
 let holidays = {};
 
 function toggleHolidayMode() {
-    const dateStr = document.getElementById('day-details-date').innerText.split('/').reverse().join('-');
-    const btn = document.getElementById('btn-holiday-toggle');
-    const slider = document.getElementById('holiday-toggle-slider');
-    const icon = slider.querySelector('i');
-    
-    if (holidays[dateStr]) {
-        // Desativa modo feriado (volta para ativo/verde) - bolinha vai para direita
-        delete holidays[dateStr];
-        btn.classList.remove('bg-red-500', 'border-red-400/50');
-        btn.classList.add('bg-green-500', 'border-green-400/50');
-        slider.style.transform = 'translateX(24px)';
-        icon.className = 'fas fa-check text-white text-xs';
-        
-        // Reabilita botão de agendar
-        const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
-        if (scheduleBtn) {
-            scheduleBtn.disabled = false;
-            scheduleBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
-            scheduleBtn.classList.add('bg-slate-100', 'hover:bg-slate-200');
-        }
-    } else {
-        // Ativa modo feriado (só se não houver marcações) - bolinha vai para esquerda
-        const dayApps = appointments.filter(a => a.data === dateStr);
-        if (dayApps.length === 0) {
-            holidays[dateStr] = true;
-            btn.classList.remove('bg-green-500', 'border-green-400/50');
-            btn.classList.add('bg-red-500', 'border-red-400/50');
-            slider.style.transform = 'translateX(0)';
-            icon.className = 'fas fa-calendar-times text-white text-xs';
-            
-            // Desabilita botão de agendar
-            const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
-            if (scheduleBtn) {
-                scheduleBtn.disabled = true;
-                scheduleBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
-                scheduleBtn.classList.remove('bg-slate-100', 'hover:bg-slate-200');
-            }
-        } else {
-            showNotification('Não é possível marcar como feriado. Existem agendamentos neste dia.', 'warning');
-            return; // Interrompe a função se houver marcações
-        }
-    }
-    
-    // Salva no Firebase (só se houver alteração)
-    saveHolidaysToFirebase();
-    
-    // Atualiza o calendário
-    renderCalendar();
+    // Feriados agora são definidos só no portal
+    showNotification('Feriados são definidos no portal: Administração › Feriados.', 'info');
 }
 
 function updateHolidayToggle(dateStr) {
@@ -448,42 +402,33 @@ function updateHolidayToggle(dateStr) {
     }
 }
 
-function saveHolidaysToFirebase() {
-    database.ref('holidays').set(holidays)
-        .then(() => {
-            console.log('Status de feriado salvo com sucesso no Firebase');
-            showNotification('Status de feriado atualizado com sucesso', 'success');
-        })
-        .catch((error) => {
-            console.error('Erro ao salvar status de feriado:', error);
-            showNotification('Erro ao salvar status de feriado', 'error');
-        });
+// Feriados vêm do portal (Dados LAMIC › Administração › Feriados), nó raiz "feriados":
+//   fixos/{MM-DD} repete todo ano · datas/{AAAA-MM-DD} só naquele ano.
+// Aqui o mapa `holidays` ({ 'AAAA-MM-DD': true }) é só leitura, montado a partir desse nó.
+function montarFeriadosPortal(raw) {
+    const mapa = {};
+    const fixos = (raw && raw.fixos) || {};
+    const datas = (raw && raw.datas) || {};
+    const ano = new Date().getFullYear();
+    for (let y = ano - 3; y <= ano + 5; y++) Object.keys(fixos).forEach(md => { mapa[`${y}-${md}`] = true; });
+    Object.keys(datas).forEach(iso => { mapa[iso] = true; });
+    return mapa;
 }
 
 function loadHolidaysFromFirebase() {
-    return database.ref('holidays').once('value')
-        .then(snapshot => {
-            const data = snapshot.val();
-            if (data) {
-                holidays = data;
-                console.log('Feriados carregados do Firebase:', holidays);
-            }
-        })
+    return rootDatabase.ref('feriados').once('value')
+        .then(snapshot => { holidays = montarFeriadosPortal(snapshot.val()); })
         .catch((error) => {
-            console.error('Erro ao carregar feriados do Firebase:', error);
-            showNotification('Erro ao carregar status de feriados', 'error');
+            console.error('Erro ao carregar feriados do portal:', error);
+            showNotification('Erro ao carregar feriados', 'error');
         });
 }
 
-// Configurar listener em tempo real para atualizações de feriados
+// Listener em tempo real: feriado marcado no portal aparece aqui na hora
 function setupHolidaysRealtimeListener() {
-    database.ref('holidays').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            holidays = data;
-            console.log('Feriados atualizados em tempo real:', holidays);
-            renderCalendar();
-        }
+    rootDatabase.ref('feriados').on('value', (snapshot) => {
+        holidays = montarFeriadosPortal(snapshot.val());
+        renderCalendar();
     });
 }
 

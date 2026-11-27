@@ -60,6 +60,8 @@ async function authVerifyCurrentPassword(pwd) {
 // ── PERSISTÊNCIA ─────────────────────────────────────────────
 function _saveAuth() {
   window.dbSave(AUTH_KEY, authState);
+  // grupos/usuários mudaram: atualiza quem vê cada unidade na Temperatura (setores visíveis)
+  if (typeof tempGravarAcessos === 'function') setTimeout(() => tempGravarAcessos(true), 800);
 }
 
 function _applyAuthData(d) {
@@ -146,6 +148,8 @@ function authCanViewTab(tabId) {
   if (currentSession.isAdmin) return true;
   // Módulo regulado: só aparece para quem recebeu a permissão explicitamente
   if (tabId === 'cq') return authHasPermission('cq.visualizar');
+  // Temperatura: permissão vem dos grupos do portal (temperatura.js), conferida também nas regras do banco
+  if (tabId === 'temperatura') return typeof tempPodeVer === 'function' && tempPodeVer();
   if (!currentSession.grupoId) return true;
   const group = authState.groups.find(g => g.id === currentSession.grupoId);
   if (!group?.permissoes) return true;
@@ -573,7 +577,7 @@ async function _onFirebaseConnected() {
       ? 'Sem permissão no banco: publique as regras do Firebase (nó manutencao) e confira o link "Manutenções" do seu grupo.'
       : 'Não foi possível ler o banco de dados. Tente novamente.');
   }
-  _authPerfilDados = perfil;
+  _authPerfilDados = { ...perfil, login };   // login do portal: a Temperatura grava com ele (regras do banco)
   _applyAuthData(data);
   const u = _authVincularDados(login, perfil, cpf);
   if (u.ativo === false && perfil.grupo !== 'admin')
@@ -780,6 +784,7 @@ function applyPermissions() {
   vis('cnav-backup',  canBackup);
   vis('cnav-ocorrencias', authCanViewTab('ocorrencias'));
   vis('cnav-cq', can('cq.configurar'));
+  vis('cnav-temperatura', typeof tempPodeConfigurar === 'function' && tempPodeConfigurar());
   vis('cnav-org', can('ativos.editarSetor'));
 
   // Config nav principal — controlado por 'visualizarConfig'
@@ -793,11 +798,13 @@ function applyPermissions() {
   const canOT      = authCanViewTab('os');
   const canOc      = authCanViewTab('ocorrencias');
   const canCQ      = authCanViewTab('cq');
+  const canTemp    = authCanViewTab('temperatura');
   vis('nav-ativos', canAtivos);
   vis('nav-rotina', canRotinas);
   vis('nav-os',     canOT);
   vis('nav-ocorrencias', canOc);
   vis('nav-cq', canCQ);
+  vis('nav-temperatura', canTemp);
 
   // Toggle de cadastro (apenas admin vê)
   vis('cfg-allow-registration-row', currentSession.isAdmin);
@@ -809,7 +816,7 @@ function applyPermissions() {
 
   // Redirecionar para Início se a aba ativa ficou oculta
   const activeNavId = document.querySelector('.nav-item.active')?.id;
-  const tabHiddenMap = { 'nav-ativos': !canAtivos, 'nav-rotina': !canRotinas, 'nav-os': !canOT, 'nav-ocorrencias': !canOc, 'nav-cq': !canCQ, 'nav-config': !canConfig };
+  const tabHiddenMap = { 'nav-ativos': !canAtivos, 'nav-rotina': !canRotinas, 'nav-os': !canOT, 'nav-ocorrencias': !canOc, 'nav-cq': !canCQ, 'nav-temperatura': !canTemp, 'nav-config': !canConfig };
   if (activeNavId && tabHiddenMap[activeNavId] && typeof switchTab === 'function') {
     switchTab('inicio');
   }
@@ -1485,6 +1492,8 @@ function openUserEditModal(id) {
     }
     _userEditIsAdmin = !!u.isAdmin;
     _userEditSetoresTemp = _authUserSetorIds(u);
+    window._userEditTempEquips = Array.isArray(u.tempEquipIds) ? u.tempEquipIds.slice() : [];
+    if (typeof tempAtualizarBotaoUsuario === 'function') setTimeout(tempAtualizarBotaoUsuario, 0);
   } else {
     ['user-edit-nome','user-edit-cpf','user-edit-cargo','user-edit-username',
      'user-edit-password','user-edit-confirm'].forEach(elId => {
@@ -1605,6 +1614,8 @@ function saveUserEdit() {
     const u = authState.users[idx];
     u.nomeCompleto = nome; u.cpf = cpf; u.cargo = cargo; u.username = username;
     _authGravarUserSetores(u, _userEditSetoresTemp);
+    // mnemônicos de Temperatura do usuário ([] = todos os do grupo)
+    if (Array.isArray(window._userEditTempEquips)) u.tempEquipIds = window._userEditTempEquips.slice();
     u.ativo = ativo;
     if (!u.isAdmin) {
       u.grupoId = grupoId || null;
@@ -1669,6 +1680,7 @@ const PERM_STRUCTURE = {
   atividades: { label: 'Atividades',       keys: ['editar','excluir','gerenciarAnexos'] },
   ot:         { label: 'OT',               keys: ['visualizar','criarOT','editarOT','excluirOT','alterarStatus','realizarPublicacoes','editarPublicacoes','excluirPublicacoes'] },
   ocorrencias:{ label: 'Ocorrências',      keys: ['visualizar','registrar','editar','tratar','liberarAtivo','encerrar','cancelar'] },
+  temperatura:{ label: 'Temperatura',      keys: ['verTemperatura','lancarLeituras','exportarLeituras','importarLeituras','configurarTemperatura'] },
   cq:         { label: 'Controle de Qualidade', keys: ['visualizar','lancar','liberar','configurar','editarCadastros','definirAlvos','ceq','revisar','relatorios','invalidar'] },
   config:    { label: 'Configurações',    keys: ['visualizarConfig','backup','gerenciarUsuarios','gerenciarGrupos','gerenciarEmpresas'] }
 };
@@ -1689,7 +1701,9 @@ const PERM_LABELS = {
   relatorios:'Relatórios de CQ', invalidar:'Corrigir / invalidar resultados',
   visualizarConfig:'Visualizar configurações', backup:'Backup',
   gerenciarUsuarios:'Gerenciar usuários', gerenciarGrupos:'Gerenciar grupos',
-  gerenciarEmpresas:'Gerenciar empresas'
+  gerenciarEmpresas:'Gerenciar empresas',
+  verTemperatura:'Visualizar aba', lancarLeituras:'Lançar / editar leituras', exportarLeituras:'Exportar leituras',
+  importarLeituras:'Importar leituras', configurarTemperatura:'Equipamentos e acessos'
 };
 
 function _emptyPermissoes() {
@@ -1738,6 +1752,10 @@ function renderGroupsTable() {
           </svg>
           ${_authEsc(_authResumoGrupo(g))}
         </button>
+        ${typeof tempPodeConfigurar === 'function' && tempPodeConfigurar() ? `<button class="btn btn-outline" onclick="tempAbrirMnemonicosGrupo('${g.id}')" title="Mnemônicos de Temperatura visíveis"
+          style="font-size:11px;padding:3px 10px;min-height:0;height:26px;gap:5px;margin-right:4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></svg>
+          ${_authEsc(typeof tempResumoMnemonicos === 'function' ? tempResumoMnemonicos(g.tempEquipIds) : 'Temperatura')}
+        </button>` : ''}
         <button class="btn btn-outline btn-icon" onclick="openGroupEditModal('${g.id}')" title="Editar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/>
@@ -1914,6 +1932,7 @@ const PERM_ICONS = {
   ot:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>`,
   ocorrencias:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
   cq:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M9 3h6"/><path d="M10 3v6.5L4.6 18.4A2 2 0 006.3 21.5h11.4a2 2 0 001.7-3.1L14 9.5V3"/><line x1="7.5" y1="15" x2="16.5" y2="15"/></svg>`,
+  temperatura:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></svg>`,
   config:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`
 };
 

@@ -311,10 +311,10 @@
   }
 
   // ── NAVEGAÇÃO ──
-  const TAB_TITLES = { inicio:'Início', ativos:'Ativos', rotina:'Rotina', os:'Ordens de Trabalho', ocorrencias:'Ocorrências', cq:'Controle de Qualidade', config:'Configurações' };
+  const TAB_TITLES = { inicio:'Início', ativos:'Ativos', rotina:'Rotina', os:'Ordens de Trabalho', ocorrencias:'Ocorrências', cq:'Controle de Qualidade', temperatura:'Temperatura', config:'Configurações' };
   function switchTab(tabId) {
     // Guardas de permissão — verificar antes de qualquer alteração no DOM
-    if (['ativos','rotina','os','ocorrencias','cq'].includes(tabId)) {
+    if (['ativos','rotina','os','ocorrencias','cq','temperatura'].includes(tabId)) {
       if (typeof authCanViewTab === 'function' && !authCanViewTab(tabId)) {
         showToast('Sem permissão para visualizar esta aba.', 'error');
         switchTab('inicio');
@@ -352,6 +352,7 @@
     if (tabId === 'config') {
       _switchConfigTabFirst();
     }
+    if (tabId === 'temperatura' && typeof tempRender === 'function') tempRender();
   }
 
   // ── ROTINA SUBTABS ──
@@ -371,7 +372,7 @@
   }
 
   // ── CONFIG SUBTABS ──
-  const CONFIG_TABS_ORDER = ['usuario','grupos','org','empresas','ocorrencias','cq','backup'];
+  const CONFIG_TABS_ORDER = ['usuario','grupos','org','empresas','ocorrencias','cq','temperatura','backup'];
 
   function _switchConfigTabFirst() {
     const first = CONFIG_TABS_ORDER.find(t => {
@@ -393,6 +394,7 @@
     if (tab === 'empresas') { if (typeof empRenderTable    === 'function') empRenderTable(); }
     if (tab === 'ocorrencias') { if (typeof ocRenderConfigCatalogos === 'function') ocRenderConfigCatalogos(); }
     if (tab === 'cq')       { if (typeof cqRenderConfig    === 'function') cqRenderConfig(); }
+    if (tab === 'temperatura') { if (typeof tempRenderConfig === 'function') tempRenderConfig(); }
     if (tab === 'org')      { if (typeof orgRenderGerenciador === 'function') orgRenderGerenciador(); }
   }
 
@@ -869,7 +871,7 @@
     if (!inp || !dd) return;
     const empresas = (typeof empState !== 'undefined' ? empState.empresas : []);
     const emp = empresas.find(e => e.id === _tarefaEmpresaId);
-    const resps = emp?.responsaveis || [];
+    const resps = (emp?.responsaveis || []).filter(r => r.ativo !== false);
     const q = inp.value.toLowerCase();
     const matches = q ? resps.filter(r => r.nome.toLowerCase().includes(q) || (r.cargo || '').toLowerCase().includes(q)) : resps;
     if (matches.length === 0) {
@@ -881,6 +883,7 @@
           ${r.cargo ? `<div class="autocomplete-opt-meta">${r.cargo}</div>` : ''}
         </div>`).join('');
     }
+    if (typeof empRespAddItemHTML === 'function') dd.innerHTML += empRespAddItemHTML(_tarefaEmpresaId, 'tarefaRespFilter', 'tarefa-resp-padrao');
     dd.classList.add('open');
   };
 
@@ -937,7 +940,7 @@
     if (!inp || !dd) return;
     const empresas = (typeof empState !== 'undefined' ? empState.empresas : []);
     const emp = empresas.find(e => e.id === _pubEmpresaId);
-    const resps = emp?.responsaveis || [];
+    const resps = (emp?.responsaveis || []).filter(r => r.ativo !== false);
     const q = inp.value.toLowerCase();
     const matches = q ? resps.filter(r => r.nome.toLowerCase().includes(q) || (r.cargo || '').toLowerCase().includes(q)) : resps;
     if (matches.length === 0) {
@@ -949,6 +952,7 @@
           ${r.cargo ? `<div class="autocomplete-opt-meta">${r.cargo}</div>` : ''}
         </div>`).join('');
     }
+    if (typeof empRespAddItemHTML === 'function') dd.innerHTML += empRespAddItemHTML(_pubEmpresaId, 'pubTecnicoFilter', 'pub-tecnico-responsavel');
     dd.classList.add('open');
   };
 
@@ -1016,7 +1020,7 @@
     if (!inp || !dd) return;
     const empresas = (typeof empState !== 'undefined' ? empState.empresas : []);
     const emp = empresas.find(e => e.id === _editPubEmpresaId);
-    const resps = emp?.responsaveis || [];
+    const resps = (emp?.responsaveis || []).filter(r => r.ativo !== false);
     const q = inp.value.toLowerCase();
     const matches = q ? resps.filter(r => r.nome.toLowerCase().includes(q) || (r.cargo || '').toLowerCase().includes(q)) : resps;
     if (matches.length === 0) {
@@ -1028,6 +1032,7 @@
           ${r.cargo ? `<div class="autocomplete-opt-meta">${r.cargo}</div>` : ''}
         </div>`).join('');
     }
+    if (typeof empRespAddItemHTML === 'function') dd.innerHTML += empRespAddItemHTML(_editPubEmpresaId, 'editPubTecnicoFilter', 'edit-pub-tecnico');
     dd.classList.add('open');
   };
 
@@ -2438,6 +2443,8 @@
 
     closeModal('modal-publicar');
     saveState();
+    // Gancho: quem abriu a publicação (ex.: vincular atividade na ocorrência) recebe a nova publicação
+    if (typeof window._onPubCriada === 'function') { const cb = window._onPubCriada; window._onPubCriada = null; try { cb(pub); } catch (e) { console.error(e); } }
     if (typeof renderHome === 'function') renderHome();
 
     const tarefaFinal = state.tarefas[tIdx];

@@ -340,7 +340,7 @@
     white-space: nowrap; pointer-events: none;
   }
   .agenda-filter-inline.open {
-    max-width: 680px; opacity: 1;
+    max-width: 1000px; opacity: 1;
     padding: 6px 14px;
     border-color: var(--border);
     pointer-events: all;
@@ -3884,3 +3884,20 @@ body.dark-mode .hkm-danger         { background: rgba(230,57,70,0.18);   color: 
 .isento-upload-box .upload-drop-zone {
   border-radius: 8px; margin-bottom: 0;
 }
+
+/* Atalho "+ Adicionar responsável" no fim dos popovers de responsável pela empresa */
+.emp-resp-add { border-top: 1px solid var(--border); color: var(--cyan) !important; font-weight: 600; font-style: normal !important; }
+.emp-resp-add .autocomplete-opt-name { color: var(--cyan); }
+
+/* Responsáveis da empresa: subabas, inativos, edição */
+.emp-resp-subs { display: flex; gap: 6px; margin-bottom: 4px; }
+.emp-resp-sub { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: #fff; font: inherit; font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
+.emp-resp-sub span { font-size: 10.5px; padding: 0 6px; border-radius: 999px; background: var(--bg); color: var(--text-muted); }
+.emp-resp-sub.active { background: var(--night, #0e1628); border-color: var(--night, #0e1628); color: #fff; }
+.emp-resp-sub.active span { background: rgba(255,255,255,.18); color: #fff; }
+.emp-resp-inativo { opacity: .6; }
+.emp-resp-editando { border-color: var(--cyan) !important; box-shadow: 0 0 0 2px var(--cyan-light, #e0f5fa); }
+.emp-resp-tag { display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); vertical-align: middle; }
+.emp-resp-tag-vinc { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-light, #e0f5fa); }
+.emp-list-item .toggle-switch { transform: scale(.8); }
+.emp-list-item .ot-sub-del-btn svg { width: 14px; height: 14px; }

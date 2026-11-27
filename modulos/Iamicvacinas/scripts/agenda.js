@@ -1177,11 +1177,11 @@ function openDayModal(dateStr, d, month, year) {
 
     const _dmIsHoliDark = document.body.classList.contains('dark-mode');
     if (isHoliday) {
-        holidayBtnContainer.innerHTML = permBtn('definir_feriados', `<button onclick="toggleHoliday('${dateStr}')" class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition shadow-sm" style="background:${_dmIsHoliDark?'rgba(148,163,184,0.15)':'#e2e8f0'};color:${_dmIsHoliDark?'#94a3b8':'#475569'};border:1px solid ${_dmIsHoliDark?'rgba(148,163,184,0.3)':'#cbd5e1'}"><i class="fas fa-calendar-check mr-1"></i> Remover Feriado</button>`);
+        holidayBtnContainer.innerHTML = '';
         list.innerHTML = `<div class="text-center py-10"><i class="fas fa-cocktail text-4xl text-red-200 mb-3"></i><p class="text-red-500 font-black uppercase">Dia marcado como Feriado</p></div>`;
         btnAgendarDia.style.display = 'none';
     } else {
-        holidayBtnContainer.innerHTML = permBtn('definir_feriados', `<button onclick="toggleHoliday('${dateStr}')" class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition shadow-sm" style="background:${_dmIsHoliDark?'rgba(239,68,68,0.15)':'#fee2e2'};color:${_dmIsHoliDark?'#f87171':'#dc2626'};border:1px solid ${_dmIsHoliDark?'rgba(239,68,68,0.3)':'#fca5a5'}"><i class="fas fa-calendar-times mr-1"></i> Marcar Feriado</button>`);
+        holidayBtnContainer.innerHTML = '';
         btnAgendarDia.style.display = (isCurrentUserAdmin() || hasPerm('agendar')) ? 'block' : 'none';
 
         const dayApps = appointments.filter(a => a.data === dateStr);
@@ -1319,25 +1319,9 @@ function openDayModal(dateStr, d, month, year) {
     document.getElementById('modal-day-details').classList.add('active');
 }
 
-function toggleHoliday(dateStr) {
-    if (!checkPerm('definir_feriados')) return;
-    const idx = holidays.indexOf(dateStr);
-    if(idx > -1) {
-        holidays.splice(idx, 1);
-        logAudit('Excluído', 'sistema', 'feriados', 'Feriado', `Data: ${dateStr.split('-').reverse().join('/')}`);
-        showNotification('Feriado removido!', 'success');
-    } else {
-        if(appointments.some(a => a.data === dateStr)) {
-            showNotification('Bloqueio: Existem agendamentos neste dia. Cancele-os antes de marcar como feriado.', 'error');
-            return;
-        }
-        holidays.push(dateStr);
-        logAudit('Criado', 'sistema', 'feriados', 'Feriado', `Data: ${dateStr.split('-').reverse().join('/')}`);
-        showNotification('Dia marcado como feriado.', 'warning');
-    }
-    saveAll(); renderCalendar();
-    const [y, m, d] = dateStr.split('-');
-    openDayModal(dateStr, d, parseInt(m)-1, y);
+function toggleHoliday() {
+    // Feriados agora são definidos só no portal
+    showNotification('Feriados são definidos no portal: Administração › Feriados.', 'info');
 }
 
 function weeklyToggleGroup(groupId) {

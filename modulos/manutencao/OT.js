@@ -1308,12 +1308,14 @@ function otFRespFilter() {
   const drop = document.getElementById('ot-f-resp-empresa-drop');
   if (!inp || !drop) return;
   const emp  = typeof empState !== 'undefined' ? empState.empresas[_otFEmpresaId] : null;
-  const resps = emp?.responsaveis || [];
+  const resps = (emp?.responsaveis || []).filter(r => r.ativo !== false);
   const q = inp.value.toLowerCase();
   const matches = resps.filter(r => r.nome.toLowerCase().includes(q));
   drop.innerHTML = matches.length
-    ? matches.map(r => `<div class="autocomplete-item" onmousedown="otFRespSelect(${resps.indexOf(r)})">${r.nome}</div>`).join('')
+    ? matches.map(r => `<div class="autocomplete-item" onmousedown="otFRespSelect(${emp.responsaveis.indexOf(r)})">${r.nome}</div>`).join('')
     : `<div class="autocomplete-item" style="color:var(--text-muted);font-style:italic;">Nenhum responsável encontrado</div>`;
+  if (typeof empRespAddItemHTML === 'function') drop.innerHTML += empRespAddItemHTML(emp?.id ?? _otFEmpresaId, 'otFRespFilter', 'ot-f-resp-empresa')
+    .replace(/autocomplete-opt/g, 'autocomplete-item');
   drop.classList.add('open');
 }
 

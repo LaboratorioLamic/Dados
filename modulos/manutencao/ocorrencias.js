@@ -220,7 +220,7 @@ function _ocNormalizar(oc) {
   ['ativoId', 'ativoSnapshot', 'equipamentoParado', 'dataHoraParada', 'liberacao'].forEach(k => delete oc[k]);
   oc.ativos = _ocArr(oc.ativos).map(a => ({ ...a, snapshot: a.snapshot || {}, liberacao: a.liberacao || {}, parado: !!a.parado, dataHoraParada: a.dataHoraParada || '' }));
   oc.trilha           = _ocArr(oc.trilha).map(t => ({ ...t, diffs: _ocArr(t.diffs) }));
-  oc.acoes            = _ocArr(oc.acoes);
+  oc.acoes            = _ocArr(oc.acoes).map(a => ({ ...a, atividades: _ocArr(a.atividades) }));
   oc.anexos           = _ocArr(oc.anexos);
   oc.otIds            = _ocArr(oc.otIds);
   oc.dadosEspecificos = oc.dadosEspecificos || {};
@@ -964,10 +964,7 @@ function _ocRenderFormAtivos() {
 function _ocRenderFormAnexos() {
   const el = document.getElementById('oc-form-anexo-list');
   if (!el) return;
-  el.innerHTML = _ocFormAnexos.map((a, i) => `<div class="oc-anexo">
-    ${OC_ICO.clip}<a href="${_ocEsc(a.url)}" target="_blank" rel="noopener">${_ocEsc(a.titulo)}</a>
-    <button class="anexo-del" onclick="_ocFormAnexos.splice(${i},1);_ocRenderFormAnexos();" title="Remover">${OC_ICO.close}</button>
-  </div>`).join('');
+  el.innerHTML = _ocFormAnexos.length ? `<div class="oc-anexos-grade">${_ocFormAnexos.map((a, i) => _ocAnexoCard(a, '', `_ocFormAnexos.splice(${i},1);_ocRenderFormAnexos();`)).join('')}</div>` : '';
 }
 
 async function ocSaveForm() {
@@ -1196,12 +1193,36 @@ function _ocSecao(titulo, html, extra) {
 function _ocAnexosHTML(oc, etapa, podeRemover, filtro) {
   const lista = oc.anexos.map((a, i) => ({ ...a, _i: i })).filter(a => (!etapa || a.etapa === etapa) && (!filtro || filtro(a)));
   if (!lista.length) return `<div class="oc-vazio">Nenhum anexo.</div>`;
-  return lista.map(a => `<div class="oc-anexo">
-    ${OC_ICO.clip}<a href="${_ocEsc(a.url)}" target="_blank" rel="noopener">${_ocEsc(a.titulo)}</a>
-    <span class="oc-anexo-meta">${etapa ? '' : `${OC_ETAPAS_ANEXO[a.etapa] || ''} · `}${_ocEsc(a.porNome || '')} · ${_ocFmtDH(a.em)}</span>
-    ${podeRemover ? `<button class="anexo-del" onclick="ocRemoverAnexo(${a._i})" title="Remover">${OC_ICO.close}</button>` : ''}
-  </div>`).join('');
+  return `<div class="oc-anexos-grade">${lista.map(a => _ocAnexoCard(a,
+    `${etapa ? '' : `${OC_ETAPAS_ANEXO[a.etapa] || ''} · `}${_ocEsc(a.porNome || '')} · ${_ocFmtDH(a.em)}`,
+    podeRemover ? `ocRemoverAnexo(${a._i})` : '')).join('')}</div>`;
 }
+
+// Anexos em cards com miniatura (Drive). Imagem abre no visualizador do portal; PDF/outros abrem o link.
+const OC_EXT_IMG = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+function _ocDriveId(a) {
+  if (a.fileId) return a.fileId;
+  const m = String(a.url || '').match(/\/d\/([\w-]{10,})|[?&]id=([\w-]{10,})/);
+  return m ? (m[1] || m[2]) : '';
+}
+function _ocAnexoEhImg(a) { return a.ext ? OC_EXT_IMG.includes(a.ext) : !/\.pdf$/i.test(a.titulo || ''); }
+function _ocAnexoCard(a, meta, onDel) {
+  const id = _ocDriveId(a), img = _ocAnexoEhImg(a);
+  const thumb = id ? `<img src="https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w400" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+  return `<div class="oc-anexo-card" data-id="${_ocEsc(id)}" data-url="${_ocEsc(a.url)}" data-nome="${_ocEsc(a.titulo)}" data-img="${img ? 1 : 0}" onclick="ocAbrirAnexo(this)" title="${_ocEsc(a.titulo)}">
+    <div class="oc-anexo-thumb">${OC_ICO.clip}${thumb}${img ? '' : '<span class="oc-anexo-tag">PDF</span>'}</div>
+    <div class="oc-anexo-info"><strong>${_ocEsc(a.titulo)}</strong>${meta ? `<small>${meta}</small>` : ''}</div>
+    ${onDel ? `<button class="anexo-del" onclick="event.stopPropagation();${onDel}" title="Remover">${OC_ICO.close}</button>` : ''}
+  </div>`;
+}
+window.ocAbrirAnexo = function (el) {
+  // Imagens e PDFs abrem no visualizador da própria página; os demais tipos abrem o link
+  const cards = [...el.parentElement.querySelectorAll('.oc-anexo-card')].filter(c => c.dataset.id);
+  if (!el.dataset.id || typeof window.lamicVisualizador !== 'function') return window.open(el.dataset.url, '_blank', 'noopener');
+  const itens = cards.map(c => ({ id: c.dataset.id, nome: c.dataset.nome, tipo: c.dataset.img === '1' ? 'img' : 'pdf' }));
+  window.lamicVisualizador(itens, cards.indexOf(el));
+};
+
 function _ocUploadHTML(ctx) {
   return `<div class="oc-upload">
     <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
@@ -1384,10 +1405,12 @@ function _ocTabAcoes(oc) {
       <div class="oc-acao-meta">${OC_ICO.user}${_ocEsc(a.responsavelNome || '—')} · ${OC_ICO.clock}Prazo ${_ocFmtData(a.prazo)}</div>
       ${a.status === 'concluida' ? `<div class="oc-acao-evid"><b>Evidência:</b> ${_ocEsc(a.evidencia)}<div class="oc-assinatura">${OC_ICO.check}Concluída por ${_ocEsc(a.concluidaPorNome || '—')} · ${_ocFmtDH(a.concluidaEm)}</div></div>` : ''}
       ${ret ? `<div class="oc-assinatura">${OC_ICO.undo}${ret.conclusaoAnterior ? 'Reaberta para retificação' : 'Retificada'} por ${_ocEsc(ret.porNome || '—')} · ${_ocFmtDH(ret.em)} — ${_ocEsc(ret.motivo)}${a.retificacoes.length > 1 ? ` (${a.retificacoes.length}×, ver Trilha)` : ''}</div>` : ''}
-      ${podeRetificar ? `<div class="oc-acao-btns"><button class="btn btn-outline btn-sm" onclick="ocRetificarAcao('${a.id}')">${OC_ICO.edit} Retificar</button></div>` : ''}
+      ${_ocAtivsVinculadasHTML(a, _ocAberta(oc) && (pode || a.responsavelId === me))}
+      ${podeRetificar ? `<div class="oc-acao-btns">${oc.ativos.length ? `<button class="btn btn-outline btn-sm" onclick="ocVincularAtividade('${a.id}')">${OC_ICO.clip} Vincular atividade</button>` : ''}<button class="btn btn-outline btn-sm" onclick="ocRetificarAcao('${a.id}')">${OC_ICO.edit} Retificar</button></div>` : ''}
       ${_ocAberta(oc) && a.status !== 'concluida' ? `<div class="oc-acao-btns">
         ${podeConcluir ? `<button class="btn btn-primary btn-sm" style="background:var(--green);" onclick="ocConcluirAcao('${a.id}')">${OC_ICO.check} Concluir</button>` : ''}
         ${podeEditar ? `<button class="btn btn-outline btn-sm" onclick="ocEditarAcao('${a.id}')">${OC_ICO.edit} Editar</button>` : ''}
+        ${podeEditar && oc.ativos.length ? `<button class="btn btn-outline btn-sm" onclick="ocVincularAtividade('${a.id}')">${OC_ICO.clip} Vincular atividade</button>` : ''}
         ${pode && canOT && !a.otId && _ocAtivoDe(oc) ? `<button class="btn btn-outline btn-sm" onclick="ocGerarOT('${oc.id}','${a.id}')">${OC_ICO.ot} Gerar OT</button>` : ''}
         ${pode && !a.retificacoes?.length ? `<button class="btn btn-outline btn-sm oc-btn-danger" onclick="ocRemoverAcao('${a.id}')">${OC_ICO.trash}</button>` : ''}
       </div>` : ''}
@@ -1421,6 +1444,161 @@ ${form}
 ${na}
 ${_ocSecao('Evidências das ações', `${_ocAnexosHTML(oc, 'acoes', pode)}${_ocAberta(oc) && (pode || oc.acoes.some(a => a.responsavelId === me)) ? _ocUploadHTML('oc-acao') : ''}`)}
 ${!pode ? _ocAvisoSomenteLeitura(oc) : ''}`;
+}
+
+// ── ATIVIDADES (publicações) VINCULADAS ÀS AÇÕES ─────────────
+// Só atividades de tarefas dos equipamentos desta ocorrência; filtro por tipo de rotina.
+function _ocPubInfo(p) {
+  const t = (state.tarefas || []).find(x => x.id === p.tarefaId) || {};
+  const r = (state.rotinas || []).find(x => x.id === t.rotinaId) || {};
+  const at = (state.ativos || []).find(x => x.id === t.equipamentoId) || state.ativos?.[t.equipamentoIdx] || {};
+  return { tarefa: t.titulo || r.nome || 'Tarefa', tipo: r.tipo || 'Outros', ativoId: at.id || '', ativo: at.nome || '—', codigo: at.codigo || '' };
+}
+function _ocAtivsVinculadasHTML(a, podeDesvincular) {
+  const ids = a.atividades || [];
+  if (!ids.length) return '';
+  return `<div class="oc-ativs">${ids.map(id => {
+    const p = typeof arqBuscarPublicacao === 'function' ? arqBuscarPublicacao(id) : null;
+    const i = p ? _ocPubInfo(p) : null;
+    return `<div class="oc-ativ-chip" onclick="ocAbrirAtividade('${id}')" title="Abrir atividade">
+      <span class="oc-ativ-ico">${OC_ICO.check}</span>
+      <span class="oc-ativ-txt"><b>${_ocEsc(i ? i.tarefa : 'Atividade arquivada')}</b><small>${i ? `${_ocEsc(i.tipo)} · ${_ocEsc(i.ativo)} · ${_ocFmtData(p.dataRealizada)}` : ''}</small></span>
+      ${podeDesvincular ? `<button class="anexo-del" onclick="event.stopPropagation();ocDesvincularAtividade('${a.id}','${id}')" title="Desvincular">${OC_ICO.close}</button>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+window.ocAbrirAtividade = function (pubId) {
+  const ov = document.getElementById('modal-pub-view');
+  if (ov) ov.style.zIndex = '760';
+  window.viewPublicacao(pubId);
+};
+
+let _ocVinc = null; // { acaoId, tipo, ativo, busca, sel: Set }
+function ocVincularAtividade(acaoId) {
+  const oc = ocState.ocorrencias[_ocViewId];
+  const a = oc?.acoes.find(x => x.id === acaoId);
+  if (!a) return;
+  window._onPubCriada = null;
+  _ocVinc = { acaoId, tipo: '', ativo: '', busca: '', nova: false, sel: new Set(a.atividades || []) };
+  _ocPrompt({
+    titulo: 'Vincular atividade',
+    subtitulo: a.descricao,
+    html: `<div class="oc-vinc">
+      <input type="text" class="field-input" placeholder="Buscar tarefa, nota ou executor…" oninput="_ocVinc.busca=this.value;_ocVincRender()">
+      <div id="oc-vinc-filtros"></div><div id="oc-vinc-nova"></div><div id="oc-vinc-lista" class="oc-vinc-lista"></div></div>`,
+    confirmar: 'Salvar vínculos', cor: 'var(--cyan)',
+    onConfirm: async () => {
+      const novo = _ocClone(ocState.ocorrencias[_ocViewId]);
+      const ac = novo.acoes.find(x => x.id === acaoId);
+      const antes = new Set(ac.atividades || []), depois = [..._ocVinc.sel];
+      const add = depois.filter(id => !antes.has(id)), rem = [...antes].filter(id => !_ocVinc.sel.has(id));
+      if (!add.length && !rem.length) return true;
+      ac.atividades = depois;
+      const nome = id => { const p = arqBuscarPublicacao(id); return p ? `${_ocPubInfo(p).tarefa} (${_ocFmtData(p.dataRealizada)})` : id; };
+      _ocTrilha(novo, 'acao', `Atividades da ação "${ac.descricao}": ${[...add.map(id => '+ ' + nome(id)), ...rem.map(id => '− ' + nome(id))].join('; ')}`);
+      await _ocCommit(novo, 'Vínculos salvos.', { tab: 'acoes' });
+      return true;
+    },
+  });
+  _ocVincRender();
+  if (typeof arqCarregarTudo === 'function') Promise.resolve(arqCarregarTudo()).catch(() => {}).finally(_ocVincRender);
+}
+function _ocVincPubs() {
+  const oc = ocState.ocorrencias[_ocViewId];
+  const ativos = new Set(oc.ativos.map(x => x.ativoId));
+  const todas = typeof todasPublicacoes === 'function' ? todasPublicacoes() : (state.publicacoes || []);
+  return todas.map(p => ({ p, i: _ocPubInfo(p) })).filter(x => ativos.has(x.i.ativoId))
+    .sort((x, y) => String(y.p.dataRealizada).localeCompare(String(x.p.dataRealizada)));
+}
+function _ocVincSet(campo, idx) {
+  _ocVinc[campo] = idx < 0 ? '' : _ocVinc['_' + campo][idx];
+  _ocVincRender();
+}
+function _ocVincRender() {
+  const lista = document.getElementById('oc-vinc-lista'), filtros = document.getElementById('oc-vinc-filtros');
+  if (!lista || !_ocVinc) return;
+  const oc = ocState.ocorrencias[_ocViewId];
+  const base = _ocVincPubs();
+  const chip = (campo, idx, label, n, on) => `<button type="button" class="oc-vinc-chip${on ? ' on' : ''}" onclick="_ocVincSet('${campo}',${idx})">${_ocEsc(label)}${n != null ? `<span>${n}</span>` : ''}</button>`;
+  const cont = {};
+  base.filter(x => !_ocVinc.ativo || x.i.ativoId === _ocVinc.ativo).forEach(x => { cont[x.i.tipo] = (cont[x.i.tipo] || 0) + 1; });
+  _ocVinc._tipo = Object.keys(cont).sort();
+  let html = `<div class="oc-vinc-linha">${chip('tipo', -1, 'Todos os tipos', null, !_ocVinc.tipo)}${_ocVinc._tipo.map((t, k) => chip('tipo', k, t, cont[t], _ocVinc.tipo === t)).join('')}</div>`;
+  if (oc.ativos.length > 1) {
+    const ats = oc.ativos.map(x => _ativoById(x.ativoId)).filter(Boolean);
+    _ocVinc._ativo = ats.map(at => at.id);
+    html += `<div class="oc-vinc-linha">${chip('ativo', -1, 'Todos os equipamentos', null, !_ocVinc.ativo)}${ats.map((at, k) => chip('ativo', k, at.nome, null, _ocVinc.ativo === at.id)).join('')}</div>`;
+  }
+  filtros.innerHTML = html;
+  _ocVincNovaRender(oc);
+  const q = _ocVinc.busca.trim().toLowerCase();
+  const vis = base.filter(x => (!_ocVinc.tipo || x.i.tipo === _ocVinc.tipo) && (!_ocVinc.ativo || x.i.ativoId === _ocVinc.ativo)
+    && (!q || `${x.i.tarefa} ${x.p.notas || ''} ${x.p.publicadoPorNome || ''} ${x.p.tecnicoResponsavel || ''}`.toLowerCase().includes(q)));
+  const desde = String(oc.dataHoraOcorrencia || oc.dataHoraDeteccao || '').slice(0, 10);
+  lista.innerHTML = vis.length ? vis.slice(0, 150).map(({ p, i }) => {
+    const on = _ocVinc.sel.has(p.id), pos = desde && String(p.dataRealizada) >= desde;
+    return `<div class="oc-vinc-item${on ? ' on' : ''}" onclick="_ocVincToggle('${p.id}')">
+      <span class="oc-vinc-box">${on ? OC_ICO.check : ''}</span>
+      <div class="oc-vinc-txt"><b>${_ocEsc(i.tarefa)}</b><small>${_ocEsc(i.tipo)} · ${_ocEsc(i.ativo)}${i.codigo ? ' · ' + _ocEsc(i.codigo) : ''} · ${_ocEsc(p.publicadoPorNome || '—')}</small></div>
+      <div class="oc-vinc-data">${_ocFmtData(p.dataRealizada)}${pos ? '<em>após a ocorrência</em>' : ''}</div>
+    </div>`;
+  }).join('') + (vis.length > 150 ? `<div class="oc-vazio">Mostrando 150 de ${vis.length}. Refine a busca.</div>` : '')
+    : `<div class="oc-vazio">Nenhuma atividade registrada para ${oc.ativos.length > 1 ? 'estes equipamentos' : 'este equipamento'}${_ocVinc.tipo || q ? ' com esse filtro' : ''}.</div>`;
+  const btn = document.getElementById('oc-prompt-confirm');
+  if (btn) btn.textContent = _ocVinc.sel.size ? `Salvar vínculos (${_ocVinc.sel.size})` : 'Salvar vínculos';
+}
+// Nova atividade direto do seletor: lista as tarefas ativas dos equipamentos (respeita os filtros),
+// abre o modal de publicação e, ao publicar, já marca a nova atividade para vínculo.
+function _ocVincTarefas(oc) {
+  const ativos = new Set(oc.ativos.map(x => x.ativoId));
+  return (state.tarefas || []).filter(t => t.status !== 'Inativo').map(t => {
+    const r = (state.rotinas || []).find(x => x.id === t.rotinaId) || {};
+    const at = (state.ativos || []).find(x => x.id === t.equipamentoId) || state.ativos?.[t.equipamentoIdx] || {};
+    return { t, tipo: r.tipo || 'Outros', nome: t.titulo || r.nome || 'Tarefa', at };
+  }).filter(x => ativos.has(x.at.id) && (!_ocVinc.tipo || x.tipo === _ocVinc.tipo) && (!_ocVinc.ativo || x.at.id === _ocVinc.ativo))
+    .sort((x, y) => x.nome.localeCompare(y.nome));
+}
+function _ocVincNovaRender(oc) {
+  const el = document.getElementById('oc-vinc-nova');
+  if (!el) return;
+  if (!_ocVinc.nova) {
+    el.innerHTML = `<button type="button" class="oc-vinc-novo-btn" onclick="_ocVinc.nova=true;_ocVincRender()">${OC_ICO.plus} Registrar nova atividade</button>`;
+    return;
+  }
+  const ts = _ocVincTarefas(oc);
+  el.innerHTML = `<div class="oc-vinc-novo">
+    <div class="oc-vinc-novo-top"><b>Qual tarefa foi executada?</b><button type="button" class="anexo-del" onclick="_ocVinc.nova=false;_ocVincRender()" title="Fechar">${OC_ICO.close}</button></div>
+    ${ts.length ? `<div class="oc-vinc-novo-lista">${ts.map(x => `<button type="button" class="oc-vinc-tarefa" onclick="ocVincNovaAtividade('${x.t.id}')">
+      <span><b>${_ocEsc(x.nome)}</b><small>${_ocEsc(x.tipo)} · ${_ocEsc(x.at.nome || '—')}${x.at.codigo ? ' · ' + _ocEsc(x.at.codigo) : ''}</small></span>${OC_ICO.plus}</button>`).join('')}</div>`
+    : `<div class="oc-vazio">Nenhuma tarefa ativa${_ocVinc.tipo ? ' desse tipo' : ''} para ${oc.ativos.length > 1 ? 'estes equipamentos' : 'este equipamento'}.</div>`}
+  </div>`;
+}
+function ocVincNovaAtividade(tarefaId) {
+  if (typeof window.openPublicarModalDireto !== 'function') return;
+  const ov = document.getElementById('modal-publicar');
+  if (ov) ov.style.zIndex = '770';
+  window._onPubCriada = pub => {
+    if (!_ocVinc || !pub?.id) return;
+    _ocVinc.sel.add(pub.id);
+    _ocVinc.nova = false; _ocVinc.tipo = ''; _ocVinc.busca = '';
+    const inp = document.querySelector('.oc-vinc > input'); if (inp) inp.value = '';
+    _ocVincRender();
+    showToast('Atividade registrada e marcada. Clique em Salvar vínculos.', 'success');
+  };
+  window.openPublicarModalDireto(tarefaId);
+}
+function _ocVincToggle(id) {
+  _ocVinc.sel.has(id) ? _ocVinc.sel.delete(id) : _ocVinc.sel.add(id);
+  _ocVincRender();
+}
+async function ocDesvincularAtividade(acaoId, pubId) {
+  const novo = _ocClone(ocState.ocorrencias[_ocViewId]);
+  const ac = novo?.acoes.find(x => x.id === acaoId);
+  if (!ac) return;
+  ac.atividades = (ac.atividades || []).filter(id => id !== pubId);
+  const p = arqBuscarPublicacao(pubId);
+  _ocTrilha(novo, 'acao', `Atividade desvinculada da ação "${ac.descricao}": ${p ? _ocPubInfo(p).tarefa + ' (' + _ocFmtData(p.dataRealizada) + ')' : pubId}`);
+  await _ocCommit(novo, 'Atividade desvinculada.', { tab: 'acoes' });
 }
 
 function ocAcoesNAToggle() {
