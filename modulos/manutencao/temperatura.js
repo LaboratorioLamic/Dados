@@ -7,7 +7,8 @@
 //     obrigatorio: false = sob rotina (ex.: caixas de transporte): sem pendência, sem sino, sem cobrança
 //     vínculo: ativoId (geladeira, freezer, estufa…) OU ambienteId (sala do org: temperatura ambiente) OU nenhum
 //   temperatura/leituras/{unidadeId}/{AAAA-MM}/{equipId}_{DD}_{turno}:
-//       { equipId, data, turno, min, max, atual, justificativa, ocorrenciaId,
+//       { equipId, data, turno, min, max, atual, justificativa (= observação), abono|null, ocorrenciaId,
+//         abono: 'manutencao'|'inoperante'|'desligado'|'outro' → sem leitura justificada (atual null), não gera pendência
 //         login, nome, gravadoEm, editadoEm, editadoPor }
 //   temperatura/acesso/{login}: { unidades: { unidadeId: true }, em }
 //       Índice gerado a partir dos SETORES VISÍVEIS do grupo (Configurações › Usuários e grupos):
@@ -23,6 +24,9 @@
 const TEMP_RAIZ = 'temperatura';
 const TEMP_CORTE = { manha: 12, tarde: 17 };       // hora a partir da qual o turno de hoje fica atrasado
 const TEMP_TURNOS = { manha: 'Manhã', tarde: 'Tarde' };
+// dia sem leitura justificado (abono): conta como preenchido, observação obrigatória
+const TEMP_ABONOS = { manutencao: 'Em manutenção', inoperante: 'Fora de funcionamento', desligado: 'Desligado / sem uso', outro: 'Outro motivo' };
+const _tOk = (l) => l != null && (l.atual != null || !!l.abono);
 const TEMP_ICON_TURNO = { manha: 'fa-cloud-sun', tarde: 'fa-sun' };
 const TEMP_MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -194,7 +198,7 @@ function tempRender() {
   const statusHoje = (e) => {
     if (e.obrigatorio === false) { const n = ['manha', 'tarde'].filter(t => _tLeitura(e.id, hoje, t)?.atual != null).length; return { cls: 'rot', txt: `<i class="fas fa-truck"></i> sob rotina${n ? ' · ' + n + ' hoje' : ''}` }; }
     if (!_tDiaUtil(ag.getFullYear(), ag.getMonth(), ag.getDate())) return { cls: 'ok', txt: '<i class="fas fa-mug-hot"></i> sem leitura hoje' };
-    const f = ['manha', 'tarde'].filter(t => _tLeitura(e.id, hoje, t)?.atual == null);
+    const f = ['manha', 'tarde'].filter(t => !_tOk(_tLeitura(e.id, hoje, t)));
     if (!f.length) return { cls: 'ok', txt: '<i class="fas fa-check"></i> completo' };
     const late = f.some(t => _tAtrasado(hoje, t));
     return { cls: late ? 'pend' : 'meio', txt: `${late ? '<i class="fas fa-circle-exclamation"></i>' : '<i class="fas fa-clock"></i>'} falta ${f.map(t => TEMP_TURNOS[t].toLowerCase()).join(' e ')}` };
@@ -284,7 +288,8 @@ function _tDetalheHtml() {
     if (e.obrigatorio === false && !lm && !lt && iso !== hoje) continue;   // sob rotina: só os dias com leitura (+ hoje, para preencher)
     if ((fer || dom) && !lm && !lt) { if (fer) linhas.push(`<tr class="hol"><td>${iso.slice(8)}/${iso.slice(5, 7)}</td><td colspan="8"><i class="fas fa-calendar-xmark"></i> ${_tEsc(fer.nome || 'Feriado')}</td></tr>`); continue; }
     const resp = [lm, lt].filter(Boolean).map(l => l.nome || l.login).filter((v, i, arr) => arr.indexOf(v) === i).join(', ');
-    const bloco = (l, t) => l && l.atual != null ? cel(l.min) + cel(l.max) + cel(l.atual) : quick(iso, t);
+    const bloco = (l, t) => l?.abono ? `<td colspan="3" class="temp-abn-c" title="${_tEsc(l.justificativa || '')}"><i class="fas fa-wrench"></i> ${_tEsc(TEMP_ABONOS[l.abono] || l.abono)}</td>`
+      : l && l.atual != null ? cel(l.min) + cel(l.max) + cel(l.atual) : quick(iso, t);
     const just = [lm, lt].filter(l => l?.justificativa).map(l => `${TEMP_TURNOS[l.turno]}: ${l.justificativa}`).join(' | ');
     linhas.push(`<tr><td>${iso.slice(8)}/${iso.slice(5, 7)}${just ? ` <i class="fas fa-comment-dots temp-ic-amb" title="${_tEsc(just)}"></i>` : ''}</td><td>${_tEsc(resp || '—')}</td>${bloco(lm, 'manha')}${bloco(lt, 'tarde')}
       <td class="temp-act">${podeLancar && (lm || lt) ? `<i class="fas fa-pen" title="Editar" onclick="tempAbrirRegistro('${iso}','${lm ? 'manha' : 'tarde'}','${e.id}',true)"></i><i class="fas fa-trash" title="Excluir" onclick="tempExcluirLeitura('${e.id}','${iso}')"></i>` : ''}</td></tr>`);
@@ -381,17 +386,67 @@ function tempAbrirRegistro(iso, turno, equipId, edicao) {
   ov.innerHTML = `<div class="temp-modal" role="dialog" aria-modal="true">
     <div class="temp-mh"><h3><i class="fas fa-plus temp-ic-cy"></i> Registrar leituras — ${_tEsc(_tNomeUnidade(tempState.unidadeId))}</h3><button class="temp-x" onclick="tempFecharRegistro()">&times;</button>
       <div class="temp-mh-row">
-        <label>Data <input type="date" id="temp-m-data" value="${data}" max="${_tIso(ag.getFullYear(), ag.getMonth(), ag.getDate())}" onchange="tempModalMudou()"></label>
+        <label>Data <input type="hidden" id="temp-m-data" value="${data}"><button type="button" class="temp-dbtn" id="temp-m-dbtn" onclick="tempCalAbrir(this)"><i class="fas fa-calendar-days"></i><span>${_tBR(data)}</span><i class="fas fa-chevron-down temp-dbtn-c"></i></button></label>
         <label>Turno <span class="temp-seg">${['manha', 'tarde'].map(t => `<button type="button" data-t="${t}" class="${t === _tempModal.turno ? 'on' : ''}" onclick="tempModalTurno('${t}')"><i class="fas ${TEMP_ICON_TURNO[t]}"></i> ${TEMP_TURNOS[t]}</button>`).join('')}</span></label>
         <label>Responsável <span class="temp-ro"><i class="fas fa-user-lock"></i> ${_tEsc(nome)}</span></label>
       </div></div>
     <div class="temp-mb"><table><thead><tr><th>Equipamento</th><th>Faixa</th><th>Mín</th><th>Máx</th><th>Atual</th></tr></thead><tbody id="temp-m-tb"></tbody></table></div>
-    <div class="temp-mf"><span class="temp-msg" id="temp-m-msg">Tab/Enter avança. Vermelho = fora da faixa (exige justificativa).</span><div class="temp-sp"></div>
+    <div class="temp-mf"><span class="temp-msg" id="temp-m-msg">Tab/Enter avança. Vermelho = fora da faixa (exige justificativa). Equipamento parado: "Sem leitura".</span><div class="temp-sp"></div>
       <button class="temp-btn" onclick="tempFecharRegistro()">Cancelar</button><button class="temp-btn pri" id="temp-m-salvar" onclick="tempSalvarRegistro()"><i class="fas fa-check"></i>Salvar</button></div></div>`;
   ov.classList.add('open');
   tempModalMudou();
 }
-function tempFecharRegistro() { document.getElementById('temp-ov')?.classList.remove('open'); _tempModal = null; }
+// ── calendário próprio do registro (o nativo não aceita estilo) ──
+const TEMP_DOW = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+let _tCalVis = null;   // { a, m } mês exibido
+function tempCalAbrir(btn) {
+  let p = document.getElementById('temp-cal');
+  if (p) { p.remove(); return; }
+  const sel = document.getElementById('temp-m-data').value;
+  _tCalVis = { a: +sel.slice(0, 4), m: +sel.slice(5, 7) - 1 };
+  p = document.createElement('div'); p.id = 'temp-cal'; p.className = 'temp-cal';
+  document.body.appendChild(p);
+  const r = btn.getBoundingClientRect();
+  p.style.top = (r.bottom + 6) + 'px'; p.style.left = r.left + 'px';
+  _tCalRender();
+  setTimeout(() => document.addEventListener('mousedown', _tCalFora), 0);
+}
+function _tCalFora(ev) {
+  const p = document.getElementById('temp-cal');
+  if (p && !p.contains(ev.target) && !ev.target.closest('#temp-m-dbtn')) _tCalFechar();
+}
+function _tCalFechar() { document.getElementById('temp-cal')?.remove(); document.removeEventListener('mousedown', _tCalFora); }
+function tempCalMes(d) {
+  let { a, m } = _tCalVis; m += d;
+  if (m < 0) { m = 11; a--; } else if (m > 11) { m = 0; a++; }
+  _tCalVis = { a, m }; _tCalRender();
+}
+function tempCalEscolher(iso) {
+  document.getElementById('temp-m-data').value = iso;
+  const b = document.querySelector('#temp-m-dbtn span'); if (b) b.textContent = _tBR(iso);
+  _tCalFechar(); tempModalMudou();
+}
+function _tCalRender() {
+  const p = document.getElementById('temp-cal'); if (!p) return;
+  const { a, m } = _tCalVis, ag = _tAgora();
+  const hoje = _tIso(ag.getFullYear(), ag.getMonth(), ag.getDate()), sel = document.getElementById('temp-m-data').value;
+  const ini = new Date(a, m, 1).getDay(), ult = new Date(a, m + 1, 0).getDate();
+  const podeProx = _tIso(a, m, 1) < hoje.slice(0, 8) + '01' || (a < ag.getFullYear() || (a === ag.getFullYear() && m < ag.getMonth()));
+  const cel = [];
+  for (let i = 0; i < ini; i++) cel.push('<span></span>');
+  for (let d = 1; d <= ult; d++) {
+    const iso = _tIso(a, m, d), fer = _tFeriado(iso), dom = new Date(a, m, d).getDay() === 0;
+    const cls = ['temp-cal-d', iso === sel ? 'sel' : '', iso === hoje ? 'hoje' : '', dom || fer ? 'folga' : ''].join(' ');
+    cel.push(iso > hoje ? `<button class="${cls}" disabled>${d}</button>`
+      : `<button class="${cls}" onclick="tempCalEscolher('${iso}')" ${fer ? `title="${_tEsc(fer.nome || 'Feriado')}"` : ''}>${d}${fer ? '<i></i>' : ''}</button>`);
+  }
+  p.innerHTML = `<div class="temp-cal-h"><button class="temp-cal-nav" onclick="tempCalMes(-1)"><i class="fas fa-chevron-left"></i></button>
+      <b>${['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][m]} <span>${a}</span></b>
+      <button class="temp-cal-nav" onclick="tempCalMes(1)" ${podeProx ? '' : 'disabled'}><i class="fas fa-chevron-right"></i></button></div>
+    <div class="temp-cal-g">${TEMP_DOW.map((w, i) => `<em class="${i === 0 ? 'folga' : ''}">${w}</em>`).join('')}${cel.join('')}</div>
+    <div class="temp-cal-f"><span><i class="temp-cal-dot"></i> feriado</span><button onclick="tempCalEscolher('${hoje}')"><i class="fas fa-calendar-day"></i> Hoje</button></div>`;
+}
+function tempFecharRegistro() { _tCalFechar(); document.getElementById('temp-ov')?.classList.remove('open'); _tempModal = null; }
 function tempModalTurno(t) { if (!_tempModal) return; _tempModal.turno = t; document.querySelectorAll('.temp-seg button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); tempModalMudou(); }
 function tempModalMudou() {
   if (!_tempModal) return;
@@ -406,28 +461,53 @@ function tempModalMudou() {
     const aviso = !_tDiaUtil(y, mo - 1, d) ? `<tr><td colspan="5" class="temp-aviso"><i class="fas fa-triangle-exclamation"></i> ${_tFeriado(data) ? 'Feriado: ' + _tEsc(_tFeriado(data).nome || '') : 'Domingo'} — leitura opcional.</td></tr>` : '';
     document.getElementById('temp-m-tb').innerHTML = aviso + (eqs.map(e => {
       const l = mes[_tChave(e.id, data, turno)];
-      if (l && l.atual != null && !_tempModal.edicao) return `<tr><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div></td><td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>
-        <td colspan="3" class="temp-done"><i class="fas fa-check"></i> já registrado (${_tEsc(l.nome || l.login || '')}${l.gravadoEm ? ', ' + new Date(l.gravadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}) — atual ${_tFmt(l.atual)} ºC
+      if (_tOk(l) && !_tempModal.edicao) return `<tr><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div></td><td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>
+        <td colspan="3" class="temp-done"><i class="fas fa-check"></i> já registrado (${_tEsc(l.nome || l.login || '')}${l.gravadoEm ? ', ' + new Date(l.gravadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}) — ${l.abono ? 'sem leitura: ' + _tEsc(TEMP_ABONOS[l.abono] || l.abono) : 'atual ' + _tFmt(l.atual) + ' ºC'}
         <button class="temp-lnk" onclick="tempEditarLinha('${e.id}')"><i class="fas fa-pen"></i> editar</button></td></tr>`;
-      return _tLinhaForm(e, l);
+      return _tLinhaForm(e, l, mes[_tChave(e.id, data, turno === 'manha' ? 'tarde' : 'manha')]);
     }).join('') || '<tr><td colspan="5">Sem equipamentos.</td></tr>');
     document.querySelectorAll('#temp-m-tb input[type=number]').forEach(i => _tValidarInput(i));
     setTimeout(() => document.querySelector('#temp-m-tb input')?.focus(), 30);
   });
 }
 function tempEditarLinha(equipId) { _tempModal.equipId = equipId; _tempModal.edicao = true; tempModalMudou(); }
-function _tLinhaForm(e, l) {
+function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloqueia 'dia todo')
   const v = (x) => x == null ? '' : String(x).replace('.', ',');
   const fora = l?.atual != null && (l.atual < e.min || l.atual > e.max);
-  return `<tr data-eq="${e.id}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div></td><td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>
-    <td><input type="text" inputmode="decimal" data-f="min" value="${v(l?.min)}" oninput="tempValidar(this)"></td>
-    <td><input type="text" inputmode="decimal" data-f="max" value="${v(l?.max)}" oninput="tempValidar(this)"></td>
-    <td><input type="text" inputmode="decimal" data-f="atual" value="${v(l?.atual)}" oninput="tempValidar(this)">
-      <div class="temp-just ${fora ? 'show' : ''}"><input type="text" data-f="just" maxlength="300" placeholder="Justificativa obrigatória" value="${_tEsc(l?.justificativa || '')}">
-      ${typeof ocOpenForm === 'function' && !l?.ocorrenciaId ? '<label class="temp-oc"><input type="checkbox" data-f="oc"> Abrir ocorrência</label>' : ''}</div></td></tr>`;
+  const ab = !!l?.abono, obs = fora || ab || !!l?.justificativa;
+  const motivos = Object.entries(TEMP_ABONOS).map(([k, t]) => `<label class="temp-chipr"><input type="radio" name="ab-${e.id}" data-f="abono" value="${k}" ${(l?.abono || 'manutencao') === k ? 'checked' : ''}><span>${t}</span></label>`).join('');
+  return `<tr data-eq="${e.id}" class="temp-lin ${ab ? 'abn' : ''} ${obs ? 'det-on' : ''} ${l?.justificativa ? 'obs-on' : ''}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div>
+      <div class="temp-acts"><button type="button" class="temp-pill" onclick="tempObsToggle(this)"><i class="fas fa-comment-dots"></i> Observação</button><button type="button" class="temp-pill amb temp-abn-bt" onclick="tempAbonoToggle(this)"><i class="fas ${ab ? 'fa-rotate-left' : 'fa-screwdriver-wrench'}"></i> <span>${ab ? 'Voltar à leitura' : 'Sem leitura'}</span></button></div></td>
+    <td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>
+    <td class="c-num"><input type="text" inputmode="decimal" data-f="min" value="${ab ? '' : v(l?.min)}" oninput="tempValidar(this)"></td>
+    <td class="c-num"><input type="text" inputmode="decimal" data-f="max" value="${ab ? '' : v(l?.max)}" oninput="tempValidar(this)"></td>
+    <td class="c-num"><input type="text" inputmode="decimal" data-f="atual" value="${ab ? '' : v(l?.atual)}" oninput="tempValidar(this)"></td>
+    <td class="c-abn" colspan="3"><span class="temp-abn-tag"><i class="fas fa-screwdriver-wrench"></i> Sem leitura — informe o motivo abaixo</span></td></tr>
+  <tr class="temp-det"><td colspan="5"><div class="temp-det-in">
+      <div class="temp-abn"><span class="temp-det-lb">Motivo</span><div class="temp-chips">${motivos}</div>
+        <label class="temp-swl ${outro?.atual != null ? 'off' : ''}" ${outro?.atual != null ? `title="Já há leitura no outro turno (${_tFmt(outro.atual)} ºC)"` : ''}><input type="checkbox" data-f="dia" ${outro?.atual != null ? 'disabled' : ''}><span class="temp-sw"></span>
+          <span>Aplicar ao dia todo (manhã e tarde)${outro?.atual != null ? ` <small><i class="fas fa-lock"></i> outro turno já tem leitura</small>` : ''}</span></label></div>
+      <div class="temp-obs"><i class="fas fa-comment-dots"></i><input type="text" data-f="just" maxlength="300" placeholder="${fora || ab ? 'Observação obrigatória — ex.: OS 123, aguardando técnico' : 'Observação (opcional)'}" value="${_tEsc(l?.justificativa || '')}" oninput="tempValidar(this)"></div>
+      ${typeof ocOpenForm === 'function' && !l?.ocorrenciaId ? `<label class="temp-chk temp-oc-fora ${fora ? '' : 'hide'}"><input type="checkbox" data-f="oc"> Abrir ocorrência de falha</label>` : ''}
+    </div></td></tr>`;
+}
+function _tLinTr(el) { const tr = el.closest('tr'); return tr?.classList.contains('temp-det') ? tr.previousElementSibling : tr; }
+function _tDet(tr) { return tr.nextElementSibling?.classList.contains('temp-det') ? tr.nextElementSibling : null; }
+function tempObsToggle(b) {   // abre/fecha o campo (fica aberto se obrigatório: fora da faixa ou sem leitura)
+  const tr = _tLinTr(b), on = tr.classList.toggle('obs-on');
+  tempValidar(tr.querySelector('[data-f=atual]'));
+  if (on) _tDet(tr)?.querySelector('[data-f=just]')?.focus();
+}
+function tempAbonoToggle(b) {
+  const tr = _tLinTr(b), on = tr.classList.toggle('abn');
+  tr.querySelectorAll('[data-f=min],[data-f=max],[data-f=atual]').forEach(i => { if (on) { i.value = ''; i.classList.remove('bad', 'good'); } });
+  b.querySelector('span').textContent = on ? 'Voltar à leitura' : 'Sem leitura';
+  b.querySelector('i').className = 'fas ' + (on ? 'fa-rotate-left' : 'fa-screwdriver-wrench');
+  tempValidar(tr.querySelector('[data-f=atual]'));
+  if (on) _tDet(tr)?.querySelector('[data-f=just]')?.focus(); else tr.querySelector('[data-f=atual]').focus();
 }
 function tempValidar(inp) {
-  const tr = inp.closest('tr'); const e = tempState.equipamentos[tr?.dataset.eq]; if (!e) return;
+  const tr = _tLinTr(inp); const e = tempState.equipamentos[tr?.dataset.eq]; if (!e) return;
   const g = (f) => _tNum(tr.querySelector(`[data-f=${f}]`).value);
   const mn = g('min'), mx = g('max'), at = g('atual');
   tr.querySelectorAll('[data-f=min],[data-f=max],[data-f=atual]').forEach(i => i.classList.remove('bad', 'good'));
@@ -435,7 +515,11 @@ function tempValidar(inp) {
   if (at != null) marca('atual', at >= e.min && at <= e.max);
   if (mn != null) marca('min', (at == null || mn <= at) && (mx == null || mn <= mx));
   if (mx != null) marca('max', (at == null || mx >= at) && (mn == null || mx >= mn));
-  tr.querySelector('.temp-just')?.classList.toggle('show', at != null && (at < e.min || at > e.max));
+  const fora = at != null && (at < e.min || at > e.max), ab = tr.classList.contains('abn');
+  const det = _tDet(tr), jt = det?.querySelector('[data-f=just]');
+  tr.classList.toggle('det-on', fora || ab || tr.classList.contains('obs-on'));
+  if (jt) jt.placeholder = fora || ab ? 'Observação obrigatória — ex.: OS 123, aguardando técnico' : 'Observação (opcional)';
+  det?.querySelector('.temp-oc-fora')?.classList.toggle('hide', !fora);
 }
 function _tValidarInput(i) { if (i) tempValidar(i); }
 
@@ -449,17 +533,33 @@ async function tempSalvarRegistro() {
   const mes = ym === _tYm(tempState.ano, tempState.mes) ? tempState.leituras : (await dbGetT(`${TEMP_RAIZ}/leituras/${uid}/${ym}`)) || {};
   document.querySelectorAll('#temp-m-tb tr[data-eq]').forEach(tr => {
     const e = tempState.equipamentos[tr.dataset.eq]; if (!e) return;
-    const g = (f) => tr.querySelector(`[data-f=${f}]`);
+    const g = (f) => tr.querySelector(`[data-f=${f}]`) || _tDet(tr)?.querySelector(`[data-f=${f}]`);
     const mn = _tNum(g('min').value), mx = _tNum(g('max').value), at = _tNum(g('atual').value);
     const just = (g('just')?.value || '').trim();
-    if (mn == null && mx == null && at == null) return;     // linha em branco: ignora
     const nome = e.codigo;
+    if (tr.classList.contains('abn')) {      // sem leitura justificada: abona o turno (ou o dia todo)
+      if (just.length < 3) { erros.push(`${nome}: descreva na observação por que não há leitura`); return; }
+      const abono = _tDet(tr)?.querySelector('[data-f=abono]:checked')?.value || 'outro';
+      const turnos = g('dia')?.checked ? ['manha', 'tarde'] : [turno];
+      turnos.forEach(t => {
+        const chave = _tChave(e.id, data, t), ant = mes[chave];
+        if (t !== turno && ant?.atual != null) return;     // não apaga leitura já feita no outro turno
+        const reg = { equipId: e.id, data, turno: t, min: null, max: null, atual: null, abono, justificativa: just,
+          ocorrenciaId: ant?.ocorrenciaId || null,
+          login: ant?.login || _tLogin(), nome: ant?.nome || currentSession?.nomeCompleto || _tLogin(),
+          gravadoEm: ant?.gravadoEm || dbServerTs() };
+        if (ant) { reg.editadoEm = dbServerTs(); reg.editadoPor = _tLogin(); }
+        up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = reg;
+      });
+      return;
+    }
+    if (mn == null && mx == null && at == null) return;     // linha em branco: ignora
     if (at == null) { erros.push(`${nome}: informe a temperatura atual`); return; }
     if ((mn != null && mn > at) || (mx != null && mx < at) || (mn != null && mx != null && mn > mx)) { erros.push(`${nome}: mínima ≤ atual ≤ máxima`); return; }
     const fora = at < e.min || at > e.max;
     if (fora && !just) { erros.push(`${nome}: fora da faixa, justifique`); return; }
     const chave = _tChave(e.id, data, turno), ant = mes[chave];
-    const reg = { equipId: e.id, data, turno, min: mn, max: mx, atual: at, justificativa: fora ? just : null,
+    const reg = { equipId: e.id, data, turno, min: mn, max: mx, atual: at, abono: null, justificativa: just || null,
       ocorrenciaId: ant?.ocorrenciaId || null,
       login: ant?.login || _tLogin(), nome: ant?.nome || currentSession?.nomeCompleto || _tLogin(),
       gravadoEm: ant?.gravadoEm || dbServerTs() };
@@ -498,7 +598,7 @@ async function tempExcluirLeitura(equipId, iso) {
 }
 
 // ── backup por planilha ────────────────────────────────────────
-const TEMP_COLS = ['unidade', 'equipamento', 'ativo', 'data', 'turno', 'min', 'max', 'atual', 'responsavel', 'justificativa'];
+const TEMP_COLS = ['unidade', 'equipamento', 'ativo', 'data', 'turno', 'min', 'max', 'atual', 'responsavel', 'observacao', 'situacao'];
 // escolha do período antes de exportar: mês selecionado ou ano inteiro
 function tempEscolherPeriodo(modo) {
   document.querySelectorAll('#tab-temperatura .temp-pop.open').forEach(p => p.classList.remove('open'));
@@ -531,7 +631,7 @@ async function tempExportar(modo, periodo = 'mes') {
       const tudo = (await dbGetT(`${TEMP_RAIZ}/leituras/${u.id}`)) || {};
       Object.entries(tudo).filter(([ym]) => noPeriodo(ym)).forEach(([, mes]) => Object.values(mes || {}).forEach(l => {
         const e = tempState.equipamentos[l.equipId];
-        L.push([u.nome, e?.codigo || l.equipId, e?.ativoId ? (_tAtivo(e.ativoId)?.codigo || '') : '', l.data, l.turno, l.min, l.max, l.atual, l.nome || l.login || '', l.justificativa || '']);
+        L.push([u.nome, e?.codigo || l.equipId, e?.ativoId ? (_tAtivo(e.ativoId)?.codigo || '') : '', l.data, l.turno, l.min, l.max, l.atual, l.nome || l.login || '', l.justificativa || '', l.abono ? 'sem leitura: ' + (TEMP_ABONOS[l.abono] || l.abono) : '']);
       }));
       Object.values(tempState.equipamentos).filter(e => e.unidadeId === u.id).forEach(e =>
         E.push([u.nome, e.codigo, e.ativoId ? (_tAtivo(e.ativoId)?.codigo || '') : '', e.tipo || '', e.legenda || '', e.min, e.max, e.ativo === false ? 'arquivado' : 'ativo']));

@@ -34,7 +34,7 @@
         const di = iso(ano, mes, d);
         if (di > hoje) break;
         if (di < desdeIso || !diaUtil(feriados, ano, mes, d)) continue;
-        const faltam = ['manha', 'tarde'].filter((t) => leituras?.[chave(e.id, di, t)]?.atual == null);
+        const faltam = ['manha', 'tarde'].filter((t) => { const l = leituras?.[chave(e.id, di, t)]; return l?.atual == null && !l?.abono; });   // abono = sem leitura justificada (manutenção etc.)
         if (faltam.length) out.push({ iso: di, equip: e, faltam, atrasado: faltam.some((t) => atrasado(di, t, agora)) });
       }
     });
