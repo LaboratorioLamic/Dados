@@ -508,7 +508,7 @@ function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloquei
   const fora = l?.atual != null && (l.atual < e.min || l.atual > e.max);
   const ab = !!l?.abono, obs = ab || !!l?.justificativa;
   const podeOc = typeof ocGerarDeTemperatura === 'function' && !l?.ocorrenciaId;
-  const motivos = Object.entries(TEMP_ABONOS).map(([k, t]) => `<label class="temp-chipr"><input type="radio" name="ab-${e.id}" data-f="abono" value="${k}" onchange="tempValidar(this)" ${(l?.abono || 'manutencao') === k ? 'checked' : ''}><span>${t}</span></label>`).join('');
+  const motivos = Object.entries(TEMP_ABONOS).map(([k, t]) => `<label class="temp-chipr"><input type="radio" name="ab-${e.id}" data-f="abono" value="${k}" onchange="tempValidar(this)" ${(l?.abono || 'limpeza') === k ? 'checked' : ''}><span>${t}</span></label>`).join('');
   return `<tr data-eq="${e.id}" class="temp-lin ${ab ? 'abn' : ''} ${obs || (fora && podeOc) ? 'det-on' : ''} ${l?.justificativa ? 'obs-on' : ''}"><td><b>${_tEsc(e.codigo)}</b><div class="temp-fx">${_tEsc(e.tipo || '')}${e.legenda ? ' · ' + _tEsc(e.legenda) : ''}</div>
       <div class="temp-acts"><button type="button" class="temp-pill" onclick="tempObsToggle(this)"><i class="fas fa-comment-dots"></i> Observação</button><button type="button" class="temp-pill amb temp-abn-bt" onclick="tempAbonoToggle(this)"><i class="fas ${ab ? 'fa-rotate-left' : 'fa-screwdriver-wrench'}"></i> <span>${ab ? 'Voltar à leitura' : 'Sem leitura'}</span></button></div></td>
     <td class="temp-fx">${_tFmt(e.min)} ~ ${_tFmt(e.max)} ºC</td>

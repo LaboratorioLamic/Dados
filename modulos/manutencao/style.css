@@ -930,6 +930,9 @@
     flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;
   }
   .rotina-panel { display: none; flex: 1; flex-direction: column; overflow-y: auto; padding: 24px; min-height: 0; }
+  /* tabelas das Configurações (Usuários, Grupos...): rolam dentro do cartão em vez de cortar as últimas linhas */
+  .rotina-panel > .data-table-wrapper:not(.atividades-table-wrapper) { overflow: auto; }
+  .rotina-panel > .data-table-wrapper:not(.atividades-table-wrapper) thead th { position: sticky; top: 0; z-index: 1; background: var(--bg-card); }
   .rotina-panel.active { display: flex; animation: fadeUp 0.15s ease; }
 
   /* ── TOOLBAR ROTINA ── */
