@@ -242,7 +242,7 @@
       if (S.cadastrando) return;   // o cadastro chama entrar() depois de gravar o perfil
       try {
         if (user) await entrar(user);
-        else { pararAvisos(); S.me = null; window.dispatchEvent(new CustomEvent('lamic:saiu')); const m = S.motivoSaida; S.motivoSaida = null; fecharViewer(); $$('.viewer').forEach((v) => v.remove()); guardados.clear(); await telaAuth('login', m); }
+        else { pararAvisos(); pararMenu(); S.me = null; window.dispatchEvent(new CustomEvent('lamic:saiu')); const m = S.motivoSaida; S.motivoSaida = null; fecharViewer(); $$('.viewer').forEach((v) => v.remove()); guardados.clear(); await telaAuth('login', m); }
       } catch (e) { console.error(e); toast(traduz(e)); }
       if (primeiro) { primeiro = false; esconderLoader(); }
     });
@@ -553,16 +553,29 @@
       const p = $('#painel-links');
       if (p && !p.classList.contains('hidden') && !e.target.closest('#painel-links, .lat-item[data-mod]')) fecharPainel();
     });
-    carregarMenu().catch((e) => toast(traduz(e)));
+    ouvirMenu();
   }
+
+  // menu em tempo real: módulos/links e os links liberados ao meu grupo
+  function ouvirMenu() {
+    pararMenu();
+    const rm = ref('modulos'), rg = ref(`grupos/${S.me.grupo}/links`);
+    let mods, mOk = false, gOk = false;
+    const redesenhar = () => { if (mOk && gOk) carregarMenu(mods); };
+    const cbM = (sn) => { mods = sn.val(); mOk = true; redesenhar(); };
+    const cbG = (sn) => { const g = S.grupos.find((x) => x.id === S.me.grupo); if (g) g.links = sn.val() || undefined; gOk = true; redesenhar(); };
+    rm.on('value', cbM, (e) => toast(traduz(e)));
+    rg.on('value', cbG, () => { gOk = true; redesenhar(); });
+    S.offMenu = () => { rm.off('value', cbM); rg.off('value', cbG); };
+  }
+  function pararMenu() { if (S.offMenu) { S.offMenu(); S.offMenu = null; } }
 
   // módulo fixo Relatórios: criado na tela Módulos se faltar; sempre ordenado por último
   const REL_ID = 'relatorios', REL_ICONE = 'fas fa-chart-pie';
   const porModulo = (a, b) => (a.id === REL_ID) - (b.id === REL_ID) || porOrdem(a, b);
 
   // Abas da lateral = módulos com pelo menos um link liberado ao grupo (Relatórios sempre aparece).
-  async function carregarMenu() {
-    const mods = await ler('modulos');
+  function carregarMenu(mods) {
     S.mods = lista(mods).map((m) => ({ ...m, _links: lista(m.links).filter((l) => linkLiberado(S.me.grupo, m, l)).sort(porOrdem) }))
       .filter((m) => m._links.length).sort(porModulo);
     window.dispatchEvent(new CustomEvent('lamic:pronto'));
@@ -581,6 +594,12 @@
       if (b.classList.contains('on')) return fecharPainel();
       abrirPainel(S.mods.find((m) => m.id === b.dataset.mod), b);
     });
+    // painel aberto: redesenha com os dados novos, ou fecha se o módulo sumiu
+    const p = $('#painel-links');
+    if (p && !p.classList.contains('hidden') && S.painelMod) {
+      const m = S.mods.find((x) => x.id === S.painelMod), b = $$('[data-mod]', nav).find((x) => x.dataset.mod === S.painelMod);
+      if (m && b) abrirPainel(m, b); else fecharPainel();
+    }
   }
 
   // ---------- Temperatura: bolinha vermelha em Operacional › Temperatura enquanto houver pendência atrasada ----------
@@ -695,6 +714,7 @@
 
   function abrirPainel(m, btn) {
     const p = $('#painel-links');
+    S.painelMod = m.id;
     $$('.lat-item[data-mod]').forEach((x) => x.classList.toggle('on', x === btn));
     p.innerHTML = `<div class="pl-head"><span class="mod-ic ${esc(m.cor)}"><i class="${esc(m.icone)}"></i></span>
         <h3>${esc(m.nome)}</h3><button class="pl-x" title="Fechar"><i class="fas fa-xmark"></i></button></div>
