@@ -51,6 +51,7 @@
 /* status no calendário: realizada (✓ verde) e cancelada (⊘, bem mais claro e riscado) */
 .reu-ev-st { margin-right: 4px; font-size: .92em; }
 .reu-ev.is-ok .reu-ev-st, .reu-tg-ev.is-ok .reu-ev-st, .reu-item.is-ok .reu-ev-st { color: #16a34a; }
+.reu-ev.is-ok .reu-ev-st, .reu-tg-ev.is-ok .reu-ev-st { background: #fff; border-radius: 50%; box-shadow: 0 0 0 1.5px #fff, 0 1px 2px rgba(0,0,0,.35); }
 .reu-ev.is-can, .reu-tg-ev.is-can, .reu-item.is-can { text-decoration: line-through; opacity: .38; filter: saturate(.35); }
 .reu-ev.is-can .reu-ev-st, .reu-tg-ev.is-can .reu-ev-st, .reu-item.is-can .reu-ev-st { color: #dc2626; text-decoration: none; }
 .reu-more { font-size: 11px; color: #64748b; font-weight: 600; padding-left: 4px; }

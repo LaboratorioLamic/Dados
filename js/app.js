@@ -556,17 +556,25 @@
     carregarMenu().catch((e) => toast(traduz(e)));
   }
 
-  // Abas da lateral = módulos com pelo menos um link liberado ao grupo.
+  // módulo fixo Relatórios: criado na tela Módulos se faltar; sempre ordenado por último
+  const REL_ID = 'relatorios', REL_ICONE = 'fas fa-chart-pie';
+  const porModulo = (a, b) => (a.id === REL_ID) - (b.id === REL_ID) || porOrdem(a, b);
+
+  // Abas da lateral = módulos com pelo menos um link liberado ao grupo (Relatórios sempre aparece).
   async function carregarMenu() {
     const mods = await ler('modulos');
     S.mods = lista(mods).map((m) => ({ ...m, _links: lista(m.links).filter((l) => linkLiberado(S.me.grupo, m, l)).sort(porOrdem) }))
-      .filter((m) => m._links.length).sort(porOrdem);
+      .filter((m) => m._links.length).sort(porModulo);
     window.dispatchEvent(new CustomEvent('lamic:pronto'));
     const nav = $('#lat-nav');
     if (!nav) return;
-    $$('[data-mod]', nav).forEach((b) => b.remove());
+    $$('[data-mod], [data-r="relatorios"]', nav).forEach((b) => b.remove());
+    // Relatórios: sempre a última aba; sem links liberados abre a página #relatorios
+    const rel = { nome: 'Relatórios', icone: REL_ICONE, ...(mods?.[REL_ID] || {}) };
+    const relComLinks = S.mods.some((m) => m.id === REL_ID);
     nav.insertAdjacentHTML('beforeend', S.mods.map((m) =>
-      `<button class="lat-item" data-mod="${esc(m.id)}" title="${esc(m.nome)}"><i class="${esc(m.icone)}"></i><span>${esc(m.nome)}</span></button>`).join(''));
+      `<button class="lat-item" data-mod="${esc(m.id)}" title="${esc(m.nome)}"><i class="${esc(m.icone)}"></i><span>${esc(m.nome)}</span></button>`).join('')
+      + (relComLinks ? '' : `<a href="#relatorios" class="lat-item ${location.hash.startsWith('#relatorios') ? 'on' : ''}" data-r="relatorios" title="${esc(rel.nome)}"><i class="${esc(rel.icone)}"></i><span>${esc(rel.nome)}</span></a>`));
     ligarSetasNav(nav);
     marcarTemperatura();
     $$('[data-mod]', nav).forEach((b) => b.onclick = () => {
@@ -706,6 +714,15 @@
     });
   }
 
+  // Relatórios: página reservada (conteúdo a definir)
+  function paginaRelatorios(pg) {
+    pg.innerHTML = `<section class="rel-vazio">
+        <span class="rel-ic"><i class="fas fa-chart-pie"></i></span>
+        <h1>Relatórios</h1>
+        <p>Em breve os relatórios do LAMIC estarão disponíveis aqui.</p>
+      </section>`;
+  }
+
   async function rotear() {
     const [rota, sub] = (location.hash.slice(1) || 'avisos').split('/');
     $$('[data-r]').forEach((a) => a.classList.toggle('on', a.dataset.r === rota));
@@ -715,6 +732,7 @@
     if (!pg) return;
     try {
       if (rota === 'admin' && ADMIN_PERMS.some(pode)) await paginaAdmin(pg, sub);
+      else if (rota === 'relatorios') paginaRelatorios(pg);
       else { await paginaAvisos(pg); if (rota === 'avisos') destacarAviso(sub); }
     } catch (e) { console.error(e); toast(traduz(e)); }
     if (S.suave) {
@@ -3569,7 +3587,7 @@
 
   async function editarGrupo(id, depois) {
     const g = id ? S.grupos.find((x) => x.id === id) : null;
-    const mods = lista(await ler('modulos')).sort(porOrdem);
+    const mods = lista(await ler('modulos')).sort(porModulo);
     // estado inicial dos links: lista do grupo ou, em grupo antigo, módulos inteiros liberados
     const ligado = (m, l) => g ? (g.links ? !!g.links[l.id] : !!m.grupos?.[id]) : false;
     const linha = (k, rotulo, on, ic = '') => `<label class="perm-row${on ? ' on' : ''}"><input type="checkbox" data-k="${esc(k)}" ${on ? 'checked' : ''}>
@@ -3626,7 +3644,13 @@
   }
 
   async function admModulos(el) {
-    const mods = lista(await ler('modulos')).sort(porOrdem);
+    let mods = lista(await ler('modulos'));
+    if (!mods.some((m) => m.id === REL_ID)) {
+      const novo = { nome: 'Relatórios', icone: REL_ICONE, cor: 'ic-blue', ordem: 9999 };
+      await ref(`modulos/${REL_ID}`).set(novo).then(() => mods.push({ id: REL_ID, ...novo })).catch((e) => toast(traduz(e)));
+    }
+    mods = mods.sort(porModulo);
+    const nMov = mods.filter((m) => m.id !== REL_ID).length;   // Relatórios fica fora da reordenação
     // migra links antigos laboratoriolamic.github.io/{repo}/ para modulos/{repo}/ (abre o index do módulo)
     const mig = {};
     mods.forEach((m) => Object.entries(m.links || {}).forEach(([lid, l]) => {
@@ -3635,14 +3659,15 @@
     }));
     if (Object.keys(mig).length) await ref('modulos').update(mig).catch((e) => toast(traduz(e)));
     el.innerHTML = `<div class="card"><p style="font-size:13px;color:var(--txt-2)">Quem vê cada link é definido em <a href="#admin/grupos">Grupos e permissões</a>. Link novo começa oculto para todos os grupos (exceto Administradores).</p></div>
-      ${mods.map((m, i) => `<div class="card" style="margin-top:16px"><h3 style="color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="${esc(m.icone)}"></i> ${esc(m.nome)}
-          <span style="margin-left:auto;display:flex;gap:4px"><button class="btn sm ghost" data-mover="-1" data-i="${i}" title="Subir no menu" ${i ? '' : 'disabled'}><i class="fas fa-arrow-up"></i></button><button class="btn sm ghost" data-mover="1" data-i="${i}" title="Descer no menu" ${i < mods.length - 1 ? '' : 'disabled'}><i class="fas fa-arrow-down"></i></button></span></h3>
+      ${mods.map((m, i) => `<div class="card" style="margin-top:16px"><h3 style="color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:8px"><button type="button" class="icp-bt" data-icmod="${esc(m.id)}" data-ic-atual="${esc(m.icone)}" title="Trocar ícone do módulo"><i class="${esc(m.icone)}"></i></button> ${esc(m.nome)}
+          ${m.id === REL_ID ? '<span class="tag normal" style="margin-left:auto">sempre a última aba</span>' : `<span style="margin-left:auto;display:flex;gap:4px"><button class="btn sm ghost" data-mover="-1" data-i="${i}" title="Subir no menu" ${i ? '' : 'disabled'}><i class="fas fa-arrow-up"></i></button><button class="btn sm ghost" data-mover="1" data-i="${i}" title="Descer no menu" ${i < nMov - 1 ? '' : 'disabled'}><i class="fas fa-arrow-down"></i></button></span>`}</h3>
         <div class="scroll-x"><table class="tabela"><tbody>
-        ${lista(m.links).sort(porOrdem).map((l) => `<tr><td><i class="${esc(l.icone)}"></i> ${esc(l.nome)}</td><td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><small>${esc(l.url)}</small></td>
+        ${lista(m.links).sort(porOrdem).map((l) => `<tr><td><button type="button" class="icp-bt sm" data-iclink="${esc(l.id)}" data-mod="${esc(m.id)}" data-ic-atual="${esc(l.icone)}" title="Trocar ícone do link"><i class="${esc(l.icone)}"></i></button> ${esc(l.nome)}</td><td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><small>${esc(l.url)}</small></td>
           <td><span class="tag ${l.modo === 'iframe' ? 'normal' : 'pend'}">${l.modo === 'iframe' ? 'no portal' : 'nova aba'}</span></td>
           <td><button class="btn sm ghost" data-dell="${esc(l.id)}" data-mod="${esc(m.id)}"><i class="fas fa-trash"></i></button></td></tr>`).join('')}
         </tbody></table></div>
         <form class="row flink" data-mod="${esc(m.id)}" style="align-items:end;margin-top:10px">
+          <div class="field"><span>Ícone</span><input type="hidden" name="icone" value="fas fa-link"><button type="button" class="icp-bt" data-icnovo title="Escolher ícone"><i class="fas fa-link"></i></button></div>
           <label class="field"><span>Nome</span><input name="nome" required></label>
           <label class="field"><span>URL</span><input name="url" required pattern="(https?://|seeds/|modulos/).+" placeholder="https://... ou modulos/pasta/"></label>
           <label class="field"><span>Abrir</span><select name="modo"><option value="iframe">no portal</option><option value="nova_aba">nova aba</option></select></label>
@@ -3651,14 +3676,22 @@
     // Ordem do menu lateral: troca o módulo com o vizinho e regrava 0..n em todos.
     $$('[data-mover]', el).forEach((b) => b.onclick = async () => {
       const i = +b.dataset.i, j = i + +b.dataset.mover;
-      if (j < 0 || j >= mods.length) return;
-      const ord = mods.slice();
+      if (j < 0 || j >= nMov) return;
+      const ord = mods.filter((m) => m.id !== REL_ID);
       [ord[i], ord[j]] = [ord[j], ord[i]];
       const up = {};
       ord.forEach((m, k) => { up[`${m.id}/ordem`] = k; });
       await ref('modulos').update(up).catch((e) => toast(traduz(e)));
       admModulos(el);
     });
+    // ícones: módulo e link existentes gravam na hora; formulário de link novo guarda no campo oculto
+    const trocaIc = (b, ic) => { b.dataset.icAtual = ic; b.firstElementChild.className = ic; };
+    $$('[data-icmod]', el).forEach((b) => b.onclick = () => escolherIcone(b, b.dataset.icAtual, async (ic) => {
+      try { await ref(`modulos/${b.dataset.icmod}/icone`).set(ic); admModulos(el); toast('Ícone do módulo atualizado.'); } catch (e) { toast(traduz(e)); } }));
+    $$('[data-iclink]', el).forEach((b) => b.onclick = () => escolherIcone(b, b.dataset.icAtual, async (ic) => {
+      try { await ref(`modulos/${b.dataset.mod}/links/${b.dataset.iclink}/icone`).set(ic); trocaIc(b, ic); toast('Ícone do link atualizado.'); } catch (e) { toast(traduz(e)); } }));
+    $$('[data-icnovo]', el).forEach((b) => b.onclick = () => escolherIcone(b, b.dataset.icAtual || 'fas fa-link', (ic) => {
+      trocaIc(b, ic); b.closest('form').icone.value = ic; }));
     $$('[data-dell]', el).forEach((b) => b.onclick = async () => {
       if (!(await confirmarAcao('Remover link?'))) return;
       await ref(`modulos/${b.dataset.mod}/links/${b.dataset.dell}`).remove().catch((e) => toast(traduz(e)));
@@ -3669,10 +3702,57 @@
       if (!f.reportValidity()) return;
       const d = Object.fromEntries(new FormData(f));
       try {
-        await ref(`modulos/${f.dataset.mod}/links`).push({ nome: d.nome.trim(), url: d.url.trim(), modo: d.modo, icone: 'fas fa-link', ordem: 999 });
+        await ref(`modulos/${f.dataset.mod}/links`).push({ nome: d.nome.trim(), url: d.url.trim(), modo: d.modo, icone: /^fas fa-[a-z0-9-]+$/.test(d.icone) ? d.icone : 'fas fa-link', ordem: 999 });
         admModulos(el);
       } catch (err) { toast(traduz(err)); }
     });
+  }
+
+  // ---------- seletor de ícones (Font Awesome 6.4 Free, estilo solid), por categoria ----------
+  const ICONES = {
+    'Geral': 'house star heart bookmark flag bell gear sliders circle-info circle-question circle-check circle-xmark triangle-exclamation lightbulb link paperclip thumbtack magnifying-glass filter list list-check table-cells-large table-list grip bars ellipsis plus minus check xmark arrow-right arrow-up-right-from-square rotate share-nodes download upload trash pen pencil eye lock unlock key shield-halved globe compass location-dot map tag tags fire bolt gem crown trophy medal award',
+    'Saúde': 'stethoscope syringe pills capsules prescription-bottle prescription-bottle-medical tablets kit-medical briefcase-medical suitcase-medical house-medical hospital hospital-user user-doctor user-nurse heart-pulse heartbeat lungs brain tooth bone eye-dropper droplet bandage crutch wheelchair notes-medical file-medical clipboard-user staff-snake truck-medical bed-pulse thermometer temperature-half temperature-low temperature-high virus virus-covid viruses bacteria bacterium disease head-side-mask head-side-cough mask-face hand-holding-medical hand-holding-heart person-dots-from-line weight-scale baby baby-carriage',
+    'Laboratório': 'flask flask-vial vial vials microscope dna atom vial-circle-check vial-virus prescription mortar-pestle magnet radiation biohazard filter-circle-dollar fill-drip droplet-slash vial-circle-check snowflake icicles box-archive boxes-stacked box cubes dolly pallet scale-balanced ruler ruler-combined',
+    'Documentos': 'file file-lines file-pdf file-word file-excel file-powerpoint file-image file-video file-audio file-zipper file-code file-csv file-signature file-contract file-invoice file-invoice-dollar file-circle-check file-circle-plus file-export file-import folder folder-open folder-tree folder-plus copy paste clipboard clipboard-list clipboard-check book book-open book-bookmark book-medical address-book note-sticky newspaper scroll print stamp signature receipt',
+    'Pessoas': 'user users user-group user-plus user-check user-gear user-shield user-tie user-graduate user-clock user-pen user-lock users-gear people-group people-roof person person-dress child children id-card id-badge address-card handshake hands-holding hand comments comment comment-dots envelope envelope-open-text inbox paper-plane phone mobile-screen headset fax at',
+    'Negócios': 'briefcase building building-user city industry store shop cart-shopping basket-shopping bag-shopping credit-card money-bill money-bill-wave money-check-dollar coins piggy-bank wallet sack-dollar hand-holding-dollar dollar-sign percent calculator cash-register chart-line chart-pie chart-bar chart-column chart-area chart-simple arrow-trend-up arrow-trend-down bullseye scale-unbalanced landmark bullhorn',
+    'Tempo': 'calendar calendar-days calendar-week calendar-check calendar-plus calendar-xmark calendar-day clock clock-rotate-left hourglass hourglass-half stopwatch business-time timeline bell-slash sun moon cloud',
+    'Tecnologia': 'laptop desktop computer tablet-screen-button keyboard mouse print server database hard-drive memory microchip wifi network-wired ethernet plug power-off battery-full sitemap diagram-project code terminal bug robot qrcode barcode camera video photo-film image images cloud-arrow-up cloud-arrow-down satellite-dish tower-broadcast',
+    'Manutenção': 'wrench screwdriver-wrench hammer toolbox screwdriver gears helmet-safety hard-hat trowel paint-roller broom spray-can-sparkles soap pump-soap faucet-drip shower toilet plug-circle-bolt fan fire-extinguisher temperature-arrow-up temperature-arrow-down snowflake fire-flame-curved lightbulb car truck van-shuttle motorcycle bicycle gas-pump road warehouse',
+    'Ensino': 'graduation-cap school chalkboard chalkboard-user person-chalkboard book-open-reader pen-ruler pencil highlighter marker brain puzzle-piece award certificate medal ranking-star spell-check language glasses circle-play video headphones microphone',
+  };
+  const ICONES_CAT = Object.entries(ICONES).map(([c, s]) => [c, [...new Set(s.split(' '))]]);
+  // abre o popover junto ao botão; ao escolher chama aoEscolher('fas fa-x')
+  function escolherIcone(ancora, atual, aoEscolher) {
+    $('.icp')?.remove();
+    const cur = String(atual || '').replace(/^fa[srb]?\s+/, '').replace(/^fa-/, '');
+    let cat = ICONES_CAT.find(([, l]) => l.includes(cur))?.[0] || ICONES_CAT[0][0];
+    const pop = document.createElement('div');
+    pop.className = 'icp';
+    pop.innerHTML = `<div class="icp-busca"><i class="fas fa-magnifying-glass"></i><input placeholder="Buscar ícone (em inglês: user, file, chart…)"></div>
+      <div class="icp-abas">${ICONES_CAT.map(([c]) => `<button type="button" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+      <div class="icp-grade"></div>`;
+    document.body.appendChild(pop);
+    const busca = $('input', pop), grade = $('.icp-grade', pop);
+    const desenhar = () => {
+      const q = busca.value.trim().toLowerCase().replace(/^fa-/, '');
+      $$('[data-cat]', pop).forEach((b) => b.classList.toggle('on', !q && b.dataset.cat === cat));
+      const l = q ? [...new Set(ICONES_CAT.flatMap(([, x]) => x))].filter((n) => n.includes(q)) : ICONES_CAT.find(([c]) => c === cat)[1];
+      grade.innerHTML = l.length ? l.map((n) => `<button type="button" data-ic="${n}" title="${n}" class="${n === cur ? 'on' : ''}"><i class="fas fa-${n}"></i></button>`).join('')
+        : '<p class="icp-nada">Nenhum ícone encontrado.</p>';
+    };
+    const fechar = () => { pop.remove(); removeEventListener('pointerdown', fora, true); removeEventListener('resize', fechar); };
+    const fora = (e) => { if (!pop.contains(e.target) && !ancora.contains(e.target)) fechar(); };
+    $$('[data-cat]', pop).forEach((b) => b.onclick = () => { cat = b.dataset.cat; busca.value = ''; desenhar(); grade.scrollTop = 0; });
+    busca.oninput = desenhar;
+    grade.onclick = (e) => { const b = e.target.closest('[data-ic]'); if (!b) return; fechar(); aoEscolher(`fas fa-${b.dataset.ic}`); };
+    pop.onkeydown = (e) => { if (e.key === 'Escape') { fechar(); ancora.focus(); } };
+    addEventListener('pointerdown', fora, true); addEventListener('resize', fechar);
+    desenhar();
+    const r = ancora.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    pop.style.left = `${Math.max(8, Math.min(r.left, innerWidth - w - 8))}px`;
+    pop.style.top = `${r.bottom + 6 + h > innerHeight && r.top - 6 - h > 0 ? r.top - 6 - h : Math.min(r.bottom + 6, innerHeight - h - 8)}px`;
+    busca.focus();
   }
 
   // Sem Storage: a imagem é reduzida (máx. 1600 px de largura, JPEG) e guardada no próprio banco.

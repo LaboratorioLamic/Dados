@@ -1417,19 +1417,19 @@ function _ocTabAcoes(oc) {
         <span class="oc-badge ${a.tipo === 'preventiva' ? 'oc-tipo-ambiental' : 'oc-tipo-falha'}">${a.tipo === 'preventiva' ? 'Preventiva' : 'Corretiva'}</span>
         <span class="oc-badge ${a.status === 'concluida' ? 'oc-st-encerrada' : venc ? 'oc-st-cancelada' : 'oc-st-aberta'}">${a.status === 'concluida' ? 'Concluída' : venc ? 'Vencida' : 'Pendente'}</span>
         <span style="flex:1;"></span>
-        ${ot ? `<span class="oc-ot-mini" onclick="ocAbrirOT('${ot.id}')">${OC_ICO.ot}${_ocEsc(ot.numero)}</span>` : ''}
       </div>
+      ${ot ? `<div class="oc-acao-ot" onclick="ocAbrirOT('${ot.id}')" title="Abrir OT"><span class="oc-acao-ot-ic">${OC_ICO.ot}</span><div><small>OT vinculada</small><b>${_ocEsc(ot.numero)} · ${_ocEsc(ot.titulo || '')}</b></div><span class="oc-acao-ot-st">${_ocEsc(ot.status || '')}</span><span class="oc-acao-ot-go">Abrir ›</span></div>` : ''}
       <div class="oc-acao-desc">${_ocEsc(a.descricao)}</div>
       <div class="oc-acao-meta">${OC_ICO.user}${_ocEsc(a.responsavelNome || '—')} · ${OC_ICO.clock}Prazo ${_ocFmtData(a.prazo)}</div>
       ${a.status === 'concluida' ? `<div class="oc-acao-evid"><b>Evidência:</b> ${_ocEsc(a.evidencia)}<div class="oc-assinatura">${OC_ICO.check}Concluída por ${_ocEsc(a.concluidaPorNome || '—')} · ${_ocFmtDH(a.concluidaEm)}</div></div>` : ''}
       ${ret ? `<div class="oc-assinatura">${OC_ICO.undo}${ret.conclusaoAnterior ? 'Reaberta para retificação' : 'Retificada'} por ${_ocEsc(ret.porNome || '—')} · ${_ocFmtDH(ret.em)} — ${_ocEsc(ret.motivo)}${a.retificacoes.length > 1 ? ` (${a.retificacoes.length}×, ver Trilha)` : ''}</div>` : ''}
       ${_ocAtivsVinculadasHTML(a, _ocAberta(oc) && (pode || a.responsavelId === me))}
-      ${podeRetificar ? `<div class="oc-acao-btns">${oc.ativos.length ? `<button class="btn btn-outline btn-sm" onclick="ocVincularAtividade('${a.id}')">${OC_ICO.clip} Vincular atividade</button>` : ''}<button class="btn btn-outline btn-sm" onclick="ocRetificarAcao('${a.id}')">${OC_ICO.edit} Retificar</button></div>` : ''}
+      ${podeRetificar ? `<div class="oc-acao-btns">${oc.ativos.length ? `<button class="btn btn-outline btn-sm" onclick="ocVincularAtividade('${a.id}')">${OC_ICO.clip} Vincular atividade</button>` : ''}<button class="btn btn-outline btn-sm" onclick="ocVincularOT('${a.id}')">${OC_ICO.ot} ${a.otId ? 'Trocar OT' : 'Vincular OT'}</button><button class="btn btn-outline btn-sm" onclick="ocRetificarAcao('${a.id}')">${OC_ICO.edit} Retificar</button></div>` : ''}
       ${_ocAberta(oc) && a.status !== 'concluida' ? `<div class="oc-acao-btns">
         ${podeConcluir ? `<button class="btn btn-primary btn-sm" style="background:var(--green);" onclick="ocConcluirAcao('${a.id}')">${OC_ICO.check} Concluir</button>` : ''}
         ${podeEditar ? `<button class="btn btn-outline btn-sm" onclick="ocEditarAcao('${a.id}')">${OC_ICO.edit} Editar</button>` : ''}
         ${podeEditar && oc.ativos.length ? `<button class="btn btn-outline btn-sm" onclick="ocVincularAtividade('${a.id}')">${OC_ICO.clip} Vincular atividade</button>` : ''}
-        ${pode && canOT && !a.otId && _ocAtivoDe(oc) ? `<button class="btn btn-outline btn-sm" onclick="ocGerarOT('${oc.id}','${a.id}')">${OC_ICO.ot} Gerar OT</button>` : ''}
+        ${podeEditar ? `<button class="btn btn-outline btn-sm" onclick="ocVincularOT('${a.id}')">${OC_ICO.ot} ${a.otId ? 'Trocar OT' : 'Vincular OT'}</button>` : ''}
         ${pode && !a.retificacoes?.length ? `<button class="btn btn-outline btn-sm oc-btn-danger" onclick="ocRemoverAcao('${a.id}')">${OC_ICO.trash}</button>` : ''}
       </div>` : ''}
     </div>`;
@@ -1490,6 +1490,56 @@ window.ocAbrirAtividade = function (pubId) {
   if (ov) ov.style.zIndex = '760';
   window.viewPublicacao(pubId);
 };
+
+// ── vincular OT existente à ação: primeiro as OTs da ocorrência, depois as dos mesmos equipamentos, depois as demais ──
+let _ocVincOT = null; // { acaoId, busca, sel }
+function ocVincularOT(acaoId) {
+  const oc = ocState.ocorrencias[_ocViewId];
+  const a = oc?.acoes.find(x => x.id === acaoId);
+  if (!a) return;
+  _ocVincOT = { acaoId, busca: '', sel: a.otId || '' };
+  _ocPrompt({
+    titulo: 'Vincular OT',
+    subtitulo: a.descricao,
+    html: `<div class="oc-vinc"><input type="text" class="field-input" placeholder="Buscar nº, título ou responsável…" oninput="_ocVincOT.busca=this.value;_ocVincOTRender()">
+      <div id="oc-vot-lista" class="oc-vinc-lista"></div></div>`,
+    confirmar: 'Salvar vínculo', cor: 'var(--cyan)',
+    onConfirm: async () => {
+      const novo = _ocClone(ocState.ocorrencias[_ocViewId]);
+      const ac = novo.acoes.find(x => x.id === acaoId);
+      const otId = _ocVincOT.sel || null;
+      if ((ac.otId || null) === otId) return true;
+      const num = id => (otState.ordens.find(o => o.id === id) || {}).numero || id;
+      ac.otId = otId;
+      if (otId) { novo.otIds = Array.from(new Set([...(novo.otIds || []), otId])); _ocMarcarOT(otId, novo.id); }
+      _ocTrilha(novo, 'acao', otId ? `OT ${num(otId)} vinculada à ação "${ac.descricao}"` : `OT removida da ação "${ac.descricao}"`);
+      await _ocCommit(novo, otId ? 'OT vinculada.' : 'Vínculo removido.', { tab: 'acoes' });
+      return true;
+    },
+  });
+  _ocVincOTRender();
+}
+function _ocVincOTRender() {
+  const lista = document.getElementById('oc-vot-lista'); if (!lista || !_ocVincOT) return;
+  const oc = ocState.ocorrencias[_ocViewId];
+  const daOc = new Set(_ocOTsVinculadas(oc).map(o => o.id));
+  const ativos = new Set(oc.ativos.map(x => x.ativoId));
+  const doAtivo = o => (typeof otAtivoIds === 'function' ? otAtivoIds(o) : [o.ativoId]).some(id => ativos.has(id));
+  const peso = o => daOc.has(o.id) ? 0 : doAtivo(o) ? 1 : 2;
+  const q = _ocVincOT.busca.trim().toLowerCase();
+  const ots = (typeof otState !== 'undefined' ? otState.ordens : [])
+    .filter(o => !q || `${o.numero} ${o.titulo} ${o.responsavelNome || ''}`.toLowerCase().includes(q))
+    .sort((x, y) => peso(x) - peso(y) || String(y.dataAbertura || '').localeCompare(String(x.dataAbertura || '')));
+  const grupos = ['Vinculadas a esta ocorrência', 'Mesmo equipamento', 'Outras OTs'];
+  let ult = -1;
+  lista.innerHTML = ots.length ? ots.slice(0, 150).map(o => {
+    const g = peso(o), on = _ocVincOT.sel === o.id;
+    const cab = g !== ult ? `<div class="oc-vinc-grp">${grupos[(ult = g)]}</div>` : '';
+    return cab + `<div class="oc-vinc-item${on ? ' on' : ''}" onclick="_ocVincOT.sel=_ocVincOT.sel==='${o.id}'?'':'${o.id}';_ocVincOTRender()">
+      <span class="oc-vinc-box">${on ? OC_ICO.check : ''}</span>
+      <div class="oc-vinc-txt"><b>${_ocEsc(o.numero)} · ${_ocEsc(o.titulo || '')}</b><small>${_ocEsc(o.status || '')}${o.responsavelNome ? ' · ' + _ocEsc(o.responsavelNome) : ''}${o.dataAbertura ? ' · ' + _ocFmtData(String(o.dataAbertura).slice(0, 10)) : ''}</small></div></div>`;
+  }).join('') : '<p style="padding:14px;color:var(--text-secondary)">Nenhuma OT encontrada.</p>';
+}
 
 let _ocVinc = null; // { acaoId, tipo, ativo, busca, sel: Set }
 function ocVincularAtividade(acaoId) {

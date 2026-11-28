@@ -883,6 +883,31 @@ async function tempConfirmarImport() {
 
 // ── configurações (equipamentos e liberação entre unidades) ─────
 let _tCfgEdit = null;
+// ── filtros da lista de equipamentos (unidade, tipo, categoria) — opções em cascata ──
+const _tEqf = { un: '', tipo: '', cat: '' };
+const _tEqfVal = { un: e => _tNomeUnidade(e.unidadeId), tipo: e => e.tipo || '', cat: e => e.obrigatorio === false ? 'Transporte' : 'Fixo' };
+function _tEqfPassa(e, ignora) { return Object.keys(_tEqf).every(k => k === ignora || !_tEqf[k] || _tEqfVal[k](e) === _tEqf[k]); }
+function _tEqfOpcoes(k) { return [...new Set(Object.values(tempState.equipamentos).filter(e => _tEqfPassa(e, k)).map(_tEqfVal[k]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })); }
+function _tEqfPills() {
+  const defs = [['un', 'Unidade', 'fa-building'], ['tipo', 'Tipo', 'fa-snowflake'], ['cat', 'Categoria', 'fa-truck']];
+  return defs.map(([k, lb, ic]) => `<button type="button" class="uf-pill ${_tEqf[k] ? 'on' : ''}" onclick="tempEqfAbrir('${k}', this)"><i class="fas ${ic}"></i> ${lb}: <b>${_tEsc(_tEqf[k] || 'Todos')}</b> <i class="fas fa-chevron-down"></i></button>`).join('')
+    + (_tEqf.un || _tEqf.tipo || _tEqf.cat ? `<button type="button" class="uf-limpar" onclick="tempEqfLimpar()"><i class="fas fa-xmark"></i> Limpar</button>` : '');
+}
+function tempEqfAbrir(k, btn) {
+  document.querySelector('.uf-pop')?.remove();
+  const sem = v => String(v).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const pop = document.createElement('div'); pop.className = 'uf-pop';
+  pop.innerHTML = `<input type="text" placeholder="Filtrar...">` + `<div class="uf-pop-l">${['', ..._tEqfOpcoes(k)].map(o => `<div class="uf-op ${_tEqf[k] === o ? 'sel' : ''}" data-v="${_tEsc(o)}">${o ? _tEsc(o) : 'Todos'}${_tEqf[k] === o ? ' <i class="fas fa-check"></i>' : ''}</div>`).join('')}</div>`;
+  document.body.appendChild(pop);
+  const r = btn.getBoundingClientRect(); pop.style.left = r.left + 'px'; pop.style.top = (r.bottom + 6) + 'px';
+  const inp = pop.querySelector('input'); inp.focus();
+  inp.oninput = () => pop.querySelectorAll('.uf-op').forEach(d => d.style.display = !d.dataset.v || sem(d.dataset.v).includes(sem(inp.value)) ? '' : 'none');
+  pop.querySelectorAll('.uf-op').forEach(d => d.onclick = () => { _tEqf[k] = d.dataset.v; fechar(); tempRenderConfig(true); });
+  const fora = ev => { if (!pop.contains(ev.target) && !btn.contains(ev.target)) fechar(); };
+  function fechar() { pop.remove(); document.removeEventListener('mousedown', fora); }
+  setTimeout(() => document.addEventListener('mousedown', fora), 0);
+}
+function tempEqfLimpar() { Object.assign(_tEqf, { un: '', tipo: '', cat: '' }); tempRenderConfig(true); }
 // ids de equipamentos com alguma leitura (qualquer mês); null = ainda carregando → lixeira oculta
 let _tSemDados = null, _tSemDadosVez = 0;
 async function _tCarregarComDados() {
@@ -900,9 +925,9 @@ function tempRenderConfig(interno) {
   const el = document.getElementById('cpanel-temperatura-body'); if (!el) return;
   if (!_tCan('configurarTemperatura')) { el.innerHTML = '<p class="temp-fx">Sem permissão.</p>'; return; }
   const unids = _tTodasUnidades();
-  const eqs = Object.values(tempState.equipamentos).sort((a, b) => _tNomeUnidade(a.unidadeId).localeCompare(_tNomeUnidade(b.unidadeId)) || String(a.codigo).localeCompare(String(b.codigo), 'pt-BR', { numeric: true }));
+  const eqs = Object.values(tempState.equipamentos).filter(e => _tEqfPassa(e)).sort((a, b) => _tNomeUnidade(a.unidadeId).localeCompare(_tNomeUnidade(b.unidadeId)) || String(a.codigo).localeCompare(String(b.codigo), 'pt-BR', { numeric: true }));
   el.innerHTML = (window.tempBackup ? tempBackup.cardHtml() : '') + `
-  <div class="temp-cfg-card"><h4><i class="fas fa-list"></i> Equipamentos <small>${eqs.length}</small><span class="temp-sp"></span><button class="temp-btn" onclick="tempVerAcessos()"><i class="fas fa-user-shield"></i>Ver acessos</button><button class="temp-btn pri" onclick="tempAbrirEquip()"><i class="fas fa-plus"></i>Novo equipamento</button></h4>
+  <div class="temp-cfg-card"><h4><i class="fas fa-list"></i> Equipamentos <small>${eqs.length}</small><span class="uf-pops temp-eqf">${_tEqfPills()}</span><span class="temp-sp"></span><button class="temp-btn" onclick="tempVerAcessos()"><i class="fas fa-user-shield"></i>Ver acessos</button><button class="temp-btn pri" onclick="tempAbrirEquip()"><i class="fas fa-plus"></i>Novo equipamento</button></h4>
     <div class="temp-tw"><table><thead><tr><th>Unidade</th><th>Código</th><th>Tipo</th><th>Legenda</th><th>Faixa</th><th>Vínculo</th><th>Status</th><th></th></tr></thead><tbody>
     ${eqs.map(e => { return `<tr class="${e.ativo === false ? 'temp-arq' : ''}"><td>${_tEsc(_tNomeUnidade(e.unidadeId))}</td><td><b>${_tEsc(e.codigo)}</b></td><td>${_tEsc(e.tipo || '')}</td><td>${_tEsc(e.legenda || '')}</td>
       <td>${_tFmt(e.min)} ~ ${_tFmt(e.max)}</td><td>${_tTagVinculo(e)}</td><td><span class="temp-pill ${e.ativo === false ? 'off' : 'ok'}">${e.ativo === false ? 'Arquivado' : 'Ativo'}</span>${e.obrigatorio === false ? ' <span class="temp-pill tr"><i class="fas fa-truck"></i> Transporte</span>' : ''}</td>

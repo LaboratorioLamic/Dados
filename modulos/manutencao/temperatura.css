@@ -420,3 +420,4 @@ tr.ocf-on + tr.temp-det .temp-obs { display: flex; }
 .temp-acs-all { background: rgba(46,160,67,.12); color: #2a7d3a; }
 .temp-acs-rh { background: rgba(100,116,139,.1); color: #64748b; }
 .temp-acs-mn { font-size: 12px; color: var(--text-secondary, #64748b); white-space: nowrap; }
+.temp-cfg-card h4 .temp-eqf { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-left: 14px; font-weight: 400; }

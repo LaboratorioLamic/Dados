@@ -652,7 +652,8 @@ function _conflicts(day, ini, fim, parts, skipId, skipKey) {
     const a = _minutes(ini), b = _minutes(fim);
     return _occurrences(day, day).filter(o => {
         if (o.status === 'cancelada') return false;
-        if (String(o.base.id) === String(skipId) && (skipKey == null || o.date === skipKey || !_isRecurring(o.base))) return false;
+        // Própria reunião (qualquer ocorrência da mesma série) nunca conta como conflito
+        if (skipId != null && String(o.base.id) === String(skipId)) return false;
         const s = _minutes(o.r.horaInicio), e = _minutes(o.r.horaFim);
         if (!(a < e && s < b)) return false;
         return (o.r.participantes || []).some(p => P.includes(String(p)));
