@@ -398,3 +398,25 @@ tr.ocf-on + tr.temp-det .temp-obs { display: flex; }
 .temp-ocf-par b { color: var(--text-primary, #1f2937); font-size: 13px; }
 .temp-ocf-par small { color: var(--text-muted, #94a3b8); font-size: 11.5px; }
 .temp-pk-bt.fixo { cursor: default; background: rgba(230,57,70,.04); box-shadow: none; } .temp-pk-bt.fixo:hover { border-color: var(--border, #e2e8f0); box-shadow: none; }
+
+/* janela Ver acessos */
+.temp-acs-m { width: min(980px, 94vw); max-height: 86vh; display: flex; flex-direction: column; }
+.temp-acs-m .temp-mh { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border, #e2e8f0); }
+.temp-acs-m .temp-mh > i { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, #0096c7, #00b4d8); color: #fff; }
+.temp-acs-m .temp-mh b { display: block; font-size: 15px; }
+.temp-acs-m .temp-mh small { color: var(--text-muted, #94a3b8); font-size: 12px; }
+.temp-x { border: 0; background: transparent; font-size: 22px; cursor: pointer; color: var(--text-secondary, #64748b); }
+.temp-acs-bar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; }
+.temp-acs-bar .temp-busca { flex: 1; }
+.temp-acs-l { overflow: auto; padding: 4px 12px 16px; }
+.temp-acs-it { display: grid; grid-template-columns: 40px minmax(180px, 260px) 1fr auto; gap: 12px; align-items: center; padding: 10px 8px; border-radius: 10px; }
+.temp-acs-it:hover { background: rgba(0,150,199,.05); }
+.temp-acs-it + .temp-acs-it { border-top: 1px solid var(--border, #eef2f6); }
+.temp-acs-av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #0077a3; background: rgba(0,150,199,.12); }
+.temp-acs-who b { display: block; font-size: 13px; }
+.temp-acs-who small { color: var(--text-muted, #94a3b8); font-size: 11.5px; }
+.temp-acs-un { display: flex; flex-wrap: wrap; gap: 4px; }
+.temp-acs-all, .temp-acs-rh { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+.temp-acs-all { background: rgba(46,160,67,.12); color: #2a7d3a; }
+.temp-acs-rh { background: rgba(100,116,139,.1); color: #64748b; }
+.temp-acs-mn { font-size: 12px; color: var(--text-secondary, #64748b); white-space: nowrap; }

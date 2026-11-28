@@ -541,7 +541,7 @@ function _tLinhaForm(e, l, outro) {   // outro = leitura do outro turno (bloquei
       <div class="temp-sws">
         <label class="temp-swl temp-dia-sw ${outro?.atual != null ? 'off' : ''}" ${outro?.atual != null ? `title="Já há leitura no outro turno (${_tFmt(outro.atual)} ºC)"` : ''}><input type="checkbox" data-f="dia" ${outro?.atual != null ? 'disabled' : ''}><span class="temp-sw"></span>
           <span>Aplicar ao dia todo (manhã e tarde)${outro?.atual != null ? ` <small><i class="fas fa-lock"></i> outro turno já tem leitura</small>` : ''}</span></label>
-      ${podeOc ? `<label class="temp-swl temp-oc-sw ${ab ? '' : 'hide'}" title="Cria a ocorrência no módulo Ocorrências usando o texto da observação"><input type="checkbox" data-f="oc" onchange="tempOcToggle(this)"><span class="temp-sw red"></span>
+      ${podeOc ? `<label class="temp-swl temp-oc-sw ${ab || fora ? '' : 'hide'}" title="Cria a ocorrência no módulo Ocorrências usando o texto da observação"><input type="checkbox" data-f="oc" onchange="tempOcToggle(this)"><span class="temp-sw red"></span>
         <span>Gerar Ocorrência</span></label>` : ''}</div>
       ${podeOc ? _tOcForm(e, fora, ab) : ''}
     </div></td></tr>`;
@@ -647,11 +647,11 @@ function tempValidar(inp) {
   const sw = det?.querySelector('.temp-oc-sw');
   tr.classList.toggle('fora', fora && !ab);
   tr.classList.toggle('det-on', ab || tr.classList.contains('obs-on') || fora);   // fora da faixa: só sugere observação (sem ocorrência)
-  if (!ab && tr.classList.contains('ocf-on')) { tr.classList.remove('ocf-on'); const c = det?.querySelector('[data-f=oc]'); if (c) c.checked = false; }
+  if (!ab && !fora && tr.classList.contains('ocf-on')) { tr.classList.remove('ocf-on'); const c = det?.querySelector('[data-f=oc]'); if (c) c.checked = false; }
   const ocf = tr.classList.contains('ocf-on');
   const limp = det?.querySelector('[data-f=abono]:checked')?.value === 'limpeza';   // limpeza: observação opcional
   if (jt) jt.placeholder = ocf ? 'Descrição da ocorrência — o que aconteceu?' : ab && !limp ? 'Observação obrigatória — ex.: compressor parou, aguardando conserto' : fora ? 'Fora da faixa — sugerimos anotar o motivo (ex.: porta ficou aberta) · opcional' : 'Observação (opcional)';
-  sw?.classList.toggle('hide', !ab);
+  sw?.classList.toggle('hide', !ab && !fora);
 }
 function _tValidarInput(i) { if (i) tempValidar(i); }
 
@@ -704,6 +704,7 @@ async function tempSalvarRegistro() {
       gravadoEm: ant?.gravadoEm || dbServerTs() };
     if (ant) { reg.editadoEm = dbServerTs(); reg.editadoPor = _tLogin(); }
     up[`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] = reg;
+    if (ocOn && (at < e.min || at > e.max)) ocorrer.push({ e, just, ocf, at, mn, mx, caminhos: [`${TEMP_RAIZ}/leituras/${uid}/${ym}/${chave}`] });
   });
   if (erros.length) { const m = document.getElementById('temp-m-msg'); m.innerHTML = `<span class="temp-ic-red"><i class="fas fa-circle-xmark"></i> ${_tEsc(erros.join(' · '))}</span>`; return; }
   if (!Object.keys(up).length) { _tToast('Nenhuma leitura preenchida.', 'info'); return; }
@@ -882,24 +883,59 @@ async function tempConfirmarImport() {
 
 // ── configurações (equipamentos e liberação entre unidades) ─────
 let _tCfgEdit = null;
-function tempRenderConfig() {
+// ids de equipamentos com alguma leitura (qualquer mês); null = ainda carregando → lixeira oculta
+let _tSemDados = null, _tSemDadosVez = 0;
+async function _tCarregarComDados() {
+  const vez = ++_tSemDadosVez, s = new Set();
+  const uns = [...new Set(Object.values(tempState.equipamentos).map(e => e.unidadeId).filter(Boolean))];
+  await Promise.all(uns.map(async u => { const m = (await dbGetT(`${TEMP_RAIZ}/leituras/${u}`)) || {};
+    Object.values(m).forEach(x => Object.values(x || {}).forEach(l => l?.equipId && s.add(l.equipId))); }));
+  if (vez !== _tSemDadosVez) return;
+  _tSemDados = s;
+  if (document.getElementById('cpanel-temperatura')?.classList.contains('active')) tempRenderConfig(true);
+}
+function tempRenderConfig(interno) {
   tempIniciar();
+  if (!interno) _tCarregarComDados();
   const el = document.getElementById('cpanel-temperatura-body'); if (!el) return;
   if (!_tCan('configurarTemperatura')) { el.innerHTML = '<p class="temp-fx">Sem permissão.</p>'; return; }
   const unids = _tTodasUnidades();
   const eqs = Object.values(tempState.equipamentos).sort((a, b) => _tNomeUnidade(a.unidadeId).localeCompare(_tNomeUnidade(b.unidadeId)) || String(a.codigo).localeCompare(String(b.codigo), 'pt-BR', { numeric: true }));
   el.innerHTML = (window.tempBackup ? tempBackup.cardHtml() : '') + `
-  <div class="temp-cfg-card"><h4><i class="fas fa-list"></i> Equipamentos <small>${eqs.length}</small><span class="temp-sp"></span><button class="temp-btn pri" onclick="tempAbrirEquip()"><i class="fas fa-plus"></i>Novo equipamento</button></h4>
+  <div class="temp-cfg-card"><h4><i class="fas fa-list"></i> Equipamentos <small>${eqs.length}</small><span class="temp-sp"></span><button class="temp-btn" onclick="tempVerAcessos()"><i class="fas fa-user-shield"></i>Ver acessos</button><button class="temp-btn pri" onclick="tempAbrirEquip()"><i class="fas fa-plus"></i>Novo equipamento</button></h4>
     <div class="temp-tw"><table><thead><tr><th>Unidade</th><th>Código</th><th>Tipo</th><th>Legenda</th><th>Faixa</th><th>Vínculo</th><th>Status</th><th></th></tr></thead><tbody>
     ${eqs.map(e => { return `<tr class="${e.ativo === false ? 'temp-arq' : ''}"><td>${_tEsc(_tNomeUnidade(e.unidadeId))}</td><td><b>${_tEsc(e.codigo)}</b></td><td>${_tEsc(e.tipo || '')}</td><td>${_tEsc(e.legenda || '')}</td>
       <td>${_tFmt(e.min)} ~ ${_tFmt(e.max)}</td><td>${_tTagVinculo(e)}</td><td><span class="temp-pill ${e.ativo === false ? 'off' : 'ok'}">${e.ativo === false ? 'Arquivado' : 'Ativo'}</span>${e.obrigatorio === false ? ' <span class="temp-pill tr"><i class="fas fa-truck"></i> Transporte</span>' : ''}</td>
-      <td class="temp-act"><i class="fas fa-pen" title="Editar" onclick="tempAbrirEquip('${e.id}')"></i><i class="fas ${e.ativo === false ? 'fa-box-open' : 'fa-box-archive'}" title="${e.ativo === false ? 'Reativar' : 'Arquivar'}" onclick="tempArquivarEquip('${e.id}')"></i></td></tr>`; }).join('') || '<tr><td colspan="8" class="miss">Nenhum equipamento.</td></tr>'}
-    </tbody></table></div></div>
-  <div class="temp-cfg-card"><h4><i class="fas fa-eye"></i> Quem vê cada unidade <span class="temp-sp"></span><button class="temp-btn" onclick="tempGravarAcessos()"><i class="fas fa-rotate"></i>Recalcular acessos</button></h4>
-    <p class="temp-fx">Vem dos <b>setores visíveis</b> do grupo (Configurações › Grupos › Unidades e setores): unidade com algum setor visível = vê a Temperatura dela. Grupo sem setor marcado = só a unidade do cadastro no RH. Administrador do portal vê todas. Atualiza sozinho ao salvar grupos e usuários.</p>
-    <div class="temp-tw"><table><thead><tr><th>Usuário</th><th>Grupo</th><th>Unidades (além da do RH)</th><th>Mnemônicos</th></tr></thead><tbody>
-    ${_tListaAcessos().map(a => `<tr><td><b>${_tEsc(a.nome)}</b> <span class="temp-fx">${_tEsc(a.login)}</span></td><td>${_tEsc(a.grupo)}</td><td class="temp-libs">${a.unidades.length ? a.unidades.map(id => `<span class="temp-tag">${_tEsc(_tNomeUnidade(id))}</span>`).join('') : '<span class="temp-fx">só a do RH</span>'}${a.desatualizado ? ' <span class="temp-tag amb">recalcular</span>' : ''}</td><td>${a.equips == null ? '<span class="temp-fx">todos</span>' : a.equips}</td></tr>`).join('') || '<tr><td colspan="4" class="miss">Nenhum usuário vinculado ao portal.</td></tr>'}
+      <td class="temp-act"><i class="fas fa-pen" title="Editar" onclick="tempAbrirEquip('${e.id}')"></i><i class="fas ${e.ativo === false ? 'fa-box-open' : 'fa-box-archive'}" title="${e.ativo === false ? 'Reativar' : 'Arquivar'}" onclick="tempArquivarEquip('${e.id}')"></i>${_tSemDados && !_tSemDados.has(e.id) ? `<i class="fas fa-trash" title="Excluir (sem leituras)" onclick="tempExcluirEquip('${e.id}')"></i>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="miss">Nenhum equipamento.</td></tr>'}
     </tbody></table></div></div>`;
+}
+// ── janela "Ver acessos": quem vê cada unidade (índice recalculado sozinho ao salvar grupos/usuários) ──
+function tempVerAcessos() {
+  document.getElementById('temp-acs')?.remove();
+  const total = _tTodasUnidades().length, lista = _tListaAcessos();
+  const ini = n => String(n || '?').trim().split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase();
+  const linha = a => {
+    const todas = a.unidades.length && a.unidades.length >= total;
+    const uns = todas ? '<span class="temp-acs-all"><i class="fas fa-globe"></i> Todas as unidades</span>'
+      : a.unidades.length ? a.unidades.map(id => `<span class="temp-tag">${_tEsc(_tNomeUnidade(id))}</span>`).join('') : '<span class="temp-acs-rh"><i class="fas fa-house-user"></i> Só a unidade do perfil</span>';
+    const busca = (a.nome + ' ' + a.login + ' ' + a.grupo).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    return `<div class="temp-acs-it" data-q="${_tEsc(busca)}"><span class="temp-acs-av">${_tEsc(ini(a.nome))}</span>
+      <div class="temp-acs-who"><b>${_tEsc(a.nome)}</b><small>@${_tEsc(a.login)} · ${_tEsc(a.grupo || 'sem grupo')}</small></div>
+      <div class="temp-acs-un">${uns}</div>
+      <div class="temp-acs-mn" title="Mnemônicos"><i class="fas fa-temperature-half"></i> ${a.equips == null ? 'todos' : a.equips}</div></div>`;
+  };
+  const ov = document.createElement('div'); ov.id = 'temp-acs'; ov.className = 'temp-ov open';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = `<div class="temp-modal temp-acs-m"><div class="temp-mh"><i class="fas fa-user-shield"></i><div><b>Quem vê cada unidade</b><small>Permissão "Ver todas unidades" do grupo · sem ela, só a unidade do perfil (RH). Atualiza sozinho.</small></div><span class="temp-sp"></span><button class="temp-x" onclick="document.getElementById('temp-acs').remove()">&times;</button></div>
+    <div class="temp-acs-bar"><label class="temp-busca"><i class="fas fa-magnifying-glass"></i><input type="search" placeholder="Buscar usuário, login ou grupo…" oninput="tempAcsFiltrar(this.value)" autocomplete="off"></label><span class="temp-fx" id="temp-acs-n">${lista.length} usuário(s)</span></div>
+    <div class="temp-acs-l">${lista.map(linha).join('') || '<p class="temp-fx" style="padding:20px">Nenhum usuário vinculado ao portal.</p>'}</div></div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => ov.querySelector('input')?.focus(), 30);
+}
+function tempAcsFiltrar(q) {
+  q = String(q).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); let n = 0;
+  document.querySelectorAll('#temp-acs .temp-acs-it').forEach(el => { const ok = !q || el.dataset.q.includes(q); el.hidden = !ok; if (ok) n++; });
+  const c = document.getElementById('temp-acs-n'); if (c) c.textContent = `${n} usuário(s)`;
 }
 function tempAbrirEquip(id) {
   if (!_tCan('configurarTemperatura')) return;
@@ -1037,6 +1073,15 @@ async function tempSalvarEquip() {
   _tToast(ok ? 'Equipamento salvo.' : 'Erro ao salvar.', ok ? 'success' : 'error');
   if (ok) { tempFecharEquip(); tempRenderConfig(); }
 }
+async function tempExcluirEquip(id) {   // só equipamento sem nenhuma leitura; com dados, arquivar
+  const e = tempState.equipamentos[id]; if (!e) return;
+  const meses = (await dbGetT(`${TEMP_RAIZ}/leituras/${e.unidadeId}`)) || {};
+  const tem = Object.values(meses).some(m => Object.values(m || {}).some(l => l?.equipId === id));
+  if (tem) { _tToast(`${e.codigo} tem leituras registradas — use Arquivar.`, 'info'); return; }
+  if (!await uiConfirmar({ tipo: 'perigo', titulo: 'Excluir equipamento?', mensagem: `${e.codigo} — ${e.legenda || e.tipo || ''}. Não tem leituras. Não dá para desfazer.`, confirmar: 'Excluir' })) return;
+  const ok = await dbUpdateT({ [`${TEMP_RAIZ}/equipamentos/${id}`]: null });
+  _tToast(ok ? 'Equipamento excluído.' : 'Erro ao excluir.', ok ? 'success' : 'error');
+}
 async function tempArquivarEquip(id) {
   const e = tempState.equipamentos[id]; if (!e) return;
   const ok = await dbUpdateT({ [`${TEMP_RAIZ}/equipamentos/${id}/ativo`]: e.ativo === false });
@@ -1049,13 +1094,9 @@ function tempCalcularAcessos() {
   if (typeof authState === 'undefined' || typeof _authGrupoSetorIds !== 'function') return out;
   (authState.users || []).filter(u => u && u.dadosLogin && u.ativo !== false).forEach(u => {
     const g = (authState.groups || []).find(x => x.id === u.grupoId);
-    const setores = _authGrupoSetorIds(g);     // null = grupo sem restrição → só a unidade do RH
+    // "Ver todas unidades" (Configurações do grupo): todas; desmarcado → só a unidade do perfil (RH)
     const unidades = {};
-    (setores || []).forEach(sid => {
-      const orgUn = typeof _orgUnidadeIdDoSetor === 'function' ? _orgUnidadeIdDoSetor(sid) : '';
-      const rh = orgUn && orgState.unidades?.[orgUn]?.rhId;
-      if (rh) unidades[rh] = true;
-    });
+    if (u.isAdmin || g?.permissoes?.config?.verTodasUnidades === true) _tTodasUnidades().forEach(x => { unidades[x.id] = true; });
     // mnemônicos: grupo (lista vazia = todos) ∩ usuário (lista vazia = todos os do grupo)
     const gl = Array.isArray(g?.tempEquipIds) && g.tempEquipIds.length ? g.tempEquipIds : null;
     const ul = Array.isArray(u.tempEquipIds) && u.tempEquipIds.length ? u.tempEquipIds : null;

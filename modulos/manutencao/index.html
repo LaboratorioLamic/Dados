@@ -2813,7 +2813,7 @@
             <select id="user-edit-cargo" class="field-select" style="flex:1;">
               <option value="">— Sem cargo —</option>
             </select>
-            <button type="button" class="btn btn-outline btn-icon" onclick="openCargosModal('user-edit')"
+            <button type="button" class="btn btn-outline btn-icon" onclick="openCargosModal('user-edit')" id="user-edit-cargo-add"
               title="Gerenciar Cargos" style="flex-shrink:0;padding:0 10px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:15px;height:15px;">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -2821,6 +2821,10 @@
             </button>
           </div>
         </div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Unidade</label>
+        <input type="text" id="user-edit-unidade" class="field-input" readonly placeholder="—" style="opacity:.65" title="Vem do Dados LAMIC (RH)">
       </div>
       <div class="form-field">
         <label class="field-label">Usuário (login) <span class="required">*</span></label>

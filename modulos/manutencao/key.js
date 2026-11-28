@@ -1556,6 +1556,27 @@ function openUserEditModal(id) {
     const el = document.getElementById(i);
     if (el) { el.readOnly = vinc; el.style.opacity = vinc ? '.65' : ''; el.title = vinc ? 'Vem do Dados LAMIC' : ''; }
   });
+  // Cargo e unidade: importados do Dados LAMIC (RH) — não se cadastram aqui
+  const cgSel = document.getElementById('user-edit-cargo'), unEl = document.getElementById('user-edit-unidade');
+  if (cgSel) { cgSel.disabled = true; cgSel.style.opacity = '.65'; cgSel.title = 'Vem do Dados LAMIC (RH)'; }
+  const cgAdd = document.getElementById('user-edit-cargo-add'); if (cgAdd) cgAdd.style.display = 'none';
+  _authImportado = null;
+  const uEd = authState.users.find(x => x.id === id);
+  if (unEl) unEl.value = uEd?.unidade || '';
+  if (uEd?.dadosLogin && typeof rootDb !== 'undefined') {
+    const login = uEd.dadosLogin;
+    Promise.all([
+      rootDb.ref(`usuarios/${login}`).once('value').then(x => x.val()).catch(() => null),
+      rootDb.ref(`privado/${login}/cpf`).once('value').then(x => x.val()).catch(() => null),
+    ]).then(([d, cpf]) => {
+      if (_userEditId !== id || !d) return;
+      _authImportado = { cargo: d.cargo || '', unidade: d.unidade || '', nome: d.nome || '', cpf: cpf ? formatCPF(String(cpf)) : '' };
+      if (cgSel) { const c = _authImportado.cargo; if (c && ![...cgSel.options].some(o => o.value === c)) cgSel.insertAdjacentHTML('beforeend', `<option>${_authEsc(c)}</option>`); cgSel.value = c; }
+      if (unEl) unEl.value = _authImportado.unidade;
+      if (_authImportado.nome) document.getElementById('user-edit-nome').value = _authImportado.nome;
+      if (_authImportado.cpf) document.getElementById('user-edit-cpf').value = _authImportado.cpf;
+    });
+  }
   ['user-edit-password', 'user-edit-confirm'].forEach(i => {
     const el = document.getElementById(i);
     const campo = el?.closest('.form-field');
@@ -1622,9 +1643,9 @@ function updateUserEditStatusLabel() {
   if (t && l) l.textContent = t.checked ? 'Ativo' : 'Inativo';
 }
 
-let _authUsuarioOriginal = null;
+let _authUsuarioOriginal = null, _authImportado = null;
 function saveUserEdit() {
-  { const o = authState.users.find(x => x.id === _userEditId); _authUsuarioOriginal = o ? { nomeCompleto: o.nomeCompleto, cpf: o.cpf, username: o.username } : null; }
+  { const o = authState.users.find(x => x.id === _userEditId); _authUsuarioOriginal = o ? { nomeCompleto: o.nomeCompleto, cpf: o.cpf, username: o.username, cargo: o.cargo } : null; }
   if (currentSession && !currentSession.isAdmin && !authHasPermission('config.gerenciarUsuarios')) {
     if (typeof showToast === 'function') showToast('Você não tem permissão para gerenciar usuários.', 'error');
     return;
@@ -1664,6 +1685,12 @@ function saveUserEdit() {
       if (_userEditIsAdmin) u.isAdmin = true;
     }
     if (u.dadosLogin) { const o = _authUsuarioOriginal; if (o) { u.nomeCompleto = o.nomeCompleto; u.cpf = o.cpf; u.username = o.username; } }
+    if (u.dadosLogin && _authImportado) {   // dados críticos sempre do Dados LAMIC
+      const d = _authImportado;
+      u.cargo = d.cargo; u.unidade = d.unidade;
+      if (d.nome) u.nomeCompleto = d.nome;
+      if (d.cpf) u.cpf = d.cpf;
+    } else if (u.dadosLogin) u.cargo = _authUsuarioOriginal?.cargo ?? u.cargo;
     // Refresh session if editing self
     if (currentSession?.userId === _userEditId) {
       currentSession.nomeCompleto = nome; currentSession.cargo = cargo;
@@ -1724,7 +1751,7 @@ const PERM_STRUCTURE = {
   ocorrencias:{ label: 'Ocorrências',      keys: ['visualizar','registrar','editar','tratar','liberarAtivo','encerrar','cancelar'] },
   temperatura:{ label: 'Temperatura',      keys: ['verTemperatura','lancarLeituras','exportarLeituras','importarLeituras','configurarTemperatura'] },
   cq:         { label: 'Controle de Qualidade', keys: ['visualizar','lancar','liberar','configurar','editarCadastros','definirAlvos','ceq','revisar','relatorios','invalidar'] },
-  config:    { label: 'Configurações',    keys: ['visualizarConfig','backup','gerenciarUsuarios','gerenciarGrupos','gerenciarEmpresas'] }
+  config:    { label: 'Configurações',    keys: ['visualizarConfig','backup','gerenciarUsuarios','gerenciarGrupos','gerenciarEmpresas','verTodasUnidades'] }
 };
 
 const PERM_LABELS = {
@@ -1741,7 +1768,7 @@ const PERM_LABELS = {
   lancar:'Lançar corridas de controle', liberar:'Avaliar / liberar corridas', configurar:'Cadastros e áreas de CQ', editarCadastros:'Editar cadastros, criar lotes e excluir cadastro sem vínculo',
   definirAlvos:'Definir médias, DP e regras', ceq:'Controle externo (CEQ)', revisar:'Revisão mensal / análise crítica',
   relatorios:'Relatórios de CQ', invalidar:'Corrigir / invalidar resultados',
-  visualizarConfig:'Visualizar configurações', backup:'Backup',
+  visualizarConfig:'Visualizar configurações', backup:'Backup', verTodasUnidades:'Ver todas unidades',
   gerenciarUsuarios:'Gerenciar usuários', gerenciarGrupos:'Gerenciar grupos',
   gerenciarEmpresas:'Gerenciar empresas',
   verTemperatura:'Visualizar aba', lancarLeituras:'Lançar / editar leituras', exportarLeituras:'Exportar leituras',
